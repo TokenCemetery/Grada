@@ -133,7 +133,7 @@ struct StoredHealthData: HealthDataSource {
     }
 
     func age() async throws -> Int? {
-        try reader?.age()
+        reader?.age()
     }
 
     func highestHeartRate(days: Int) async throws -> Double? {

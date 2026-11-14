@@ -172,8 +172,12 @@ final class HealthKitReader {
         .sorted { $0.start < $1.start }
     }
 
-    func age() throws -> Int? {
-        guard let birth = calendar.date(from: try store.dateOfBirthComponents()) else { return nil }
+    /// Nil when no birth date is set or reading it isn't allowed. HealthKit reports both as an error
+    /// without details (for privacy it doesn't say which), so the error itself carries no information.
+    func age() -> Int? {
+        guard let components = try? store.dateOfBirthComponents(), components.year != nil,
+              let birth = calendar.date(from: components)
+        else { return nil }
         return calendar.dateComponents([.year], from: birth, to: .now).year
     }
 
