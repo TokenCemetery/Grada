@@ -351,6 +351,9 @@ struct SnapshotBuilder {
     }
 
     /// Today's total compared with the 7 days before it.
+    // TODO(v2, Goals): for metrics with a goal (steps, exercise, sleep), compare with the goal instead,
+    // e.g. "−1,580 of 10,000", and show a goal progress bar (CardSnapshot.Chart) instead of the 7-day bars.
+    // TODO(later): show the change as an arrow and amount, e.g. "▲ 1,200 vs 7-day avg", like Resources does.
     private func totals(_ series: [DayValue], decimals: Int, unit: String) -> CardSnapshot {
         guard series.contains(where: { $0.value != nil }) else { return .noData(period: "Today") }
         let today = series.last?.value ?? 0
