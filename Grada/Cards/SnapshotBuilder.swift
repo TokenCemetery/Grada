@@ -543,7 +543,7 @@ struct SnapshotBuilder {
     }
 }
 
-extension QuantityMetric {
+nonisolated extension QuantityMetric {
     var unit: String {
         switch self {
         case .restingHeartRate: "bpm"

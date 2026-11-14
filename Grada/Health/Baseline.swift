@@ -1,7 +1,7 @@
 import Foundation
 
 /// Personal normal range for a vital, built from the user's own recent history.
-enum Baseline {
+nonisolated enum Baseline {
     /// Fewer days than this and the metric shows "Calibrating".
     static let minimumDays = 7
 
