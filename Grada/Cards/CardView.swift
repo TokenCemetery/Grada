@@ -11,27 +11,55 @@ struct CardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            HStack {
-                Text(kind.title).font(.subheadline.weight(.semibold))
-                Spacer(minLength: 4)
-                Image(systemName: kind.symbol).foregroundStyle(color)
-            }
-            if let snapshot {
-                Text(snapshot.period).font(.caption).foregroundStyle(.secondary)
-                if snapshot.value != nil {
-                    content(snapshot)
-                } else {
-                    noData
+            if kind.valueBesideTitle, let snapshot, snapshot.value != nil {
+                // A big value shares the title row, between the text and the icon, so it adds no height.
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(kind.title).font(.subheadline.weight(.semibold))
+                        Text(snapshot.period).font(.caption).foregroundStyle(.secondary)
+                        if let comparison = snapshot.comparison {
+                            comparisonText(comparison, snapshot.tone).lineLimit(2)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    valueText(snapshot, numberFont: .system(.largeTitle, weight: .bold))
+                        .fixedSize()
+                    Image(systemName: kind.symbol).foregroundStyle(color)
                 }
+                CardDetailView(detail: snapshot.detail, color: color)
+                    .padding(.top, 8)
             } else {
-                Spacer(minLength: 0)
-                ProgressView().frame(maxWidth: .infinity)
-                Spacer(minLength: 0)
+                header
+                periodAndContent(snapshot)
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, minHeight: kind.size == .square ? Self.squareHeight : nil, alignment: .topLeading)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var header: some View {
+        HStack {
+            Text(kind.title).font(.subheadline.weight(.semibold))
+            Spacer(minLength: 4)
+            Image(systemName: kind.symbol).foregroundStyle(color)
+        }
+    }
+
+    @ViewBuilder
+    private func periodAndContent(_ snapshot: CardSnapshot?) -> some View {
+        if let snapshot {
+            Text(snapshot.period).font(.caption).foregroundStyle(.secondary)
+            if snapshot.value != nil {
+                content(snapshot)
+            } else {
+                noData
+            }
+        } else {
+            Spacer(minLength: 0)
+            ProgressView().frame(maxWidth: .infinity)
+            Spacer(minLength: 0)
+        }
     }
 
     @ViewBuilder
@@ -57,24 +85,32 @@ struct CardView: View {
 
     private func valueBlock(_ snapshot: CardSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            if kind == .healthStatus || !(snapshot.value ?? "").contains(where: \.isNumber) {
-                Text(snapshot.value ?? "")
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(valueColor(snapshot.tone))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-            } else {
-                ValueText(value: snapshot.value ?? "", unit: snapshot.unit)
-                    .foregroundStyle(valueColor(snapshot.tone))
-            }
+            valueText(snapshot)
             if let comparison = snapshot.comparison {
-                Text(comparison)
-                    .font(.caption)
-                    .foregroundStyle(snapshot.tone == .warning && !kind.isScore ? Color.orange : .secondary)
-                    .lineLimit(1)
+                comparisonText(comparison, snapshot.tone).lineLimit(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func valueText(_ snapshot: CardSnapshot, numberFont: Font = ValueText.numberFont) -> some View {
+        if kind == .healthStatus || !(snapshot.value ?? "").contains(where: \.isNumber) {
+            Text(snapshot.value ?? "")
+                .font(.title2.weight(.bold))
+                .foregroundStyle(valueColor(snapshot.tone))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        } else {
+            ValueText(value: snapshot.value ?? "", unit: snapshot.unit, numberFont: numberFont)
+                .foregroundStyle(valueColor(snapshot.tone))
+        }
+    }
+
+    private func comparisonText(_ comparison: String, _ tone: CardSnapshot.Tone) -> some View {
+        Text(comparison)
+            .font(.caption)
+            .foregroundStyle(tone == .warning && !kind.isScore ? Color.orange : .secondary)
     }
 
     /// Only scored cards color their value; plain metrics stay neutral.
@@ -100,14 +136,15 @@ struct CardView: View {
 private struct ValueText: View {
     let value: String
     let unit: String
+    var numberFont: Font = Self.numberFont
 
-    private static let numberFont = Font.system(.title, weight: .bold)
+    static let numberFont = Font.system(.title, weight: .bold)
     private static let unitFont = Font.subheadline.weight(.semibold)
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
             ForEach(Array(Self.runs(value).enumerated()), id: \.offset) { _, run in
-                Text(run.text).font(run.isNumber ? Self.numberFont : Self.unitFont)
+                Text(run.text).font(run.isNumber ? numberFont : Self.unitFont)
             }
             if !unit.isEmpty {
                 Text("\u{2009}" + unit).font(Self.unitFont)

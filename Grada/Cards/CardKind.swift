@@ -143,6 +143,14 @@ enum CardKind: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Wide cards whose value sits on the title row, just left of the icon, leaving the full width below for details.
+    var valueBesideTitle: Bool {
+        switch self {
+        case .healthAge, .lastWorkout, .racePredictor: true
+        default: false
+        }
+    }
+
     var size: CardSize {
         switch self {
         case .healthStatus, .sleepStages, .lastWorkout, .last30Days, .healthAge, .racePredictor, .loadFocus: .wide
