@@ -412,3 +412,14 @@ struct PlannedCardTests {
         #expect(!CardKind.gallery.contains(.loadFocus))
     }
 }
+
+@MainActor
+struct HealthProfileTests {
+    @Test func maxHeartRateComesFromAgeWhenKnown() async throws {
+        let profile = try await HealthProfile.load(from: SampleDataSource())
+        #expect(profile.age == 35)
+        #expect(profile.maxHeartRate == 185)
+        #expect(profile.maxHeartRateSource == .age)
+        #expect(profile.restingHeartRate != nil)
+    }
+}

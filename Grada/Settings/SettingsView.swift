@@ -37,6 +37,7 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
                 }
+                ProfileSection()
                 Section {
                     Button("Open Health app") {
                         if let url = URL(string: "x-apple-health://") { openURL(url) }
@@ -54,6 +55,48 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+        }
+    }
+}
+
+/// Read-only: these values come from Apple Health and are changed there.
+private struct ProfileSection: View {
+    @Environment(HomeModel.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var profile: HealthProfile?
+
+    var body: some View {
+        Section {
+            LabeledContent("Age", value: profile.map { $0.age.map { "\($0)" } ?? "Not available" } ?? "…")
+            LabeledContent("Max heart rate") {
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(profile?.maxHeartRate.map { "\(Int($0.rounded())) bpm" } ?? "–")
+                    if let source = profile?.maxHeartRateSource {
+                        Text(source == .age ? "220 − age" : "Highest recorded").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            LabeledContent("Resting heart rate") {
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(profile?.restingHeartRate.map { "\(Int($0.rounded())) bpm" } ?? "–")
+                    if profile?.restingHeartRate != nil {
+                        Text("7-day average").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            LabeledContent("Sleep need", value: SnapshotBuilder.hoursMinutes(SleepNeed.baseline))
+        } header: {
+            Text("Profile")
+        } footer: {
+            if profile != nil, profile?.age == nil {
+                Text("Grada can't read your birth date. Add it in Health › your picture › Health Details, then allow Grada to read Date of Birth in Health › Sharing › Apps › Grada.")
+            } else {
+                Text("Used for Resources, Health age and Sleep need. Read from Apple Health; change them there.")
+            }
+        }
+        // Re-read when coming back from the Health app, where the user may have just changed them.
+        .task(id: scenePhase) {
+            if scenePhase == .active { profile = await model.loadProfile() }
         }
     }
 }

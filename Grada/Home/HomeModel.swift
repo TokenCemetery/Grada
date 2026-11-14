@@ -17,6 +17,15 @@ final class HomeModel {
         self.importer = importer
     }
 
+    /// What Apple Health says about the user, for the read-only profile in Settings.
+    func loadProfile() async -> HealthProfile {
+        do { return try await HealthProfile.load(from: source) }
+        catch {
+            logger.error("Loading profile failed: \(error.localizedDescription)")
+            return HealthProfile()
+        }
+    }
+
     /// Pulls the latest days from Apple Health, then rebuilds the cards.
     func refresh(_ kinds: [CardKind]) async {
         await importer?.importRecent()

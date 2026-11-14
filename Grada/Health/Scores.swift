@@ -92,6 +92,28 @@ nonisolated enum Recovery {
     }
 }
 
+/// The personal values scores are built on, as Settings shows them.
+nonisolated struct HealthProfile: Equatable {
+    enum MaxHeartRateSource: Equatable { case age, highestRecorded }
+
+    var age: Int?
+    var maxHeartRate: Double?
+    var maxHeartRateSource: MaxHeartRateSource?
+    /// 7-day average, the same one Resources uses.
+    var restingHeartRate: Double?
+
+    static func load(from source: HealthDataSource) async throws -> HealthProfile {
+        let age = try await source.age()
+        let highest = age == nil ? try await source.highestHeartRate(days: 365) : nil
+        return HealthProfile(
+            age: age,
+            maxHeartRate: Resources.maxHeartRate(age: age, highestRecorded: highest),
+            maxHeartRateSource: age != nil ? .age : (highest != nil ? .highestRecorded : nil),
+            restingHeartRate: Baseline.average(try await source.daily(.restingHeartRate, days: 8).compactMap(\.value))
+        )
+    }
+}
+
 /// Estimated energy through the day, 0–100, from heart rate: sleep and rest charge it,
 /// raised heart rate and workouts drain it. Garmin and Suunto use beat-to-beat HRV for this,
 /// which iOS doesn't record all day, so this is an estimate.
