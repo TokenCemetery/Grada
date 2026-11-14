@@ -1,7 +1,7 @@
 import XCTest
 
 /// Smoke test of the home screen using sample data (the simulator has no Health data).
-final class DailyHealthUITests: XCTestCase {
+final class GradaUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
     }

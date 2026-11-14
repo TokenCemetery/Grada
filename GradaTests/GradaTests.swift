@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 import Testing
-@testable import DailyHealth
+@testable import Grada
 
 @MainActor
 struct HomeLayoutTests {

@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 @main
-struct DailyHealthApp: App {
+struct GradaApp: App {
     private let modelContainer: ModelContainer
     @State private var homeModel: HomeModel
 
@@ -26,7 +26,7 @@ struct DailyHealthApp: App {
     /// `.automatic` syncs with the iCloud container from the app's entitlements and stays local-only
     /// without one. iCloud is off for now: personal (free) teams can't sign the iCloud capability.
     /// To turn it on with a paid team, add in Signing & Capabilities: iCloud › CloudKit with container
-    /// `iCloud.com.GitHub.TokenCemetery.DailyHealth`, and Background Modes › Remote notifications.
+    /// `iCloud.com.GitHub.TokenCemetery.Grada`, and Background Modes › Remote notifications.
     ///
     /// Falls back to a local-only store so the app still works if iCloud can't be set up.
     private static func makeModelContainer() -> ModelContainer {
@@ -35,7 +35,7 @@ struct DailyHealthApp: App {
             let configuration = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
             return try ModelContainer(for: schema, configurations: configuration)
         } catch {
-            Logger(subsystem: "DailyHealth", category: "Storage")
+            Logger(subsystem: "Grada", category: "Storage")
                 .error("iCloud store unavailable, using local store: \(error.localizedDescription)")
             do {
                 let configuration = ModelConfiguration(schema: schema, cloudKitDatabase: .none)

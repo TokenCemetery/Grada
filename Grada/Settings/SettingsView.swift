@@ -44,7 +44,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Data source")
                 } footer: {
-                    Text("DailyHealth reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps. Manage what DailyHealth can read in Health › Sharing › Apps.")
+                    Text("Grada reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps. Manage what Grada can read in Health › Sharing › Apps.")
                 }
 #if DEBUG && targetEnvironment(simulator)
                 SimulatorDataSection()

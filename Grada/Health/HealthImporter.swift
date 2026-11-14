@@ -30,7 +30,7 @@ final class HealthImporter {
     @ObservationIgnored private var recentImport: Task<Void, Never>?
     @ObservationIgnored private var recentImportPending = false
     @ObservationIgnored private var didStartBackgroundUpdates = false
-    private let logger = Logger(subsystem: "DailyHealth", category: "HealthImporter")
+    private let logger = Logger(subsystem: "Grada", category: "HealthImporter")
 
     /// Oldest day imported so far; lets an interrupted history import resume.
     private static let importedFromKey = "historyImportedFrom"

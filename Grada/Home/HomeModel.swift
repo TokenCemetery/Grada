@@ -10,7 +10,7 @@ final class HomeModel {
     let importer: HealthImporter?
 
     private let source: HealthDataSource
-    private let logger = Logger(subsystem: "DailyHealth", category: "HomeModel")
+    private let logger = Logger(subsystem: "Grada", category: "HomeModel")
 
     init(source: HealthDataSource, importer: HealthImporter? = nil) {
         self.source = source
