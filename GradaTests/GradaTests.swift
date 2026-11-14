@@ -114,3 +114,42 @@ struct HealthImporterTests {
         #expect(values.map(\.value) == [nil, 8000, 9000])
     }
 }
+
+/// Sample data as it looks just after midnight: nothing recorded yet for the night ending today.
+private struct BeforeWakeUpSource: HealthDataSource {
+    let base = SampleDataSource()
+    let today = Calendar.current.startOfDay(for: .now)
+
+    func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
+        try await base.daily(metric, days: days).map { $0.day == today ? DayValue(day: $0.day, value: nil) : $0 }
+    }
+    func standHours(days: Int) async throws -> [DayValue] { try await base.standHours(days: days) }
+    func sleepNights(days: Int) async throws -> [SleepNight] {
+        try await base.sleepNights(days: days).filter { $0.wakeDay != today }
+    }
+    func workouts(days: Int) async throws -> [WorkoutSummary] { try await base.workouts(days: days) }
+}
+
+@MainActor
+struct AfterMidnightTests {
+    private let builder = SnapshotBuilder(source: BeforeWakeUpSource())
+
+    @Test func sleepShowsYesterdaysNight() async throws {
+        for kind in [CardKind.sleepDuration, .sleepStages] {
+            let snapshot = try await builder.snapshot(for: kind)
+            #expect(snapshot.period == "Yesterday")
+            #expect(snapshot.value != nil)
+        }
+    }
+
+    @Test func healthStatusShowsYesterdaysVitals() async throws {
+        let snapshot = try await builder.snapshot(for: .healthStatus)
+        #expect(snapshot.period == "Yesterday")
+        #expect(snapshot.value != nil)
+    }
+
+    @Test func todaysNightWinsOnceRecorded() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepStages)
+        #expect(snapshot.period == "Last night")
+    }
+}

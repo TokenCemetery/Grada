@@ -40,15 +40,25 @@ struct SnapshotBuilder {
         (.oxygenSaturation, "SpO₂"), (.wristTemperature, "Temp"),
     ]
 
+    /// Vitals from the night that ended today. Until it has (e.g. just after midnight),
+    /// the previous night is shown instead, labelled "Yesterday".
     private func healthStatus() async throws -> CardSnapshot {
-        var statuses: [VitalStatus] = []
+        var allSeries: [(QuantityMetric, String, [DayValue])] = []
         for (metric, name) in Self.vitals {
-            let series = try await source.daily(metric, days: baselineDays + 1)
+            allSeries.append((metric, name, try await source.daily(metric, days: baselineDays + 1)))
+        }
+        let todayIndex = baselineDays
+        let hasToday = allSeries.contains { $0.2.last?.value != nil }
+        let nightIndex = hasToday ? todayIndex : todayIndex - 1
+        let period = hasToday ? "Last night" : "Yesterday"
+
+        var statuses: [VitalStatus] = []
+        for (metric, name, series) in allSeries {
             let state: VitalStatus.State
-            if let today = series.last?.value {
-                let history = series.dropLast().compactMap(\.value)
+            if let value = series[nightIndex].value {
+                let history = series[..<nightIndex].compactMap(\.value)
                 if let range = Baseline.normalRange(history: history, minimumHalfWidth: metric.minimumHalfWidth) {
-                    state = range.contains(today) ? .inRange : .outOfRange
+                    state = range.contains(value) ? .inRange : .outOfRange
                 } else {
                     state = .calibrating
                 }
@@ -63,7 +73,7 @@ struct SnapshotBuilder {
         let outOfRange = statuses.filter { $0.state == .outOfRange }.count
         let inRange = statuses.filter { $0.state == .inRange }.count
 
-        var snapshot = CardSnapshot(period: "Last night", value: nil, detail: .vitals(statuses))
+        var snapshot = CardSnapshot(period: period, value: nil, detail: .vitals(statuses))
         if outOfRange > 0 {
             snapshot.value = outOfRange == 1 ? "1 vital out of range" : "\(outOfRange) vitals out of range"
             snapshot.tone = .warning
@@ -176,22 +186,31 @@ struct SnapshotBuilder {
 
     // MARK: - Sleep
 
+    /// The night that ended today; until there is one (e.g. just after midnight), yesterday's.
     private func sleep(withStages: Bool) async throws -> CardSnapshot {
         let nights = try await source.sleepNights(days: 8)
         let byDay = Dictionary(nights.map { ($0.wakeDay, $0) }, uniquingKeysWith: { first, _ in first })
         let days = lastDays(7)
-        guard let lastNight = byDay[days.last!], lastNight.asleep > 0 else { return .noData(period: "Last night") }
+        let today = days[days.count - 1], yesterday = days[days.count - 2]
+        let shown: (night: SleepNight, period: String)
+        if let night = byDay[today], night.asleep > 0 {
+            shown = (night, "Last night")
+        } else if let night = byDay[yesterday], night.asleep > 0 {
+            shown = (night, "Yesterday")
+        } else {
+            return .noData(period: "Last night")
+        }
 
-        let previous = nights.filter { $0.wakeDay < days.last! }.map(\.asleep)
+        let previous = nights.filter { $0.wakeDay < shown.night.wakeDay }.map(\.asleep)
         let comparison = Baseline.average(previous).map {
-            "\(Self.signedMinutes(lastNight.asleep - $0)) vs 7-day avg"
+            "\(Self.signedMinutes(shown.night.asleep - $0)) vs 7-day avg"
         }
         return CardSnapshot(
-            period: "Last night",
-            value: Self.hoursMinutes(lastNight.asleep),
+            period: shown.period,
+            value: Self.hoursMinutes(shown.night.asleep),
             comparison: comparison,
             chart: .bars(days.map { byDay[$0].map { $0.asleep / 3600 } }),
-            detail: withStages ? .sleepStages(lastNight.stages) : .none
+            detail: withStages ? .sleepStages(shown.night.stages) : .none
         )
     }
 
