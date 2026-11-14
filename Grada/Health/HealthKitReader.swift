@@ -88,7 +88,7 @@ final class HealthKitReader {
 
     /// Nights whose wake-up day falls in `days`, oldest first. Sleep counts toward the day you wake up.
     func sleepNights(in days: DateInterval) async throws -> [SleepNight] {
-        // Start the evening before the first day so that night is complete.
+        // Start the afternoon before the first day so that night is complete.
         let start = calendar.date(byAdding: .hour, value: -12, to: days.start)!
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.categorySample(
@@ -98,7 +98,7 @@ final class HealthKitReader {
             sortDescriptors: [SortDescriptor(\.startDate)]
         )
         let samples = try await descriptor.result(for: store)
-        let byDay = Dictionary(grouping: samples) { calendar.startOfDay(for: $0.endDate) }
+        let byDay = Dictionary(grouping: samples) { SleepNight.wakeDay(forEnd: $0.endDate, calendar: calendar) }
         return byDay.keys.filter { $0 >= days.start && $0 < days.end }.sorted().compactMap { day in
             Self.night(wakeDay: day, samples: byDay[day]!)
         }

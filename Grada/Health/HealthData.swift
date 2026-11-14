@@ -34,6 +34,12 @@ nonisolated struct SleepNight: Equatable {
     var asleep: TimeInterval {
         unspecified + (stages[.core] ?? 0) + (stages[.deep] ?? 0) + (stages[.rem] ?? 0)
     }
+
+    /// The day a stretch of sleep ending at `end` counts toward. Sleep ending after 18:00 belongs to the
+    /// next morning, so a night that starts before midnight stays in one piece.
+    static func wakeDay(forEnd end: Date, calendar: Calendar) -> Date {
+        calendar.startOfDay(for: end.addingTimeInterval(6 * 3600))
+    }
 }
 
 nonisolated struct WorkoutSummary: Equatable {
