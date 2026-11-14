@@ -10,6 +10,7 @@ struct HealthBatch {
     var daily: [QuantityMetric: [DayValue]] = [:]
     var standHours: [DayValue] = []
     var sleepNights: [SleepNight] = []
+    var overnight: [OvernightVitals] = []
     var workouts: [WorkoutSummary] = []
 }
 
@@ -33,8 +34,10 @@ final class HealthImporter {
     private let logger = Logger(subsystem: "Grada", category: "HealthImporter")
 
     /// Oldest day imported so far; lets an interrupted history import resume.
-    private static let importedFromKey = "historyImportedFrom"
-    private static let historyDoneKey = "historyImportDone"
+    /// Versioned: bumping it re-imports the whole history once, e.g. v2 added overnight vitals and
+    /// bed and wake times, and keeps nights that start before midnight in one piece.
+    private static let importedFromKey = "historyImportedFrom.v2"
+    private static let historyDoneKey = "historyImportDone.v2"
     /// Re-imported on every refresh: today, plus nights and late-syncing watches from the days before.
     static let recentDays = 3
 
@@ -158,6 +161,7 @@ final class HealthImporter {
         }
         batch.standHours = try await reader.standHours(in: days)
         batch.sleepNights = try await reader.sleepNights(in: days)
+        batch.overnight = try await reader.overnightVitals(in: days)
         batch.workouts = try await reader.workouts(in: days)
         // Everything below is synchronous, so concurrent imports can't interleave their writes.
         try save(batch)
@@ -174,6 +178,7 @@ final class HealthImporter {
         }
 
         let sleepByDay = Dictionary(batch.sleepNights.map { ($0.wakeDay, $0) }, uniquingKeysWith: { first, _ in first })
+        let overnightByDay = Dictionary(batch.overnight.map { ($0.wakeDay, $0) }, uniquingKeysWith: { first, _ in first })
         let standByDay = Dictionary(batch.standHours.map { ($0.day, $0.value) }, uniquingKeysWith: { first, _ in first })
         let dailyByDay = batch.daily.mapValues { values in
             Dictionary(values.map { ($0.day, $0.value) }, uniquingKeysWith: { first, _ in first })
@@ -185,13 +190,18 @@ final class HealthImporter {
             let metrics = dailyByDay.mapValues { $0[day] ?? nil }
             let stand = standByDay[day] ?? nil
             let sleep = sleepByDay[day]
-            let hasData = metrics.values.contains { $0 != nil } || stand != nil || sleep != nil
+            let overnight = overnightByDay[day]
+            let hasData = metrics.values.contains { $0 != nil } || stand != nil || sleep != nil || overnight != nil
 
             if let summary = summaries[key] ?? (hasData ? DaySummary(day: day, dayKey: key) : nil) {
                 if summaries[key] == nil { context.insert(summary) }
                 for (metric, value) in metrics { summary.setValue(value, for: metric) }
                 summary.standHours = stand
                 summary.setSleep(sleep)
+                summary.overnightHRV = overnight?.hrv
+                summary.sleepingHeartRate = overnight?.heartRate
+                summary.bedtime = overnight?.bedtime
+                summary.wakeTime = overnight?.wakeTime
                 summary.updatedAt = .now
             }
             day = calendar.date(byAdding: .day, value: 1, to: day)!

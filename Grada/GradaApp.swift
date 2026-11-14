@@ -50,10 +50,11 @@ struct GradaApp: App {
 #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-SampleData") { return HomeModel(source: SampleDataSource()) }
 #endif
-        let importer = HealthImporter(reader: HealthKitReader(), context: context)
+        let reader = HealthKitReader()
+        let importer = HealthImporter(reader: reader, context: context)
         // Started here, not from a view: iOS may relaunch the app in the background with no UI.
         Task { await importer.startBackgroundUpdates() }
-        return HomeModel(source: StoredHealthData(context: context), importer: importer)
+        return HomeModel(source: StoredHealthData(context: context, reader: reader), importer: importer)
     }
 }
 

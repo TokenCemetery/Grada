@@ -30,6 +30,23 @@ struct SampleDataSource: HealthDataSource {
         }
     }
 
+    /// Overnight HRV runs a little above the daily average, sleeping heart rate a little below resting.
+    /// Bed around 23:00 and up around 07:00, give or take 20 minutes.
+    func overnight(days: Int) async throws -> [OvernightVitals] {
+        let hrv = try await daily(.hrv, days: days)
+        let resting = try await daily(.restingHeartRate, days: days)
+        var random = SeededRandom(seed: 13)
+        return zip(hrv, resting).map { hrv, resting in
+            OvernightVitals(
+                wakeDay: hrv.day,
+                hrv: hrv.value.map { $0 + 3 },
+                heartRate: resting.value.map { $0 - 4 },
+                bedtime: hrv.day.addingTimeInterval(-3600 + 1200 * random.nextSigned()),
+                wakeTime: hrv.day.addingTimeInterval(7 * 3600 + 1200 * random.nextSigned())
+            )
+        }
+    }
+
     func standHours(days: Int) async throws -> [DayValue] {
         var random = SeededRandom(seed: 7)
         return lastDays(days).map { DayValue(day: $0, value: (10 + 3 * random.nextSigned()).rounded()) }
@@ -65,6 +82,53 @@ struct SampleDataSource: HealthDataSource {
             )
         }
     }
+
+    /// About 50 bpm asleep, 70 awake, and workout effort during the sample workouts.
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
+        let asleep = try await sleepPeriods(in: interval)
+        let workouts = try await workouts(days: 8)
+        var random = SeededRandom(seed: 3)
+        var values: [TimedValue] = []
+        var time = interval.start
+        while time < min(interval.end, .now) {
+            let base: Double
+            if workouts.contains(where: { time >= $0.start && time < $0.start.addingTimeInterval($0.duration) }) {
+                base = 140
+            } else if asleep.contains(where: { time >= $0.start && time < $0.end && $0.stage != .awake }) {
+                base = 51
+            } else {
+                base = 72
+            }
+            values.append(TimedValue(date: time, value: base + 5 * random.nextSigned()))
+            time.addTimeInterval(300)
+        }
+        return values
+    }
+
+    /// 23:00 to 07:00 every night, in 90-minute cycles of core, deep, REM and a short wake.
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] {
+        let cycle: [(SleepStage, TimeInterval)] = [(.core, 45 * 60), (.deep, 20 * 60), (.rem, 20 * 60), (.awake, 5 * 60)]
+        var periods: [SleepPeriod] = []
+        for day in lastDays(8) {
+            var time = calendar.date(byAdding: .hour, value: -1, to: day)!
+            let wake = calendar.date(byAdding: .hour, value: 7, to: day)!
+            var index = 0
+            while time < wake {
+                let (stage, length) = cycle[index % cycle.count]
+                let end = min(time.addingTimeInterval(length), wake)
+                if end <= .now, end > interval.start, time < interval.end {
+                    periods.append(SleepPeriod(start: time, end: end, stage: stage))
+                }
+                time = end
+                index += 1
+            }
+        }
+        return periods
+    }
+
+    func age() async throws -> Int? { 35 }
+
+    func highestHeartRate(days: Int) async throws -> Double? { 184 }
 
     private func lastDays(_ count: Int) -> [Date] {
         let today = calendar.startOfDay(for: .now)

@@ -113,6 +113,15 @@ struct HealthImporterTests {
         let values = try await StoredHealthData(context: context).daily(.steps, days: 3)
         #expect(values.map(\.value) == [nil, 8000, 9000])
     }
+
+    @Test func storesOvernightVitals() async throws {
+        var batch = batch(steps: [8000])
+        batch.overnight = [OvernightVitals(wakeDay: today, hrv: 64, heartRate: 49)]
+        try importer.save(batch)
+        let overnight = try await StoredHealthData(context: context).overnight(days: 2)
+        #expect(overnight.map(\.hrv) == [nil, 64])
+        #expect(overnight.map(\.heartRate) == [nil, 49])
+    }
 }
 
 /// Sample data as it looks just after midnight: nothing recorded yet for the night ending today.
@@ -124,10 +133,17 @@ private struct BeforeWakeUpSource: HealthDataSource {
         try await base.daily(metric, days: days).map { $0.day == today ? DayValue(day: $0.day, value: nil) : $0 }
     }
     func standHours(days: Int) async throws -> [DayValue] { try await base.standHours(days: days) }
+    func overnight(days: Int) async throws -> [OvernightVitals] {
+        try await base.overnight(days: days).map { $0.wakeDay == today ? OvernightVitals(wakeDay: today) : $0 }
+    }
     func sleepNights(days: Int) async throws -> [SleepNight] {
         try await base.sleepNights(days: days).filter { $0.wakeDay != today }
     }
     func workouts(days: Int) async throws -> [WorkoutSummary] { try await base.workouts(days: days) }
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] { try await base.heartRate(in: interval) }
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { try await base.sleepPeriods(in: interval) }
+    func age() async throws -> Int? { try await base.age() }
+    func highestHeartRate(days: Int) async throws -> Double? { try await base.highestHeartRate(days: days) }
 }
 
 @MainActor

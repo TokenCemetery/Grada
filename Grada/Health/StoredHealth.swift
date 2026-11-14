@@ -15,6 +15,11 @@ final class DaySummary {
     var oxygenSaturation: Double?
     var respiratoryRate: Double?
     var wristTemperature: Double?
+    /// Measured while asleep in the night that ended on this day.
+    var overnightHRV: Double?
+    var sleepingHeartRate: Double?
+    var bedtime: Date?
+    var wakeTime: Date?
     var steps: Double?
     var activeEnergy: Double?
     var exerciseMinutes: Double?
@@ -113,9 +118,27 @@ enum DayKey {
 }
 
 /// Card data read from the imported store, so cards load instantly and work offline.
+/// Intraday data (5-minute heart rate, sleep timing) isn't stored; it's read from Apple Health through `reader`.
 struct StoredHealthData: HealthDataSource {
     let context: ModelContext
+    var reader: HealthKitReader?
     var calendar: Calendar = .current
+
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
+        try await reader?.heartRate(in: interval) ?? []
+    }
+
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] {
+        try await reader?.sleepPeriods(in: interval) ?? []
+    }
+
+    func age() async throws -> Int? {
+        try reader?.age()
+    }
+
+    func highestHeartRate(days: Int) async throws -> Double? {
+        try await reader?.highestHeartRate(days: days)
+    }
 
     func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
         let summaries = try summaries(days: days)
@@ -125,6 +148,15 @@ struct StoredHealthData: HealthDataSource {
     func standHours(days: Int) async throws -> [DayValue] {
         let summaries = try summaries(days: days)
         return lastDays(days).map { DayValue(day: $0, value: summaries[DayKey.make($0, calendar: calendar)]?.standHours) }
+    }
+
+    func overnight(days: Int) async throws -> [OvernightVitals] {
+        let summaries = try summaries(days: days)
+        return lastDays(days).map { day in
+            let summary = summaries[DayKey.make(day, calendar: calendar)]
+            return OvernightVitals(wakeDay: day, hrv: summary?.overnightHRV, heartRate: summary?.sleepingHeartRate,
+                                   bedtime: summary?.bedtime, wakeTime: summary?.wakeTime)
+        }
     }
 
     func sleepNights(days: Int) async throws -> [SleepNight] {

@@ -53,11 +53,76 @@ nonisolated struct WorkoutSummary: Equatable {
     let averageHeartRate: Double?
 }
 
+/// A value at a point in time, e.g. the average heart rate of a 5-minute interval starting at `date`.
+nonisolated struct TimedValue: Equatable {
+    let date: Date
+    let value: Double
+}
+
+/// A stretch of sleep in one stage. `stage` is nil for asleep time without stage detail.
+nonisolated struct SleepPeriod: Equatable {
+    let start: Date
+    let end: Date
+    let stage: SleepStage?
+}
+
+/// Vitals measured while asleep, for the night that ended on `wakeDay`. Daytime readings are
+/// left out: they move with stress, caffeine and activity, which makes them noisy for recovery.
+nonisolated struct OvernightVitals: Equatable {
+    let wakeDay: Date
+    /// Average HRV (SDNN, ms) of readings taken while asleep.
+    var hrv: Double?
+    /// Lowest 5-minute average heart rate while asleep.
+    var heartRate: Double?
+    /// When the night's sleep started and ended, for sleep consistency.
+    var bedtime: Date?
+    var wakeTime: Date?
+
+    /// Groups readings by the night they fall in. All arrays must be sorted by time; awake periods are skipped.
+    static func make(hrv: [TimedValue], heartRate: [TimedValue], sleep: [SleepPeriod], calendar: Calendar) -> [OvernightVitals] {
+        let asleep = sleep.filter { $0.stage != .awake }
+        let nights = Dictionary(grouping: asleep) { SleepNight.wakeDay(forEnd: $0.end, calendar: calendar) }
+        let hrvByNight = byNight(hrv, asleep, calendar)
+        let heartRateByNight = byNight(heartRate, asleep, calendar)
+        return nights.keys.sorted().map { day in
+            OvernightVitals(
+                wakeDay: day,
+                hrv: Baseline.average(hrvByNight[day] ?? []),
+                heartRate: heartRateByNight[day]?.min(),
+                bedtime: nights[day]?.map(\.start).min(),
+                wakeTime: nights[day]?.map(\.end).max()
+            )
+        }
+    }
+
+    /// One pass over both sorted lists, since a year of 5-minute heart rate is ~100k values.
+    private static func byNight(_ values: [TimedValue], _ periods: [SleepPeriod], _ calendar: Calendar) -> [Date: [Double]] {
+        var result: [Date: [Double]] = [:]
+        var index = 0
+        for value in values {
+            while index < periods.count, periods[index].end <= value.date { index += 1 }
+            guard index < periods.count, periods[index].start <= value.date else { continue }
+            result[SleepNight.wakeDay(forEnd: periods[index].end, calendar: calendar), default: []].append(value.value)
+        }
+        return result
+    }
+}
+
 /// Where cards get their data: the imported store in the app, sample data in previews and demo mode.
 protocol HealthDataSource {
+    /// Average heart rate per 5 minutes in `interval`, oldest first; intervals without data are left out.
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue]
+    /// Sleep stages that overlap `interval`, oldest first, from one source per night.
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod]
+    /// The user's age from Apple Health, if they entered a birth date.
+    func age() async throws -> Int?
+    /// Highest heart rate recorded in the last `days` days.
+    func highestHeartRate(days: Int) async throws -> Double?
     /// One value per day for the `days` days ending today, oldest first.
     func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue]
     func standHours(days: Int) async throws -> [DayValue]
+    /// One entry per day for the `days` days ending today, oldest first; values are nil without overnight data.
+    func overnight(days: Int) async throws -> [OvernightVitals]
     /// Nights whose wake-up day falls in the last `days` days, oldest first.
     func sleepNights(days: Int) async throws -> [SleepNight]
     /// Workouts that started in the last `days` days, newest first.

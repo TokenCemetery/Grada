@@ -101,6 +101,13 @@ final class SimulatorHealthSeeder {
             let (stage, minutes) = cycle[index % cycle.count]
             let end = min(time.addingTimeInterval(minutes * 60 * (1 + 0.2 * random.nextSigned())), wake)
             samples.append(HKCategorySample(type: HKCategoryType(.sleepAnalysis), value: stage.rawValue, start: time, end: end))
+            // Heart rate as a watch records it overnight: lower in deep sleep, so sleeping heart rate has data.
+            samples.append(HKQuantitySample(
+                type: HKQuantityType(.heartRate),
+                quantity: HKQuantity(unit: .count().unitDivided(by: .minute()),
+                                     doubleValue: (stage == .asleepDeep ? 48 : 53) + 2 * random.nextSigned()),
+                start: time, end: time.addingTimeInterval(60)
+            ))
             time = end
             index += 1
         }
