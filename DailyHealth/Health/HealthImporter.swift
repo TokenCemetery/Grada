@@ -27,6 +27,9 @@ final class HealthImporter {
     @ObservationIgnored private let calendar = Calendar.current
     @ObservationIgnored private let defaults = UserDefaults.standard
     @ObservationIgnored private var authorization: Task<Void, Never>?
+    @ObservationIgnored private var recentImport: Task<Void, Never>?
+    @ObservationIgnored private var recentImportPending = false
+    @ObservationIgnored private var didStartBackgroundUpdates = false
     private let logger = Logger(subsystem: "DailyHealth", category: "HealthImporter")
 
     /// Oldest day imported so far; lets an interrupted history import resume.
@@ -82,8 +85,44 @@ final class HealthImporter {
         }
     }
 
+    /// Re-imports the last few days whenever Apple Health gets new data, including in the background.
+    func startBackgroundUpdates() async {
+        guard HealthKitReader.isAvailable, !didStartBackgroundUpdates else { return }
+        didStartBackgroundUpdates = true
+        await authorize()
+        do {
+            try await reader.observeChanges { [weak self] completion in
+                Task { @MainActor in
+                    await self?.importRecent()
+                    completion()
+                }
+            }
+        } catch {
+            logger.error("Background updates unavailable: \(error.localizedDescription)")
+        }
+    }
+
+    /// Several data types often change together (a workout brings energy, distance and heart rate),
+    /// so overlapping calls share one import, plus one more pass if data changed while it ran.
     func importRecent() async {
         guard HealthKitReader.isAvailable else { return }
+        if let running = recentImport {
+            recentImportPending = true
+            await running.value
+            return
+        }
+        let task = Task {
+            repeat {
+                recentImportPending = false
+                await importRecentDays()
+            } while recentImportPending
+            recentImport = nil
+        }
+        recentImport = task
+        await task.value
+    }
+
+    private func importRecentDays() async {
         await authorize()
         let today = calendar.startOfDay(for: .now)
         let start = calendar.date(byAdding: .day, value: -(Self.recentDays - 1), to: today)!

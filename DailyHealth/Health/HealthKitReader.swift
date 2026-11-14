@@ -22,6 +22,22 @@ final class HealthKitReader {
         try await store.requestAuthorization(toShare: [], read: Set(Self.readTypes))
     }
 
+    /// Calls `onChange` whenever Apple Health gets new data for any read type, even while the app is
+    /// in the background or not running (iOS relaunches it). `onChange` must call its completion
+    /// handler when done, or iOS backs off delivery.
+    func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws {
+        // Heart rate is sampled every few minutes; its changes come with the daily metrics anyway.
+        for type in Self.readTypes where type != HKQuantityType(.heartRate) {
+            store.execute(HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
+                guard error == nil else { completion(); return }
+                // HealthKit's completion handler may be called from any thread, but isn't annotated Sendable.
+                nonisolated(unsafe) let completion = completion
+                onChange { completion() }
+            })
+            try await store.enableBackgroundDelivery(for: type, frequency: .immediate)
+        }
+    }
+
     /// Date of the oldest data the app can import.
     func earliestSampleDate() async throws -> Date? {
         let dates = [

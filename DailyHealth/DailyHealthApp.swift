@@ -51,6 +51,8 @@ struct DailyHealthApp: App {
         if ProcessInfo.processInfo.arguments.contains("-SampleData") { return HomeModel(source: SampleDataSource()) }
 #endif
         let importer = HealthImporter(reader: HealthKitReader(), context: context)
+        // Started here, not from a view: iOS may relaunch the app in the background with no UI.
+        Task { await importer.startBackgroundUpdates() }
         return HomeModel(source: StoredHealthData(context: context), importer: importer)
     }
 }
