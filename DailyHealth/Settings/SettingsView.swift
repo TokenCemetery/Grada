@@ -75,6 +75,7 @@ private struct SimulatorDataSection: View {
         Section {
             Button("Add 90 days of sample data") { run { try await seed(days: 90) } }
             Button("Add 2 years of sample data") { run { try await seed(days: 730) } }
+            Button("Add 3 years of sample data") { run { try await seed(days: 1_095) } }
             Button("Remove sample data", role: .destructive) {
                 run {
                     status = "Removing…"
@@ -94,14 +95,26 @@ private struct SimulatorDataSection: View {
     }
 
     private func seed(days: Int) async throws {
-        try await seeder.seed(days: days) { status = "Adding sample data… \(Int($0 * 100))%" }
-        await reimport()
+        let clock = ContinuousClock()
+        let seeding = try await clock.measure {
+            try await seeder.seed(days: days) { status = "Adding sample data… \(Int($0 * 100))%" }
+        }
+        await reimport(after: "Added in \(Self.seconds(seeding)).")
     }
 
-    private func reimport() async {
+    /// Times the full history import, the same work a new user's first launch does.
+    private func reimport(after previousStep: String? = nil) async {
         status = "Importing…"
-        await model.importer?.reimportHistory()
-        status = "Done"
+        let importing = await ContinuousClock().measure {
+            await model.importer?.reimportHistory()
+        }
+        status = ["Done.", previousStep, "Imported in \(Self.seconds(importing))."]
+            .compactMap { $0 }.joined(separator: " ")
+    }
+
+    private static func seconds(_ duration: Duration) -> String {
+        let seconds = Double(duration.components.seconds) + Double(duration.components.attoseconds) / 1e18
+        return "\(seconds.formatted(.number.precision(.fractionLength(1)))) s"
     }
 
     private func run(_ work: @escaping () async throws -> Void) {
