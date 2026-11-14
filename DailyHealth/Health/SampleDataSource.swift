@@ -73,7 +73,7 @@ struct SampleDataSource: HealthDataSource {
 }
 
 /// Deterministic generator so previews look the same every time.
-private struct SeededRandom {
+struct SeededRandom {
     private var state: UInt64
 
     init(seed: UInt64) { state = seed &+ 0x9E37_79B9_7F4A_7C15 }

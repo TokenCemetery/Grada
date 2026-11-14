@@ -134,6 +134,23 @@ final class HealthImporter {
         }
     }
 
+#if DEBUG && targetEnvironment(simulator)
+    /// Throws away imported data and imports the whole history again, after seeding sample data.
+    func reimportHistory() async {
+        do {
+            try context.delete(model: DaySummary.self)
+            try context.delete(model: WorkoutRecord.self)
+            try context.save()
+        } catch {
+            logger.error("Clearing imported data failed: \(error.localizedDescription)")
+        }
+        defaults.removeObject(forKey: Self.importedFromKey)
+        defaults.removeObject(forKey: Self.historyDoneKey)
+        revision += 1
+        await importHistoryIfNeeded()
+    }
+#endif
+
     private func importDays(_ days: DateInterval) async throws {
         var batch = HealthBatch(days: days)
         for metric in QuantityMetric.allCases {

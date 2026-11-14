@@ -46,6 +46,9 @@ struct SettingsView: View {
                 } footer: {
                     Text("DailyHealth reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps. Manage what DailyHealth can read in Health › Sharing › Apps.")
                 }
+#if DEBUG && targetEnvironment(simulator)
+                SimulatorDataSection()
+#endif
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")
                 }
@@ -57,4 +60,56 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+        .environment(HomeModel(source: SampleDataSource()))
 }
+
+#if DEBUG && targetEnvironment(simulator)
+/// Fills the simulator's Apple Health with sample data. Not in device or release builds.
+private struct SimulatorDataSection: View {
+    @Environment(HomeModel.self) private var model
+    @State private var status: String?
+    @State private var isWorking = false
+    private let seeder = SimulatorHealthSeeder()
+
+    var body: some View {
+        Section {
+            Button("Add 90 days of sample data") { run { try await seed(days: 90) } }
+            Button("Add 2 years of sample data") { run { try await seed(days: 730) } }
+            Button("Remove sample data", role: .destructive) {
+                run {
+                    status = "Removing…"
+                    try await seeder.removeSampleData()
+                    await reimport()
+                }
+            }
+            if let status {
+                Text(status).font(.caption).foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Simulator test data")
+        } footer: {
+            Text("Writes to the simulator's Apple Health, then imports it again. Only in simulator test builds. Tapping Add twice adds the data twice.")
+        }
+        .disabled(isWorking)
+    }
+
+    private func seed(days: Int) async throws {
+        try await seeder.seed(days: days) { status = "Adding sample data… \(Int($0 * 100))%" }
+        await reimport()
+    }
+
+    private func reimport() async {
+        status = "Importing…"
+        await model.importer?.reimportHistory()
+        status = "Done"
+    }
+
+    private func run(_ work: @escaping () async throws -> Void) {
+        isWorking = true
+        Task {
+            do { try await work() } catch { status = error.localizedDescription }
+            isWorking = false
+        }
+    }
+}
+#endif
