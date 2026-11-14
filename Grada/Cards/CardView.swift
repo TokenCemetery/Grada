@@ -57,7 +57,7 @@ struct CardView: View {
 
     private func valueBlock(_ snapshot: CardSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            if kind == .healthStatus {
+            if kind == .healthStatus || !(snapshot.value ?? "").contains(where: \.isNumber) {
                 Text(snapshot.value ?? "")
                     .font(.title2.weight(.bold))
                     .foregroundStyle(valueColor(snapshot.tone))
@@ -65,11 +65,12 @@ struct CardView: View {
                     .minimumScaleFactor(0.6)
             } else {
                 ValueText(value: snapshot.value ?? "", unit: snapshot.unit)
+                    .foregroundStyle(valueColor(snapshot.tone))
             }
             if let comparison = snapshot.comparison {
                 Text(comparison)
                     .font(.caption)
-                    .foregroundStyle(snapshot.tone == .warning && kind != .healthStatus ? Color.orange : .secondary)
+                    .foregroundStyle(snapshot.tone == .warning && !kind.isScore ? Color.orange : .secondary)
                     .lineLimit(1)
             }
         }
@@ -78,7 +79,7 @@ struct CardView: View {
 
     /// Only scored cards color their value; plain metrics stay neutral.
     private func valueColor(_ tone: CardSnapshot.Tone) -> Color {
-        guard kind == .healthStatus else { return .primary }
+        guard kind.isScore else { return .primary }
         switch tone {
         case .good: return .green
         case .warning: return .orange
@@ -121,7 +122,7 @@ private struct ValueText: View {
     static func runs(_ value: String) -> [(text: String, isNumber: Bool)] {
         var runs: [(text: String, isNumber: Bool)] = []
         for character in value {
-            let isNumber = character.isNumber || "+-−.,\u{00A0}\u{202F}".contains(character)
+            let isNumber = character.isNumber || "+-−–.,:\u{00A0}\u{202F}".contains(character)
             if let last = runs.last, last.isNumber == isNumber {
                 runs[runs.count - 1].text.append(character)
             } else {
@@ -151,6 +152,16 @@ private struct CardDetailView: View {
             WorkoutDetail(workout: workout, color: color)
         case .days(let minutes):
             DaysGrid(minutes: minutes, color: color)
+        case .stats(let stats):
+            HStack(alignment: .top, spacing: 16) {
+                ForEach(Array(stats.enumerated()), id: \.offset) { _, stat in
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(stat.value).font(.headline).monospacedDigit()
+                        Text(stat.label).font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
         }
     }
 }

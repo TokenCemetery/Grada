@@ -36,17 +36,26 @@ enum CardCategory: CaseIterable {
 
 /// Every card the home screen can show. The raw value is persisted, so don't rename cases.
 enum CardKind: String, CaseIterable, Identifiable {
-    case healthStatus
-    case sleepDuration, sleepStages
-    case restingHeartRate, hrv, oxygenSaturation, respiratoryRate, wristTemperature
+    case healthStatus, recovery, resources, healthAge
+    case sleepDuration, sleepStages, sleepNeed, sleepConsistency
+    case heartRate, restingHeartRate, hrv, oxygenSaturation, respiratoryRate, wristTemperature
     case steps, activeEnergy, exerciseMinutes, distance, floors, standHours
-    case lastWorkout, weeklyTraining, vo2Max
+    case lastWorkout, weeklyTraining, vo2Max, racePredictor, trainingReadiness, loadFocus
     case last30Days
 
     var id: String { rawValue }
 
     /// Cards the user can add or remove. Health status is pinned on top.
-    static var gallery: [CardKind] { allCases.filter { $0 != .healthStatus } }
+    static var gallery: [CardKind] { allCases.filter { $0 != .healthStatus && !$0.isPlanned } }
+
+    /// Cards whose calculation isn't built yet. They stay out of the gallery until it is.
+    var isPlanned: Bool {
+        switch self {
+        // TODO(v4): build with Strain's training-load model, then remove from this list.
+        case .trainingReadiness, .loadFocus: true
+        default: false
+        }
+    }
 
     static let defaultSet: [CardKind] = [
         .sleepStages, .restingHeartRate, .hrv, .steps, .activeEnergy, .lastWorkout, .last30Days,
@@ -55,8 +64,17 @@ enum CardKind: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .healthStatus: "Health status"
+        case .recovery: "Recovery"
+        case .resources: "Resources"
+        case .heartRate: "Heart rate"
         case .sleepDuration: "Sleep"
         case .sleepStages: "Sleep stages"
+        case .sleepNeed: "Sleep need"
+        case .sleepConsistency: "Consistency"
+        case .healthAge: "Health age"
+        case .racePredictor: "Race predictor"
+        case .trainingReadiness: "Training readiness"
+        case .loadFocus: "Load focus"
         case .restingHeartRate: "Resting HR"
         case .hrv: "HRV"
         case .oxygenSaturation: "Blood oxygen"
@@ -78,7 +96,16 @@ enum CardKind: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .healthStatus: "checkmark.shield"
+        case .recovery: "arrow.clockwise.heart"
+        case .resources: "battery.75percent"
+        case .heartRate: "heart.circle"
         case .sleepDuration, .sleepStages: "moon.zzz"
+        case .sleepNeed: "bed.double"
+        case .sleepConsistency: "clock.arrow.circlepath"
+        case .healthAge: "hourglass"
+        case .racePredictor: "flag.checkered"
+        case .trainingReadiness: "gauge.with.dots.needle.67percent"
+        case .loadFocus: "chart.bar.xaxis"
         case .restingHeartRate: "heart"
         case .hrv: "waveform.path.ecg"
         case .oxygenSaturation: "drop"
@@ -99,18 +126,26 @@ enum CardKind: String, CaseIterable, Identifiable {
 
     var category: CardCategory {
         switch self {
-        case .healthStatus: .status
-        case .sleepDuration, .sleepStages: .sleep
-        case .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature: .heart
+        case .healthStatus, .recovery, .resources, .healthAge: .status
+        case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: .sleep
+        case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature: .heart
         case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours: .activity
-        case .lastWorkout, .weeklyTraining, .vo2Max: .training
+        case .lastWorkout, .weeklyTraining, .vo2Max, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .last30Days: .history
+        }
+    }
+
+    /// Scores color their value by how good it is; plain metrics stay neutral.
+    var isScore: Bool {
+        switch self {
+        case .healthStatus, .recovery, .resources: true
+        default: false
         }
     }
 
     var size: CardSize {
         switch self {
-        case .healthStatus, .sleepStages, .lastWorkout, .last30Days: .wide
+        case .healthStatus, .sleepStages, .lastWorkout, .last30Days, .healthAge, .racePredictor, .loadFocus: .wide
         default: .square
         }
     }
@@ -122,7 +157,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .sleep: "Wear a watch to bed or track sleep in a sleep app."
         case .activity: "Recorded by your iPhone or watch."
         case .training, .history: "Record a workout on your watch or in a fitness app."
-        case .status: "Needs overnight vitals from Apple Watch or a compatible watch."
+        case .status: "Needs heart rate and overnight vitals from Apple Watch or a compatible watch."
         }
     }
 }

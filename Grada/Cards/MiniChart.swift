@@ -24,7 +24,47 @@ struct MiniChart: View {
                     .frame(height: Self.plotHeight)
                 WeekdayLabels()
             }
+        case .intraday(let points, let domain):
+            VStack(spacing: 2) {
+                DayLine(points: points, domain: domain, color: color)
+                    .frame(height: Self.plotHeight)
+                HStack {
+                    Text("0:00")
+                    Spacer()
+                    Text("24:00")
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            }
         }
+    }
+}
+
+/// Today so far on a midnight-to-midnight axis, with a soft fill below the line.
+private struct DayLine: View {
+    let points: [(hour: Double, value: Double)]
+    let domain: ClosedRange<Double>?
+    let color: Color
+
+    var body: some View {
+        let values = points.map(\.value)
+        let yDomain = domain ?? ((values.min() ?? 0) - 5)...((values.max() ?? 1) + 5)
+        let fill = LinearGradient(colors: [color.opacity(0.3), color.opacity(0.02)], startPoint: .top, endPoint: .bottom)
+        Chart {
+            ForEach(Array(points.enumerated()), id: \.offset) { _, point in
+                AreaMark(x: .value("Hour", point.hour), yStart: .value("Base", yDomain.lowerBound), yEnd: .value("Value", point.value))
+                    .foregroundStyle(fill)
+                LineMark(x: .value("Hour", point.hour), y: .value("Value", point.value))
+                    .foregroundStyle(color)
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            }
+        }
+        .chartXScale(domain: 0...24)
+        .chartYScale(domain: yDomain)
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Today")
     }
 }
 

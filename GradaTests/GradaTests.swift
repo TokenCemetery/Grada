@@ -46,7 +46,7 @@ struct SnapshotBuilderTests {
 
     @Test func everyCardBuildsFromSampleData() async throws {
         let builder = SnapshotBuilder(source: SampleDataSource())
-        for kind in CardKind.allCases {
+        for kind in CardKind.allCases where !kind.isPlanned {
             let snapshot = try await builder.snapshot(for: kind)
             #expect(snapshot.value != nil, "\(kind) has no value")
         }
@@ -182,5 +182,233 @@ struct SleepChartTests {
         guard case .sleep(let nights) = snapshot.chart else { Issue.record("Expected a sleep chart"); return }
         #expect(nights.count == 7)
         #expect(nights.last??.stages[.deep] != nil)
+    }
+}
+
+@MainActor
+struct RecoveryTests {
+    private let hrvHistory: [Double] = [58, 62, 60, 64, 60, 58, 62, 60, 64, 62]
+    private let rhrHistory: [Double] = [54, 55, 53, 54, 55, 53, 54, 54, 55, 53]
+
+    @Test func calibratingWithoutEnoughHistory() {
+        let input = Recovery.Input(hrv: 60, hrvHistory: [60, 61], restingHeartRate: 54, restingHeartRateHistory: [54], asleep: 8 * 3600)
+        #expect(Recovery.score(input) == nil)
+    }
+
+    @Test func normalNightScoresGood() throws {
+        let input = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54,
+                                   restingHeartRateHistory: rhrHistory, asleep: 8 * 3600)
+        let result = try #require(Recovery.score(input))
+        #expect(result.score >= 67)
+        #expect(result.reason == "Close to your normal")
+    }
+
+    @Test func lowHRVDragsScoreDownAndIsNamed() throws {
+        let input = Recovery.Input(hrv: 48, hrvHistory: hrvHistory, restingHeartRate: 54,
+                                   restingHeartRateHistory: rhrHistory, asleep: 8 * 3600)
+        let result = try #require(Recovery.score(input))
+        #expect(result.score < 50)
+        #expect(result.reason == "HRV below normal")
+    }
+
+    @Test func shortSleepIsNamed() throws {
+        let input = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54,
+                                   restingHeartRateHistory: rhrHistory, asleep: 5 * 3600)
+        #expect(try #require(Recovery.score(input)).reason == "Short sleep")
+    }
+
+    @Test func raisedBreathingLowersScoreAndIsNamed() throws {
+        let history: [Double] = [14.2, 14.6, 14.4, 14.8, 14.5, 14.3, 14.7, 14.5]
+        let normal = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54, restingHeartRateHistory: rhrHistory,
+                                    asleep: 8 * 3600, respiratoryRate: 14.5, respiratoryRateHistory: history)
+        var raised = normal
+        raised.respiratoryRate = 17.5
+        let normalResult = try #require(Recovery.score(normal))
+        let raisedResult = try #require(Recovery.score(raised))
+        #expect(raisedResult.score < normalResult.score - 10)
+        #expect(raisedResult.reason == "Breathing rate up")
+    }
+
+    @Test func lowBreathingDoesNotRaiseScore() throws {
+        let history: [Double] = [14.2, 14.6, 14.4, 14.8, 14.5, 14.3, 14.7, 14.5]
+        let base = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54, restingHeartRateHistory: rhrHistory,
+                                  asleep: 8 * 3600)
+        var low = base
+        low.respiratoryRate = 12
+        low.respiratoryRateHistory = history
+        #expect(Recovery.score(low) == Recovery.score(base))
+    }
+
+    @Test func missingHRVUsesRestingHeartRateAlone() throws {
+        let input = Recovery.Input(hrv: nil, hrvHistory: [], restingHeartRate: 50,
+                                   restingHeartRateHistory: rhrHistory, asleep: nil)
+        let result = try #require(Recovery.score(input))
+        #expect(result.score > 65)
+        #expect(result.reason == "Resting HR low")
+    }
+}
+
+@MainActor
+struct OvernightVitalsTests {
+    @Test func usesOnlyReadingsTakenWhileAsleep() throws {
+        let calendar = Calendar.current
+        let wakeDay = calendar.startOfDay(for: .now)
+        func at(_ hours: Double) -> Date { wakeDay.addingTimeInterval(hours * 3600) }
+        let sleep = [
+            SleepPeriod(start: at(-1), end: at(3), stage: .core),
+            SleepPeriod(start: at(3), end: at(3.5), stage: .awake),
+            SleepPeriod(start: at(3.5), end: at(7), stage: .deep),
+        ]
+        let hrv = [TimedValue(date: at(-3), value: 20), TimedValue(date: at(2), value: 60),
+                   TimedValue(date: at(5), value: 70), TimedValue(date: at(12), value: 30)]
+        let heartRate = [TimedValue(date: at(1), value: 52), TimedValue(date: at(3.2), value: 45),
+                         TimedValue(date: at(5), value: 49), TimedValue(date: at(10), value: 40)]
+        let nights = OvernightVitals.make(hrv: hrv, heartRate: heartRate, sleep: sleep, calendar: calendar)
+        #expect(nights == [OvernightVitals(wakeDay: wakeDay, hrv: 65, heartRate: 49, bedtime: at(-1), wakeTime: at(7))])
+    }
+
+    @Test func eveningSleepCountsTowardNextMorning() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+        #expect(SleepNight.wakeDay(forEnd: today.addingTimeInterval(23.5 * 3600), calendar: calendar) == tomorrow)
+        #expect(SleepNight.wakeDay(forEnd: today.addingTimeInterval(7 * 3600), calendar: calendar) == today)
+        #expect(SleepNight.wakeDay(forEnd: today.addingTimeInterval(14 * 3600), calendar: calendar) == today)
+    }
+}
+
+@MainActor
+struct ResourcesTests {
+    private let start = Date(timeIntervalSinceReferenceDate: 0)
+    private func hours(_ value: Double) -> Date { start.addingTimeInterval(value * 3600) }
+
+    private func run(_ length: Double, heartRate: Double?, sleep: [SleepPeriod] = [], workouts: [DateInterval] = [],
+                     startLevel: Double = 50) -> [TimedValue] {
+        let interval = DateInterval(start: start, end: hours(length))
+        let samples = heartRate.map { bpm in
+            stride(from: 0, to: length * 3600, by: Resources.step).map { TimedValue(date: start.addingTimeInterval($0), value: bpm) }
+        } ?? []
+        return Resources.timeline(interval: interval, heartRate: samples, sleep: sleep, workouts: workouts,
+                                  restingHeartRate: 55, maxHeartRate: 185, startLevel: startLevel)
+    }
+
+    @Test func sleepCharges() throws {
+        let night = [SleepPeriod(start: start, end: hours(8), stage: .core)]
+        let level = try #require(run(8, heartRate: 50, sleep: night, startLevel: 20).last).value
+        #expect(level > 70)
+    }
+
+    @Test func calmDayDrainsSlowly() throws {
+        let level = try #require(run(10, heartRate: 65, startLevel: 80).last).value
+        #expect(level < 80 && level > 50)
+    }
+
+    @Test func calmDaytimeRestCharges() throws {
+        let level = try #require(run(2, heartRate: 56, startLevel: 50).last).value
+        #expect(level > 50)
+    }
+
+    @Test func workoutDrainsMoreThanRest() throws {
+        let workout = [DateInterval(start: start, duration: 3600)]
+        let worked = try #require(run(1, heartRate: 150, workouts: workout, startLevel: 80).last).value
+        let rested = try #require(run(1, heartRate: 60, startLevel: 80).last).value
+        #expect(worked < rested - 10)
+    }
+
+    @Test func staysWithinZeroAndHundred() {
+        let night = [SleepPeriod(start: start, end: hours(24), stage: .deep)]
+        #expect(run(24, heartRate: 45, sleep: night, startLevel: 90).allSatisfy { $0.value <= 100 })
+        let workout = [DateInterval(start: start, duration: 24 * 3600)]
+        #expect(run(24, heartRate: 180, workouts: workout, startLevel: 10).allSatisfy { $0.value >= 0 })
+    }
+
+    @Test func maxHeartRateFromAgeFirst() {
+        #expect(Resources.maxHeartRate(age: 40, highestRecorded: 195) == 180)
+        #expect(Resources.maxHeartRate(age: nil, highestRecorded: 195) == 195)
+    }
+}
+
+@MainActor
+struct SleepNeedTests {
+    @Test func shortNightsBuildDebtAndLongNightsRepayIt() {
+        let debt = SleepNeed.debt(asleep: [6 * 3600, nil, 7 * 3600, 10 * 3600, 9 * 3600])
+        // 7 h after 2 h of debt: three quarters of it remain, plus the new hour.
+        #expect(debt.map { $0 / 3600 } == [2, 2, 2.5, 0, 0])
+    }
+
+    @Test func steadyShortfallSettlesInsteadOfGrowing() {
+        let debt = SleepNeed.debt(asleep: Array(repeating: 7.5 * 3600, count: 60))
+        #expect(abs(debt.last! - 2 * 3600) < 60)
+    }
+
+    @Test func needAddsPartOfDebtAndTraining() {
+        #expect(SleepNeed.need(debt: 0, trainingTime: 0) == 8 * 3600)
+        // A quarter of 2 h debt, plus 15 min for an hour of training.
+        #expect(SleepNeed.need(debt: 2 * 3600, trainingTime: 3600) == 8 * 3600 + 30 * 60 + 15 * 60)
+        // Both extras are capped.
+        #expect(SleepNeed.need(debt: 10 * 3600, trainingTime: 6 * 3600) == 8 * 3600 + 90 * 60 + 45 * 60)
+    }
+}
+
+@MainActor
+struct SleepConsistencyTests {
+    @Test func sameTimesEveryNightScoresFull() throws {
+        let result = try #require(SleepConsistency.score(bedtimes: [1380, 1380, 1380], wakeTimes: [420, 420, 420]))
+        #expect(result.score == 100)
+    }
+
+    @Test func bedtimesAcrossMidnightAreNotFarApart() throws {
+        // 23:30, 00:30, 23:30, 00:30: half an hour either side, not 23 hours.
+        let result = try #require(SleepConsistency.score(bedtimes: [1410, 30, 1410, 30], wakeTimes: [420, 420, 420, 420]))
+        #expect(result.bedtimeSpread == 30)
+        #expect(result.score == 88)
+    }
+
+    @Test func needsThreeNights() {
+        #expect(SleepConsistency.score(bedtimes: [1380, 1380], wakeTimes: [420, 420]) == nil)
+    }
+}
+
+@MainActor
+struct HealthAgeTests {
+    @Test func fitHabitsLowerHealthAge() throws {
+        let fit = HealthAge.Input(age: 40, sleepHours: 7.5, sleepConsistency: 85, dailySteps: 11_000, restingHeartRate: 50,
+                                  vo2Max: 50, moderateMinutesPerWeek: 250, vigorousMinutesPerWeek: 90, strengthMinutesPerWeek: 90)
+        let unfit = HealthAge.Input(age: 40, sleepHours: 5.5, sleepConsistency: 50, dailySteps: 3_000, restingHeartRate: 75,
+                                    vo2Max: 30, moderateMinutesPerWeek: 20, vigorousMinutesPerWeek: 0, strengthMinutesPerWeek: 0)
+        #expect(try #require(HealthAge.age(fit)) < 35)
+        #expect(try #require(HealthAge.age(unfit)) > 50)
+    }
+
+    @Test func needsThreeInputs() {
+        #expect(HealthAge.age(HealthAge.Input(age: 40, dailySteps: 8_000, restingHeartRate: 60)) == nil)
+    }
+
+    @Test func paceComparesRecentWithBaseline() {
+        #expect(HealthAge.pace(recent: 38, baseline: 38) == 1)
+        #expect(HealthAge.pace(recent: 37, baseline: 38) == 0.5)
+        #expect(HealthAge.pace(recent: 30, baseline: 38) == -1)
+    }
+}
+
+@MainActor
+struct RacePredictorTests {
+    /// Jack Daniels' published VDOT tables: VDOT 50 runs 5K in 19:57 and a marathon in 3:10:49.
+    @Test func matchesDanielsTables() {
+        #expect(abs(RacePredictor.time(meters: 5_000, vo2Max: 50) - (19 * 60 + 57)) < 5)
+        #expect(abs(RacePredictor.time(meters: 42_195, vo2Max: 50) - (3 * 3600 + 10 * 60 + 49)) < 30)
+    }
+
+    @Test func formatsRaceTimes() {
+        #expect(SnapshotBuilder.raceTime(19 * 60 + 57) == "19:57")
+        #expect(SnapshotBuilder.raceTime(3 * 3600 + 10 * 60 + 49) == "3:10:49")
+    }
+}
+
+@MainActor
+struct PlannedCardTests {
+    @Test func plannedCardsStayOutOfTheGallery() {
+        #expect(!CardKind.gallery.contains(.trainingReadiness))
+        #expect(!CardKind.gallery.contains(.loadFocus))
     }
 }

@@ -15,6 +15,14 @@ enum Baseline {
         return (mean - halfWidth)...(mean + halfWidth)
     }
 
+    /// How many standard deviations `value` is from the history's mean, with the SD never below
+    /// `minimumSD`. Nil while calibrating.
+    static func zScore(_ value: Double, history: [Double], minimumSD: Double) -> Double? {
+        guard history.count >= minimumDays, let mean = average(history) else { return nil }
+        let variance = history.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(history.count - 1)
+        return (value - mean) / max(variance.squareRoot(), minimumSD)
+    }
+
     static func average(_ values: [Double]) -> Double? {
         values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
     }
