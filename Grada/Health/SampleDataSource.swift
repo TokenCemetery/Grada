@@ -130,6 +130,11 @@ struct SampleDataSource: HealthDataSource {
 
     func highestHeartRate(days: Int) async throws -> Double? { 184 }
 
+    /// Half a year of history for the calendar.
+    func earliestDay() async throws -> Date? {
+        lastDays(182).first
+    }
+
     private func lastDays(_ count: Int) -> [Date] {
         let today = calendar.startOfDay(for: .now)
         return (0..<count).reversed().map { calendar.date(byAdding: .day, value: -$0, to: today)! }

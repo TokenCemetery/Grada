@@ -127,4 +127,10 @@ protocol HealthDataSource {
     func sleepNights(days: Int) async throws -> [SleepNight]
     /// Workouts that started in the last `days` days, newest first.
     func workouts(days: Int) async throws -> [WorkoutSummary]
+    /// The oldest day with data, where the calendar starts. Nil if unknown.
+    func earliestDay() async throws -> Date?
+}
+
+extension HealthDataSource {
+    func earliestDay() async throws -> Date? { nil }
 }

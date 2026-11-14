@@ -44,7 +44,8 @@ struct SnapshotBuilder {
 
     // MARK: - Vitals
 
-    private static let vitals: [(QuantityMetric, String)] = [
+    /// The vitals behind Health status; the calendar rates days with the same set.
+    static let vitals: [(QuantityMetric, String)] = [
         (.hrv, "HRV"), (.restingHeartRate, "RHR"), (.respiratoryRate, "Resp"),
         (.oxygenSaturation, "SpO₂"), (.wristTemperature, "Temp"),
     ]
@@ -59,7 +60,7 @@ struct SnapshotBuilder {
         let todayIndex = baselineDays
         let hasToday = allSeries.contains { $0.2.last?.value != nil }
         let nightIndex = hasToday ? todayIndex : todayIndex - 1
-        let period = hasToday ? "Last night" : "Yesterday"
+        let period = hasToday ? "Last night" : yesterdayLabel
 
         var statuses: [VitalStatus] = []
         for (metric, name, series) in allSeries {
@@ -104,7 +105,7 @@ struct SnapshotBuilder {
         let series = try await source.daily(metric, days: baselineDays + 1)
         guard let latestIndex = series.indices.suffix(2).last(where: { series[$0].value != nil }),
               let latest = series[latestIndex].value
-        else { return .noData(period: "Today") }
+        else { return .noData(period: todayLabel) }
 
         let history = series[..<latestIndex].compactMap(\.value)
         let range = Baseline.normalRange(history: history, minimumHalfWidth: metric.minimumHalfWidth)
@@ -205,8 +206,8 @@ struct SnapshotBuilder {
         let last = overnight.count - 1
         let hasToday = hasData(last)
         let shownIndex = hasToday ? last : last - 1
-        guard hasData(shownIndex) else { return .noData(period: "Today") }
-        let period = hasToday ? "Today" : "Yesterday"
+        guard hasData(shownIndex) else { return .noData(period: todayLabel) }
+        let period = hasToday ? todayLabel : yesterdayLabel
         guard let shown = result(at: shownIndex) else {
             return CardSnapshot(period: period, value: "Calibrating", comparison: "Needs \(Baseline.minimumDays) nights of data")
         }
@@ -315,7 +316,7 @@ struct SnapshotBuilder {
     // TODO(v4): Garmin-style readiness from sleep score, recovery time, HRV status, acute load,
     // 3-night sleep history and 3-day stress history. Needs Strain's training-load model.
     private func trainingReadiness() -> CardSnapshot {
-        .noData(period: "Today")
+        .noData(period: todayLabel)
     }
 
     // TODO(v4): the last 4 weeks of training load split into low aerobic, high aerobic and anaerobic
@@ -330,9 +331,9 @@ struct SnapshotBuilder {
         let values = try await source.heartRate(in: DateInterval(start: today, end: max(now, today)))
         guard let low = values.map(\.value).min(), let high = values.map(\.value).max(),
               let average = Baseline.average(values.map(\.value))
-        else { return .noData(period: "Today") }
+        else { return .noData(period: todayLabel) }
         return CardSnapshot(
-            period: "Today",
+            period: todayLabel,
             value: "\(format(low, 0))–\(format(high, 0))",
             unit: "bpm",
             comparison: "Avg \(format(average, 0)) bpm",
@@ -355,11 +356,11 @@ struct SnapshotBuilder {
     // e.g. "−1,580 of 10,000", and show a goal progress bar (CardSnapshot.Chart) instead of the 7-day bars.
     // TODO(later): show the change as an arrow and amount, e.g. "▲ 1,200 vs 7-day avg", like Resources does.
     private func totals(_ series: [DayValue], decimals: Int, unit: String) -> CardSnapshot {
-        guard series.contains(where: { $0.value != nil }) else { return .noData(period: "Today") }
+        guard series.contains(where: { $0.value != nil }) else { return .noData(period: todayLabel) }
         let today = series.last?.value ?? 0
         let average = Baseline.average(series.dropLast().compactMap(\.value))
         return CardSnapshot(
-            period: "Today",
+            period: todayLabel,
             value: format(today, decimals),
             unit: unit,
             comparison: average.map { "7-day avg \(format($0, decimals))" },
@@ -379,7 +380,7 @@ struct SnapshotBuilder {
         if let night = byDay[today], night.asleep > 0 {
             shown = (night, "Last night")
         } else if let night = byDay[yesterday], night.asleep > 0 {
-            shown = (night, "Yesterday")
+            shown = (night, yesterdayLabel)
         } else {
             return .noData(period: "Last night")
         }
@@ -401,13 +402,13 @@ struct SnapshotBuilder {
     private func sleepNeed() async throws -> CardSnapshot {
         let days = lastDays(21)
         let nights = try await source.sleepNights(days: days.count)
-        guard !nights.isEmpty else { return .noData(period: "Tonight") }
+        guard !nights.isEmpty else { return .noData(period: tonightLabel) }
         let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
         let debt = SleepNeed.debt(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } })
         let trainingToday = workoutMinutesPerDay(try await source.workouts(days: 1), days: 1)[0] * 60
         let owed = debt[debt.count - 1]
         return CardSnapshot(
-            period: "Tonight",
+            period: tonightLabel,
             value: Self.hoursMinutes(SleepNeed.need(debt: owed, trainingTime: trainingToday)),
             comparison: owed >= 5 * 60 ? "Sleep debt \(Self.hoursMinutes(owed))" : "No sleep debt",
             chart: .bars(debt.suffix(7).map { $0 / 3600 })
@@ -507,9 +508,15 @@ struct SnapshotBuilder {
         return (0..<count).reversed().map { calendar.date(byAdding: .day, value: -$0, to: today)! }
     }
 
+    /// False when building a past day's cards for the calendar, where "Today" would be wrong.
+    private var isToday: Bool { calendar.isDateInToday(now) }
+    private var todayLabel: String { isToday ? "Today" : "That day" }
+    private var tonightLabel: String { isToday ? "Tonight" : "That night" }
+    private var yesterdayLabel: String { dayLabel(calendar.date(byAdding: .day, value: -1, to: now)!) }
+
     private func dayLabel(_ date: Date) -> String {
-        if calendar.isDate(date, inSameDayAs: now) { return "Today" }
-        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
+        if calendar.isDate(date, inSameDayAs: now) { return todayLabel }
+        if isToday, let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
             return "Yesterday"
         }
         return date.formatted(.dateTime.month(.abbreviated).day())

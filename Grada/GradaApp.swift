@@ -6,17 +6,21 @@ import SwiftUI
 struct GradaApp: App {
     private let modelContainer: ModelContainer
     @State private var homeModel: HomeModel
+    @State private var calendarModel: CalendarModel
 
     init() {
         let container = Self.makeModelContainer()
         modelContainer = container
-        _homeModel = State(initialValue: Self.makeHomeModel(context: container.mainContext))
+        let (home, calendar) = Self.makeModels(context: container.mainContext)
+        _homeModel = State(initialValue: home)
+        _calendarModel = State(initialValue: calendar)
     }
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(homeModel)
+                .environment(calendarModel)
         }
         .modelContainer(modelContainer)
     }
@@ -46,15 +50,18 @@ struct GradaApp: App {
         }
     }
 
-    private static func makeHomeModel(context: ModelContext) -> HomeModel {
+    private static func makeModels(context: ModelContext) -> (HomeModel, CalendarModel) {
 #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-SampleData") { return HomeModel(source: SampleDataSource()) }
+        if ProcessInfo.processInfo.arguments.contains("-SampleData") {
+            return (HomeModel(source: SampleDataSource()), CalendarModel(source: SampleDataSource()))
+        }
 #endif
         let reader = HealthKitReader()
         let importer = HealthImporter(reader: reader, context: context)
         // Started here, not from a view: iOS may relaunch the app in the background with no UI.
         Task { await importer.startBackgroundUpdates() }
-        return HomeModel(source: StoredHealthData(context: context, reader: reader), importer: importer)
+        let source = StoredHealthData(context: context, reader: reader)
+        return (HomeModel(source: source, importer: importer), CalendarModel(source: source, importer: importer))
     }
 }
 

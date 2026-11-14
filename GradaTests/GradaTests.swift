@@ -423,3 +423,64 @@ struct HealthProfileTests {
         #expect(profile.restingHeartRate != nil)
     }
 }
+
+@MainActor
+struct DayRatingTests {
+    @Test func goalMetricsUseSeventyPercentForYellow() {
+        #expect(DayRatings.goal(10_000, goal: 10_000) == .good)
+        #expect(DayRatings.goal(7_000, goal: 10_000) == .fair)
+        #expect(DayRatings.goal(6_999, goal: 10_000) == .poor)
+    }
+
+    /// Normal 48–72 (half-width 12): slightly below means less than 6 under the range.
+    @Test func higherIsBetterOnlyPenalizesLowValues() {
+        #expect(DayRatings.range(90, normal: 48...72, higherIsBetter: true) == .good)
+        #expect(DayRatings.range(44, normal: 48...72, higherIsBetter: true) == .fair)
+        #expect(DayRatings.range(41, normal: 48...72, higherIsBetter: true) == .poor)
+    }
+
+    @Test func lowerIsBetterOnlyPenalizesHighValues() {
+        #expect(DayRatings.range(40, normal: 49...55, higherIsBetter: false) == .good)
+        #expect(DayRatings.range(56, normal: 49...55, higherIsBetter: false) == .fair)
+        #expect(DayRatings.range(57, normal: 49...55, higherIsBetter: false) == .poor)
+    }
+
+    @Test func healthStatusCountsVitalsOutOfRange() {
+        #expect(DayRatings.healthStatus(outOfRange: 0) == .good)
+        #expect(DayRatings.healthStatus(outOfRange: 1) == .fair)
+        #expect(DayRatings.healthStatus(outOfRange: 2) == .poor)
+    }
+
+    @Test func daysStayUnratedWhileCalibrating() {
+        let start = Calendar.current.startOfDay(for: .now)
+        let series = (0..<10).map { DayValue(day: start.addingTimeInterval(Double($0) * 86_400), value: 54) }
+        let ratings = DayRatings.rateVital(series, metric: .restingHeartRate, higherIsBetter: false, baselineDays: 30)
+        #expect(ratings[series[6].day] == nil)
+        #expect(ratings[series[7].day] == .good)
+        #expect(ratings.count == 3)
+    }
+}
+
+@MainActor
+struct PastDaySourceTests {
+    @Test func seriesEndOnThePastDay() async throws {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let threeDaysAgo = calendar.date(byAdding: .day, value: -3, to: today)!
+        let source = PastDaySource(base: SampleDataSource(), daysAgo: 3,
+                                   dayEnd: calendar.date(byAdding: .day, value: 1, to: threeDaysAgo)!)
+        let steps = try await source.daily(.steps, days: 8)
+        #expect(steps.count == 8)
+        #expect(steps.last?.day == threeDaysAgo)
+        #expect(try await source.sleepNights(days: 8).allSatisfy { $0.wakeDay <= threeDaysAgo })
+        #expect(try await source.workouts(days: 30).allSatisfy { $0.start < calendar.date(byAdding: .day, value: 1, to: threeDaysAgo)! })
+    }
+
+    @Test func pastDayCardsDontSayToday() async throws {
+        let calendar = Calendar.current
+        let day = calendar.date(byAdding: .day, value: -5, to: calendar.startOfDay(for: .now))!
+        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, kinds: [.steps, .sleepNeed])
+        #expect(snapshots[.steps]?.period == "That day")
+        #expect(snapshots[.sleepNeed]?.period == "That night")
+    }
+}

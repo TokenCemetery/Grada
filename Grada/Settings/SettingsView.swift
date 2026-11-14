@@ -25,6 +25,7 @@ enum Appearance: String, CaseIterable, Identifiable {
 
 struct SettingsView: View {
     @AppStorage("appearance") private var appearance: Appearance = .system
+    @AppStorage("colorBlindPalette") private var colorBlind = false
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -36,6 +37,11 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
+                }
+                Section {
+                    Toggle("Color-blind palette", isOn: $colorBlind)
+                } footer: {
+                    Text("Calendar days use blue, orange and dark instead of green, yellow and red.")
                 }
                 ProfileSection()
                 Section {

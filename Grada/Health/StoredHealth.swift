@@ -174,6 +174,12 @@ struct StoredHealthData: HealthDataSource {
         return try context.fetch(descriptor).filter { seen.insert($0.healthID).inserted }.map(\.summary)
     }
 
+    func earliestDay() async throws -> Date? {
+        var descriptor = FetchDescriptor<DaySummary>(sortBy: [SortDescriptor(\.day)])
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first?.day
+    }
+
     /// Summaries by day key; the first wins if iCloud delivered duplicates.
     private func summaries(days: Int) throws -> [String: DaySummary] {
         let start = lastDays(days).first!
