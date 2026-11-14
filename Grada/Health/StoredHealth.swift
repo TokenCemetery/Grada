@@ -174,6 +174,12 @@ struct StoredHealthData: HealthDataSource {
         return try context.fetch(descriptor).filter { seen.insert($0.healthID).inserted }.map(\.summary)
     }
 
+    func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] {
+        let start = calendar.startOfDay(for: day)
+        let interval = DateInterval(start: start, end: calendar.date(byAdding: .day, value: 1, to: start)!)
+        return try await reader?.hourly(metric, in: interval) ?? []
+    }
+
     func earliestDay() async throws -> Date? {
         var descriptor = FetchDescriptor<DaySummary>(sortBy: [SortDescriptor(\.day)])
         descriptor.fetchLimit = 1

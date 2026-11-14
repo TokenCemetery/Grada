@@ -70,6 +70,27 @@ final class HealthKitReader {
         return values
     }
 
+    /// Hourly totals of a cumulative metric in `interval`, oldest first; hours without data are left out.
+    func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] {
+        let descriptor = HKStatisticsCollectionQueryDescriptor(
+            predicate: .quantitySample(
+                type: HKQuantityType(metric.identifier),
+                predicate: HKQuery.predicateForSamples(withStart: interval.start, end: interval.end)
+            ),
+            options: .cumulativeSum,
+            anchorDate: interval.start,
+            intervalComponents: DateComponents(hour: 1)
+        )
+        let collection = try await descriptor.result(for: store)
+        var values: [TimedValue] = []
+        collection.enumerateStatistics(from: interval.start, to: interval.end) { statistics, _ in
+            if let sum = statistics.sumQuantity() {
+                values.append(TimedValue(date: statistics.startDate, value: metric.convert(sum)))
+            }
+        }
+        return values
+    }
+
     /// Hours with at least a minute of standing, per day. All nil when no stand data exists at all.
     func standHours(in days: DateInterval) async throws -> [DayValue] {
         let descriptor = HKSampleQueryDescriptor(

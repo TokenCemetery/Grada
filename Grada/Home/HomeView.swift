@@ -36,6 +36,7 @@ struct HomeView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Today")
+            .navigationDestination(for: MetricRoute.self) { MetricDetailView(route: $0) }
             .toolbar {
                 Button("Edit") { isCustomizing = true }
             }
@@ -62,7 +63,7 @@ struct HomeView: View {
     }
 
     private func card(_ kind: CardKind) -> some View {
-        CardView(kind: kind, snapshot: model.snapshots[kind])
+        CardLink(kind: kind, snapshot: model.snapshots[kind])
     }
 
     private func refresh() async {

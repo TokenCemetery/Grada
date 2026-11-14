@@ -130,6 +130,20 @@ struct SampleDataSource: HealthDataSource {
 
     func highestHeartRate(days: Int) async throws -> Double? { 184 }
 
+    /// Spreads the day's total over waking hours, busiest around lunch and early evening.
+    func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] {
+        let start = calendar.startOfDay(for: day)
+        let daysAgo = calendar.dateComponents([.day], from: start, to: calendar.startOfDay(for: .now)).day ?? 0
+        guard let total = try await daily(metric, days: daysAgo + 1).first?.value else { return [] }
+        let weights: [Double] = [0, 0, 0, 0, 0, 0, 0.5, 1, 1.5, 1, 1, 1, 2, 1.5, 1, 1, 1, 1.5, 2, 1.5, 1, 0.5, 0.2, 0]
+        let lastHour = calendar.isDateInToday(day) ? calendar.component(.hour, from: .now) : 23
+        let share = weights[0...lastHour].reduce(0, +)
+        return (0...lastHour).compactMap { hour in
+            guard weights[hour] > 0 else { return nil }
+            return TimedValue(date: calendar.date(byAdding: .hour, value: hour, to: start)!, value: total * weights[hour] / share)
+        }
+    }
+
     /// Half a year of history for the calendar.
     func earliestDay() async throws -> Date? {
         lastDays(182).first

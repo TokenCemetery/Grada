@@ -7,13 +7,15 @@ struct GradaApp: App {
     private let modelContainer: ModelContainer
     @State private var homeModel: HomeModel
     @State private var calendarModel: CalendarModel
+    private let healthSource: HealthDataSource
 
     init() {
         let container = Self.makeModelContainer()
         modelContainer = container
-        let (home, calendar) = Self.makeModels(context: container.mainContext)
+        let (home, calendar, source) = Self.makeModels(context: container.mainContext)
         _homeModel = State(initialValue: home)
         _calendarModel = State(initialValue: calendar)
+        healthSource = source
     }
 
     var body: some Scene {
@@ -21,6 +23,7 @@ struct GradaApp: App {
             RootView()
                 .environment(homeModel)
                 .environment(calendarModel)
+                .environment(\.healthSource, healthSource)
         }
         .modelContainer(modelContainer)
     }
@@ -50,10 +53,11 @@ struct GradaApp: App {
         }
     }
 
-    private static func makeModels(context: ModelContext) -> (HomeModel, CalendarModel) {
+    private static func makeModels(context: ModelContext) -> (HomeModel, CalendarModel, HealthDataSource) {
 #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-SampleData") {
-            return (HomeModel(source: SampleDataSource()), CalendarModel(source: SampleDataSource()))
+            let source = SampleDataSource()
+            return (HomeModel(source: source), CalendarModel(source: source), source)
         }
 #endif
         let reader = HealthKitReader()
@@ -61,23 +65,34 @@ struct GradaApp: App {
         // Started here, not from a view: iOS may relaunch the app in the background with no UI.
         Task { await importer.startBackgroundUpdates() }
         let source = StoredHealthData(context: context, reader: reader)
-        return (HomeModel(source: source, importer: importer), CalendarModel(source: source, importer: importer))
+        return (HomeModel(source: source, importer: importer), CalendarModel(source: source, importer: importer), source)
     }
 }
 
 struct RootView: View {
     @AppStorage("appearance") private var appearance: Appearance = .system
+    @AppStorage("calendarMetric") private var calendarMetric: CalendarMetric = .healthStatus
     @Environment(HomeModel.self) private var homeModel
+    @State private var tab = Tab.home
+
+    private enum Tab { case home, calendar, settings }
 
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             HomeView()
                 .tabItem { Label("Home", systemImage: "house") }
+                .tag(Tab.home)
             CalendarView()
                 .tabItem { Label("Calendar", systemImage: "calendar") }
+                .tag(Tab.calendar)
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tag(Tab.settings)
         }
+        .environment(\.openCalendar, OpenCalendarAction { metric in
+            if let metric { calendarMetric = metric }
+            tab = .calendar
+        })
         .preferredColorScheme(appearance.colorScheme)
         .task { await homeModel.importer?.importHistoryIfNeeded() }
     }

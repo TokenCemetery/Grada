@@ -129,8 +129,11 @@ protocol HealthDataSource {
     func workouts(days: Int) async throws -> [WorkoutSummary]
     /// The oldest day with data, where the calendar starts. Nil if unknown.
     func earliestDay() async throws -> Date?
+    /// Hourly totals of a cumulative metric on `day`, oldest first; hours without data are left out.
+    func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue]
 }
 
 extension HealthDataSource {
     func earliestDay() async throws -> Date? { nil }
+    func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] { [] }
 }

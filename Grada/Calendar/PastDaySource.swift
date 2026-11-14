@@ -21,6 +21,10 @@ struct PastDaySource: HealthDataSource {
         try await base.age()
     }
 
+    func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] {
+        try await base.hourly(metric, on: day)
+    }
+
     func highestHeartRate(days: Int) async throws -> Double? {
         try await base.highestHeartRate(days: days + daysAgo)
     }
@@ -43,5 +47,28 @@ struct PastDaySource: HealthDataSource {
 
     func workouts(days: Int) async throws -> [WorkoutSummary] {
         try await base.workouts(days: days + daysAgo).filter { $0.start < dayEnd }
+    }
+}
+
+extension PastDaySource {
+    /// `base` as it looked at the end of `day`; `base` itself for today.
+    static func asOf(_ day: Date, base: HealthDataSource, calendar: Calendar) -> HealthDataSource {
+        let start = calendar.startOfDay(for: day)
+        let daysAgo = calendar.dateComponents([.day], from: start, to: calendar.startOfDay(for: .now)).day ?? 0
+        guard daysAgo > 0 else { return base }
+        return PastDaySource(base: base, daysAgo: daysAgo, dayEnd: calendar.date(byAdding: .day, value: 1, to: start)!)
+    }
+}
+
+extension SnapshotBuilder {
+    /// Builds cards for `day` as they looked at the end of that day, or live for today.
+    static func forDay(_ day: Date, source: HealthDataSource, calendar: Calendar) -> SnapshotBuilder {
+        var builder = SnapshotBuilder(source: PastDaySource.asOf(day, base: source, calendar: calendar))
+        builder.calendar = calendar
+        if !calendar.isDateInToday(day) {
+            let dayEnd = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: day))!
+            builder.now = dayEnd.addingTimeInterval(-1)
+        }
+        return builder
     }
 }

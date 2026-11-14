@@ -484,3 +484,39 @@ struct PastDaySourceTests {
         #expect(snapshots[.sleepNeed]?.period == "That night")
     }
 }
+
+@MainActor
+struct TrendBuilderTests {
+    private let calendar = Calendar.current
+    private var today: Date { calendar.startOfDay(for: .now) }
+
+    @Test func monthHasOnePointPerDayEndingToday() async throws {
+        let trend = try #require(try await TrendBuilder(source: SampleDataSource()).trend(for: .steps, period: .month))
+        #expect(trend.points.count == 30)
+        #expect(trend.points.last?.date == today)
+        #expect(trend.average != nil)
+    }
+
+    @Test func longPeriodsShowWeeklyPoints() async throws {
+        let trend = try #require(try await TrendBuilder(source: SampleDataSource()).trend(for: .restingHeartRate, period: .year))
+        #expect((52...54).contains(trend.points.count))
+        #expect(trend.normalRange != nil)
+    }
+
+    @Test func pastDayTrendsEndOnThatDay() async throws {
+        let day = calendar.date(byAdding: .day, value: -10, to: today)!
+        let source = PastDaySource.asOf(day, base: SampleDataSource(), calendar: calendar)
+        for kind in [CardKind.sleepStages, .hrv, .recovery, .weeklyTraining, .sleepNeed, .healthStatus] {
+            let trend = try #require(try await TrendBuilder(source: source).trend(for: kind, period: .week), "\(kind)")
+            #expect(trend.points.count == 7, "\(kind)")
+            #expect(trend.points.last?.date == day, "\(kind)")
+        }
+    }
+
+    @Test func everyCardWithADetailScreenHasAnExplanationAndValidLinks() {
+        for kind in CardKind.gallery + [.healthStatus] where !kind.opensCalendar {
+            #expect(!kind.explanation.isEmpty)
+            #expect((kind.affects + kind.basedOn).allSatisfy { !$0.isPlanned })
+        }
+    }
+}

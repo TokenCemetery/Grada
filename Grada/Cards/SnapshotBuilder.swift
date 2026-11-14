@@ -174,41 +174,13 @@ struct SnapshotBuilder {
 
     /// This morning's recovery. Until last night's vitals arrive, yesterday's, like Health status.
     private func recovery() async throws -> CardSnapshot {
-        let overnight = try await source.overnight(days: baselineDays + 7)
-        let breathing = try await source.daily(.respiratoryRate, days: baselineDays + 7)
-        let nights = try await source.sleepNights(days: overnight.count)
-        let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let debt = SleepNeed.debt(asleep: overnight.map { asleep[$0.wakeDay] })
-        let training = workoutMinutesPerDay(try await source.workouts(days: 8), days: 8)
-
-        /// Need for the night ending on `index`: the debt and training of the day before.
-        func sleepNeed(at index: Int) -> TimeInterval {
-            let trainingIndex = index - 1 - (overnight.count - training.count)
-            let trainingTime = training.indices.contains(trainingIndex) ? training[trainingIndex] * 60 : 0
-            return SleepNeed.need(debt: debt[index - 1], trainingTime: trainingTime)
-        }
-
-        func result(at index: Int) -> Recovery.Result? {
-            let history = (index - baselineDays)..<index
-            return Recovery.score(Recovery.Input(
-                hrv: overnight[index].hrv,
-                hrvHistory: overnight[history].compactMap(\.hrv),
-                restingHeartRate: overnight[index].heartRate,
-                restingHeartRateHistory: overnight[history].compactMap(\.heartRate),
-                asleep: asleep[overnight[index].wakeDay],
-                sleepNeed: sleepNeed(at: index),
-                respiratoryRate: breathing[index].value,
-                respiratoryRateHistory: breathing[history].compactMap(\.value)
-            ))
-        }
-
-        func hasData(_ index: Int) -> Bool { overnight[index].hrv != nil || overnight[index].heartRate != nil }
-        let last = overnight.count - 1
-        let hasToday = hasData(last)
+        let days = try await recoveryDays(7)
+        let last = days.count - 1
+        let hasToday = days[last].hasData
         let shownIndex = hasToday ? last : last - 1
-        guard hasData(shownIndex) else { return .noData(period: todayLabel) }
+        guard days[shownIndex].hasData else { return .noData(period: todayLabel) }
         let period = hasToday ? todayLabel : yesterdayLabel
-        guard let shown = result(at: shownIndex) else {
+        guard let shown = days[shownIndex].result else {
             return CardSnapshot(period: period, value: "Calibrating", comparison: "Needs \(Baseline.minimumDays) nights of data")
         }
         let status = Recovery.status(shown.score)
@@ -218,8 +190,36 @@ struct SnapshotBuilder {
             unit: "%",
             comparison: "\(status.word) · \(shown.reason)",
             tone: status.tone,
-            chart: .bars((last - 6...last).map { result(at: $0).map { Double($0.score) } ?? 0 })
+            chart: .bars(days.map { $0.result.map { Double($0.score) } ?? 0 })
         )
+    }
+
+    /// Recovery for each of the last `count` days, oldest first. `hasData` is false without overnight
+    /// HRV or heart rate; `result` is also nil while calibrating.
+    func recoveryDays(_ count: Int) async throws -> [(day: Date, hasData: Bool, result: Recovery.Result?)] {
+        let overnight = try await source.overnight(days: baselineDays + count)
+        let breathing = try await source.daily(.respiratoryRate, days: overnight.count)
+        let nights = try await source.sleepNights(days: overnight.count)
+        let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
+        let debt = SleepNeed.debt(asleep: overnight.map { asleep[$0.wakeDay] })
+        let training = workoutMinutesPerDay(try await source.workouts(days: overnight.count), days: overnight.count)
+
+        return (overnight.count - count..<overnight.count).map { index in
+            let history = (index - baselineDays)..<index
+            // The need for the night ending on `index` comes from the debt and training of the day before.
+            let result = Recovery.score(Recovery.Input(
+                hrv: overnight[index].hrv,
+                hrvHistory: overnight[history].compactMap(\.hrv),
+                restingHeartRate: overnight[index].heartRate,
+                restingHeartRateHistory: overnight[history].compactMap(\.heartRate),
+                asleep: asleep[overnight[index].wakeDay],
+                sleepNeed: SleepNeed.need(debt: debt[index - 1], trainingTime: training[index - 1] * 60),
+                respiratoryRate: breathing[index].value,
+                respiratoryRateHistory: breathing[history].compactMap(\.value)
+            ))
+            let hasData = overnight[index].hrv != nil || overnight[index].heartRate != nil
+            return (overnight[index].wakeDay, hasData, result)
+        }
     }
 
     /// Resources now, simulated from three days back so the starting guess no longer matters.

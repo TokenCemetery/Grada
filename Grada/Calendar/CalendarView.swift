@@ -8,7 +8,6 @@ struct CalendarView: View {
     @AppStorage("calendarMetric") private var metric: CalendarMetric = .healthStatus
     @AppStorage("colorBlindPalette") private var colorBlind = false
     @State private var selectedDay: Date?
-    // TODO(detail screens): opening the calendar from a metric's detail screen should preselect that metric.
     // TODO(v3, Reports): a monthly summary like Whoop's "Month in Review" belongs in reports, not here.
 
     private var calendar: Calendar { .current }
@@ -52,6 +51,11 @@ struct CalendarView: View {
             // A flag, not `sheet(item:)`: tapping another day while the sheet is open updates it in place.
             .sheet(isPresented: Binding(get: { selectedDay != nil }, set: { if !$0 { selectedDay = nil } })) {
                 DaySheet(day: selectedDay ?? today)
+                    // The calendar is already showing behind the sheet: pick the metric and close the sheet.
+                    .environment(\.openCalendar, OpenCalendarAction { picked in
+                        if let picked { metric = picked }
+                        selectedDay = nil
+                    })
                     .presentationDetents([.medium, .large])
                     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
             }
@@ -277,6 +281,12 @@ private struct DaySheet: View {
     private var kinds: [CardKind] { cards.compactMap(\.kind) }
 
     var body: some View {
+        NavigationStack {
+            content.navigationDestination(for: MetricRoute.self) { MetricDetailView(route: $0) }
+        }
+    }
+
+    private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 Text(day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
@@ -304,12 +314,14 @@ private struct DaySheet: View {
 
     /// Shows the loading state until this day's values arrive, never the previous day's.
     private func card(_ kind: CardKind) -> some View {
-        CardView(kind: kind, snapshot: loadedDay == day ? snapshots[kind] : nil)
+        CardLink(kind: kind, snapshot: loadedDay == day ? snapshots[kind] : nil,
+                 day: Calendar.current.isDateInToday(day) ? nil : day)
     }
 }
 
 #Preview {
     CalendarView()
         .environment(CalendarModel(source: SampleDataSource()))
+        .environment(\.healthSource, SampleDataSource())
         .modelContainer(for: HomeCard.self, inMemory: true)
 }

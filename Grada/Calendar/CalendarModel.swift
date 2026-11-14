@@ -47,12 +47,7 @@ final class CalendarModel {
     /// Cards for `day` as they looked at the end of that day, without the 7-day charts
     /// (the month grid already shows the trend).
     func snapshots(for day: Date, kinds: [CardKind]) async -> [CardKind: CardSnapshot] {
-        let start = calendar.startOfDay(for: day)
-        let daysAgo = calendar.dateComponents([.day], from: start, to: calendar.startOfDay(for: .now)).day ?? 0
-        let dayEnd = calendar.date(byAdding: .day, value: 1, to: start)!
-        var builder = SnapshotBuilder(source: daysAgo == 0 ? source : PastDaySource(base: source, daysAgo: daysAgo, dayEnd: dayEnd))
-        builder.calendar = calendar
-        builder.now = daysAgo == 0 ? .now : dayEnd.addingTimeInterval(-1)
+        let builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
 
         var result: [CardKind: CardSnapshot] = [:]
         await withTaskGroup(of: (CardKind, CardSnapshot?).self) { group in
