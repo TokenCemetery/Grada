@@ -5,8 +5,6 @@ import Foundation
 struct SampleDataSource: HealthDataSource {
     var calendar: Calendar = .current
 
-    func requestAuthorization() async throws {}
-
     func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
         var random = SeededRandom(seed: UInt64(metric.hashSeed))
         let (base, spread): (Double, Double) = switch metric {
@@ -57,6 +55,7 @@ struct SampleDataSource: HealthDataSource {
         return lastDays(days).enumerated().reversed().compactMap { index, day in
             guard let (name, symbol, minutes) = pattern[index % pattern.count] else { return nil }
             return WorkoutSummary(
+                id: "sample-\(index)",
                 start: calendar.date(byAdding: .hour, value: 7, to: day)!,
                 duration: minutes * 60,
                 name: name,

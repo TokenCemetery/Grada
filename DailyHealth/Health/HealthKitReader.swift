@@ -1,87 +1,103 @@
 import Foundation
 import HealthKit
 
-/// Reads raw data from Apple Health. Garmin, Oura and others arrive here through their own Apple Health sync.
-final class HealthKitDataSource: HealthDataSource {
-    private let store = HKHealthStore()
+/// Reads raw data from Apple Health for a date range. Garmin, Oura and others arrive here
+/// through their own Apple Health sync.
+final class HealthKitReader {
+    let store = HKHealthStore()
     private let calendar = Calendar.current
 
     static var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
 
+    /// Every type the app reads.
+    static let readTypes: [HKSampleType] =
+        QuantityMetric.allCases.map { HKQuantityType($0.identifier) } + [
+            HKQuantityType(.heartRate),
+            HKCategoryType(.sleepAnalysis),
+            HKCategoryType(.appleStandHour),
+            HKObjectType.workoutType(),
+        ]
+
     func requestAuthorization() async throws {
-        var types: Set<HKObjectType> = Set(QuantityMetric.allCases.map { HKQuantityType($0.identifier) })
-        types.insert(HKQuantityType(.heartRate))
-        types.insert(HKCategoryType(.sleepAnalysis))
-        types.insert(HKCategoryType(.appleStandHour))
-        types.insert(HKObjectType.workoutType())
-        try await store.requestAuthorization(toShare: [], read: types)
+        try await store.requestAuthorization(toShare: [], read: Set(Self.readTypes))
     }
 
-    func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
-        let start = startOfDay(daysAgo: days - 1)
-        let end = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: .now))!
+    /// Date of the oldest data the app can import.
+    func earliestSampleDate() async throws -> Date? {
+        let dates = [
+            try await earliest(.quantitySample(type: HKQuantityType(.stepCount))),
+            try await earliest(.quantitySample(type: HKQuantityType(.heartRate))),
+            try await earliest(.categorySample(type: HKCategoryType(.sleepAnalysis))),
+            try await earliest(.workout()),
+        ]
+        return dates.compactMap { $0 }.min()
+    }
+
+    /// One value per day in `days` (start of day ..< start of day), oldest first.
+    func daily(_ metric: QuantityMetric, in days: DateInterval) async throws -> [DayValue] {
         let descriptor = HKStatisticsCollectionQueryDescriptor(
             predicate: .quantitySample(
                 type: HKQuantityType(metric.identifier),
-                predicate: HKQuery.predicateForSamples(withStart: start, end: end)
+                predicate: HKQuery.predicateForSamples(withStart: days.start, end: days.end)
             ),
             options: metric.isCumulative ? .cumulativeSum : .discreteAverage,
-            anchorDate: start,
+            anchorDate: days.start,
             intervalComponents: DateComponents(day: 1)
         )
         let collection = try await descriptor.result(for: store)
         var values: [DayValue] = []
-        collection.enumerateStatistics(from: start, to: end) { statistics, _ in
+        collection.enumerateStatistics(from: days.start, to: days.end) { statistics, _ in
             let quantity = metric.isCumulative ? statistics.sumQuantity() : statistics.averageQuantity()
             values.append(DayValue(day: statistics.startDate, value: quantity.map(metric.convert)))
         }
         return values
     }
 
-    func standHours(days: Int) async throws -> [DayValue] {
-        let start = startOfDay(daysAgo: days - 1)
+    /// Hours with at least a minute of standing, per day. All nil when no stand data exists at all.
+    func standHours(in days: DateInterval) async throws -> [DayValue] {
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.categorySample(
                 type: HKCategoryType(.appleStandHour),
-                predicate: HKQuery.predicateForSamples(withStart: start, end: nil)
+                predicate: HKQuery.predicateForSamples(withStart: days.start, end: days.end)
             )],
             sortDescriptors: []
         )
         let samples = try await descriptor.result(for: store)
-        guard !samples.isEmpty else { return lastDays(days).map { DayValue(day: $0, value: nil) } }
+        let dayStarts = self.dayStarts(in: days)
+        guard !samples.isEmpty else { return dayStarts.map { DayValue(day: $0, value: nil) } }
         let stood = samples.filter { $0.value == HKCategoryValueAppleStandHour.stood.rawValue }
         let counts = Dictionary(grouping: stood) { calendar.startOfDay(for: $0.startDate) }.mapValues { Double($0.count) }
-        return lastDays(days).map { DayValue(day: $0, value: counts[$0] ?? 0) }
+        return dayStarts.map { DayValue(day: $0, value: counts[$0] ?? 0) }
     }
 
-    func sleepNights(days: Int) async throws -> [SleepNight] {
+    /// Nights whose wake-up day falls in `days`, oldest first. Sleep counts toward the day you wake up.
+    func sleepNights(in days: DateInterval) async throws -> [SleepNight] {
         // Start the evening before the first day so that night is complete.
-        let start = calendar.date(byAdding: .hour, value: -12, to: startOfDay(daysAgo: days - 1))!
+        let start = calendar.date(byAdding: .hour, value: -12, to: days.start)!
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.categorySample(
                 type: HKCategoryType(.sleepAnalysis),
-                predicate: HKQuery.predicateForSamples(withStart: start, end: nil)
+                predicate: HKQuery.predicateForSamples(withStart: start, end: days.end)
             )],
             sortDescriptors: [SortDescriptor(\.startDate)]
         )
         let samples = try await descriptor.result(for: store)
-        let firstDay = startOfDay(daysAgo: days - 1)
-
-        // Sleep counts toward the day you wake up.
         let byDay = Dictionary(grouping: samples) { calendar.startOfDay(for: $0.endDate) }
-        return byDay.keys.filter { $0 >= firstDay }.sorted().compactMap { day in
+        return byDay.keys.filter { $0 >= days.start && $0 < days.end }.sorted().compactMap { day in
             Self.night(wakeDay: day, samples: byDay[day]!)
         }
     }
 
-    func workouts(days: Int) async throws -> [WorkoutSummary] {
+    /// Workouts that started in `days`, newest first.
+    func workouts(in days: DateInterval) async throws -> [WorkoutSummary] {
         let descriptor = HKSampleQueryDescriptor(
-            predicates: [.workout(HKQuery.predicateForSamples(withStart: startOfDay(daysAgo: days - 1), end: nil))],
+            predicates: [.workout(HKQuery.predicateForSamples(withStart: days.start, end: days.end))],
             sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)]
         )
         return try await descriptor.result(for: store).map { workout in
             let info = WorkoutNames.info(for: workout.workoutActivityType)
             return WorkoutSummary(
+                id: workout.uuid.uuidString,
                 start: workout.startDate,
                 duration: workout.duration,
                 name: info.name,
@@ -92,6 +108,25 @@ final class HealthKitDataSource: HealthDataSource {
                     .averageQuantity()?.doubleValue(for: .count().unitDivided(by: .minute()))
             )
         }
+    }
+
+    private func earliest<Sample: HKSample>(_ predicate: HKSamplePredicate<Sample>) async throws -> Date? {
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [predicate],
+            sortDescriptors: [SortDescriptor(\.startDate)],
+            limit: 1
+        )
+        return try await descriptor.result(for: store).first?.startDate
+    }
+
+    private func dayStarts(in days: DateInterval) -> [Date] {
+        var result: [Date] = []
+        var day = days.start
+        while day < days.end {
+            result.append(day)
+            day = calendar.date(byAdding: .day, value: 1, to: day)!
+        }
+        return result
     }
 
     /// Several apps and watches can record the same night. Using one source avoids double counting:
@@ -119,14 +154,6 @@ final class HealthKitDataSource: HealthDataSource {
             }
         }
         return night
-    }
-
-    private func startOfDay(daysAgo: Int) -> Date {
-        calendar.date(byAdding: .day, value: -daysAgo, to: calendar.startOfDay(for: .now))!
-    }
-
-    private func lastDays(_ count: Int) -> [Date] {
-        (0..<count).reversed().map { startOfDay(daysAgo: $0) }
     }
 }
 

@@ -6,25 +6,25 @@ import os
 @Observable
 final class HomeModel {
     private(set) var snapshots: [CardKind: CardSnapshot] = [:]
+    /// Nil in sample-data mode, where there is nothing to import.
+    let importer: HealthImporter?
 
     private let source: HealthDataSource
-    private var didRequestAuthorization = false
     private let logger = Logger(subsystem: "DailyHealth", category: "HomeModel")
 
-    init(source: HealthDataSource) {
+    init(source: HealthDataSource, importer: HealthImporter? = nil) {
         self.source = source
+        self.importer = importer
     }
 
+    /// Pulls the latest days from Apple Health, then rebuilds the cards.
     func refresh(_ kinds: [CardKind]) async {
-        if !didRequestAuthorization {
-            do {
-                try await source.requestAuthorization()
-            } catch {
-                logger.error("Health authorization failed: \(error.localizedDescription)")
-            }
-            didRequestAuthorization = true
-        }
+        await importer?.importRecent()
+        await reload(kinds)
+    }
 
+    /// Rebuilds the cards from data already imported.
+    func reload(_ kinds: [CardKind]) async {
         let builder = SnapshotBuilder(source: source)
         await withTaskGroup(of: (CardKind, Result<CardSnapshot, Error>).self) { group in
             for kind in Set(kinds) {

@@ -4,8 +4,14 @@ import SwiftUI
 
 @main
 struct DailyHealthApp: App {
-    @State private var homeModel = HomeModel(source: Self.makeDataSource())
-    private let modelContainer = Self.makeModelContainer()
+    private let modelContainer: ModelContainer
+    @State private var homeModel: HomeModel
+
+    init() {
+        let container = Self.makeModelContainer()
+        modelContainer = container
+        _homeModel = State(initialValue: Self.makeHomeModel(context: container.mainContext))
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -24,7 +30,7 @@ struct DailyHealthApp: App {
     ///
     /// Falls back to a local-only store so the app still works if iCloud can't be set up.
     private static func makeModelContainer() -> ModelContainer {
-        let schema = Schema([HomeCard.self])
+        let schema = Schema([HomeCard.self, DaySummary.self, WorkoutRecord.self])
         do {
             let configuration = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
             return try ModelContainer(for: schema, configurations: configuration)
@@ -40,16 +46,18 @@ struct DailyHealthApp: App {
         }
     }
 
-    private static func makeDataSource() -> HealthDataSource {
+    private static func makeHomeModel(context: ModelContext) -> HomeModel {
 #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-SampleData") { return SampleDataSource() }
+        if ProcessInfo.processInfo.arguments.contains("-SampleData") { return HomeModel(source: SampleDataSource()) }
 #endif
-        return HealthKitDataSource()
+        let importer = HealthImporter(reader: HealthKitReader(), context: context)
+        return HomeModel(source: StoredHealthData(context: context), importer: importer)
     }
 }
 
 struct RootView: View {
     @AppStorage("appearance") private var appearance: Appearance = .system
+    @Environment(HomeModel.self) private var homeModel
 
     var body: some View {
         TabView {
@@ -61,5 +69,6 @@ struct RootView: View {
                 .tabItem { Label("Settings", systemImage: "gearshape") }
         }
         .preferredColorScheme(appearance.colorScheme)
+        .task { await homeModel.importer?.importHistoryIfNeeded() }
     }
 }

@@ -18,6 +18,9 @@ struct HomeView: View {
                     Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                    if let progress = model.importer?.historyProgress {
+                        ImportProgressView(progress: progress)
+                    }
                     card(.healthStatus)
                     ForEach(HomeLayout.rows(for: kinds), id: \.self) { row in
                         HStack(alignment: .top, spacing: 12) {
@@ -51,7 +54,10 @@ struct HomeView: View {
         .onChange(of: kinds) { oldKinds, newKinds in
             removeDuplicateCards()
             let added = newKinds.filter { !oldKinds.contains($0) && model.snapshots[$0] == nil }
-            if !added.isEmpty { Task { await model.refresh(added) } }
+            if !added.isEmpty { Task { await model.reload(added) } }
+        }
+        .onChange(of: model.importer?.revision) {
+            Task { await model.reload([.healthStatus] + kinds) }
         }
     }
 
@@ -80,6 +86,23 @@ struct HomeView: View {
         for card in cards where !seen.insert(card.kindRawValue).inserted {
             modelContext.delete(card)
         }
+    }
+}
+
+private struct ImportProgressView: View {
+    let progress: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Importing your Apple Health history")
+                .font(.subheadline.weight(.semibold))
+            ProgressView(value: progress)
+            Text("Recent days are ready. Older data keeps loading while you use the app.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
