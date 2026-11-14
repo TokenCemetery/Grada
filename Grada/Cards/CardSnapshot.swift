@@ -8,7 +8,17 @@ struct CardSnapshot {
         case none
         /// Seven values, oldest first; the last one is today.
         case bars([Double?])
+        /// Seven nights, oldest first, each bar split by sleep stage; nil where there's no night.
+        case sleep([SleepNight?])
         case line([Double?], normalRange: ClosedRange<Double>?)
+
+        /// Bar charts sit beside the value on wide cards.
+        var isBars: Bool {
+            switch self {
+            case .bars, .sleep: true
+            case .none, .line: false
+            }
+        }
     }
 
     enum Detail {

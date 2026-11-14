@@ -153,3 +153,18 @@ struct AfterMidnightTests {
         #expect(snapshot.period == "Last night")
     }
 }
+
+@MainActor
+struct SleepChartTests {
+    @Test func nightSplitsIntoStageHours() {
+        let night = SleepNight(wakeDay: .now, stages: [.deep: 3600, .core: 7200, .rem: 1800, .awake: 900], unspecified: 1800)
+        #expect(SleepStage.chartOrder.map { night.hours(in: $0) } == [1, 2.5, 0.5, 0.25])
+    }
+
+    @Test func sleepCardsChartSevenNights() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepStages)
+        guard case .sleep(let nights) = snapshot.chart else { Issue.record("Expected a sleep chart"); return }
+        #expect(nights.count == 7)
+        #expect(nights.last??.stages[.deep] != nil)
+    }
+}

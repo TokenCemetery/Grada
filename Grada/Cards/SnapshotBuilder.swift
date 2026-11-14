@@ -209,7 +209,7 @@ struct SnapshotBuilder {
             period: shown.period,
             value: Self.hoursMinutes(shown.night.asleep),
             comparison: comparison,
-            chart: .bars(days.map { byDay[$0].map { $0.asleep / 3600 } }),
+            chart: .sleep(days.map { byDay[$0] }),
             detail: withStages ? .sleepStages(shown.night.stages) : .none
         )
     }

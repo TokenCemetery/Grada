@@ -13,7 +13,11 @@ struct MiniChart: View {
         case .none:
             EmptyView()
         case .bars(let values):
-            TrackBars(values: values, color: color)
+            TrackBars(days: values.map { [($0 ?? 0, color)] })
+        case .sleep(let nights):
+            TrackBars(days: nights.map { night in
+                SleepStage.chartOrder.map { stage in ((night?.hours(in: stage) ?? 0), stage.color(base: color)) }
+            })
         case .line(let values, let normalRange):
             VStack(spacing: 2) {
                 AreaLine(values: values, normalRange: normalRange, color: color)
@@ -25,36 +29,72 @@ struct MiniChart: View {
 }
 
 /// Bars filled from the bottom of a full-height track, so empty days still read as days.
+/// Each day can stack several segments, listed bottom to top.
 private struct TrackBars: View {
-    let values: [Double?]
-    let color: Color
+    let days: [[(value: Double, color: Color)]]
 
     var body: some View {
+        let totals = days.map { $0.reduce(0) { $0 + max($1.value, 0) } }
         // Headroom above the best day keeps the track visible when days are similar, e.g. sleep.
-        let highest = max((values.compactMap { $0 }.max() ?? 0) * 1.2, .leastNonzeroMagnitude)
-        let labels = WeekdayLabels.symbols(count: values.count)
+        let highest = max((totals.max() ?? 0) * 1.2, .leastNonzeroMagnitude)
+        let labels = WeekdayLabels.symbols(count: days.count)
         HStack(alignment: .bottom, spacing: 0) {
-            ForEach(Array(values.enumerated()), id: \.offset) { index, value in
-                let isToday = index == values.count - 1
+            ForEach(Array(days.enumerated()), id: \.offset) { index, segments in
                 VStack(spacing: 2) {
                     GeometryReader { proxy in
                         ZStack(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 3, style: .continuous).fill(Color(.systemFill))
-                            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .fill(color)
-                                .frame(height: proxy.size.height * min(max((value ?? 0) / highest, 0), 1))
+                            VStack(spacing: 0) {
+                                ForEach(Array(segments.enumerated().reversed()), id: \.offset) { _, segment in
+                                    // White underneath makes translucent shades lighter in dark mode too.
+                                    segment.color.background(Color.white)
+                                        .frame(height: proxy.size.height * max(segment.value, 0) / highest)
+                                }
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
                         }
                         .frame(width: min(proxy.size.width * 0.55, 14))
                         .frame(maxWidth: .infinity)
                     }
                     .frame(height: MiniChart.plotHeight)
-                    WeekdayLabels.label(labels[index], isToday: isToday)
+                    WeekdayLabels.label(labels[index], isToday: index == days.count - 1)
                 }
                 .frame(maxWidth: .infinity)
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Last 7 days")
+    }
+}
+
+extension SleepStage {
+    /// Bottom to top in sleep bars, left to right in the stage legend.
+    static let chartOrder: [SleepStage] = [.deep, .core, .rem, .awake]
+
+    var title: String {
+        switch self {
+        case .deep: "Deep"
+        case .core: "Core"
+        case .rem: "REM"
+        case .awake: "Awake"
+        }
+    }
+
+    /// Asleep stages are shades of the sleep color; awake stands out, as in Suunto.
+    func color(base: Color) -> Color {
+        switch self {
+        case .deep: base
+        case .core: base.opacity(0.65)
+        case .rem: base.opacity(0.4)
+        case .awake: .orange
+        }
+    }
+}
+
+extension SleepNight {
+    /// Hours in a stage. Sleep without stage detail is drawn as core.
+    func hours(in stage: SleepStage) -> Double {
+        ((stages[stage] ?? 0) + (stage == .core ? unspecified : 0)) / 3600
     }
 }
 

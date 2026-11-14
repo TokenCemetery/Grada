@@ -42,7 +42,7 @@ struct CardView: View {
             Spacer(minLength: 8)
             MiniChart(chart: snapshot.chart, color: color)
         case .wide:
-            if case .bars = snapshot.chart {
+            if snapshot.chart.isBars {
                 HStack(alignment: .bottom, spacing: 16) {
                     valueBlock(snapshot)
                     MiniChart(chart: snapshot.chart, color: color).frame(width: 150)
@@ -201,19 +201,15 @@ private struct SleepStagesBar: View {
     let stages: [SleepStage: TimeInterval]
     let color: Color
 
-    private let order: [(SleepStage, String, Double)] = [
-        (.deep, "Deep", 1), (.core, "Core", 0.65), (.rem, "REM", 0.4), (.awake, "Awake", 0.15),
-    ]
-
     var body: some View {
-        let total = max(order.reduce(0) { $0 + (stages[$1.0] ?? 0) }, 1)
+        let total = max(SleepStage.chartOrder.reduce(0) { $0 + (stages[$1] ?? 0) }, 1)
         VStack(alignment: .leading, spacing: 6) {
             GeometryReader { proxy in
                 HStack(spacing: 2) {
-                    ForEach(order, id: \.1) { stage, _, opacity in
+                    ForEach(SleepStage.chartOrder, id: \.self) { stage in
                         let share = (stages[stage] ?? 0) / total
                         if share > 0 {
-                            color.opacity(opacity)
+                            stage.color(base: color).background(Color.white)
                                 .frame(width: max(proxy.size.width * share - 2, 2))
                         }
                     }
@@ -222,10 +218,10 @@ private struct SleepStagesBar: View {
             }
             .frame(height: 8)
             HStack(spacing: 8) {
-                ForEach(order, id: \.1) { stage, name, opacity in
+                ForEach(SleepStage.chartOrder, id: \.self) { stage in
                     HStack(spacing: 4) {
-                        Circle().fill(color.opacity(opacity)).frame(width: 7, height: 7)
-                        Text("\(name) \(SnapshotBuilder.hoursMinutes(stages[stage] ?? 0))")
+                        Circle().fill(stage.color(base: color)).background(Circle().fill(.white)).frame(width: 7, height: 7)
+                        Text("\(stage.title) \(SnapshotBuilder.hoursMinutes(stages[stage] ?? 0))")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
