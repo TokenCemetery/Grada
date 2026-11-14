@@ -1,0 +1,42 @@
+import Foundation
+
+/// Everything a card needs to render, already formatted.
+struct CardSnapshot {
+    enum Tone { case neutral, good, warning }
+
+    enum Chart {
+        case none
+        /// Seven values, oldest first; the last one is today.
+        case bars([Double?])
+        case line([Double?], normalRange: ClosedRange<Double>?)
+    }
+
+    enum Detail {
+        case none
+        case sleepStages([SleepStage: TimeInterval])
+        case workout(WorkoutSummary)
+        /// Workout minutes per day for the last 30 days, oldest first.
+        case days([Double])
+        case vitals([VitalStatus])
+    }
+
+    var period: String
+    /// Nil means Apple Health has no data for this card.
+    var value: String?
+    var unit: String = ""
+    var comparison: String?
+    var tone: Tone = .neutral
+    var chart: Chart = .none
+    var detail: Detail = .none
+
+    static func noData(period: String) -> CardSnapshot {
+        CardSnapshot(period: period, value: nil)
+    }
+}
+
+struct VitalStatus: Equatable {
+    enum State { case inRange, outOfRange, calibrating, noData }
+
+    let name: String
+    let state: State
+}
