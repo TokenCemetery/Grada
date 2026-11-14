@@ -57,15 +57,14 @@ struct CardView: View {
 
     private func valueBlock(_ snapshot: CardSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
+            if kind == .healthStatus {
                 Text(snapshot.value ?? "")
-                    .font(.system(kind == .healthStatus ? .title2 : .title, design: .rounded).weight(.semibold))
+                    .font(.title2.weight(.bold))
                     .foregroundStyle(valueColor(snapshot.tone))
-                    .minimumScaleFactor(0.6)
                     .lineLimit(1)
-                if !snapshot.unit.isEmpty {
-                    Text(snapshot.unit).font(.subheadline).foregroundStyle(.secondary)
-                }
+                    .minimumScaleFactor(0.6)
+            } else {
+                ValueText(value: snapshot.value ?? "", unit: snapshot.unit)
             }
             if let comparison = snapshot.comparison {
                 Text(comparison)
@@ -93,6 +92,43 @@ struct CardView: View {
             Text("No data yet").font(.headline)
             Text(kind.missingDataHint).font(.caption).foregroundStyle(.secondary)
         }
+    }
+}
+
+/// Big bold numbers with small bold units, like "7 h 50 min" or "52 bpm".
+private struct ValueText: View {
+    let value: String
+    let unit: String
+
+    private static let numberFont = Font.system(.title, weight: .bold)
+    private static let unitFont = Font.subheadline.weight(.semibold)
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 0) {
+            ForEach(Array(Self.runs(value).enumerated()), id: \.offset) { _, run in
+                Text(run.text).font(run.isNumber ? Self.numberFont : Self.unitFont)
+            }
+            if !unit.isEmpty {
+                Text("\u{2009}" + unit).font(Self.unitFont)
+            }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Splits "7h 50m" into number and letter runs, with a thin space before each letter run.
+    static func runs(_ value: String) -> [(text: String, isNumber: Bool)] {
+        var runs: [(text: String, isNumber: Bool)] = []
+        for character in value {
+            let isNumber = character.isNumber || "+-−.,\u{00A0}\u{202F}".contains(character)
+            if let last = runs.last, last.isNumber == isNumber {
+                runs[runs.count - 1].text.append(character)
+            } else {
+                runs.append((text: (isNumber || runs.isEmpty ? "" : "\u{2009}") + String(character), isNumber: isNumber))
+            }
+        }
+        return runs
     }
 }
 
@@ -185,13 +221,15 @@ private struct SleepStagesBar: View {
                 .clipShape(RoundedRectangle(cornerRadius: 3))
             }
             .frame(height: 8)
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 ForEach(order, id: \.1) { stage, name, opacity in
                     HStack(spacing: 4) {
                         Circle().fill(color.opacity(opacity)).frame(width: 7, height: 7)
                         Text("\(name) \(SnapshotBuilder.hoursMinutes(stages[stage] ?? 0))")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                 }
             }
@@ -229,19 +267,43 @@ private struct WorkoutDetail: View {
     }
 }
 
-/// One dot per day; bigger dots mean longer workouts.
+/// The last 30 days as a calendar: weekday columns, one dot per day, bigger dots for longer
+/// workouts, today ringed.
 private struct DaysGrid: View {
     let minutes: [Double]
     let color: Color
 
     var body: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 15)
-        LazyVGrid(columns: columns, spacing: 6) {
-            ForEach(Array(minutes.enumerated()), id: \.offset) { _, value in
-                Circle()
-                    .fill(value > 0 ? color : Color(.tertiarySystemFill))
-                    .frame(width: diameter(value), height: diameter(value))
-                    .frame(height: 16)
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let first = calendar.date(byAdding: .day, value: -(minutes.count - 1), to: today)!
+        let leadingBlanks = (calendar.component(.weekday, from: first) - calendar.firstWeekday + 7) % 7
+        let cells: [Double?] = Array(repeating: nil, count: leadingBlanks) + minutes.map { $0 }
+        let letters = calendar.veryShortStandaloneWeekdaySymbols
+        let header = (0..<7).map { letters[(calendar.firstWeekday - 1 + $0) % 7] }
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
+
+        VStack(spacing: 4) {
+            // The header is a separate grid: sharing one ForEach id space with the days would drop days.
+            LazyVGrid(columns: columns, spacing: 4) {
+                ForEach(Array(header.enumerated()), id: \.offset) { _, letter in
+                    Text(letter).font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+            LazyVGrid(columns: columns, spacing: 4) {
+                ForEach(Array(cells.enumerated()), id: \.offset) { index, value in
+                    ZStack {
+                        if let value {
+                            Circle()
+                                .fill(value > 0 ? color : Color(.tertiarySystemFill))
+                                .frame(width: diameter(value), height: diameter(value))
+                        }
+                        if index == cells.count - 1 {
+                            Circle().strokeBorder(Color.primary.opacity(0.6), lineWidth: 1.5).frame(width: 24, height: 24)
+                        }
+                    }
+                    .frame(height: 24)
+                }
             }
         }
         .accessibilityElement(children: .ignore)
@@ -249,7 +311,7 @@ private struct DaysGrid: View {
     }
 
     private func diameter(_ minutes: Double) -> CGFloat {
-        minutes <= 0 ? 5 : min(8 + CGFloat(minutes) / 10, 16)
+        minutes <= 0 ? 6 : min(10 + CGFloat(minutes) / 8, 20)
     }
 }
 
