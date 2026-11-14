@@ -49,6 +49,7 @@ struct HomeView: View {
             if phase == .active { Task { await refresh() } }
         }
         .onChange(of: kinds) { oldKinds, newKinds in
+            removeDuplicateCards()
             let added = newKinds.filter { !oldKinds.contains($0) && model.snapshots[$0] == nil }
             if !added.isEmpty { Task { await model.refresh(added) } }
         }
@@ -70,6 +71,15 @@ struct HomeView: View {
             }
         }
         didSeedHomeCards = true
+    }
+
+    /// A second device seeds the default cards before iCloud delivers the existing ones,
+    /// so the same card can arrive twice. Keep the first of each kind.
+    private func removeDuplicateCards() {
+        var seen = Set<String>()
+        for card in cards where !seen.insert(card.kindRawValue).inserted {
+            modelContext.delete(card)
+        }
     }
 }
 
