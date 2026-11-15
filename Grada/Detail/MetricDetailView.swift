@@ -87,9 +87,12 @@ struct MetricDetailView: View {
             snapshot = try? await builder.snapshot(for: kind)
         }
         .task(id: period) {
-            trend = try? await TrendBuilder(source: source, calendar: calendar).trend(for: kind, period: period)
+            var trendBuilder = TrendBuilder(source: source, calendar: calendar)
+            trendBuilder.goals = GoalHistory(goalChanges)
+            trend = try? await trendBuilder.trend(for: kind, period: period)
             trendLoaded = true
-            breakdown = try? await Breakdown.load(for: kind, day: day, period: period, source: source, calendar: calendar)
+            breakdown = try? await Breakdown.load(for: kind, day: day, period: period, source: source, calendar: calendar,
+                                                  goals: GoalHistory(goalChanges))
         }
     }
 
@@ -266,7 +269,7 @@ enum Breakdown {
 
     /// Nil when the card has no breakdown, or nothing to show for the day.
     static func load(for kind: CardKind, day: Date, period: TrendPeriod, source: HealthDataSource,
-                     calendar: Calendar) async throws -> Breakdown? {
+                     calendar: Calendar, goals: GoalHistory = GoalHistory()) async throws -> Breakdown? {
         switch kind.family {
         case .total:
             guard let metric = kind.quantityMetric else { return nil }
@@ -283,12 +286,11 @@ enum Breakdown {
             let values = try await source.heartRate(in: interval)
             return values.isEmpty ? nil : .heartRate(values)
         case .sleep:
-            let days = 21
-            let nights = try await source.sleepNights(days: days)
+            let nights = try await source.sleepNights(days: 1)
             guard let night = nights.last(where: { $0.wakeDay == day }), night.asleep > 0 else { return nil }
-            let byDay = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-            let dayStarts = (0..<days).reversed().map { calendar.date(byAdding: .day, value: -$0, to: day)! }
-            let debt = SleepNeed.debt(asleep: dayStarts.map { byDay[$0].flatMap { $0 > 0 ? $0 : nil } }).last ?? 0
+            var builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
+            builder.goals = goals
+            let debt = try await builder.sleepDebt(1)?.last?.debt ?? 0
             let vitals = try await source.overnight(days: 1).last
             return .sleep(night, bedtime: vitals?.bedtime, wakeTime: vitals?.wakeTime, debt: debt)
         case .training:

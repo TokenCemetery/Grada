@@ -1,7 +1,8 @@
 import Foundation
 
-/// Morning recovery, 0–100, modelled on WHOOP: HRV and heart rate measured while asleep against
-/// the user's own baseline, plus sleep against their sleep need and a penalty for raised breathing rate.
+/// Morning recovery: each overnight input is checked against a published threshold, and the status counts
+/// how many crossed it, like Health Status. No study has validated a formula that weighs these inputs into one
+/// number (WHOOP's isn't published), so none is made up here.
 nonisolated enum Recovery {
     struct Input {
         /// Overnight HRV (ms).
@@ -12,92 +13,62 @@ nonisolated enum Recovery {
         var restingHeartRate: Double?
         var restingHeartRateHistory: [Double]
         var asleep: TimeInterval?
-        /// What the user needed that night; see `SleepNeed`.
-        var sleepNeed: TimeInterval = SleepNeed.baseline
         /// Sleeping respiratory rate; a rise above normal is an early sign of illness or fatigue.
         var respiratoryRate: Double? = nil
         var respiratoryRateHistory: [Double] = []
     }
 
     struct Result: Equatable {
-        let score: Int
-        /// The input that moved the score most, e.g. "HRV above normal".
+        /// Good with no input off, Fair with one, Poor with two or more.
+        let rating: DayRating
+        /// Inputs measured with enough history to judge, and how many of them were within their threshold.
+        let measured: Int
+        let inRange: Int
+        /// The first input that's off, e.g. "HRV below normal", or "Close to your normal".
         let reason: String
     }
 
-    /// A component score on a normal day; one standard deviation moves it by `pointsPerSD`.
-    private static let neutral = 65.0
-    private static let pointsPerSD = 20.0
-    /// Points lost per hour of sleep below the sleep need.
-    private static let pointsPerHourShort = 20.0
-    /// Points lost per SD of respiratory rate beyond the first SD above normal, up to `maxBreathingPenalty`.
-    private static let pointsPerBreathingSD = 10.0
-    private static let maxBreathingPenalty = 30.0
+    /// The smallest worthwhile change: 0.5 SD of the baseline (Hopkins 2000), as used for HRV-guided training
+    /// (Plews et al. 2013, Buchheit 2014). Recovery only flags the direction that signals fatigue.
+    static let smallestWorthwhileChangeInSD = 0.5
+    /// AASM/SRS consensus: adults need at least 7 hours (Watson et al. 2015).
+    static let minimumSleep = SleepNeed.baseline
     /// HRV is compared on a log scale, as in HRV research, because its spread grows with its size.
     /// 0.05 in log terms is about ±3 ms at 60 ms, the same floor as the HRV normal range.
-    private static let minimumLogHRVSD = 0.05
+    static let minimumLogHRVSD = 0.05
 
     /// Nil while HRV and resting heart rate are both missing or still calibrating.
-    static func score(_ input: Input) -> Result? {
-        // `effect` is how far, in standard deviations, the input pushes recovery up (+) or down (−).
-        var parts: [(weight: Double, score: Double, effect: Double, high: String?, low: String)] = []
+    static func status(_ input: Input) -> Result? {
+        // Each checked input, in the order they're named: whether it's off and how it's described.
+        var checks: [(isOff: Bool, reason: String)] = []
         if let hrv = input.hrv, hrv > 0,
            let z = Baseline.zScore(log(hrv), history: input.hrvHistory.filter { $0 > 0 }.map(log), minimumSD: minimumLogHRVSD) {
-            parts.append((0.5, neutral + pointsPerSD * z, z, "HRV above normal", "HRV below normal"))
+            checks.append((z < -smallestWorthwhileChangeInSD, "HRV below normal"))
         }
         if let rhr = input.restingHeartRate,
            let z = Baseline.zScore(rhr, history: input.restingHeartRateHistory,
                                    minimumSD: QuantityMetric.restingHeartRate.minimumHalfWidth / 2) {
-            // Lower resting heart rate means better recovery.
-            parts.append((0.25, neutral - pointsPerSD * z, -z, "Resting HR low", "Resting HR high"))
+            checks.append((z > smallestWorthwhileChangeInSD, "Resting HR high"))
         }
-        guard !parts.isEmpty else { return nil }
+        guard !checks.isEmpty else { return nil }
         if let asleep = input.asleep {
-            let hoursShort = max(input.sleepNeed - asleep, 0) / 3600
-            // An hour short counts like one standard deviation; enough sleep is expected, not a boost.
-            parts.append((0.25, 100 - pointsPerHourShort * hoursShort, -hoursShort, nil, "Short sleep"))
+            checks.append((asleep < minimumSleep, "Short sleep"))
         }
-
-        // Missing inputs don't count against the score: weights are shared among what's there.
-        let totalWeight = parts.reduce(0) { $0 + $1.weight }
-        var score = parts.reduce(0) { $0 + $1.weight * min(max($1.score, 0), 100) } / totalWeight
-
-        // Breathing only ever lowers the score: a normal rate says nothing about recovery.
+        // Breathing uses the same ±2 SD normal range as the Respiratory Rate card; only a rise counts.
         if let rate = input.respiratoryRate,
-           let z = Baseline.zScore(rate, history: input.respiratoryRateHistory,
-                                   minimumSD: QuantityMetric.respiratoryRate.minimumHalfWidth / 2), z >= 1 {
-            score = max(score - min((z - 1) * pointsPerBreathingSD, maxBreathingPenalty), 0)
-            parts.append((0.25, score, -z, nil, "Breathing rate up"))
+           let normal = Baseline.normalRange(history: input.respiratoryRateHistory,
+                                             minimumHalfWidth: QuantityMetric.respiratoryRate.minimumHalfWidth) {
+            checks.append((rate > normal.upperBound, "Breathing rate up"))
         }
 
-        // Only inputs at least one SD from normal are named; a drag explains more than a boost.
-        let reason: String
-        if let worst = parts.filter({ $0.effect <= -1 }).min(by: { $0.effect * $0.weight < $1.effect * $1.weight }) {
-            reason = worst.low
-        } else if let best = parts.filter({ $0.effect >= 1 && $0.high != nil })
-            .max(by: { $0.effect * $0.weight < $1.effect * $1.weight }), let high = best.high {
-            reason = high
-        } else {
-            reason = "Close to your normal"
+        let off = checks.filter(\.isOff)
+        let reason = switch off.count {
+        case 0: "Close to your normal"
+        case 1: off[0].reason
+        default: "\(off[0].reason) · \(off.count - 1) more off"
         }
-        return Result(score: Int(score.rounded()), reason: reason)
-    }
-
-    /// Whoop's bands: green from 67, yellow from 34, red below.
-    static func rating(_ score: Int) -> DayRating {
-        switch score {
-        case 67...: .good
-        case 34...: .fair
-        default: .poor
-        }
-    }
-
-    static func status(_ score: Int) -> (word: String, tone: CardSnapshot.Tone) {
-        switch score {
-        case 67...: ("Good", .good)
-        case 34...: ("Fair", .neutral)
-        default: ("Low", .warning)
-        }
+        return Result(rating: DayRatings.healthStatus(outOfRange: off.count),
+                      measured: checks.count, inRange: checks.count - off.count, reason: reason)
     }
 }
 
@@ -200,9 +171,19 @@ nonisolated enum Resources {
         return result
     }
 
-    /// 220 − age, or the highest heart rate on record when the age isn't known.
+    /// WHOOP's recovery bands (green from 67, yellow from 34), with no published basis; see #69.
+    static func rating(_ level: Int) -> DayRating {
+        switch level {
+        case 67...: .good
+        case 34...: .fair
+        default: .poor
+        }
+    }
+
+    /// 208 − 0.7 × age (Tanaka, Monahan & Seals 2001, a meta-analysis of 351 studies; 220 − age has no
+    /// study behind it and underestimates older adults), or the highest heart rate on record without an age.
     static func maxHeartRate(age: Int?, highestRecorded: Double?) -> Double? {
-        if let age { return Double(220 - age) }
+        if let age { return 208 - 0.7 * Double(age) }
         return highestRecorded
     }
 }
@@ -229,63 +210,121 @@ nonisolated enum IntensityMinutes {
     }
 }
 
-/// How much sleep the user needs tonight, like WHOOP's Sleep Planner and Garmin's Sleep Coach:
-/// a baseline, plus part of the recent sleep debt, plus extra after a training day.
-nonisolated enum SleepNeed {
-    /// Until Goals (v2) let the user set it.
-    static let baseline: TimeInterval = 8 * 3600
-    /// Share of the debt to win back in one night, so a big debt is repaid over several nights.
-    private static let debtShare = 0.25
-    private static let maxDebtExtra: TimeInterval = 90 * 60
-    /// Extra sleep per hour of workout, up to `maxTrainingExtra`.
-    private static let extraPerTrainingHour: TimeInterval = 15 * 60
-    private static let maxTrainingExtra: TimeInterval = 45 * 60
-    /// Share of the debt that fades each night, so it reflects recent nights only: always sleeping
-    /// 30 minutes short settles at 2 hours of debt instead of growing forever.
-    private static let nightlyFade = 0.25
+/// Waking time outside workouts split into the ACSM intensity bands by share of heart rate reserve
+/// (Garber et al. 2011, Med Sci Sports Exerc 43:1334, Table 1). Workouts are left to Intensity Minutes.
+nonisolated enum DayIntensity {
+    enum Band: Int, CaseIterable {
+        /// Below 30% of heart rate reserve.
+        case veryLight
+        /// 30–39%.
+        case light
+        /// 40–59%.
+        case moderate
+        /// 60% and up: ACSM's vigorous (60–89%) and near-maximal (90%+) together.
+        case vigorous
 
-    /// Running debt after each night, oldest first. Short nights add to it and long nights repay it;
-    /// nights without data leave it unchanged.
-    static func debt(asleep: [TimeInterval?]) -> [TimeInterval] {
-        var debt: TimeInterval = 0
-        return asleep.map { night in
-            if let night { debt = max(debt * (1 - nightlyFade) + baseline - night, 0) }
-            return debt
+        var title: String {
+            switch self {
+            case .veryLight: "Very light"
+            case .light: "Light"
+            case .moderate: "Moderate"
+            case .vigorous: "Vigorous"
+            }
         }
     }
 
-    static func need(debt: TimeInterval, trainingTime: TimeInterval) -> TimeInterval {
-        baseline + min(debt * debtShare, maxDebtExtra) + min(trainingTime / 3600 * extraPerTrainingHour, maxTrainingExtra)
+    /// Lower bounds of light, moderate and vigorous as a share of heart rate reserve.
+    static let lowerBounds = [0.3, 0.4, 0.6]
+
+    static func band(_ heartRate: Double, restingHeartRate: Double, maxHeartRate: Double) -> Band {
+        let share = (heartRate - restingHeartRate) / max(maxHeartRate - restingHeartRate, 1)
+        return Band(rawValue: lowerBounds.filter { share >= $0 }.count)!
+    }
+
+    /// Seconds in each band from 5-minute average heart rates, skipping readings taken asleep and any that
+    /// touch a workout, so workout time is never counted here as well as in Intensity Minutes.
+    static func time(heartRate: [TimedValue], sleep: [SleepPeriod], workouts: [DateInterval],
+                     restingHeartRate: Double, maxHeartRate: Double) -> [Band: TimeInterval] {
+        var seconds: [Band: TimeInterval] = [:]
+        for reading in heartRate {
+            let end = reading.date + Resources.step
+            let middle = reading.date + Resources.step / 2
+            let asleep = sleep.contains { $0.stage != .awake && $0.start <= middle && middle < $0.end }
+            let inWorkout = workouts.contains { $0.start < end && reading.date < $0.end }
+            guard !asleep, !inWorkout else { continue }
+            seconds[band(reading.value, restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate), default: 0] += Resources.step
+        }
+        return seconds
     }
 }
 
-/// How regular bed and wake times are, like WHOOP's Sleep Consistency: 100 means the same times every night.
+/// How much sleep the user needs, and the debt from nights short of it. The need is the user's sleep goal, or
+/// the AASM/SRS adult minimum of 7 hours (Watson et al. 2015). No published method adds debt or training on
+/// top of it, so nothing is added.
+nonisolated enum SleepNeed {
+    static let baseline: TimeInterval = 7 * 3600
+    /// Van Dongen et al. 2003 saw deficits keep building over 14 nights of short sleep.
+    static let debtNights = 14
+
+    /// How far each night fell short of its need, oldest first; nights without data count nothing.
+    static func shortfalls(asleep: [TimeInterval?], need: [TimeInterval]) -> [TimeInterval] {
+        zip(asleep, need).map { night, need in night.map { max(need - $0, 0) } ?? 0 }
+    }
+
+    /// Debt after each night, oldest first: the shortfalls of the last `debtNights` nights. A long night doesn't
+    /// cancel earlier ones: no paper gives a payback rate, and Kitamura et al. 2016 found an hour of debt took
+    /// four days of extended sleep to recover.
+    static func debt(shortfalls: [TimeInterval]) -> [TimeInterval] {
+        shortfalls.indices.map { shortfalls[max($0 - debtNights + 1, 0)...$0].reduce(0, +) }
+    }
+}
+
+/// The Sleep Regularity Index (Phillips et al. 2017, Sci Rep 7:3216): the chance of being in the same state,
+/// asleep or awake, at two moments 24 hours apart, scaled so identical days score 100 and random ones 0 (it can
+/// fall below 0). Only pairs where both moments have data count. In UK Biobank, more regular sleepers had 20–48%
+/// lower all-cause mortality than the least regular fifth (Windred et al. 2024, Sleep 47:zsad253).
 nonisolated enum SleepConsistency {
-    struct Result: Equatable {
-        let score: Int
-        /// Standard deviations in minutes.
-        let bedtimeSpread: Double
-        let wakeSpread: Double
+    /// One week, as Windred et al. scored it; Phillips et al. also used whole weeks.
+    static let days = 7
+    /// Days with a sleep record needed in the week. Grada's own data-sufficiency rule; the papers don't give one.
+    static let minimumDays = 5
+    /// UK Biobank (Windred et al. 2024): median 81.0, interquartile range 73.8–86.3.
+    static let populationMedian = 81.0
+    static let populationLowerQuartile = 73.8
+
+    private static let minutesPerDay = 24 * 60
+
+    /// The index over `days` 24-hour blocks from `start`, from minute-by-minute sleep state. A block without any
+    /// sleep record is missing (the watch was off), as is every minute from `until` on. Nil with too few days.
+    static func index(sleep: [SleepPeriod], start: Date, days: Int = days, until: Date = .distantFuture) -> Double? {
+        let total = days * minutesPerDay
+        var asleep = [Bool](repeating: false, count: total)
+        var measured = [Bool](repeating: false, count: days)
+        for period in sleep where period.stage != .awake {
+            let first = max(Int((period.start.timeIntervalSince(start) / 60).rounded(.down)), 0)
+            let last = min(Int((period.end.timeIntervalSince(start) / 60).rounded(.up)), total)
+            guard first < last else { continue }
+            for minute in first..<last { asleep[minute] = true }
+            for block in (first / minutesPerDay)...((last - 1) / minutesPerDay) { measured[block] = true }
+        }
+        guard measured.filter({ $0 }).count >= minimumDays else { return nil }
+
+        let available = min(total, max(Int(until.timeIntervalSince(start) / 60), 0))
+        var same = 0, pairs = 0
+        for minute in 0..<max(available - minutesPerDay, 0) {
+            let block = minute / minutesPerDay
+            guard measured[block], measured[block + 1] else { continue }
+            pairs += 1
+            if asleep[minute] == asleep[minute + minutesPerDay] { same += 1 }
+        }
+        guard pairs > 0 else { return nil }
+        return 200 * Double(same) / Double(pairs) - 100
     }
 
-    /// WHOOP compares the last 4 nights.
-    static let nights = 4
-    /// Points lost per minute of average spread: 15 minutes ≈ 88, 30 ≈ 76, an hour ≈ 52.
-    private static let pointsPerMinute = 0.8
-
-    /// Times as minutes after midnight. Bedtimes before noon are taken as after midnight (e.g. 00:30).
-    /// Nil with fewer than 3 nights.
-    static func score(bedtimes: [Double], wakeTimes: [Double]) -> Result? {
-        guard bedtimes.count >= 3, wakeTimes.count >= 3 else { return nil }
-        let bedtimeSpread = spread(bedtimes.map { $0 < 12 * 60 ? $0 + 24 * 60 : $0 })
-        let wakeSpread = spread(wakeTimes)
-        let score = 100 - pointsPerMinute * (bedtimeSpread + wakeSpread) / 2
-        return Result(score: Int(min(max(score, 0), 100).rounded()), bedtimeSpread: bedtimeSpread, wakeSpread: wakeSpread)
-    }
-
-    private static func spread(_ values: [Double]) -> Double {
-        let mean = values.reduce(0, +) / Double(values.count)
-        return (values.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(values.count)).squareRoot()
+    /// Against UK Biobank adults: Good from the median, Fair from the lower quartile, Poor below it.
+    static func rating(_ index: Double) -> DayRating {
+        if index >= populationMedian { return .good }
+        return index >= populationLowerQuartile ? .fair : .poor
     }
 }
 
@@ -326,52 +365,54 @@ nonisolated enum HRVStatus {
     /// Garmin also needs about 3 weeks: 14 baseline nights plus a 7-night window.
     static let minimumBaselineNights = 14
     static let minimumWindowNights = 3
-    /// A 7-night average moves much less than a single night, so the balanced range is narrower than
-    /// the nightly ±2 SD normal range, but never narrower than 6% of the mean either side.
-    private static let halfWidthInSD = 0.6
-    private static let minimumHalfWidthShare = 0.06
+    /// The HRV-guided training method (Plews et al. 2012/2013, Buchheit 2014): the 7-night average of ln(HRV)
+    /// against the baseline mean ± the smallest worthwhile change, 0.5 SD of ln(HRV) (Hopkins 2000).
+    private static let smallestWorthwhileChangeInSD = 0.5
+    /// Low is a full SD below the baseline mean: twice the smallest worthwhile change.
+    private static let lowInSD = 1.0
 
     /// Status for the window ending at `end`, from overnight HRV per night (nil without a reading),
-    /// oldest first. Nil while calibrating.
+    /// oldest first. Nil while calibrating. `average` and `baseline` are in ms, back from the log scale.
     static func status(nights: [Double?], endingAt end: Int) -> Result? {
         let windowStart = end - window + 1
         guard windowStart >= 0, end < nights.count else { return nil }
-        let recent = nights[windowStart...end].compactMap { $0 }
-        let history = nights[max(windowStart - baselineNights, 0)..<windowStart].compactMap { $0 }
+        let recent = nights[windowStart...end].compactMap { $0 }.filter { $0 > 0 }.map(log)
+        let history = nights[max(windowStart - baselineNights, 0)..<windowStart].compactMap { $0 }.filter { $0 > 0 }.map(log)
         guard recent.count >= minimumWindowNights, history.count >= minimumBaselineNights,
               let average = Baseline.average(recent), let mean = Baseline.average(history)
         else { return nil }
 
         let variance = history.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(history.count - 1)
-        let halfWidth = max(halfWidthInSD * variance.squareRoot(), minimumHalfWidthShare * mean)
-        let baseline = (mean - halfWidth)...(mean + halfWidth)
-        let state: State = if baseline.contains(average) {
+        // Keeps a very steady history from flagging tiny changes; the same floor Recovery uses.
+        let sd = max(variance.squareRoot(), Recovery.minimumLogHRVSD)
+        let change = smallestWorthwhileChangeInSD * sd
+        let state: State = if abs(average - mean) <= change {
             .balanced
-        } else if average < mean - 2 * halfWidth {
+        } else if average < mean - lowInSD * sd {
             .low
         } else {
             .unbalanced
         }
-        return Result(average: average, baseline: baseline, state: state)
+        return Result(average: exp(average), baseline: exp(mean - change)...exp(mean + change), state: state)
     }
 }
 
-/// Health age and pace of aging, inspired by WHOOP Healthspan. WHOOP's model isn't public, so this is
-/// a transparent heuristic: each habit or fitness marker adds or removes years from the user's real age,
-/// using rough sizes from published associations with mortality and fitness norms.
+/// Health age: the user's age plus, for each input, the years of aging that carry the same all-cause mortality
+/// risk. Each input's risk ratio comes from a meta-analysis or pooled cohort, against a published reference for
+/// the user's age and sex, and turns into years through the Gompertz law: adult mortality doubles about every
+/// 8 years (Finch et al. 1990), so years = 8 × log₂(risk ratio). The studies adjusted for different things and the
+/// inputs overlap (fit people also walk more), so the sum somewhat overstates the total.
 nonisolated enum HealthAge {
     struct Input {
         var age: Int
+        /// Needed for the VO₂ max and resting heart rate norms; without it those two are left out.
+        var sex: BiologicalSex? = nil
         var sleepHours: Double?
-        var sleepConsistency: Double?
         var dailySteps: Double?
         var restingHeartRate: Double?
         var vo2Max: Double?
-        /// Apple exercise minutes, roughly WHOOP's heart rate zones 1–3.
-        var moderateMinutesPerWeek: Double?
-        /// Workout time at 80% of max heart rate or more, roughly zones 4–5.
-        var vigorousMinutesPerWeek: Double?
-        var strengthMinutesPerWeek: Double?
+        /// Apple exercise minutes: moderate effort or more.
+        var exerciseMinutesPerWeek: Double?
     }
 
     struct Impact: Equatable {
@@ -382,38 +423,35 @@ nonisolated enum HealthAge {
 
     /// Fewer inputs than this and the age would rest on too little.
     static let minimumInputs = 3
+    /// Gompertz mortality doubling time for adults (Finch et al. 1990).
+    static let mortalityDoublingYears = 8.0
+
+    /// Years of aging with the same change in mortality risk.
+    static func years(riskRatio: Double) -> Double {
+        mortalityDoublingYears * log2(riskRatio)
+    }
 
     static func impacts(_ input: Input) -> [Impact] {
-        func clamp(_ value: Double, _ low: Double, _ high: Double) -> Double { min(max(value, low), high) }
         var impacts: [Impact] = []
-        if let vo2 = input.vo2Max {
-            // Typical VO₂ max falls about 0.35 per year from ~45 at 25.
-            let expected = 45 - 0.35 * Double(max(input.age - 25, 0))
-            impacts.append(Impact(name: "VO₂ Max", years: clamp((expected - vo2) * 0.4, -5, 5)))
+        if let vo2 = input.vo2Max, let sex = input.sex {
+            // Kodama et al. 2009 (JAMA 301:2024): RR 0.87 per 1 MET (3.5 ml/kg·min) higher fitness.
+            let mets = (vo2 - expectedVO2Max(age: input.age, sex: sex)) / 3.5
+            impacts.append(Impact(name: "VO₂ Max", years: mets * years(riskRatio: 0.87)))
         }
-        if let rhr = input.restingHeartRate {
-            impacts.append(Impact(name: "Resting HR", years: clamp((rhr - 60) * 0.15, -2, 4)))
+        if let rhr = input.restingHeartRate, let sex = input.sex {
+            // Zhang et al. 2016 (CMAJ 188:E53): RR 1.09 per 10 bpm higher.
+            let tens = (rhr - expectedRestingHeartRate(age: input.age, sex: sex)) / 10
+            impacts.append(Impact(name: "Resting HR", years: tens * years(riskRatio: 1.09)))
         }
         if let steps = input.dailySteps {
-            impacts.append(Impact(name: "Steps", years: clamp((8_000 - steps) / 1_000 * 0.4, -2, 3)))
+            let reference = input.age < 60 ? 7_803.0 : 5_649.0
+            impacts.append(Impact(name: "Steps", years: years(riskRatio: stepsRisk(steps) / stepsRisk(reference))))
         }
         if let hours = input.sleepHours {
-            // 7 to 8.5 hours is the healthy band; each hour outside it adds a year.
-            let outside = hours < 7 ? 7 - hours : max(hours - 8.5, 0)
-            impacts.append(Impact(name: "Sleep", years: clamp(outside, 0, 3)))
+            impacts.append(Impact(name: "Sleep", years: years(riskRatio: sleepRisk(hours))))
         }
-        if let consistency = input.sleepConsistency {
-            impacts.append(Impact(name: "Consistency", years: clamp((75 - consistency) * 0.05, -1, 2)))
-        }
-        if let minutes = input.moderateMinutesPerWeek {
-            // 150 minutes a week is the WHO guideline.
-            impacts.append(Impact(name: "Exercise", years: clamp((150 - minutes) / 50 * 0.5, -1.5, 2)))
-        }
-        if let minutes = input.vigorousMinutesPerWeek {
-            impacts.append(Impact(name: "Hard training", years: clamp((60 - minutes) / 30 * 0.5, -1.5, 1.5)))
-        }
-        if let minutes = input.strengthMinutesPerWeek {
-            impacts.append(Impact(name: "Strength", years: clamp((60 - minutes) / 30 * 0.5, -1, 1.5)))
+        if let minutes = input.exerciseMinutesPerWeek {
+            impacts.append(Impact(name: "Exercise", years: years(riskRatio: exerciseRisk(minutes))))
         }
         return impacts
     }
@@ -424,17 +462,62 @@ nonisolated enum HealthAge {
         return Double(input.age) + impacts.reduce(0) { $0 + $1.years }
     }
 
-    /// Years aged per calendar year, from the last 30 days against the last 6 months, like WHOOP:
-    /// 1× is steady, below 1× slowing, below 0× getting younger. Each year of difference moves it by 0.5.
-    static func pace(recent: Double, baseline: Double) -> Double {
-        min(max(1 + (recent - baseline) * 0.5, -1), 3)
+    /// Median measured VO₂ max (ml/kg·min) for the age and sex: the 50th percentiles of the FRIEND registry's
+    /// treadmill tests (Kaminsky et al. 2015, Mayo Clin Proc 90:1515, Table 3). Under 20 uses the 20s,
+    /// 80 and over the 70s.
+    static func expectedVO2Max(age: Int, sex: BiologicalSex) -> Double {
+        VO2MaxZones.bounds(age: age, sex: sex)[1]
+    }
+
+    /// Median resting pulse for the age and sex in NHANES 1999–2008 (Ostchega et al. 2011, NHSR 41, Table 1):
+    /// ages 20–39, 40–59, 60–79 and 80+. That pulse was taken seated after 4 minutes' rest; Apple's resting heart
+    /// rate is usually a little lower, which errs toward a younger health age.
+    static func expectedRestingHeartRate(age: Int, sex: BiologicalSex) -> Double {
+        let row = min(max(age / 20 - 1, 0), 3)
+        return sex == .male ? [69.0, 68, 67, 68][row] : [74.0, 71, 70, 71][row]
+    }
+
+    /// Mortality risk against the lowest quartile, from Paluch et al. 2022 (Lancet Public Health 7:e219): quartile
+    /// medians of 3553, 5801, 7842 and 10 901 steps had HRs of 1, 0.60, 0.55 and 0.47. Between medians the
+    /// log-risk is interpolated; beyond them it stays flat. References are the pooled medians for under-60s
+    /// (7803) and 60 and over (5649).
+    static func stepsRisk(_ steps: Double) -> Double {
+        let points: [(steps: Double, risk: Double)] = [(3_553, 1), (5_801, 0.60), (7_842, 0.55), (10_901, 0.47)]
+        guard steps > points[0].steps else { return points[0].risk }
+        guard let upper = points.firstIndex(where: { $0.steps >= steps }) else { return points[points.count - 1].risk }
+        let (low, high) = (points[upper - 1], points[upper])
+        let share = (steps - low.steps) / (high.steps - low.steps)
+        return exp(log(low.risk) + share * (log(high.risk) - log(low.risk)))
+    }
+
+    /// Cappuccio et al. 2010 (Sleep 33:585): RR 1.12 for short and 1.30 for long sleep against the studies'
+    /// reference, mostly 7 or 7–8 hours.
+    static func sleepRisk(_ hours: Double) -> Double {
+        if hours < 7 { return 1.12 }
+        return hours > 8 ? 1.30 : 1
+    }
+
+    /// Arem et al. 2015 (JAMA Intern Med 175:959), as multiples of the 150-minute guideline against none:
+    /// below it HR 0.80, 1–2× 0.69, 2–3× 0.63, 3–5× 0.61 (5–10× is taken as the same; not confirmed), 10× and up
+    /// 0.69. Returned against the guideline
+    /// (1–2×), so meeting it adds nothing. Exercise minutes stand in for the study's moderate-intensity minutes.
+    static func exerciseRisk(_ minutesPerWeek: Double) -> Double {
+        let multiple = minutesPerWeek / 150
+        let risk = switch multiple {
+        case ..<0.001: 1.0
+        case ..<1: 0.80
+        case ..<2: 0.69
+        case ..<3: 0.63
+        case ..<10: 0.61
+        default: 0.69
+        }
+        return risk / 0.69
     }
 }
 
-/// Race times from VO₂ max with Jack Daniels' running formula, as Garmin's race predictor does
-/// from its own VO₂ max. Assumes training for the distance; real results vary with it.
-/// VO₂ max fitness zones by age and sex, from the Cooper Institute norms (the 6-category table reproduced
-/// by most fitness references; Very poor is merged into Poor here).
+/// VO₂ max fitness zones by age and sex, from the FRIEND registry's measured treadmill VO₂ max (Kaminsky et al.
+/// 2015, Mayo Clin Proc 90:1515, Table 3): Poor below the 25th percentile, Fair from it, Good from the 50th,
+/// Excellent from the 75th and Superior from the 90th.
 nonisolated enum VO2MaxZones {
     enum Zone: Int, CaseIterable {
         case poor, fair, good, excellent, superior
@@ -458,16 +541,10 @@ nonisolated enum VO2MaxZones {
         }
     }
 
-    /// Lower bounds of Fair, Good, Excellent and Superior in ml/kg·min. Under 20 uses the 13–19 row.
+    /// Lower bounds of Fair, Good, Excellent and Superior in ml/kg·min: the 25th, 50th, 75th and 90th percentiles.
+    /// FRIEND covers ages 20–79, so younger adults use the 20s and older ones the 70s.
     static func bounds(age: Int, sex: BiologicalSex) -> [Double] {
-        let row = switch age {
-        case ..<20: 0
-        case 20..<30: 1
-        case 30..<40: 2
-        case 40..<50: 3
-        case 50..<60: 4
-        default: 5
-        }
+        let row = min(max(age / 10 - 2, 0), 5)
         return sex == .male ? men[row] : women[row]
     }
 
@@ -476,15 +553,17 @@ nonisolated enum VO2MaxZones {
     }
 
     private static let men: [[Double]] = [
-        [38.4, 45.2, 51.0, 56.0], [36.5, 42.5, 46.5, 52.5], [35.5, 41.0, 45.0, 49.5],
-        [33.6, 39.0, 43.8, 48.1], [31.0, 35.8, 41.0, 45.4], [26.1, 32.3, 36.5, 44.3],
+        [40.1, 48.0, 55.2, 61.8], [35.9, 42.4, 49.2, 56.5], [31.9, 37.8, 45.0, 52.1],
+        [27.1, 32.6, 39.7, 45.6], [23.7, 28.2, 34.5, 40.3], [20.4, 24.4, 30.4, 36.6],
     ]
     private static let women: [[Double]] = [
-        [31.0, 35.0, 39.0, 42.0], [29.0, 33.0, 37.0, 41.1], [27.0, 31.5, 35.7, 40.1],
-        [24.5, 29.0, 32.9, 37.0], [22.8, 27.0, 31.5, 35.8], [20.2, 24.5, 30.3, 31.5],
+        [30.5, 37.6, 44.7, 51.3], [25.3, 30.2, 36.1, 41.4], [22.1, 26.7, 32.4, 38.4],
+        [19.9, 23.4, 27.6, 32.0], [17.2, 20.0, 23.8, 27.0], [15.6, 18.3, 20.8, 23.1],
     ]
 }
 
+/// Race times from VO₂ max with Jack Daniels' running formula, as Garmin's race predictor does
+/// from its own VO₂ max. Assumes training for the distance; real results vary with it.
 nonisolated enum RacePredictor {
     static let distances: [(name: String, meters: Double)] = [
         ("5K", 5_000), ("10K", 10_000), ("Half", 21_097.5), ("Marathon", 42_195),
@@ -541,28 +620,17 @@ nonisolated enum HeartRateZones {
     }
 }
 
-/// How much a workout improves aerobic fitness, 0–5, on Garmin's Training Effect scale. Garmin's model
-/// (Firstbeat EPOC) isn't public, so this uses zone-weighted minutes (Edwards TRIMP) with a curve that
-/// gives a steady 45-minute zone 3 run about 3 and a hard hour in zone 4 about 4.
-nonisolated enum TrainingEffect {
-    /// TRIMP at which the effect reaches 63% of the scale.
-    private static let scale = 150.0
-
-    static func aerobic(timeInZones: [TimeInterval]) -> Double {
-        let load = timeInZones.enumerated().reduce(0) { $0 + Double($1.offset + 1) * $1.element / 60 }
-        let effect = 5 * (1 - exp(-load / scale))
-        return (effect * 10).rounded() / 10
+/// A workout's training load as Edwards' TRIMP (Edwards 1993): minutes in each `HeartRateZones` zone weighted
+/// 1–5 and summed. There's no published scale for what a score means for fitness, so it's shown as the number,
+/// for comparing workouts with each other.
+nonisolated enum TrainingLoad {
+    /// Each zone's weighted minutes, zones 1–5.
+    static func edwardsTRIMPByZone(timeInZones: [TimeInterval]) -> [Double] {
+        timeInZones.enumerated().map { Double($0.offset + 1) * $0.element / 60 }
     }
 
-    static func label(_ effect: Double) -> String {
-        switch effect {
-        case ..<1: "No benefit"
-        case ..<2: "Minor benefit"
-        case ..<3: "Maintaining"
-        case ..<4: "Improving"
-        case ..<5: "Highly improving"
-        default: "Overreaching"
-        }
+    static func edwardsTRIMP(timeInZones: [TimeInterval]) -> Double {
+        edwardsTRIMPByZone(timeInZones: timeInZones).reduce(0, +)
     }
 }
 

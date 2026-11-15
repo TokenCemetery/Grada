@@ -37,6 +37,7 @@ struct SnapshotBuilder {
         case .activeEnergy: try await cumulative(.activeEnergy, goal: .activeEnergy, variant)
         case .exerciseMinutes: try await cumulative(.exerciseMinutes, variant)
         case .intensityMinutes: try await intensityMinutes()
+        case .dayIntensity: try await dayIntensity()
         case .distance: try await cumulative(.distance, variant)
         case .floors: try await cumulative(.floors, goal: .floors, variant)
         case .standHours: totals(try await source.standHours(days: 8), decimals: 0, unit: "h", variant: variant)
@@ -242,19 +243,24 @@ struct SnapshotBuilder {
         guard let shown = days[shownIndex].result else {
             return CardSnapshot(period: period, value: "Calibrating", comparison: "Needs \(Baseline.minimumDays) nights of data")
         }
-        let status = Recovery.status(shown.score)
         return CardSnapshot(
             period: period,
-            value: "\(shown.score)",
-            unit: "%",
-            comparison: "\(status.word) · \(shown.reason)",
-            tone: status.tone,
-            rating: Recovery.rating(shown.score),
-            chart: variant == .week
-                ? .bars(days.map { $0.result.map { Double($0.score) } ?? 0 }, target: 100,
-                        ratings: days.map { $0.result.map { Recovery.rating($0.score) } })
-                : .progress(value: Double(shown.score), goal: 100)
+            value: shown.rating.title,
+            comparison: shown.reason,
+            tone: Self.tone(shown.rating),
+            rating: shown.rating,
+            // Each bar is the share of inputs within their threshold; a full bar means none was off.
+            chart: .bars(days.map { $0.result.map { Double($0.inRange) / Double($0.measured) } }, target: 1,
+                         ratings: days.map { $0.result?.rating })
         )
+    }
+
+    static func tone(_ rating: DayRating) -> CardSnapshot.Tone {
+        switch rating {
+        case .good: .good
+        case .fair: .neutral
+        case .poor: .warning
+        }
     }
 
     /// Recovery for each of the last `count` days, oldest first. `hasData` is false without overnight
@@ -264,19 +270,15 @@ struct SnapshotBuilder {
         let breathing = try await source.daily(.respiratoryRate, days: overnight.count)
         let nights = try await source.sleepNights(days: overnight.count)
         let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let debt = SleepNeed.debt(asleep: overnight.map { asleep[$0.wakeDay] })
-        let training = workoutMinutesPerDay(try await source.workouts(days: overnight.count), days: overnight.count)
 
         return (overnight.count - count..<overnight.count).map { index in
             let history = (index - baselineDays)..<index
-            // The need for the night ending on `index` comes from the debt and training of the day before.
-            let result = Recovery.score(Recovery.Input(
+            let result = Recovery.status(Recovery.Input(
                 hrv: overnight[index].hrv,
                 hrvHistory: overnight[history].compactMap(\.hrv),
                 restingHeartRate: overnight[index].heartRate,
                 restingHeartRateHistory: overnight[history].compactMap(\.heartRate),
                 asleep: asleep[overnight[index].wakeDay],
-                sleepNeed: SleepNeed.need(debt: debt[index - 1], trainingTime: training[index - 1] * 60),
                 respiratoryRate: breathing[index].value,
                 respiratoryRateHistory: breathing[history].compactMap(\.value)
             ))
@@ -320,8 +322,8 @@ struct SnapshotBuilder {
             value: "\(level)",
             unit: "%",
             comparison: comparison,
-            tone: Recovery.status(level).tone,
-            rating: Recovery.rating(level),
+            tone: Self.tone(Resources.rating(level)),
+            rating: Resources.rating(level),
             chart: .intraday(todayLevels.map { (hour: $0.date.timeIntervalSince(today) / 3600, value: $0.value) }, domain: 0...100)
         )
     }
@@ -351,30 +353,15 @@ struct SnapshotBuilder {
     }
 
     private func healthAgeInput(age: Int, days: Int) async throws -> HealthAge.Input {
-        let weeks = Double(days) / 7
         let exercise = try await source.daily(.exerciseMinutes, days: days).compactMap(\.value)
-        let workouts = try await source.workouts(days: days)
-        let maxHeartRate = Resources.maxHeartRate(age: age, highestRecorded: nil) ?? 220
-        let hasTraining = !workouts.isEmpty || !exercise.isEmpty
-        let overnight = try await source.overnight(days: days)
-        let consistency = overnight.indices.dropFirst(SleepConsistency.nights - 1).compactMap { end in
-            let window = overnight[(end - SleepConsistency.nights + 1)...end]
-            return SleepConsistency.score(bedtimes: window.compactMap { $0.bedtime.map(minutesAfterMidnight) },
-                                          wakeTimes: window.compactMap { $0.wakeTime.map(minutesAfterMidnight) })
-                .map { Double($0.score) }
-        }
         return HealthAge.Input(
             age: age,
+            sex: try await source.biologicalSex(),
             sleepHours: Baseline.average(try await source.sleepNights(days: days).map(\.asleep).filter { $0 > 0 }).map { $0 / 3600 },
-            sleepConsistency: Baseline.average(consistency),
             dailySteps: Baseline.average(try await source.daily(.steps, days: days).compactMap(\.value)),
             restingHeartRate: Baseline.average(try await source.daily(.restingHeartRate, days: days).compactMap(\.value)),
             vo2Max: try await source.daily(.vo2Max, days: days).compactMap(\.value).last,
-            moderateMinutesPerWeek: exercise.isEmpty ? nil : exercise.reduce(0, +) / weeks,
-            vigorousMinutesPerWeek: hasTraining ? workouts.filter { ($0.averageHeartRate ?? 0) >= 0.8 * maxHeartRate }
-                .reduce(0) { $0 + $1.duration / 60 } / weeks : nil,
-            strengthMinutesPerWeek: hasTraining ? workouts.filter { $0.name == "Strength" }
-                .reduce(0) { $0 + $1.duration / 60 } / weeks : nil
+            exerciseMinutesPerWeek: exercise.isEmpty ? nil : exercise.reduce(0, +) / (Double(days) / 7)
         )
     }
 
@@ -449,6 +436,40 @@ struct SnapshotBuilder {
         )
     }
 
+    /// Today's waking time at light effort or harder, with the last 7 days split by ACSM band.
+    private func dayIntensity() async throws -> CardSnapshot {
+        guard let days = try await dayIntensityDays(7) else {
+            return CardSnapshot(period: todayLabel, value: "Calibrating", comparison: "Needs resting and max heart rate")
+        }
+        guard let today = days.last?.seconds else { return .noData(period: todayLabel) }
+        let active = today.filter { $0.key != .veryLight }.values.reduce(0, +)
+        return CardSnapshot(
+            period: todayLabel,
+            value: Self.hoursMinutes(active),
+            comparison: "\(Self.hoursMinutes(today[.veryLight] ?? 0)) very light",
+            chart: .intensity(days.map(\.seconds))
+        )
+    }
+
+    /// Seconds per ACSM band for each of the last `count` days, oldest first; nil on days without heart rate.
+    /// Nil altogether until resting and max heart rate are known.
+    func dayIntensityDays(_ count: Int) async throws -> [(day: Date, seconds: [DayIntensity.Band: TimeInterval]?)]? {
+        let days = lastDays(count)
+        let restingHeartRate = Baseline.average(try await source.daily(.restingHeartRate, days: baselineDays).compactMap(\.value))
+        let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
+                                                  highestRecorded: try await source.highestHeartRate(days: 365))
+        guard let restingHeartRate, let maxHeartRate, maxHeartRate > restingHeartRate + 20 else { return nil }
+
+        let interval = DateInterval(start: days[0], end: max(now, days[count - 1]))
+        let byDay = Dictionary(grouping: try await source.heartRate(in: interval)) { calendar.startOfDay(for: $0.date) }
+        let sleep = try await source.sleepPeriods(in: interval)
+        let workouts = try await source.workouts(days: count).map { DateInterval(start: $0.start, duration: $0.duration) }
+        return days.map { day in
+            (day, byDay[day].map { DayIntensity.time(heartRate: $0, sleep: sleep, workouts: workouts,
+                                                      restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate) })
+        }
+    }
+
     /// Intensity minutes for each of the last `count` days, oldest first: from heart rate where the day has
     /// any, otherwise Apple's exercise minutes. Nil on days with neither.
     func intensityDays(_ count: Int) async throws -> [DayValue] {
@@ -516,7 +537,7 @@ struct SnapshotBuilder {
         }
 
         let goalIndex = shown.night.wakeDay == today ? 1 : 0
-        let goal = try await sleepGoals(2)[goalIndex].value ?? SleepNeed.baseline
+        let goal = sleepGoals(2)[goalIndex].value ?? SleepNeed.baseline
         return CardSnapshot(
             period: shown.period,
             value: Self.hoursMinutes(shown.night.asleep),
@@ -528,63 +549,71 @@ struct SnapshotBuilder {
         )
     }
 
-    /// The sleep goal for each night ending on the last `count` days, oldest first: the user's edited goal
-    /// while it holds, otherwise that night's Sleep need.
-    func sleepGoals(_ count: Int) async throws -> [DayValue] {
-        // Extra days so the sleep debt has built up by the first night, plus the day before it.
-        let warmUp = 22
-        let days = lastDays(count + warmUp)
-        let nights = try await source.sleepNights(days: days.count)
-        let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let debt = SleepNeed.debt(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } })
-        let training = workoutMinutesPerDay(try await source.workouts(days: days.count), days: days.count)
-        // The need for the night ending on a day comes from the debt and training of the day before.
-        return (warmUp..<days.count).map { index in
-            DayValue(day: days[index], value: goals.value(.sleep, on: days[index])
-                ?? SleepNeed.need(debt: debt[index - 1], trainingTime: training[index - 1] * 60))
-        }
+    /// The sleep need for each night ending on the last `count` days, oldest first: the user's edited goal
+    /// while it holds, otherwise the 7-hour guideline.
+    func sleepGoals(_ count: Int) -> [DayValue] {
+        lastDays(count).map { DayValue(day: $0, value: goals.value(.sleep, on: $0) ?? SleepNeed.baseline) }
     }
 
-    /// Tonight's need: baseline, plus part of the sleep debt, plus extra after today's training.
-    private func sleepNeed() async throws -> CardSnapshot {
-        let days = lastDays(21)
+    /// Each of the last `count` nights' shortfall below its need, and the sleep debt after it, oldest first.
+    /// Nil when there are no sleep records at all.
+    func sleepDebt(_ count: Int) async throws -> [(shortfall: TimeInterval, debt: TimeInterval)]? {
+        let days = lastDays(count + SleepNeed.debtNights - 1)
         let nights = try await source.sleepNights(days: days.count)
-        guard !nights.isEmpty else { return .noData(period: tonightLabel) }
+        guard !nights.isEmpty else { return nil }
         let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let debt = SleepNeed.debt(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } })
-        let trainingToday = workoutMinutesPerDay(try await source.workouts(days: 1), days: 1)[0] * 60
-        let owed = debt[debt.count - 1]
+        let shortfalls = SleepNeed.shortfalls(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } },
+                                              need: sleepGoals(days.count).map { $0.value ?? SleepNeed.baseline })
+        return Array(zip(shortfalls, SleepNeed.debt(shortfalls: shortfalls)).suffix(count))
+            .map { (shortfall: $0.0, debt: $0.1) }
+    }
+
+    /// Tonight's need, the debt from the last 14 nights, and each of the last 7 nights' shortfall.
+    private func sleepNeed() async throws -> CardSnapshot {
+        guard let nights = try await sleepDebt(7) else { return .noData(period: tonightLabel) }
+        let need = goals.value(.sleep, on: calendar.startOfDay(for: now)) ?? SleepNeed.baseline
+        let owed = nights[nights.count - 1].debt
         return CardSnapshot(
             period: tonightLabel,
-            value: Self.hoursMinutes(SleepNeed.need(debt: owed, trainingTime: trainingToday)),
-            comparison: owed >= 5 * 60 ? "Sleep debt \(Self.hoursMinutes(owed))" : "No sleep debt",
-            chart: .bars(debt.suffix(7).map { $0 / 3600 })
+            value: Self.hoursMinutes(need),
+            comparison: owed >= 5 * 60 ? "Sleep debt \(Self.hoursMinutes(owed)) · \(SleepNeed.debtNights) nights" : "No sleep debt",
+            chart: .bars(nights.map { $0.shortfall / 3600 })
         )
     }
 
-    /// Bed and wake time regularity over the last 4 nights.
+    /// The Sleep Regularity Index over the last week, rated against UK Biobank adults, with the last 7 days.
     private func sleepConsistency() async throws -> CardSnapshot {
-        let period = "Last \(SleepConsistency.nights) nights"
-        let overnight = try await source.overnight(days: 7 + SleepConsistency.nights - 1)
-        guard overnight.contains(where: { $0.wakeTime != nil }) else { return .noData(period: period) }
-
-        func result(endingAt end: Int) -> SleepConsistency.Result? {
-            let window = overnight[max(end - SleepConsistency.nights + 1, 0)...end]
-            return SleepConsistency.score(bedtimes: window.compactMap { $0.bedtime.map(minutesAfterMidnight) },
-                                          wakeTimes: window.compactMap { $0.wakeTime.map(minutesAfterMidnight) })
+        let period = "Last \(SleepConsistency.days) days"
+        let days = try await sleepRegularity(7)
+        guard days.contains(where: { $0.hasData }) else { return .noData(period: period) }
+        guard let shown = days.last?.index ?? days.dropLast().last?.index else {
+            return CardSnapshot(period: period, value: "Calibrating",
+                                comparison: "Needs \(SleepConsistency.minimumDays) of \(SleepConsistency.days) nights")
         }
-        let last = overnight.count - 1
-        // Until last night is recorded, the window ending yesterday.
-        guard let shown = result(endingAt: last) ?? result(endingAt: last - 1) else {
-            return CardSnapshot(period: period, value: "Calibrating", comparison: "Needs 3 nights of data")
-        }
+        let rating = SleepConsistency.rating(shown)
         return CardSnapshot(
             period: period,
-            value: "\(shown.score)",
-            unit: "%",
-            comparison: "Bed ±\(Int(shown.bedtimeSpread.rounded()))m · wake ±\(Int(shown.wakeSpread.rounded()))m",
-            chart: .bars((last - 6...last).map { result(endingAt: $0).map { Double($0.score) } ?? 0 })
+            value: format(shown, 0),
+            comparison: "Typical adult \(format(SleepConsistency.populationMedian, 0))",
+            tone: Self.tone(rating),
+            rating: rating,
+            chart: .bars(days.map { $0.index.map { max($0, 0) } }, target: 100,
+                         ratings: days.map { $0.index.map(SleepConsistency.rating) })
         )
+    }
+
+    /// The Sleep Regularity Index for the week ending at noon on each of the last `count` days, oldest first.
+    /// Today's week ends now. `hasData` is false without any sleep record in that week.
+    func sleepRegularity(_ count: Int) async throws -> [(day: Date, hasData: Bool, index: Double?)] {
+        let days = lastDays(count)
+        let noon = { (day: Date) in self.calendar.date(byAdding: .hour, value: 12, to: day)! }
+        let first = calendar.date(byAdding: .day, value: -SleepConsistency.days, to: noon(days[0]))!
+        let sleep = try await source.sleepPeriods(in: DateInterval(start: first, end: max(now, first)))
+        return days.map { day in
+            let start = calendar.date(byAdding: .day, value: -SleepConsistency.days, to: noon(day))!
+            let hasData = sleep.contains { $0.stage != .awake && $0.end > start && $0.start < noon(day) }
+            return (day, hasData, SleepConsistency.index(sleep: sleep, start: start, until: min(now, noon(day))))
+        }
     }
 
     // MARK: - Training
@@ -711,10 +740,6 @@ struct SnapshotBuilder {
         let total = Int(seconds.rounded())
         let (hours, minutes, secs) = (total / 3600, total % 3600 / 60, total % 60)
         return hours > 0 ? String(format: "%d:%02d:%02d", hours, minutes, secs) : String(format: "%d:%02d", minutes, secs)
-    }
-
-    private func minutesAfterMidnight(_ date: Date) -> Double {
-        date.timeIntervalSince(calendar.startOfDay(for: date)) / 60
     }
 
     static func signedMinutes(_ seconds: TimeInterval) -> String {

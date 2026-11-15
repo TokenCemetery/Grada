@@ -146,6 +146,9 @@ struct SampleDataSource: HealthDataSource {
                 base = 140
             } else if asleep.contains(where: { time >= $0.start && time < $0.end && $0.stage != .awake }) {
                 base = 51
+            } else if (12..<13).contains(calendar.component(.hour, from: time)) {
+                // A lunchtime walk: light effort, below moderate, so Intensity Minutes don't change.
+                base = 97
             } else {
                 base = 72
             }
@@ -159,7 +162,10 @@ struct SampleDataSource: HealthDataSource {
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] {
         let cycle: [(SleepStage, TimeInterval)] = [(.core, 45 * 60), (.deep, 20 * 60), (.rem, 20 * 60), (.awake, 5 * 60)]
         var periods: [SleepPeriod] = []
-        for day in lastDays(8) {
+        // Every night whose wake-up falls in the interval, so long windows (e.g. sleep regularity) have data too.
+        let first = calendar.startOfDay(for: interval.start)
+        let days = (calendar.dateComponents([.day], from: first, to: calendar.startOfDay(for: min(interval.end, .now))).day ?? 0) + 1
+        for day in (0..<max(days, 1)).map({ calendar.date(byAdding: .day, value: $0, to: first)! }) {
             var time = calendar.date(byAdding: .hour, value: -1, to: day)!
             let wake = calendar.date(byAdding: .hour, value: 7, to: day)!
             var index = 0

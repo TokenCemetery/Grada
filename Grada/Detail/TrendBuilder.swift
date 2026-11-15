@@ -68,6 +68,8 @@ struct TrendBuilder {
     let source: HealthDataSource
     var calendar: Calendar = .current
     var usesMetric: Bool = Locale.current.measurementSystem != .us
+    /// The user's goals, for series that depend on them, e.g. sleep debt.
+    var goals = GoalHistory()
 
     /// History used for personal normal ranges, as on the cards.
     private let baselineDays = 30
@@ -88,6 +90,11 @@ struct TrendBuilder {
         case .intensityMinutes:
             return make(try await cardBuilder.intensityDays(days), period, style: .bars, unit: "min",
                         format: .number(decimals: 0), weeklyTotals: true)
+        case .dayIntensity:
+            let active = (try await cardBuilder.dayIntensityDays(days) ?? []).map { day in
+                DayValue(day: day.day, value: day.seconds.map { $0.filter { $0.key != .veryLight }.values.reduce(0, +) / 3600 })
+            }
+            return make(active, period, style: .bars, unit: "h", format: .number(decimals: 1), title: "Light or harder")
         case .standHours:
             return make(try await source.standHours(days: days), period, style: .bars, unit: "h", format: .number(decimals: 0))
         case .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .heartRate:
@@ -113,9 +120,9 @@ struct TrendBuilder {
         case .healthStatus:
             return try await healthStatus(period)
         case .recovery:
-            let scores = try await cardBuilder.recoveryDays(days)
-                .map { DayValue(day: $0.day, value: $0.result.map { Double($0.score) }) }
-            return make(scores, period, style: .line, unit: "%", format: .number(decimals: 0))
+            let inRange = try await cardBuilder.recoveryDays(days)
+                .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
+            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: "Inputs in range")
         // TODO(#42, later): Resources needs each day's timeline re-simulated from 5-minute heart rate, and
         // Health age a 30-day window per point. Both are too slow to run per chart; store daily values first.
         case .resources, .healthAge:
@@ -173,30 +180,16 @@ struct TrendBuilder {
                      average: Baseline.average(values), low: values.min(), high: values.max())
     }
 
-    private func sleepNeed(_ period: TrendPeriod) async throws -> Trend {
-        // Extra days so the sleep debt has built up by the first shown day.
-        let warmUp = 21
-        let days = lastDays(period.days + warmUp)
-        let nights = try await source.sleepNights(days: days.count)
-        let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let debt = SleepNeed.debt(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } })
-        let training = minutesPerDay(try await source.workouts(days: days.count), days: days.count)
-        let needs = days.indices.map { index in
-            DayValue(day: days[index], value: SleepNeed.need(debt: debt[index], trainingTime: training[index].value! * 60) / 3600)
-        }
-        return make(Array(needs.suffix(period.days)), period, style: .bars, unit: "", format: .hours, title: "Sleep need")
+    /// Sleep debt after each night, as the Sleep Need card counts it.
+    private func sleepNeed(_ period: TrendPeriod) async throws -> Trend? {
+        guard let nights = try await cardBuilder.sleepDebt(period.days) else { return nil }
+        let debt = zip(lastDays(period.days), nights).map { DayValue(day: $0, value: $1.debt / 3600) }
+        return make(debt, period, style: .bars, unit: "", format: .hours, title: "Sleep debt")
     }
 
     private func sleepConsistency(_ period: TrendPeriod) async throws -> Trend {
-        let window = SleepConsistency.nights
-        let overnight = try await source.overnight(days: period.days + window - 1)
-        let scores = (window - 1..<overnight.count).map { end in
-            let nights = overnight[(end - window + 1)...end]
-            let score = SleepConsistency.score(bedtimes: nights.compactMap { $0.bedtime.map(minutesAfterMidnight) },
-                                               wakeTimes: nights.compactMap { $0.wakeTime.map(minutesAfterMidnight) })
-            return DayValue(day: overnight[end].wakeDay, value: score.map { Double($0.score) })
-        }
-        return make(scores, period, style: .line, unit: "%", format: .number(decimals: 0))
+        let indexes = try await cardBuilder.sleepRegularity(period.days).map { DayValue(day: $0.day, value: $0.index) }
+        return make(indexes, period, style: .line, unit: "", format: .number(decimals: 0), title: "Sleep Regularity Index")
     }
 
     /// The 7-night average for each day, with the shown day's baseline as the normal range.
@@ -280,6 +273,7 @@ struct TrendBuilder {
     private var cardBuilder: SnapshotBuilder {
         var builder = SnapshotBuilder(source: source)
         builder.calendar = calendar
+        builder.goals = goals
         if !calendar.isDateInToday(shownDay) {
             builder.now = calendar.date(byAdding: .day, value: 1, to: shownDay)!.addingTimeInterval(-1)
         }
@@ -289,9 +283,5 @@ struct TrendBuilder {
     private var shownDay: Date {
         (source as? PastDaySource).map { calendar.date(byAdding: .day, value: -1, to: $0.dayEnd)! }
             ?? calendar.startOfDay(for: .now)
-    }
-
-    private func minutesAfterMidnight(_ date: Date) -> Double {
-        date.timeIntervalSince(calendar.startOfDay(for: date)) / 60
     }
 }

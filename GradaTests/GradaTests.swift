@@ -118,9 +118,10 @@ struct CardVariantTests {
 
     @Test func recoveryColorsEachDay() async throws {
         let week = try await builder.snapshot(for: .recovery, variant: .week)
-        guard case .bars(let scores, 100, let ratings?) = week.chart else { Issue.record("\(week.chart)"); return }
-        #expect(ratings.count == scores.count)
-        #expect(week.rating != nil)
+        guard case .bars(let shares, 1, let ratings?) = week.chart else { Issue.record("\(week.chart)"); return }
+        #expect(ratings.count == shares.count)
+        #expect(shares.allSatisfy { ($0 ?? 0) <= 1 }, "Each bar is the share of inputs in range")
+        #expect(week.rating.map(\.title) == week.value)
     }
 
     @Test func scoresAreRated() async throws {
@@ -132,9 +133,9 @@ struct CardVariantTests {
 }
 
 struct RatingTests {
-    @Test func recoveryBands() {
-        #expect([Recovery.rating(80), Recovery.rating(50), Recovery.rating(20)] == [.good, .fair, .poor])
-        #expect([Recovery.rating(67), Recovery.rating(66), Recovery.rating(34), Recovery.rating(33)] == [.good, .fair, .fair, .poor])
+    @Test func resourcesBands() {
+        #expect([Resources.rating(80), Resources.rating(50), Resources.rating(20)] == [.good, .fair, .poor])
+        #expect([Resources.rating(67), Resources.rating(66), Resources.rating(34), Resources.rating(33)] == [.good, .fair, .fair, .poor])
     }
 
     @Test func wristTempOnlyFlagsARise() {
@@ -145,14 +146,14 @@ struct RatingTests {
         #expect(DayRatings.range(36.4, normal: normal, higherIsBetter: false) == .poor)
     }
 
-    @Test func vo2MaxZonesFollowTheCooperTable() {
+    @Test func vo2MaxZonesFollowFRIENDPercentiles() {
         let men = VO2MaxZones.bounds(age: 25, sex: .male)
-        #expect(men == [36.5, 42.5, 46.5, 52.5])
-        #expect(VO2MaxZones.zone(36.4, bounds: men) == .poor)
-        #expect(VO2MaxZones.zone(42.5, bounds: men) == .good)
-        #expect(VO2MaxZones.zone(60, bounds: men) == .superior)
-        #expect(VO2MaxZones.bounds(age: 25, sex: .female) == [29.0, 33.0, 37.0, 41.1])
-        #expect(VO2MaxZones.bounds(age: 70, sex: .male) == VO2MaxZones.bounds(age: 60, sex: .male))
+        #expect(men == [40.1, 48.0, 55.2, 61.8])
+        #expect(VO2MaxZones.zone(40.0, bounds: men) == .poor)
+        #expect(VO2MaxZones.zone(48.0, bounds: men) == .good)
+        #expect(VO2MaxZones.zone(65, bounds: men) == .superior)
+        #expect(VO2MaxZones.bounds(age: 18, sex: .female) == VO2MaxZones.bounds(age: 25, sex: .female))
+        #expect(VO2MaxZones.bounds(age: 85, sex: .male) == VO2MaxZones.bounds(age: 75, sex: .male))
     }
 
     @Test func raceTrendIgnoresSmallChanges() {
@@ -380,7 +381,8 @@ struct IntensityMinutesTests {
 }
 
 struct HRVStatusTests {
-    /// 20 nights around 60 ms: SD ≈ 2, so the 6% minimum applies and the baseline is 56.4–63.6.
+    /// 20 nights of 58 and 62 ms: ln SD ≈ 0.034, so the 0.05 floor applies and the baseline is the geometric
+    /// mean 59.97 × e^±0.025, about 58.49–61.48.
     private let history: [Double?] = (0..<20).map { $0.isMultiple(of: 2) ? 58 : 62 }
 
     private func status(window: [Double?], history: [Double?]? = nil) -> HRVStatus.Result? {
@@ -399,85 +401,86 @@ struct HRVStatusTests {
     @Test func averageInsideBaselineIsBalanced() throws {
         let result = try #require(status(window: Array(repeating: 61, count: 7)))
         #expect(result.state == .balanced)
-        #expect(abs(result.baseline.lowerBound - 56.4) < 0.01)
-        #expect(abs(result.baseline.upperBound - 63.6) < 0.01)
+        #expect(abs(result.baseline.lowerBound - 58.487) < 0.01)
+        #expect(abs(result.baseline.upperBound - 61.484) < 0.01)
     }
 
     @Test func averageAboveOrSlightlyBelowIsUnbalanced() throws {
         #expect(try #require(status(window: Array(repeating: 66, count: 7))).state == .unbalanced)
-        #expect(try #require(status(window: Array(repeating: 54, count: 7))).state == .unbalanced)
+        #expect(try #require(status(window: Array(repeating: 57.5, count: 7))).state == .unbalanced)
     }
 
+    /// More than one SD (0.05 in ln terms) below the baseline mean: 54 ms is ln −0.105.
     @Test func averageWellBelowIsLow() throws {
+        #expect(try #require(status(window: Array(repeating: 54, count: 7))).state == .low)
         #expect(try #require(status(window: Array(repeating: 50, count: 7))).state == .low)
     }
 
     @Test func missingNightsAreSkipped() throws {
         let result = try #require(status(window: [nil, 61, nil, 61, nil, 61, 61]))
-        #expect(result.average == 61)
+        #expect(abs(result.average - 61) < 1e-9)
     }
 }
 
 @MainActor
 struct RecoveryTests {
+    /// ln SD ≈ 0.035, below the 0.05 floor, so HRV is off below the geometric mean × e^−0.025 ≈ 59.46 ms.
     private let hrvHistory: [Double] = [58, 62, 60, 64, 60, 58, 62, 60, 64, 62]
+    /// Mean 54, SD ≈ 0.82 → 1.5 bpm floor, so resting HR is off above 54.75.
     private let rhrHistory: [Double] = [54, 55, 53, 54, 55, 53, 54, 54, 55, 53]
+    /// Mean 14.5, SD ≈ 0.2 → 1 breath floor, so breathing is off above 15.5.
+    private let breathingHistory: [Double] = [14.2, 14.6, 14.4, 14.8, 14.5, 14.3, 14.7, 14.5]
+
+    private func input(hrv: Double? = 61, rhr: Double? = 54, asleep: TimeInterval? = 8 * 3600,
+                       breathing: Double? = nil) -> Recovery.Input {
+        Recovery.Input(hrv: hrv, hrvHistory: hrv == nil ? [] : hrvHistory, restingHeartRate: rhr,
+                       restingHeartRateHistory: rhr == nil ? [] : rhrHistory, asleep: asleep,
+                       respiratoryRate: breathing, respiratoryRateHistory: breathing == nil ? [] : breathingHistory)
+    }
 
     @Test func calibratingWithoutEnoughHistory() {
         let input = Recovery.Input(hrv: 60, hrvHistory: [60, 61], restingHeartRate: 54, restingHeartRateHistory: [54], asleep: 8 * 3600)
-        #expect(Recovery.score(input) == nil)
+        #expect(Recovery.status(input) == nil)
     }
 
-    @Test func normalNightScoresGood() throws {
-        let input = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54,
-                                   restingHeartRateHistory: rhrHistory, asleep: 8 * 3600)
-        let result = try #require(Recovery.score(input))
-        #expect(result.score >= 67)
-        #expect(result.reason == "Close to your normal")
+    @Test func nothingOffIsGood() throws {
+        let result = try #require(Recovery.status(input(breathing: 14.6)))
+        #expect(result == Recovery.Result(rating: .good, measured: 4, inRange: 4, reason: "Close to your normal"))
     }
 
-    @Test func lowHRVDragsScoreDownAndIsNamed() throws {
-        let input = Recovery.Input(hrv: 48, hrvHistory: hrvHistory, restingHeartRate: 54,
-                                   restingHeartRateHistory: rhrHistory, asleep: 8 * 3600)
-        let result = try #require(Recovery.score(input))
-        #expect(result.score < 50)
-        #expect(result.reason == "HRV below normal")
+    /// HRV and resting HR flag at the smallest worthwhile change, 0.5 SD, and only in the direction of fatigue.
+    @Test func hrvAndRestingHeartRateFlagAtHalfASD() throws {
+        #expect(try #require(Recovery.status(input(hrv: 59.6))).rating == .good)
+        #expect(try #require(Recovery.status(input(hrv: 59.3))).reason == "HRV below normal")
+        #expect(try #require(Recovery.status(input(hrv: 80))).rating == .good, "High HRV isn't a fatigue sign")
+        #expect(try #require(Recovery.status(input(rhr: 54.7))).rating == .good)
+        #expect(try #require(Recovery.status(input(rhr: 55))).reason == "Resting HR high")
+        #expect(try #require(Recovery.status(input(rhr: 48))).rating == .good, "Low resting HR isn't a fatigue sign")
     }
 
-    @Test func shortSleepIsNamed() throws {
-        let input = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54,
-                                   restingHeartRateHistory: rhrHistory, asleep: 5 * 3600)
-        #expect(try #require(Recovery.score(input)).reason == "Short sleep")
+    /// AASM/SRS: at least 7 hours.
+    @Test func sleepUnderSevenHoursIsOff() throws {
+        #expect(try #require(Recovery.status(input(asleep: 7 * 3600))).rating == .good)
+        let short = try #require(Recovery.status(input(asleep: 7 * 3600 - 60)))
+        #expect(short.rating == .fair)
+        #expect(short.reason == "Short sleep")
     }
 
-    @Test func raisedBreathingLowersScoreAndIsNamed() throws {
-        let history: [Double] = [14.2, 14.6, 14.4, 14.8, 14.5, 14.3, 14.7, 14.5]
-        let normal = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54, restingHeartRateHistory: rhrHistory,
-                                    asleep: 8 * 3600, respiratoryRate: 14.5, respiratoryRateHistory: history)
-        var raised = normal
-        raised.respiratoryRate = 17.5
-        let normalResult = try #require(Recovery.score(normal))
-        let raisedResult = try #require(Recovery.score(raised))
-        #expect(raisedResult.score < normalResult.score - 10)
-        #expect(raisedResult.reason == "Breathing rate up")
+    @Test func onlyRaisedBreathingIsOff() throws {
+        #expect(try #require(Recovery.status(input(breathing: 15.4))).rating == .good)
+        #expect(try #require(Recovery.status(input(breathing: 12))).rating == .good)
+        #expect(try #require(Recovery.status(input(breathing: 15.6))).reason == "Breathing rate up")
     }
 
-    @Test func lowBreathingDoesNotRaiseScore() throws {
-        let history: [Double] = [14.2, 14.6, 14.4, 14.8, 14.5, 14.3, 14.7, 14.5]
-        let base = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54, restingHeartRateHistory: rhrHistory,
-                                  asleep: 8 * 3600)
-        var low = base
-        low.respiratoryRate = 12
-        low.respiratoryRateHistory = history
-        #expect(Recovery.score(low) == Recovery.score(base))
+    @Test func twoOrMoreOffIsPoorAndCounted() throws {
+        let result = try #require(Recovery.status(input(hrv: 50, rhr: 58, asleep: 5 * 3600, breathing: 17)))
+        #expect(result == Recovery.Result(rating: .poor, measured: 4, inRange: 0, reason: "HRV below normal · 3 more off"))
+        #expect(try #require(Recovery.status(input(hrv: 50, asleep: 6 * 3600))).rating == .poor)
     }
 
     @Test func missingHRVUsesRestingHeartRateAlone() throws {
-        let input = Recovery.Input(hrv: nil, hrvHistory: [], restingHeartRate: 50,
-                                   restingHeartRateHistory: rhrHistory, asleep: nil)
-        let result = try #require(Recovery.score(input))
-        #expect(result.score > 65)
-        #expect(result.reason == "Resting HR low")
+        let result = try #require(Recovery.status(input(hrv: nil, asleep: nil)))
+        #expect(result == Recovery.Result(rating: .good, measured: 1, inRange: 1, reason: "Close to your normal"))
     }
 }
 
@@ -557,70 +560,136 @@ struct ResourcesTests {
 
     @Test func maxHeartRateFromAgeFirst() {
         #expect(Resources.maxHeartRate(age: 40, highestRecorded: 195) == 180)
+        #expect(Resources.maxHeartRate(age: 60, highestRecorded: nil) == 166, "Tanaka: 208 − 0.7 × age, not 220 − age")
         #expect(Resources.maxHeartRate(age: nil, highestRecorded: 195) == 195)
     }
 }
 
 @MainActor
 struct SleepNeedTests {
-    @Test func shortNightsBuildDebtAndLongNightsRepayIt() {
-        let debt = SleepNeed.debt(asleep: [6 * 3600, nil, 7 * 3600, 10 * 3600, 9 * 3600])
-        // 7 h after 2 h of debt: three quarters of it remain, plus the new hour.
-        #expect(debt.map { $0 / 3600 } == [2, 2, 2.5, 0, 0])
+    /// AASM/SRS (Watson et al. 2015): adults need at least 7 hours.
+    @Test func needIsTheSevenHourGuideline() {
+        #expect(SleepNeed.baseline == 7 * 3600)
+        #expect(Recovery.minimumSleep == SleepNeed.baseline)
     }
 
-    @Test func steadyShortfallSettlesInsteadOfGrowing() {
-        let debt = SleepNeed.debt(asleep: Array(repeating: 7.5 * 3600, count: 60))
-        #expect(abs(debt.last! - 2 * 3600) < 60)
+    @Test func shortfallCountsOnlyNightsBelowTheirNeed() {
+        let shortfalls = SleepNeed.shortfalls(asleep: [6 * 3600, nil, 7 * 3600, 9 * 3600, 7.5 * 3600],
+                                              need: [7 * 3600, 7 * 3600, 7 * 3600, 7 * 3600, 8 * 3600])
+        #expect(shortfalls.map { $0 / 3600 } == [1, 0, 0, 0, 0.5])
     }
 
-    @Test func needAddsPartOfDebtAndTraining() {
-        #expect(SleepNeed.need(debt: 0, trainingTime: 0) == 8 * 3600)
-        // A quarter of 2 h debt, plus 15 min for an hour of training.
-        #expect(SleepNeed.need(debt: 2 * 3600, trainingTime: 3600) == 8 * 3600 + 30 * 60 + 15 * 60)
-        // Both extras are capped.
-        #expect(SleepNeed.need(debt: 10 * 3600, trainingTime: 6 * 3600) == 8 * 3600 + 90 * 60 + 45 * 60)
+    /// Van Dongen et al. 2003: deficits build over 14 nights. Long nights don't pay it back early.
+    @Test func debtSumsTheLastFourteenNights() {
+        let shortfalls: [TimeInterval] = [3600] + Array(repeating: 0, count: 13) + [1800, 0]
+        let debt = SleepNeed.debt(shortfalls: shortfalls)
+        #expect(debt[0] == 3600)
+        #expect(debt[13] == 3600, "Still inside the 14-night window")
+        #expect(debt[14] == 1800, "The first night has dropped out")
+        #expect(debt[15] == 1800)
+    }
+
+    @Test func cardShowsNeedDebtAndAWeekOfShortfalls() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepNeed)
+        #expect(snapshot.value == "7h 00m")
+        guard case .bars(let shortfalls, _, _) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(shortfalls.count == 7)
     }
 }
 
 @MainActor
 struct SleepConsistencyTests {
-    @Test func sameTimesEveryNightScoresFull() throws {
-        let result = try #require(SleepConsistency.score(bedtimes: [1380, 1380, 1380], wakeTimes: [420, 420, 420]))
-        #expect(result.score == 100)
+    /// Noon; nights are placed in hours after it, so 11 is 23:00 and 19 is 07:00 the next morning.
+    private let noon = Date(timeIntervalSince1970: 1_700_000_000)
+
+    private func night(_ day: Int, from start: Double, to end: Double, stage: SleepStage? = .core) -> SleepPeriod {
+        SleepPeriod(start: noon.addingTimeInterval((Double(day) * 24 + start) * 3600),
+                    end: noon.addingTimeInterval((Double(day) * 24 + end) * 3600), stage: stage)
     }
 
-    @Test func bedtimesAcrossMidnightAreNotFarApart() throws {
-        // 23:30, 00:30, 23:30, 00:30: half an hour either side, not 23 hours.
-        let result = try #require(SleepConsistency.score(bedtimes: [1410, 30, 1410, 30], wakeTimes: [420, 420, 420, 420]))
-        #expect(result.bedtimeSpread == 30)
-        #expect(result.score == 88)
+    @Test func identicalDaysScore100() throws {
+        let sleep = (0..<7).map { night($0, from: 11, to: 19) }
+        #expect(try #require(SleepConsistency.index(sleep: sleep, start: noon)) == 100)
     }
 
-    @Test func needsThreeNights() {
-        #expect(SleepConsistency.score(bedtimes: [1380, 1380], wakeTimes: [420, 420]) == nil)
+    /// Phillips et al. 2017: 200 × P − 100. Alternating 23:00–07:00 and 01:00–09:00 nights differ in 4 of every
+    /// 24 hours, so P = 20/24 and the index is 200 × 20/24 − 100 ≈ 66.7.
+    @Test func twoHourShiftEveryOtherNightMatchesTheFormula() throws {
+        let sleep = (0..<7).map { $0.isMultiple(of: 2) ? night($0, from: 11, to: 19) : night($0, from: 13, to: 21) }
+        let index = try #require(SleepConsistency.index(sleep: sleep, start: noon))
+        #expect(abs(index - (200 * 20 / 24 - 100)) < 0.01)
+    }
+
+    /// Random states agree half the time: 200 × 0.5 − 100 = 0. Sleeping exactly the opposite half of each
+    /// consecutive day gives −100.
+    @Test func oppositeDaysScoreMinus100() throws {
+        let sleep = (0..<7).map { $0.isMultiple(of: 2) ? night($0, from: 0, to: 12) : night($0, from: 12, to: 24) }
+        #expect(try #require(SleepConsistency.index(sleep: sleep, start: noon)) == -100)
+    }
+
+    @Test func daysWithoutARecordAreLeftOutAndTooFewGiveNothing() throws {
+        let missingOne = (0..<7).filter { $0 != 3 }.map { night($0, from: 11, to: 19) }
+        #expect(try #require(SleepConsistency.index(sleep: missingOne, start: noon)) == 100, "Pairs with day 3 are skipped")
+        let fourDays = (0..<4).map { night($0, from: 11, to: 19) }
+        #expect(SleepConsistency.index(sleep: fourDays, start: noon) == nil)
+    }
+
+    @Test func awakeInBedCountsAsAwake() throws {
+        var sleep = (0..<7).map { night($0, from: 11, to: 19) }
+        sleep.append(night(3, from: 14, to: 16, stage: .awake))
+        // Day 3 is still asleep 01:00–03:00 in its core period, so the awake entry changes nothing.
+        #expect(try #require(SleepConsistency.index(sleep: sleep, start: noon)) == 100)
+    }
+
+    /// UK Biobank (Windred et al. 2024): median 81.0, lower quartile 73.8.
+    @Test func ratedAgainstUKBiobankAdults() {
+        #expect(SleepConsistency.rating(81) == .good)
+        #expect(SleepConsistency.rating(80.9) == .fair)
+        #expect(SleepConsistency.rating(73.8) == .fair)
+        #expect(SleepConsistency.rating(73.7) == .poor)
+    }
+
+    @Test func cardShowsTheIndexAndAWeek() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepConsistency)
+        #expect(snapshot.value != nil && snapshot.value != "Calibrating")
+        #expect(snapshot.rating != nil)
+        guard case .bars(let days, 100, _) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(days.count == 7)
     }
 }
 
 @MainActor
 struct HealthAgeTests {
     @Test func fitHabitsLowerHealthAge() throws {
-        let fit = HealthAge.Input(age: 40, sleepHours: 7.5, sleepConsistency: 85, dailySteps: 11_000, restingHeartRate: 50,
-                                  vo2Max: 50, moderateMinutesPerWeek: 250, vigorousMinutesPerWeek: 90, strengthMinutesPerWeek: 90)
-        let unfit = HealthAge.Input(age: 40, sleepHours: 5.5, sleepConsistency: 50, dailySteps: 3_000, restingHeartRate: 75,
-                                    vo2Max: 30, moderateMinutesPerWeek: 20, vigorousMinutesPerWeek: 0, strengthMinutesPerWeek: 0)
+        let fit = HealthAge.Input(age: 40, sex: .male, sleepHours: 7.5, dailySteps: 11_000, restingHeartRate: 50,
+                                  vo2Max: 50, exerciseMinutesPerWeek: 250)
+        let unfit = HealthAge.Input(age: 40, sex: .male, sleepHours: 5.5, dailySteps: 3_000, restingHeartRate: 75,
+                                    vo2Max: 30, exerciseMinutesPerWeek: 20)
         #expect(try #require(HealthAge.age(fit)) < 35)
         #expect(try #require(HealthAge.age(unfit)) > 50)
     }
 
-    @Test func needsThreeInputs() {
-        #expect(HealthAge.age(HealthAge.Input(age: 40, dailySteps: 8_000, restingHeartRate: 60)) == nil)
+    /// A typical adult who meets the guidelines is their own age.
+    @Test func typicalAdultIsTheirOwnAge() throws {
+        let typical = HealthAge.Input(age: 45, sex: .female, sleepHours: 7.5, dailySteps: 7_803, restingHeartRate: 71,
+                                      vo2Max: 26.7, exerciseMinutesPerWeek: 200)
+        #expect(abs(try #require(HealthAge.age(typical)) - 45) < 0.001)
     }
 
-    @Test func paceComparesRecentWithBaseline() {
-        #expect(HealthAge.pace(recent: 38, baseline: 38) == 1)
-        #expect(HealthAge.pace(recent: 37, baseline: 38) == 0.5)
-        #expect(HealthAge.pace(recent: 30, baseline: 38) == -1)
+    /// FRIEND registry medians: a 45-year-old woman at 26.7 is average, while a man at 26.7 is 11.1 below his.
+    @Test func vo2MaxIsComparedWithTheNormForAgeAndSex() throws {
+        func vo2Years(_ sex: BiologicalSex?) -> Double? {
+            HealthAge.impacts(HealthAge.Input(age: 45, sex: sex, vo2Max: 26.7)).first { $0.name == "VO₂ Max" }?.years
+        }
+        #expect(vo2Years(.female) == 0)
+        #expect(try #require(vo2Years(.male)) > 4)
+        #expect(vo2Years(nil) == nil, "Without sex there is no norm to compare with")
+        #expect(HealthAge.expectedVO2Max(age: 18, sex: .male) == 48.0)
+        #expect(HealthAge.expectedVO2Max(age: 85, sex: .female) == 18.3)
+    }
+
+    @Test func needsThreeInputs() {
+        #expect(HealthAge.age(HealthAge.Input(age: 40, dailySteps: 8_000, restingHeartRate: 60)) == nil)
     }
 }
 
@@ -651,7 +720,7 @@ struct HealthProfileTests {
     @Test func maxHeartRateComesFromAgeWhenKnown() async throws {
         let profile = try await HealthProfile.load(from: SampleDataSource())
         #expect(profile.age == 35)
-        #expect(profile.maxHeartRate == 185)
+        #expect(profile.maxHeartRate == 183.5)
         #expect(profile.maxHeartRateSource == .age)
         #expect(profile.restingHeartRate != nil)
     }
@@ -1036,13 +1105,9 @@ struct WorkoutDetailTests {
         #expect(seconds == [0, 0, 60, 0, HeartRateZones.maxGap])
     }
 
-    @Test func trainingEffectGrowsWithLoadAndCapsAtFive() {
-        #expect(TrainingEffect.aerobic(timeInZones: [0, 0, 0, 0, 0]) == 0)
-        let steadyRun = TrainingEffect.aerobic(timeInZones: [0, 0, 45 * 60, 0, 0])
-        #expect((2.8...3.2).contains(steadyRun))
-        #expect(TrainingEffect.label(steadyRun) == "Maintaining" || TrainingEffect.label(steadyRun) == "Improving")
-        #expect(TrainingEffect.aerobic(timeInZones: [0, 0, 0, 0, 300 * 60]) == 5)
-        #expect(TrainingEffect.label(5) == "Overreaching")
+    @Test func trainingLoadSplitsByZone() {
+        #expect(TrainingLoad.edwardsTRIMP(timeInZones: [0, 0, 0, 0, 0]) == 0)
+        #expect(TrainingLoad.edwardsTRIMPByZone(timeInZones: [600, 0, 1200, 0, 300]) == [10, 0, 60, 0, 25])
     }
 
     @Test func splitsInterpolateEachKilometer() {
@@ -1085,5 +1150,198 @@ struct WorkoutDetailTests {
     @Test func runsSplitPerKilometerOrMile() {
         #expect(DistanceUnits(sport: "Run", isUS: false).paceOrSpeed(meters: 5000, seconds: 1500).value == "5:00 /km")
         #expect(DistanceUnits(sport: "Run", isUS: true).splitMeters == 1_609.344)
+    }
+}
+
+/// Calculations checked against the numbers published in the papers and tables they come from.
+struct PublishedReferenceTests {
+    /// Tanaka, Monahan & Seals 2001 (JACC 37:153): 208 − 0.7 × age; the paper's example is 166 bpm at 60.
+    /// Cross-checked with maximal treadmill tests in the FRIEND registry (Kaminsky et al. 2015, Mayo Clin Proc
+    /// 90:1515, Table 2): the prediction at each decade's midpoint is within one SD of the measured mean.
+    @Test func maxHeartRateMatchesTanakaAndMeasuredFRIENDValues() throws {
+        #expect(Resources.maxHeartRate(age: 60, highestRecorded: nil) == 166)
+        // Decade → measured HRmax mean and SD for men, then women.
+        let measured: [(age: Int, men: (Double, Double), women: (Double, Double))] = [
+            (25, (190, 11), (189, 12)), (35, (185, 11), (184, 11)), (45, (176, 14), (176, 14)),
+            (55, (168, 14), (167, 15)), (65, (158, 17), (157, 17)), (75, (147, 20), (147, 21)),
+        ]
+        for decade in measured {
+            let predicted = try #require(Resources.maxHeartRate(age: decade.age, highestRecorded: nil))
+            #expect(abs(predicted - decade.men.0) <= decade.men.1, "Men at \(decade.age)")
+            #expect(abs(predicted - decade.women.0) <= decade.women.1, "Women at \(decade.age)")
+        }
+    }
+
+    /// FRIEND registry 50th percentiles of measured treadmill VO₂ max (Kaminsky et al. 2015, Table 3).
+    @Test func vo2MaxNormIsTheFRIENDMedian() {
+        let men = [48.0, 42.4, 37.8, 32.6, 28.2, 24.4]
+        let women = [37.6, 30.2, 26.7, 23.4, 20.0, 18.3]
+        for (index, age) in [25, 35, 45, 55, 65, 75].enumerated() {
+            #expect(HealthAge.expectedVO2Max(age: age, sex: .male) == men[index], "Men at \(age)")
+            #expect(HealthAge.expectedVO2Max(age: age, sex: .female) == women[index], "Women at \(age)")
+        }
+    }
+
+    /// Gompertz: adult mortality doubles about every 8 years (Finch et al. 1990), so a risk ratio of 2 is 8 years.
+    @Test func riskRatiosTurnIntoYearsByTheMortalityDoublingTime() {
+        #expect(HealthAge.years(riskRatio: 2) == 8)
+        #expect(HealthAge.years(riskRatio: 1) == 0)
+        #expect(HealthAge.years(riskRatio: 0.5) == -8)
+    }
+
+    /// Kodama et al. 2009: RR 0.87 per MET (3.5 ml/kg·min). Zhang et al. 2016: RR 1.09 per 10 bpm. Both against
+    /// the norm for age and sex (FRIEND median VO₂ max, NHANES median resting pulse).
+    @Test func healthAgeFitnessFollowsKodamaAndZhang() throws {
+        func years(_ input: HealthAge.Input, _ name: String) -> Double? {
+            HealthAge.impacts(input).first { $0.name == name }?.years
+        }
+        let fitter = try #require(years(HealthAge.Input(age: 35, sex: .male, vo2Max: 42.4 + 3.5), "VO₂ Max"))
+        #expect(abs(fitter - 8 * log2(0.87)) < 1e-9)
+        #expect(HealthAge.expectedRestingHeartRate(age: 35, sex: .male) == 69)
+        #expect(HealthAge.expectedRestingHeartRate(age: 65, sex: .female) == 70)
+        let faster = try #require(years(HealthAge.Input(age: 35, sex: .male, restingHeartRate: 79), "Resting HR"))
+        #expect(abs(faster - 8 * log2(1.09)) < 1e-9)
+    }
+
+    /// Paluch et al. 2022: quartile medians 3553, 5801, 7842 and 10 901 steps, HRs 1, 0.60, 0.55 and 0.47.
+    @Test func stepsRiskFollowsPaluchQuartiles() {
+        #expect(HealthAge.stepsRisk(3_553) == 1)
+        #expect(abs(HealthAge.stepsRisk(5_801) - 0.60) < 1e-9)
+        #expect(abs(HealthAge.stepsRisk(7_842) - 0.55) < 1e-9)
+        #expect(abs(HealthAge.stepsRisk(10_901) - 0.47) < 1e-9)
+        #expect(HealthAge.stepsRisk(1_000) == 1, "Flat below the lowest median")
+        #expect(HealthAge.stepsRisk(20_000) == 0.47, "Flat above the highest median")
+        let between = HealthAge.stepsRisk((5_801 + 7_842) / 2)
+        #expect(between < 0.60 && between > 0.55)
+    }
+
+    /// Cappuccio et al. 2010: short sleep RR 1.12, long sleep RR 1.30, against 7–8 hours.
+    @Test func sleepRiskFollowsCappuccio() {
+        #expect(HealthAge.sleepRisk(6.5) == 1.12)
+        #expect(HealthAge.sleepRisk(7) == 1)
+        #expect(HealthAge.sleepRisk(8) == 1)
+        #expect(HealthAge.sleepRisk(9) == 1.30)
+    }
+
+    /// Arem et al. 2015, against the 150-minute guideline (HR 0.69 vs none): none is 1/0.69, below it 0.80/0.69,
+    /// 2–3× the guideline 0.63/0.69.
+    @Test func exerciseRiskFollowsArem() {
+        #expect(abs(HealthAge.exerciseRisk(0) - 1 / 0.69) < 1e-9)
+        #expect(abs(HealthAge.exerciseRisk(100) - 0.80 / 0.69) < 1e-9)
+        #expect(HealthAge.exerciseRisk(150) == 1)
+        #expect(HealthAge.exerciseRisk(299) == 1)
+        #expect(abs(HealthAge.exerciseRisk(400) - 0.63 / 0.69) < 1e-9)
+    }
+
+    /// FRIEND registry (Kaminsky et al. 2015, Table 3): the 25th, 50th, 75th and 90th percentiles of measured
+    /// treadmill VO₂ max start Fair, Good, Excellent and Superior, for each decade from 20–29 to 70–79.
+    @Test func vo2MaxZonesMatchFRIENDTable3() {
+        let men: [[Double]] = [
+            [40.1, 48.0, 55.2, 61.8], [35.9, 42.4, 49.2, 56.5], [31.9, 37.8, 45.0, 52.1],
+            [27.1, 32.6, 39.7, 45.6], [23.7, 28.2, 34.5, 40.3], [20.4, 24.4, 30.4, 36.6],
+        ]
+        let women: [[Double]] = [
+            [30.5, 37.6, 44.7, 51.3], [25.3, 30.2, 36.1, 41.4], [22.1, 26.7, 32.4, 38.4],
+            [19.9, 23.4, 27.6, 32.0], [17.2, 20.0, 23.8, 27.0], [15.6, 18.3, 20.8, 23.1],
+        ]
+        for (index, age) in [25, 35, 45, 55, 65, 75].enumerated() {
+            #expect(VO2MaxZones.bounds(age: age, sex: .male) == men[index], "Men at \(age)")
+            #expect(VO2MaxZones.bounds(age: age, sex: .female) == women[index], "Women at \(age)")
+        }
+    }
+
+    /// Daniels & Gilbert (1979) equivalent race times for VDOT 30–70 (5K, 10K, half marathon, marathon), as the
+    /// published equations give them in VDOT calculators. The printed tables in Daniels' Running Formula round
+    /// a few seconds differently (`matchesDanielsTables` checks those).
+    @Test func raceTimesMatchTheDanielsTable() {
+        let table: [(vdot: Double, times: [TimeInterval])] = [
+            (30, [30 * 60 + 41, 3600 + 3 * 60 + 49, 2 * 3600 + 21 * 60 + 17, 4 * 3600 + 49 * 60 + 49]),
+            (40, [24 * 60 + 6, 50 * 60 + 1, 3600 + 50 * 60 + 54, 3 * 3600 + 49 * 60 + 37]),
+            (50, [19 * 60 + 56, 41 * 60 + 20, 3600 + 31 * 60 + 31, 3 * 3600 + 10 * 60 + 40]),
+            (60, [17 * 60 + 3, 35 * 60 + 22, 3600 + 18 * 60 + 9, 2 * 3600 + 43 * 60 + 22]),
+            (70, [14 * 60 + 56, 31 * 60 + 1, 3600 + 8 * 60 + 23, 2 * 3600 + 23 * 60 + 13]),
+        ]
+        for row in table {
+            for (distance, published) in zip(RacePredictor.distances, row.times) {
+                let time = RacePredictor.time(meters: distance.meters, vo2Max: row.vdot)
+                #expect(abs(time - published) <= 1, "VDOT \(row.vdot) \(distance.name)")
+            }
+        }
+    }
+
+    /// Edwards (1993): zones at 50, 60, 70, 80 and 90% of max heart rate, weighted 1–5.
+    @Test func zonesAndTRIMPFollowEdwards() {
+        #expect(HeartRateZones.zone(99.9, maxHeartRate: 200) == nil)
+        for (zone, share) in [0.5, 0.6, 0.7, 0.8, 0.9].enumerated() {
+            #expect(HeartRateZones.zone(200 * share, maxHeartRate: 200) == zone + 1)
+        }
+        // 10 minutes in each zone: 10 × (1 + 2 + 3 + 4 + 5).
+        #expect(TrainingLoad.edwardsTRIMP(timeInZones: Array(repeating: 600, count: 5)) == 150)
+        #expect(TrainingLoad.edwardsTRIMP(timeInZones: [0, 0, 45 * 60, 0, 0]) == 135)
+    }
+
+    /// ACSM (Garber et al. 2011, Table 1): very light below 30% of heart rate reserve, light 30–39%, moderate
+    /// 40–59%, vigorous 60–89% (near-maximal 90%+ is folded into vigorous).
+    @Test func dayIntensityBandsFollowACSM() {
+        // Resting 50, max 190: reserve 140, so light from 92 bpm, moderate from 106 and vigorous from 134.
+        let expected: [(Double, DayIntensity.Band)] = [
+            (91.9, .veryLight), (92, .light), (105.9, .light), (106, .moderate),
+            (133.9, .moderate), (134, .vigorous), (190, .vigorous),
+        ]
+        for (heartRate, band) in expected {
+            #expect(DayIntensity.band(heartRate, restingHeartRate: 50, maxHeartRate: 190) == band, "\(heartRate) bpm")
+        }
+    }
+
+    /// ACSM (Garber et al. 2011, Med Sci Sports Exerc 43:1334, Table 1): moderate is 40–59% of heart rate reserve,
+    /// vigorous 60–89%. WHO 2020 (Bull et al., Br J Sports Med 54:1451): 150 minutes of moderate activity a week,
+    /// or 75 of vigorous, so a vigorous minute counts as two.
+    @Test func intensityMinutesFollowACSMAndWHO() {
+        // Resting 50, max 190: reserve 140, so moderate from 106 bpm and vigorous from 134.
+        func minutes(_ heartRate: Double, bins: Int = 1) -> Double {
+            let values = (0..<bins).map { TimedValue(date: Date(timeIntervalSince1970: Double($0) * 300), value: heartRate) }
+            return IntensityMinutes.total(heartRate: values, restingHeartRate: 50, maxHeartRate: 190)
+        }
+        #expect(minutes(105.9) == 0)
+        #expect(minutes(106) == 5)
+        #expect(minutes(133.9) == 5)
+        #expect(minutes(134) == 10)
+        // 75 vigorous minutes meet the weekly target, as do 150 moderate ones.
+        #expect(minutes(150, bins: 15) == IntensityMinutes.weeklyTarget)
+        #expect(minutes(120, bins: 30) == IntensityMinutes.weeklyTarget)
+    }
+}
+
+struct DayIntensityTests {
+    private let start = Date(timeIntervalSince1970: 1_700_000_000)
+
+    /// One reading every 5 minutes from `start`.
+    private func readings(_ heartRates: [Double]) -> [TimedValue] {
+        heartRates.enumerated().map { TimedValue(date: start.addingTimeInterval(Double($0.offset) * 300), value: $0.element) }
+    }
+
+    @Test func countsFiveMinutesPerReadingByBand() {
+        let seconds = DayIntensity.time(heartRate: readings([60, 95, 95, 120, 150]), sleep: [], workouts: [],
+                                        restingHeartRate: 50, maxHeartRate: 190)
+        #expect(seconds == [.veryLight: 300, .light: 600, .moderate: 300, .vigorous: 300])
+    }
+
+    @Test func skipsSleepAndWorkoutsButNotAwakeInBed() {
+        let sleep = [SleepPeriod(start: start, end: start.addingTimeInterval(600), stage: .core),
+                     SleepPeriod(start: start.addingTimeInterval(600), end: start.addingTimeInterval(900), stage: .awake)]
+        let workout = DateInterval(start: start.addingTimeInterval(900), duration: 600)
+        let seconds = DayIntensity.time(heartRate: readings([55, 55, 60, 150, 150, 95]), sleep: sleep, workouts: [workout],
+                                        restingHeartRate: 50, maxHeartRate: 190)
+        #expect(seconds == [.veryLight: 300, .light: 300])
+    }
+
+    @MainActor
+    @Test func cardShowsTodayAndAWeekOfBands() async throws {
+        #expect(CardKind.gallery.contains(.dayIntensity))
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .dayIntensity, variant: .week)
+        #expect(snapshot.value != nil)
+        #expect(snapshot.comparison?.hasSuffix("very light") == true)
+        guard case .intensity(let days) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(days.count == 7)
     }
 }

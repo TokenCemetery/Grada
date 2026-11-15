@@ -30,7 +30,7 @@ extension CardKind {
 
     var family: DetailFamily {
         switch self {
-        case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .last30Days: .total
+        case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity, .last30Days: .total
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: .sleep
         case .lastWorkout, .weeklyTraining, .racePredictor, .trainingReadiness, .loadFocus: .training
@@ -71,13 +71,11 @@ extension CardKind {
         switch self {
         case .hrv: [.healthStatus, .recovery, .hrvStatus]
         case .respiratoryRate: [.healthStatus, .recovery]
-        case .restingHeartRate: [.healthStatus, .recovery, .resources, .healthAge]
+        case .restingHeartRate: [.healthStatus, .recovery, .resources, .healthAge, .dayIntensity]
         case .oxygenSaturation, .wristTemperature: [.healthStatus]
-        case .heartRate: [.resources]
+        case .heartRate: [.resources, .dayIntensity]
         case .vo2Max: [.racePredictor, .healthAge]
         case .sleepDuration, .sleepStages: [.recovery, .sleepNeed, .resources, .healthAge]
-        case .sleepNeed: [.recovery]
-        case .sleepConsistency: [.healthAge]
         default: []
         }
     }
@@ -86,10 +84,11 @@ extension CardKind {
     var basedOn: [CardKind] {
         switch self {
         case .healthStatus: [.hrv, .restingHeartRate, .respiratoryRate, .oxygenSaturation, .wristTemperature]
-        case .recovery: [.hrv, .restingHeartRate, .sleepDuration, .sleepNeed, .respiratoryRate]
+        case .recovery: [.hrv, .restingHeartRate, .sleepDuration, .respiratoryRate]
         case .resources: [.heartRate, .restingHeartRate, .sleepStages]
-        case .healthAge: [.steps, .sleepDuration, .sleepConsistency, .restingHeartRate, .vo2Max, .exerciseMinutes]
+        case .healthAge: [.steps, .sleepDuration, .restingHeartRate, .vo2Max, .exerciseMinutes]
         case .intensityMinutes: [.heartRate, .restingHeartRate, .exerciseMinutes]
+        case .dayIntensity: [.heartRate, .restingHeartRate]
         case .hrvStatus: [.hrv]
         default: []
         }
@@ -101,17 +100,17 @@ extension CardKind {
         case .healthStatus:
             "Compares last night's HRV, resting heart rate, breathing rate, blood oxygen and wrist temperature with your own normal range from the last 30 days. Several vitals out of range together often come before illness or follow heavy training, alcohol or poor sleep."
         case .recovery:
-            "How ready your body is for strain today, from overnight HRV and heart rate against your baseline, sleep against your sleep need, and breathing rate. High: a good day to push. Low: favour easy training and rest."
+            "How ready your body is for strain today. Each input is checked against a published threshold: overnight HRV more than half a standard deviation below your baseline, resting heart rate more than half a standard deviation above it, under 7 hours of sleep, or breathing rate above your normal range. Good: nothing off, a good day to push. Fair: one input off. Poor: two or more; favour easy training and rest."
         case .resources:
-            "An estimate of your energy through the day. Sleep and calm rest recharge it; activity and stress, seen as a raised heart rate, drain it."
+            "An estimate of your energy through the day. Sleep and calm rest recharge it; activity and stress, seen as a raised heart rate, drain it. No published method exists for this without beat-to-beat HRV, which iPhone doesn't record through the day, so the charge and drain rates and the colour bands (borrowed from WHOOP) are Grada's own guesses. For measured effort, see Day Intensity."
         case .healthAge:
-            "The age your habits and fitness point to, from steps, sleep, resting heart rate, VO₂ max and exercise over the last 30 days. Pace shows whether it's moving faster or slower than time."
+            "The age your fitness and habits over the last 30 days point to. Each input is compared with a typical adult of your age and sex, or with the guideline, and its link with lifespan from large studies is turned into years: the risk of dying doubles about every 8 years of age. Inputs: VO₂ max and resting heart rate (need your sex in Apple Health), steps, sleep (7–8 hours is the reference) and exercise (150 minutes a week is the reference). Fit people also tend to walk and exercise more, so the inputs overlap and the total is an estimate."
         case .sleepDuration, .sleepStages:
             "Time asleep in the night that ended this morning. Deep sleep restores the body, REM supports memory and mood. Most adults need 7–9 hours."
         case .sleepNeed:
-            "How much sleep you need tonight: your baseline, plus part of any sleep debt, plus extra after a hard training day."
+            "How much sleep you need tonight: your sleep goal, or 7 hours, the minimum sleep experts recommend for adults. Sleep debt adds up how far each of the last 14 nights fell short of that. A long night doesn't cancel it: an hour of debt can take several nights of extra sleep to recover, and the bars show each night's shortfall."
         case .sleepConsistency:
-            "How regular your bed and wake times were over the last 4 nights. A steady rhythm improves sleep quality, even on weekends."
+            "The Sleep Regularity Index for the last 7 days: how likely you were to be in the same state, asleep or awake, at the same time on consecutive days. 100 means identical days, 0 random ones. In a UK study of 60,000 adults the typical score was 81 and half scored between 74 and 86; the least regular fifth had the highest mortality risk. Green from 81, yellow from 74. Needs sleep records on 5 of the 7 days."
         case .heartRate:
             "Your heart rate through the day. It rises with activity and stress and drops during rest and sleep."
         case .restingHeartRate:
@@ -134,6 +133,8 @@ extension CardKind {
             "Minutes of brisk activity or more. Health guidelines recommend at least 150 minutes a week."
         case .intensityMinutes:
             "Minutes over the last 7 days with your heart rate at 40–59% of its reserve (moderate) or above (vigorous, counted double). The WHO recommends at least 150 a week. Days without heart rate use exercise minutes instead."
+        case .dayIntensity:
+            "Your waking time outside workouts by effort, from heart rate as a share of its reserve (max minus resting), in the American College of Sports Medicine's bands: very light below 30%, light 30–39%, moderate 40–59%, vigorous 60% and up. The big number is time at light effort or harder; workouts count in Intensity Minutes instead."
         case .distance:
             "Distance covered walking and running."
         case .floors:
@@ -143,7 +144,7 @@ extension CardKind {
         case .lastWorkout, .weeklyTraining:
             "Time spent in recorded workouts. Steady weekly volume builds fitness; sudden jumps raise the risk of injury."
         case .vo2Max:
-            "The most oxygen your body can use during hard exercise, a key measure of cardio fitness. It changes slowly over weeks of training."
+            "The most oxygen your body can use during hard exercise, a key measure of cardio fitness. It changes slowly over weeks of training. The zones compare it with lab-measured VO₂ max of adults your age and sex in the US FRIEND registry: Poor below the bottom quarter, Fair up to the middle, Good from the middle, Excellent from the top quarter and Superior from the top tenth."
         case .racePredictor:
             "Race times your current VO₂ max points to, assuming you've trained for the distance."
         case .trainingReadiness, .loadFocus:
