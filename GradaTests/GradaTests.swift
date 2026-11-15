@@ -185,6 +185,29 @@ struct SleepChartTests {
     }
 }
 
+struct IntensityMinutesTests {
+    private func values(_ heartRates: [Double]) -> [TimedValue] {
+        heartRates.enumerated().map { TimedValue(date: Date(timeIntervalSince1970: Double($0.offset) * 300), value: $0.element) }
+    }
+
+    /// Resting 60 and max 180: moderate from 108 bpm, vigorous from 132.
+    @Test func vigorousCountsDoubleAndLightIsIgnored() {
+        let total = IntensityMinutes.total(heartRate: values([100, 107, 108, 131, 132, 170]), restingHeartRate: 60, maxHeartRate: 180)
+        #expect(total == 2 * 5 + 2 * 10)
+    }
+
+    @Test func noReserveCountsNothing() {
+        #expect(IntensityMinutes.total(heartRate: values([150]), restingHeartRate: 180, maxHeartRate: 180) == 0)
+    }
+
+    @Test func cardShowsThisWeekAgainstTheTarget() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .intensityMinutes)
+        #expect(snapshot.period == "This week")
+        let comparison = try #require(snapshot.comparison)
+        #expect(comparison.hasSuffix("of 150") || comparison == "150 target reached", "\(comparison)")
+    }
+}
+
 @MainActor
 struct RecoveryTests {
     private let hrvHistory: [Double] = [58, 62, 60, 64, 60, 58, 62, 60, 64, 62]

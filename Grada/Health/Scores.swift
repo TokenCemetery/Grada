@@ -198,6 +198,28 @@ nonisolated enum Resources {
     }
 }
 
+/// Weekly moderate and vigorous minutes against the WHO target, like Garmin Intensity Minutes.
+nonisolated enum IntensityMinutes {
+    /// WHO: at least 150 minutes of moderate activity a week, or 75 vigorous.
+    static let weeklyTarget = 150.0
+    /// ACSM bands as a share of heart rate reserve: moderate 40–59%, vigorous from 60%.
+    private static let moderateReserve = 0.4
+    private static let vigorousReserve = 0.6
+
+    /// Moderate plus vigorous minutes, vigorous counted double, from 5-minute average heart rate.
+    static func total(heartRate: [TimedValue], restingHeartRate: Double, maxHeartRate: Double) -> Double {
+        let reserve = maxHeartRate - restingHeartRate
+        guard reserve > 0 else { return 0 }
+        let minutesPerValue = Resources.step / 60
+        return heartRate.reduce(0) { total, value in
+            let share = (value.value - restingHeartRate) / reserve
+            if share >= vigorousReserve { return total + 2 * minutesPerValue }
+            if share >= moderateReserve { return total + minutesPerValue }
+            return total
+        }
+    }
+}
+
 /// How much sleep the user needs tonight, like WHOOP's Sleep Planner and Garmin's Sleep Coach:
 /// a baseline, plus part of the recent sleep debt, plus extra after a training day.
 nonisolated enum SleepNeed {

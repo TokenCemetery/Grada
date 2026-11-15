@@ -85,6 +85,9 @@ struct TrendBuilder {
                 unit = "mi"
             }
             return make(series, period, style: .bars, unit: unit, format: .number(decimals: metric.decimals))
+        case .intensityMinutes:
+            return make(try await cardBuilder.intensityDays(days), period, style: .bars, unit: "min",
+                        format: .number(decimals: 0), weeklyTotals: true)
         case .standHours:
             return make(try await source.standHours(days: days), period, style: .bars, unit: "h", format: .number(decimals: 0))
         case .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .heartRate:
@@ -108,12 +111,7 @@ struct TrendBuilder {
         case .healthStatus:
             return try await healthStatus(period)
         case .recovery:
-            var builder = SnapshotBuilder(source: source)
-            builder.calendar = calendar
-            if !calendar.isDateInToday(shownDay) {
-                builder.now = calendar.date(byAdding: .day, value: 1, to: shownDay)!.addingTimeInterval(-1)
-            }
-            let scores = try await builder.recoveryDays(days)
+            let scores = try await cardBuilder.recoveryDays(days)
                 .map { DayValue(day: $0.day, value: $0.result.map { Double($0.score) }) }
             return make(scores, period, style: .line, unit: "%", format: .number(decimals: 0))
         // TODO(#42, later): Resources needs each day's timeline re-simulated from 5-minute heart rate, and
@@ -260,6 +258,16 @@ struct TrendBuilder {
     private func lastDays(_ count: Int) -> [Date] {
         let end = shownDay
         return (0..<count).reversed().map { calendar.date(byAdding: .day, value: -$0, to: end)! }
+    }
+
+    /// For series the cards already calculate, ending on the shown day.
+    private var cardBuilder: SnapshotBuilder {
+        var builder = SnapshotBuilder(source: source)
+        builder.calendar = calendar
+        if !calendar.isDateInToday(shownDay) {
+            builder.now = calendar.date(byAdding: .day, value: 1, to: shownDay)!.addingTimeInterval(-1)
+        }
+        return builder
     }
 
     private var shownDay: Date {

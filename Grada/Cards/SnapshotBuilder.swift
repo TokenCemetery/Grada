@@ -32,6 +32,7 @@ struct SnapshotBuilder {
         case .steps: try await cumulative(.steps)
         case .activeEnergy: try await cumulative(.activeEnergy)
         case .exerciseMinutes: try await cumulative(.exerciseMinutes)
+        case .intensityMinutes: try await intensityMinutes()
         case .distance: try await cumulative(.distance)
         case .floors: try await cumulative(.floors)
         case .standHours: totals(try await source.standHours(days: 8), decimals: 0, unit: "h")
@@ -349,6 +350,48 @@ struct SnapshotBuilder {
             series = series.map { DayValue(day: $0.day, value: $0.value.map { $0 * 0.621_371 }) }
         }
         return totals(series, decimals: metric.decimals, unit: metric == .distance && !usesMetric ? "mi" : metric.unit)
+    }
+
+    /// This week's total so far against the WHO target, with the last 7 days as bars.
+    private func intensityMinutes() async throws -> CardSnapshot {
+        let period = isToday ? "This week" : "That week"
+        let today = calendar.startOfDay(for: now)
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: today)!.start
+        let daysThisWeek = calendar.dateComponents([.day], from: weekStart, to: today).day! + 1
+        let days = try await intensityDays(max(daysThisWeek, 7))
+        guard days.contains(where: { $0.value != nil }) else { return .noData(period: period) }
+
+        let total = days.suffix(daysThisWeek).compactMap(\.value).reduce(0, +)
+        let target = IntensityMinutes.weeklyTarget
+        let reached = total >= target
+        return CardSnapshot(
+            period: period,
+            value: format(total, 0),
+            unit: "min",
+            comparison: reached ? "\(format(target, 0)) target reached" : "\(format(target - total, 0)) to go of \(format(target, 0))",
+            tone: reached ? .good : .neutral,
+            chart: .bars(days.suffix(7).map { $0.value ?? 0 })
+        )
+    }
+
+    /// Intensity minutes for each of the last `count` days, oldest first: from heart rate where the day has
+    /// any, otherwise Apple's exercise minutes. Nil on days with neither.
+    func intensityDays(_ count: Int) async throws -> [DayValue] {
+        let days = lastDays(count)
+        let heartRate = try await source.heartRate(in: DateInterval(start: days[0], end: max(now, days[count - 1])))
+        let byDay = Dictionary(grouping: heartRate) { calendar.startOfDay(for: $0.date) }
+        let exercise = try await source.daily(.exerciseMinutes, days: count)
+        let restingHeartRate = Baseline.average(try await source.daily(.restingHeartRate, days: baselineDays).compactMap(\.value))
+        let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
+                                                  highestRecorded: try await source.highestHeartRate(days: 365))
+
+        return days.indices.map { index in
+            if let values = byDay[days[index]], let restingHeartRate, let maxHeartRate {
+                return DayValue(day: days[index], value: IntensityMinutes.total(
+                    heartRate: values, restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate))
+            }
+            return DayValue(day: days[index], value: exercise[index].value)
+        }
     }
 
     /// Today's total compared with the 7 days before it.

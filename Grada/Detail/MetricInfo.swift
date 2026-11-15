@@ -30,7 +30,7 @@ extension CardKind {
 
     var family: DetailFamily {
         switch self {
-        case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours, .last30Days: .total
+        case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .last30Days: .total
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: .sleep
         case .lastWorkout, .weeklyTraining, .racePredictor, .trainingReadiness, .loadFocus: .training
@@ -90,6 +90,7 @@ extension CardKind {
         case .recovery: [.hrv, .restingHeartRate, .sleepDuration, .sleepNeed, .respiratoryRate]
         case .resources: [.heartRate, .restingHeartRate, .sleepStages]
         case .healthAge: [.steps, .sleepDuration, .sleepConsistency, .restingHeartRate, .vo2Max, .exerciseMinutes]
+        case .intensityMinutes: [.heartRate, .restingHeartRate, .exerciseMinutes]
         default: []
         }
     }
@@ -129,6 +130,8 @@ extension CardKind {
             "Calories burned through movement and exercise, on top of what your body uses at rest."
         case .exerciseMinutes:
             "Minutes of brisk activity or more. Health guidelines recommend at least 150 minutes a week."
+        case .intensityMinutes:
+            "Minutes this week with your heart rate at 40–59% of its reserve (moderate) or above (vigorous, counted double). The WHO recommends at least 150 a week. Days without heart rate use exercise minutes instead."
         case .distance:
             "Distance covered walking and running."
         case .floors:
