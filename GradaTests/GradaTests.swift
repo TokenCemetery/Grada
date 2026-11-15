@@ -599,20 +599,62 @@ struct SleepNeedTests {
 
 @MainActor
 struct SleepConsistencyTests {
-    @Test func sameTimesEveryNightScoresFull() throws {
-        let result = try #require(SleepConsistency.score(bedtimes: [1380, 1380, 1380], wakeTimes: [420, 420, 420]))
-        #expect(result.score == 100)
+    /// Noon; nights are placed in hours after it, so 11 is 23:00 and 19 is 07:00 the next morning.
+    private let noon = Date(timeIntervalSince1970: 1_700_000_000)
+
+    private func night(_ day: Int, from start: Double, to end: Double, stage: SleepStage? = .core) -> SleepPeriod {
+        SleepPeriod(start: noon.addingTimeInterval((Double(day) * 24 + start) * 3600),
+                    end: noon.addingTimeInterval((Double(day) * 24 + end) * 3600), stage: stage)
     }
 
-    @Test func bedtimesAcrossMidnightAreNotFarApart() throws {
-        // 23:30, 00:30, 23:30, 00:30: half an hour either side, not 23 hours.
-        let result = try #require(SleepConsistency.score(bedtimes: [1410, 30, 1410, 30], wakeTimes: [420, 420, 420, 420]))
-        #expect(result.bedtimeSpread == 30)
-        #expect(result.score == 88)
+    @Test func identicalDaysScore100() throws {
+        let sleep = (0..<7).map { night($0, from: 11, to: 19) }
+        #expect(try #require(SleepConsistency.index(sleep: sleep, start: noon)) == 100)
     }
 
-    @Test func needsThreeNights() {
-        #expect(SleepConsistency.score(bedtimes: [1380, 1380], wakeTimes: [420, 420]) == nil)
+    /// Phillips et al. 2017: 200 × P − 100. Alternating 23:00–07:00 and 01:00–09:00 nights differ in 4 of every
+    /// 24 hours, so P = 20/24 and the index is 200 × 20/24 − 100 ≈ 66.7.
+    @Test func twoHourShiftEveryOtherNightMatchesTheFormula() throws {
+        let sleep = (0..<7).map { $0.isMultiple(of: 2) ? night($0, from: 11, to: 19) : night($0, from: 13, to: 21) }
+        let index = try #require(SleepConsistency.index(sleep: sleep, start: noon))
+        #expect(abs(index - (200 * 20 / 24 - 100)) < 0.01)
+    }
+
+    /// Random states agree half the time: 200 × 0.5 − 100 = 0. Sleeping exactly the opposite half of each
+    /// consecutive day gives −100.
+    @Test func oppositeDaysScoreMinus100() throws {
+        let sleep = (0..<7).map { $0.isMultiple(of: 2) ? night($0, from: 0, to: 12) : night($0, from: 12, to: 24) }
+        #expect(try #require(SleepConsistency.index(sleep: sleep, start: noon)) == -100)
+    }
+
+    @Test func daysWithoutARecordAreLeftOutAndTooFewGiveNothing() throws {
+        let missingOne = (0..<7).filter { $0 != 3 }.map { night($0, from: 11, to: 19) }
+        #expect(try #require(SleepConsistency.index(sleep: missingOne, start: noon)) == 100, "Pairs with day 3 are skipped")
+        let fourDays = (0..<4).map { night($0, from: 11, to: 19) }
+        #expect(SleepConsistency.index(sleep: fourDays, start: noon) == nil)
+    }
+
+    @Test func awakeInBedCountsAsAwake() throws {
+        var sleep = (0..<7).map { night($0, from: 11, to: 19) }
+        sleep.append(night(3, from: 14, to: 16, stage: .awake))
+        // Day 3 is still asleep 01:00–03:00 in its core period, so the awake entry changes nothing.
+        #expect(try #require(SleepConsistency.index(sleep: sleep, start: noon)) == 100)
+    }
+
+    /// UK Biobank (Windred et al. 2024): median 81.0, lower quartile 73.8.
+    @Test func ratedAgainstUKBiobankAdults() {
+        #expect(SleepConsistency.rating(81) == .good)
+        #expect(SleepConsistency.rating(80.9) == .fair)
+        #expect(SleepConsistency.rating(73.8) == .fair)
+        #expect(SleepConsistency.rating(73.7) == .poor)
+    }
+
+    @Test func cardShowsTheIndexAndAWeek() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepConsistency)
+        #expect(snapshot.value != nil && snapshot.value != "Calibrating")
+        #expect(snapshot.rating != nil)
+        guard case .bars(let days, 100, _) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(days.count == 7)
     }
 }
 

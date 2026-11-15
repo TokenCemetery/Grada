@@ -188,15 +188,8 @@ struct TrendBuilder {
     }
 
     private func sleepConsistency(_ period: TrendPeriod) async throws -> Trend {
-        let window = SleepConsistency.nights
-        let overnight = try await source.overnight(days: period.days + window - 1)
-        let scores = (window - 1..<overnight.count).map { end in
-            let nights = overnight[(end - window + 1)...end]
-            let score = SleepConsistency.score(bedtimes: nights.compactMap { $0.bedtime.map(minutesAfterMidnight) },
-                                               wakeTimes: nights.compactMap { $0.wakeTime.map(minutesAfterMidnight) })
-            return DayValue(day: overnight[end].wakeDay, value: score.map { Double($0.score) })
-        }
-        return make(scores, period, style: .line, unit: "%", format: .number(decimals: 0))
+        let indexes = try await cardBuilder.sleepRegularity(period.days).map { DayValue(day: $0.day, value: $0.index) }
+        return make(indexes, period, style: .line, unit: "", format: .number(decimals: 0), title: "Sleep Regularity Index")
     }
 
     /// The 7-night average for each day, with the shown day's baseline as the normal range.
@@ -290,9 +283,5 @@ struct TrendBuilder {
     private var shownDay: Date {
         (source as? PastDaySource).map { calendar.date(byAdding: .day, value: -1, to: $0.dayEnd)! }
             ?? calendar.startOfDay(for: .now)
-    }
-
-    private func minutesAfterMidnight(_ date: Date) -> Double {
-        date.timeIntervalSince(calendar.startOfDay(for: date)) / 60
     }
 }

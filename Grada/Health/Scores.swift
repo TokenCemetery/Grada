@@ -279,33 +279,52 @@ nonisolated enum SleepNeed {
     }
 }
 
-/// How regular bed and wake times are, like WHOOP's Sleep Consistency: 100 means the same times every night.
+/// The Sleep Regularity Index (Phillips et al. 2017, Sci Rep 7:3216): the chance of being in the same state,
+/// asleep or awake, at two moments 24 hours apart, scaled so identical days score 100 and random ones 0 (it can
+/// fall below 0). Only pairs where both moments have data count. In UK Biobank, more regular sleepers had 20–48%
+/// lower all-cause mortality than the least regular fifth (Windred et al. 2024, Sleep 47:zsad253).
 nonisolated enum SleepConsistency {
-    struct Result: Equatable {
-        let score: Int
-        /// Standard deviations in minutes.
-        let bedtimeSpread: Double
-        let wakeSpread: Double
+    /// One week, as Windred et al. scored it; Phillips et al. also used whole weeks.
+    static let days = 7
+    /// Days with a sleep record needed in the week. Grada's own data-sufficiency rule; the papers don't give one.
+    static let minimumDays = 5
+    /// UK Biobank (Windred et al. 2024): median 81.0, interquartile range 73.8–86.3.
+    static let populationMedian = 81.0
+    static let populationLowerQuartile = 73.8
+
+    private static let minutesPerDay = 24 * 60
+
+    /// The index over `days` 24-hour blocks from `start`, from minute-by-minute sleep state. A block without any
+    /// sleep record is missing (the watch was off), as is every minute from `until` on. Nil with too few days.
+    static func index(sleep: [SleepPeriod], start: Date, days: Int = days, until: Date = .distantFuture) -> Double? {
+        let total = days * minutesPerDay
+        var asleep = [Bool](repeating: false, count: total)
+        var measured = [Bool](repeating: false, count: days)
+        for period in sleep where period.stage != .awake {
+            let first = max(Int((period.start.timeIntervalSince(start) / 60).rounded(.down)), 0)
+            let last = min(Int((period.end.timeIntervalSince(start) / 60).rounded(.up)), total)
+            guard first < last else { continue }
+            for minute in first..<last { asleep[minute] = true }
+            for block in (first / minutesPerDay)...((last - 1) / minutesPerDay) { measured[block] = true }
+        }
+        guard measured.filter({ $0 }).count >= minimumDays else { return nil }
+
+        let available = min(total, max(Int(until.timeIntervalSince(start) / 60), 0))
+        var same = 0, pairs = 0
+        for minute in 0..<max(available - minutesPerDay, 0) {
+            let block = minute / minutesPerDay
+            guard measured[block], measured[block + 1] else { continue }
+            pairs += 1
+            if asleep[minute] == asleep[minute + minutesPerDay] { same += 1 }
+        }
+        guard pairs > 0 else { return nil }
+        return 200 * Double(same) / Double(pairs) - 100
     }
 
-    /// WHOOP compares the last 4 nights.
-    static let nights = 4
-    /// Points lost per minute of average spread: 15 minutes ≈ 88, 30 ≈ 76, an hour ≈ 52.
-    private static let pointsPerMinute = 0.8
-
-    /// Times as minutes after midnight. Bedtimes before noon are taken as after midnight (e.g. 00:30).
-    /// Nil with fewer than 3 nights.
-    static func score(bedtimes: [Double], wakeTimes: [Double]) -> Result? {
-        guard bedtimes.count >= 3, wakeTimes.count >= 3 else { return nil }
-        let bedtimeSpread = spread(bedtimes.map { $0 < 12 * 60 ? $0 + 24 * 60 : $0 })
-        let wakeSpread = spread(wakeTimes)
-        let score = 100 - pointsPerMinute * (bedtimeSpread + wakeSpread) / 2
-        return Result(score: Int(min(max(score, 0), 100).rounded()), bedtimeSpread: bedtimeSpread, wakeSpread: wakeSpread)
-    }
-
-    private static func spread(_ values: [Double]) -> Double {
-        let mean = values.reduce(0, +) / Double(values.count)
-        return (values.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(values.count)).squareRoot()
+    /// Against UK Biobank adults: Good from the median, Fair from the lower quartile, Poor below it.
+    static func rating(_ index: Double) -> DayRating {
+        if index >= populationMedian { return .good }
+        return index >= populationLowerQuartile ? .fair : .poor
     }
 }
 

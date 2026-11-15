@@ -358,13 +358,7 @@ struct SnapshotBuilder {
         let workouts = try await source.workouts(days: days)
         let maxHeartRate = Resources.maxHeartRate(age: age, highestRecorded: nil) ?? 220
         let hasTraining = !workouts.isEmpty || !exercise.isEmpty
-        let overnight = try await source.overnight(days: days)
-        let consistency = overnight.indices.dropFirst(SleepConsistency.nights - 1).compactMap { end in
-            let window = overnight[(end - SleepConsistency.nights + 1)...end]
-            return SleepConsistency.score(bedtimes: window.compactMap { $0.bedtime.map(minutesAfterMidnight) },
-                                          wakeTimes: window.compactMap { $0.wakeTime.map(minutesAfterMidnight) })
-                .map { Double($0.score) }
-        }
+        let consistency = try await sleepRegularity(days).compactMap(\.index)
         return HealthAge.Input(
             age: age,
             sex: try await source.biologicalSex(),
@@ -597,29 +591,39 @@ struct SnapshotBuilder {
         )
     }
 
-    /// Bed and wake time regularity over the last 4 nights.
+    /// The Sleep Regularity Index over the last week, rated against UK Biobank adults, with the last 7 days.
     private func sleepConsistency() async throws -> CardSnapshot {
-        let period = "Last \(SleepConsistency.nights) nights"
-        let overnight = try await source.overnight(days: 7 + SleepConsistency.nights - 1)
-        guard overnight.contains(where: { $0.wakeTime != nil }) else { return .noData(period: period) }
-
-        func result(endingAt end: Int) -> SleepConsistency.Result? {
-            let window = overnight[max(end - SleepConsistency.nights + 1, 0)...end]
-            return SleepConsistency.score(bedtimes: window.compactMap { $0.bedtime.map(minutesAfterMidnight) },
-                                          wakeTimes: window.compactMap { $0.wakeTime.map(minutesAfterMidnight) })
+        let period = "Last \(SleepConsistency.days) days"
+        let days = try await sleepRegularity(7)
+        guard days.contains(where: { $0.hasData }) else { return .noData(period: period) }
+        guard let shown = days.last?.index ?? days.dropLast().last?.index else {
+            return CardSnapshot(period: period, value: "Calibrating",
+                                comparison: "Needs \(SleepConsistency.minimumDays) of \(SleepConsistency.days) nights")
         }
-        let last = overnight.count - 1
-        // Until last night is recorded, the window ending yesterday.
-        guard let shown = result(endingAt: last) ?? result(endingAt: last - 1) else {
-            return CardSnapshot(period: period, value: "Calibrating", comparison: "Needs 3 nights of data")
-        }
+        let rating = SleepConsistency.rating(shown)
         return CardSnapshot(
             period: period,
-            value: "\(shown.score)",
-            unit: "%",
-            comparison: "Bed ±\(Int(shown.bedtimeSpread.rounded()))m · wake ±\(Int(shown.wakeSpread.rounded()))m",
-            chart: .bars((last - 6...last).map { result(endingAt: $0).map { Double($0.score) } ?? 0 })
+            value: format(shown, 0),
+            comparison: "Typical adult \(format(SleepConsistency.populationMedian, 0))",
+            tone: Self.tone(rating),
+            rating: rating,
+            chart: .bars(days.map { $0.index.map { max($0, 0) } }, target: 100,
+                         ratings: days.map { $0.index.map(SleepConsistency.rating) })
         )
+    }
+
+    /// The Sleep Regularity Index for the week ending at noon on each of the last `count` days, oldest first.
+    /// Today's week ends now. `hasData` is false without any sleep record in that week.
+    func sleepRegularity(_ count: Int) async throws -> [(day: Date, hasData: Bool, index: Double?)] {
+        let days = lastDays(count)
+        let noon = { (day: Date) in self.calendar.date(byAdding: .hour, value: 12, to: day)! }
+        let first = calendar.date(byAdding: .day, value: -SleepConsistency.days, to: noon(days[0]))!
+        let sleep = try await source.sleepPeriods(in: DateInterval(start: first, end: max(now, first)))
+        return days.map { day in
+            let start = calendar.date(byAdding: .day, value: -SleepConsistency.days, to: noon(day))!
+            let hasData = sleep.contains { $0.stage != .awake && $0.end > start && $0.start < noon(day) }
+            return (day, hasData, SleepConsistency.index(sleep: sleep, start: start, until: min(now, noon(day))))
+        }
     }
 
     // MARK: - Training
@@ -746,10 +750,6 @@ struct SnapshotBuilder {
         let total = Int(seconds.rounded())
         let (hours, minutes, secs) = (total / 3600, total % 3600 / 60, total % 60)
         return hours > 0 ? String(format: "%d:%02d:%02d", hours, minutes, secs) : String(format: "%d:%02d", minutes, secs)
-    }
-
-    private func minutesAfterMidnight(_ date: Date) -> Double {
-        date.timeIntervalSince(calendar.startOfDay(for: date)) / 60
     }
 
     static func signedMinutes(_ seconds: TimeInterval) -> String {

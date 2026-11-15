@@ -111,7 +111,7 @@ extension CardKind {
         case .sleepNeed:
             "How much sleep you need tonight: your sleep goal, or 7 hours, the minimum sleep experts recommend for adults. Sleep debt adds up how far each of the last 14 nights fell short of that. A long night doesn't cancel it: an hour of debt can take several nights of extra sleep to recover, and the bars show each night's shortfall."
         case .sleepConsistency:
-            "How regular your bed and wake times were over the last 4 nights. A steady rhythm improves sleep quality, even on weekends."
+            "The Sleep Regularity Index for the last 7 days: how likely you were to be in the same state, asleep or awake, at the same time on consecutive days. 100 means identical days, 0 random ones. In a UK study of 60,000 adults the typical score was 81 and half scored between 74 and 86; the least regular fifth had the highest mortality risk. Green from 81, yellow from 74. Needs sleep records on 5 of the 7 days."
         case .heartRate:
             "Your heart rate through the day. It rises with activity and stress and drops during rest and sleep."
         case .restingHeartRate:
