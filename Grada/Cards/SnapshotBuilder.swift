@@ -21,6 +21,7 @@ struct SnapshotBuilder {
         case .healthAge: try await healthAge()
         case .sleepNeed: try await sleepNeed()
         case .sleepConsistency: try await sleepConsistency()
+        case .sleepScore: try await sleepScore()
         case .racePredictor: try await racePredictor()
         case .trainingReadiness: trainingReadiness()
         case .loadFocus: loadFocus()
@@ -613,6 +614,46 @@ struct SnapshotBuilder {
             let start = calendar.date(byAdding: .day, value: -SleepConsistency.days, to: noon(day))!
             let hasData = sleep.contains { $0.stage != .awake && $0.end > start && $0.start < noon(day) }
             return (day, hasData, SleepConsistency.index(sleep: sleep, start: start, until: min(now, noon(day))))
+        }
+    }
+
+    /// Last night's score; until last night is recorded, the night before's. Bars show the last 7 nights.
+    private func sleepScore() async throws -> CardSnapshot {
+        let days = try await sleepScoreDays(7)
+        let last = days.count - 1
+        let shownIndex = days[last].hasData ? last : last - 1
+        guard days[shownIndex].hasData else { return .noData(period: lastNightLabel) }
+        let period = shownIndex == last ? lastNightLabel : yesterdayLabel
+        guard let shown = days[shownIndex].result else {
+            return CardSnapshot(period: period, value: "Calibrating",
+                                comparison: "Needs sleep stages and \(SleepConsistency.minimumDays) of \(SleepConsistency.days) nights")
+        }
+        return CardSnapshot(
+            period: period,
+            value: "\(shown.score)",
+            comparison: shown.reason,
+            tone: Self.tone(shown.rating),
+            rating: shown.rating,
+            chart: .bars(days.map { $0.result.map { Double($0.score) } }, target: 100, ratings: days.map { $0.result?.rating })
+        )
+    }
+
+    /// The sleep score of the night ending on each of the last `count` days, oldest first. `hasData` is false
+    /// without any sleep that night; `result` is also nil while the regularity index calibrates or without stages.
+    func sleepScoreDays(_ count: Int) async throws -> [(day: Date, hasData: Bool, result: SleepScore.Result?)] {
+        let days = lastDays(count)
+        let first = calendar.date(byAdding: .day, value: -1, to: days[0])!
+        let periods = try await source.sleepPeriods(in: DateInterval(start: first, end: max(now, first)))
+        let byNight = Dictionary(grouping: periods) { SleepNight.wakeDay(forEnd: $0.end, calendar: calendar) }
+        let regularity = try await sleepRegularity(count)
+        let needs = sleepGoals(count)
+        let age = try await source.age()
+        return days.indices.map { index in
+            let night = byNight[days[index]] ?? []
+            let hasData = night.contains { $0.stage != .awake }
+            let result = SleepScore.score(quality: SleepScore.quality(night), need: needs[index].value ?? SleepNeed.baseline,
+                                          regularity: regularity[index].index, age: age)
+            return (days[index], hasData, result)
         }
     }
 

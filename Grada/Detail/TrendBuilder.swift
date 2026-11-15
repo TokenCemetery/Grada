@@ -112,6 +112,9 @@ struct TrendBuilder {
             return try await sleepNeed(period)
         case .sleepConsistency:
             return try await sleepConsistency(period)
+        case .sleepScore:
+            let scores = try await cardBuilder.sleepScoreDays(days).map { DayValue(day: $0.day, value: $0.result.map { Double($0.score) }) }
+            return make(scores, period, style: .bars, unit: "", format: .number(decimals: 0))
         case .lastWorkout, .weeklyTraining, .last30Days:
             let workouts = try await source.workouts(days: days)
             let minutes = minutesPerDay(workouts, days: days)

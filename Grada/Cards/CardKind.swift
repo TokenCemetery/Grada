@@ -67,7 +67,7 @@ struct CardID: Hashable, Identifiable {
 /// Every card the home screen can show. The raw value is persisted, so don't rename cases.
 enum CardKind: String, CaseIterable, Identifiable {
     case healthStatus, recovery, resources, healthAge
-    case sleepDuration, sleepStages, sleepNeed, sleepConsistency
+    case sleepDuration, sleepStages, sleepNeed, sleepConsistency, sleepScore
     case heartRate, restingHeartRate, hrv, hrvStatus, oxygenSaturation, respiratoryRate, wristTemperature
     case steps, activeEnergy, exerciseMinutes, intensityMinutes, distance, floors, standHours, dayIntensity
     case lastWorkout, weeklyTraining, vo2Max, racePredictor, trainingReadiness, loadFocus
@@ -126,6 +126,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .sleepDuration, .sleepStages: "Sleep"
         case .sleepNeed: "Sleep Need"
         case .sleepConsistency: "Sleep Consistency"
+        case .sleepScore: "Sleep Score"
         case .healthAge: "Health Age"
         case .racePredictor: "Race Predictor"
         case .trainingReadiness: "Training Readiness"
@@ -160,6 +161,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .sleepDuration, .sleepStages: "moon.zzz"
         case .sleepNeed: "bed.double"
         case .sleepConsistency: "clock.arrow.circlepath"
+        case .sleepScore: "moon.stars"
         case .healthAge: "hourglass"
         case .racePredictor: "flag.checkered"
         case .trainingReadiness: "gauge.with.dots.needle.67percent"
@@ -188,7 +190,7 @@ enum CardKind: String, CaseIterable, Identifiable {
     var category: CardCategory {
         switch self {
         case .healthStatus, .recovery, .resources, .healthAge: .status
-        case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: .sleep
+        case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .heartRate, .restingHeartRate, .hrv, .hrvStatus, .oxygenSaturation, .respiratoryRate, .wristTemperature: .heart
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity: .activity
         case .lastWorkout, .weeklyTraining, .vo2Max, .racePredictor, .trainingReadiness, .loadFocus: .training

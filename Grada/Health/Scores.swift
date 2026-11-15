@@ -328,6 +328,85 @@ nonisolated enum SleepConsistency {
     }
 }
 
+/// A 0–100 sleep score: the share of good-sleep indicators a night meets. The quality indicators and their cut-offs
+/// are the National Sleep Foundation's consensus (Ohayon et al. 2017, Sleep Health 3:6): sleep efficiency of 85% or
+/// more, at most 20 minutes awake after falling asleep, and at most one awakening longer than 5 minutes (two from 65).
+/// Duration is checked against the night's Sleep Need, and timing against the Sleep Regularity Index. The panel found
+/// no consensus on sleep stages as a quality marker, so the stage mix isn't scored; sleep latency isn't either, as
+/// Apple Health doesn't reliably record time in bed before sleep. No study weighs the indicators, so each counts
+/// the same and the rating counts misses, like Recovery.
+nonisolated enum SleepScore {
+    /// One night's continuity, from its first to its last minute asleep.
+    struct Quality: Equatable {
+        let asleep: TimeInterval
+        /// Time awake between falling asleep and the final wake-up (WASO), gaps in the record included.
+        let wakeAfterOnset: TimeInterval
+        /// Awake stretches longer than `longAwakening`.
+        let longAwakenings: Int
+
+        /// Asleep time over the time from falling asleep to waking up. Without sleep latency this runs a
+        /// little above the efficiency a sleep lab measures from lights out.
+        var efficiency: Double { asleep / max(asleep + wakeAfterOnset, 1) }
+    }
+
+    struct Result: Equatable {
+        let score: Int
+        let rating: DayRating
+        /// The first indicator missed, e.g. "Short sleep", or "All indicators met".
+        let reason: String
+    }
+
+    static let minimumEfficiency = 0.85
+    static let maximumWakeAfterOnset: TimeInterval = 20 * 60
+    static let longAwakening: TimeInterval = 5 * 60
+
+    /// NSF: one awakening is still good sleep for adults, and two for older adults.
+    static func maximumLongAwakenings(age: Int?) -> Int {
+        (age ?? 0) >= 65 ? 2 : 1
+    }
+
+    /// Continuity of one night from its periods. Nil without stage detail: sources that record only "asleep"
+    /// don't record waking either, so the night would look unbroken.
+    static func quality(_ periods: [SleepPeriod]) -> Quality? {
+        let asleep = periods.filter { $0.stage != .awake && $0.stage != nil }.sorted { $0.start < $1.start }
+        guard !asleep.isEmpty else { return nil }
+        // Merge overlapping stretches so a gap between them is time awake or off the wrist.
+        var merged: [(start: Date, end: Date)] = []
+        for period in asleep {
+            if let last = merged.last, period.start <= last.end {
+                merged[merged.count - 1].end = max(last.end, period.end)
+            } else {
+                merged.append((period.start, period.end))
+            }
+        }
+        let gaps = zip(merged, merged.dropFirst()).map { $1.start.timeIntervalSince($0.end) }
+        return Quality(asleep: merged.reduce(0) { $0 + $1.end.timeIntervalSince($1.start) },
+                       wakeAfterOnset: gaps.reduce(0, +),
+                       longAwakenings: gaps.filter { $0 > longAwakening }.count)
+    }
+
+    /// Nil until the night has stage detail and the week has a Sleep Regularity Index.
+    static func score(quality: Quality?, need: TimeInterval, regularity: Double?, age: Int?) -> Result? {
+        guard let quality, let regularity else { return nil }
+        let checks: [(met: Bool, miss: String)] = [
+            (quality.asleep >= need, "Short sleep"),
+            (quality.efficiency >= minimumEfficiency, "Low sleep efficiency"),
+            (quality.wakeAfterOnset <= maximumWakeAfterOnset, "Long time awake"),
+            (quality.longAwakenings <= maximumLongAwakenings(age: age), "Woke up often"),
+            (SleepConsistency.rating(regularity) != .poor, "Irregular schedule"),
+        ]
+        let missed = checks.filter { !$0.met }
+        let reason = switch missed.count {
+        case 0: "All indicators met"
+        case 1: missed[0].miss
+        default: "\(missed[0].miss) · \(missed.count - 1) more"
+        }
+        let met = checks.count - missed.count
+        return Result(score: Int((100 * Double(met) / Double(checks.count)).rounded()),
+                      rating: DayRatings.healthStatus(outOfRange: missed.count), reason: reason)
+    }
+}
+
 /// Like Garmin HRV Status: the average overnight HRV of the last 7 nights against a personal baseline
 /// from the nights before them.
 nonisolated enum HRVStatus {

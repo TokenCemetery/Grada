@@ -32,7 +32,7 @@ extension CardKind {
         switch self {
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity, .last30Days: .total
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max: .vital
-        case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: .sleep
+        case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .lastWorkout, .weeklyTraining, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .healthStatus, .recovery, .resources, .healthAge, .hrvStatus: .score
         }
@@ -75,7 +75,8 @@ extension CardKind {
         case .oxygenSaturation, .wristTemperature: [.healthStatus]
         case .heartRate: [.resources, .dayIntensity]
         case .vo2Max: [.racePredictor, .healthAge]
-        case .sleepDuration, .sleepStages: [.recovery, .sleepNeed, .resources, .healthAge]
+        case .sleepDuration, .sleepStages: [.recovery, .sleepNeed, .sleepScore, .resources, .healthAge]
+        case .sleepNeed, .sleepConsistency: [.sleepScore]
         default: []
         }
     }
@@ -90,6 +91,7 @@ extension CardKind {
         case .intensityMinutes: [.heartRate, .restingHeartRate, .exerciseMinutes]
         case .dayIntensity: [.heartRate, .restingHeartRate]
         case .hrvStatus: [.hrv]
+        case .sleepScore: [.sleepStages, .sleepNeed, .sleepConsistency]
         default: []
         }
     }
@@ -111,6 +113,8 @@ extension CardKind {
             "How much sleep you need tonight: your sleep goal, or 7 hours, the minimum sleep experts recommend for adults. Sleep debt adds up how far each of the last 14 nights fell short of that. A long night doesn't cancel it: an hour of debt can take several nights of extra sleep to recover, and the bars show each night's shortfall."
         case .sleepConsistency:
             "The Sleep Regularity Index for the last 7 days: how likely you were to be in the same state, asleep or awake, at the same time on consecutive days. 100 means identical days, 0 random ones. In a UK study of 60,000 adults the typical score was 81 and half scored between 74 and 86; the least regular fifth had the highest mortality risk. Green from 81, yellow from 74. Needs sleep records on 5 of the 7 days."
+        case .sleepScore:
+            "How well you slept last night: the share of good-sleep indicators the night met, each counting the same. Four come from the National Sleep Foundation's expert consensus: asleep at least 85% of the time from falling asleep to waking up, no more than 20 minutes awake in between, and at most one awakening longer than 5 minutes (two from age 65). The other two are enough sleep for your Sleep Need and a Sleep Regularity Index above the least regular quarter of adults. The experts found no agreement on sleep stages as a sign of good sleep, so they aren't scored. Green with every indicator met, yellow with one missed, red with two or more. Needs sleep stages from your watch and sleep records on 5 of the last 7 days."
         case .heartRate:
             "Your heart rate through the day. It rises with activity and stress and drops during rest and sleep."
         case .restingHeartRate:
