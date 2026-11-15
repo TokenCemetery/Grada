@@ -241,3 +241,59 @@ struct LoadFocusTests {
         #expect(rows.map(\.label) == ["Low · <82% max HR", "Threshold · ≥82% max HR", "High · ≥88% max HR"])
     }
 }
+
+struct ScoreBreakdownTests {
+    /// The thresholds Recovery rates against, as RecoveryTests derives them: HRV off below ≈59.46 ms,
+    /// resting HR above 54.75 bpm, sleep under 7 hours, breathing above 15.5.
+    @Test func recoveryChecksShowEachThreshold() throws {
+        let input = Recovery.Input(hrv: 59.3, hrvHistory: [58, 62, 60, 64, 60, 58, 62, 60, 64, 62],
+                                   restingHeartRate: 54, restingHeartRateHistory: [54, 55, 53, 54, 55, 53, 54, 54, 55, 53],
+                                   asleep: 8 * 3600, respiratoryRate: 14.6,
+                                   respiratoryRateHistory: [14.2, 14.6, 14.4, 14.8, 14.5, 14.3, 14.7, 14.5])
+        let checks = try #require(Recovery.checks(input))
+        #expect(checks.map(\.kind) == [.hrv, .restingHeartRate, .sleep, .breathing])
+        #expect(abs(checks[0].limit - 59.46) < 0.01)
+        #expect(checks[0].isOff)
+        #expect(checks[1].limit == 54.75)
+        #expect(checks[2].limit == 7 * 3600)
+        #expect(abs(checks[3].limit - 15.5) < 0.000_1)
+        #expect(checks.filter(\.isOff).map(\.reason) == ["HRV below normal"])
+        #expect(Recovery.status(input)?.reason == "HRV below normal", "Status counts the same checks")
+    }
+
+    /// Each step's cause takes the change actually applied, so the amounts add up to the level's change.
+    @Test func resourcesContributionsAddUpToTheChange() throws {
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let interval = DateInterval(start: start, duration: 6 * 3600)
+        let sleep = [SleepPeriod(start: start, end: start + 2 * 3600, stage: .deep)]
+        let workout = DateInterval(start: start + 3 * 3600, duration: 3600)
+        let heartRate = stride(from: 0.0, through: 6 * 3600, by: 300).map { offset in
+            TimedValue(date: start + offset, value: offset < 2 * 3600 ? 48 : (workout.contains(start + offset) ? 160 : 80))
+        }
+        let steps = Resources.steps(interval: interval, heartRate: heartRate, sleep: sleep, workouts: [workout],
+                                    restingHeartRate: 50, maxHeartRate: 190, startLevel: 95)
+        #expect(steps.map { TimedValue(date: $0.date, value: $0.level) }
+                == Resources.timeline(interval: interval, heartRate: heartRate, sleep: sleep, workouts: [workout],
+                                      restingHeartRate: 50, maxHeartRate: 190, startLevel: 95))
+        let amounts = Resources.contributions(steps, from: start)
+        #expect(abs(amounts.values.reduce(0, +) - (steps.last!.level - steps.first!.level)) < 0.000_1)
+        #expect(amounts[.sleep]! > 0, "Sleep charges, capped at 100")
+        #expect(amounts[.workout]! < 0)
+        #expect(amounts[.raisedHeartRate]! < 0, "80 bpm is above 15% of the reserve")
+    }
+
+    @MainActor
+    @Test func detailScreensListTheInputs() async throws {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let source = SampleDataSource()
+        let recovery = try await Breakdown.load(for: .recovery, day: today, period: .month, source: source, calendar: calendar)
+        guard case .recovery(let checks) = recovery else { Issue.record("\(String(describing: recovery))"); return }
+        #expect(checks.first?.kind == .hrv)
+        let resources = try await Breakdown.load(for: .resources, day: today, period: .month, source: source, calendar: calendar)
+        guard case .resources(let midnight, let now, let amounts) = resources else {
+            Issue.record("\(String(describing: resources))"); return
+        }
+        #expect(abs(amounts.values.reduce(0, +) - (now - midnight)) < 0.000_1)
+    }
+}

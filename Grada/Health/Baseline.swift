@@ -18,9 +18,14 @@ nonisolated enum Baseline {
     /// How many standard deviations `value` is from the history's mean, with the SD never below
     /// `minimumSD`. Nil while calibrating.
     static func zScore(_ value: Double, history: [Double], minimumSD: Double) -> Double? {
+        spread(history: history, minimumSD: minimumSD).map { (value - $0.mean) / $0.sd }
+    }
+
+    /// The history's mean and SD, the SD never below `minimumSD`. Nil while calibrating.
+    static func spread(history: [Double], minimumSD: Double) -> (mean: Double, sd: Double)? {
         guard history.count >= minimumDays, let mean = average(history) else { return nil }
         let variance = history.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(history.count - 1)
-        return (value - mean) / max(variance.squareRoot(), minimumSD)
+        return (mean, max(variance.squareRoot(), minimumSD))
     }
 
     static func average(_ values: [Double]) -> Double? {

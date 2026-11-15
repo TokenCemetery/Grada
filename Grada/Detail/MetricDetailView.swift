@@ -257,6 +257,10 @@ enum Breakdown {
     case heartRate([TimedValue])
     case sleep(SleepNight, bedtime: Date?, wakeTime: Date?, debt: TimeInterval)
     case workouts([WorkoutSummary])
+    /// Each Recovery input against its threshold.
+    case recovery([Recovery.Check])
+    /// Resources at midnight and now, and what moved it in between.
+    case resources(midnight: Double, now: Double, amounts: [Resources.Cause: Double])
 
     var title: String {
         switch self {
@@ -264,6 +268,8 @@ enum Breakdown {
         case .heartRate: "Through the day"
         case .sleep: "Last night"
         case .workouts: "Workouts"
+        case .recovery: "Inputs"
+        case .resources: "Since midnight"
         }
     }
 
@@ -297,10 +303,19 @@ enum Breakdown {
             guard kind == .lastWorkout || kind == .weeklyTraining else { return nil }
             let workouts = try await source.workouts(days: period.days)
             return workouts.isEmpty ? nil : .workouts(workouts)
-        // TODO(#41, v4, Scores): show how much each input raised or lowered Recovery and Resources.
-        // Health status and Health age already list theirs on the card.
         case .score:
-            return nil
+            let builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
+            switch kind {
+            case .recovery:
+                // The same night the card shows: today's, or yesterday's until today's arrives.
+                let days = try await builder.recoveryDays(2)
+                let checks = (days.last?.hasData == true ? days.last : days.first)?.checks ?? []
+                return checks.isEmpty ? nil : .recovery(checks)
+            case .resources:
+                return try await builder.resourcesContributions().map { .resources(midnight: $0.midnight, now: $0.now, amounts: $0.amounts) }
+            default:
+                return nil
+            }
         }
     }
 }
@@ -308,6 +323,7 @@ enum Breakdown {
 private struct BreakdownView: View {
     let breakdown: Breakdown
     let color: Color
+    @AppStorage("colorBlindPalette") private var colorBlind = false
 
     var body: some View {
         switch breakdown {
@@ -369,7 +385,61 @@ private struct BreakdownView: View {
                     if workout.id != workouts.last?.id { Divider() }
                 }
             }
+        case .recovery(let checks):
+            VStack(spacing: 6) {
+                ForEach(checks, id: \.name) { check in
+                    let rating: DayRating = check.isOff ? .poor : .good
+                    HStack(spacing: 8) {
+                        Circle().fill(rating.fill(colorBlind: colorBlind)).frame(width: 8, height: 8)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(check.name).font(.subheadline)
+                            Text("\(check.isOff ? check.reason : "Within threshold") · \(check.higherIsBetter ? "≥" : "≤") \(Self.recoveryValue(check.limit, check, decimals: Self.decimals(check)))")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(Self.recoveryValue(check.value, check, decimals: Self.decimals(check))).font(.subheadline.weight(.semibold)).monospacedDigit()
+                            .foregroundStyle(rating.text(colorBlind: colorBlind))
+                    }
+                }
+            }
+        case .resources(let midnight, let now, let amounts):
+            VStack(spacing: 6) {
+                row("At midnight", "\(Int(midnight.rounded()))%")
+                Divider()
+                ForEach(Resources.Cause.allCases, id: \.self) { cause in
+                    if let amount = amounts[cause], abs(amount) >= 0.5 {
+                        HStack {
+                            Text(cause.title).font(.subheadline).foregroundStyle(.secondary)
+                            Spacer()
+                            Text(amount.formatted(.number.precision(.fractionLength(0)).sign(strategy: .always())))
+                                .font(.subheadline.weight(.semibold)).monospacedDigit()
+                                .foregroundStyle(amount > 0 ? DayRating.good.text(colorBlind: colorBlind) : .orange)
+                        }
+                    }
+                }
+                Divider()
+                row("Now", "\(Int(now.rounded()))%")
+            }
         }
+    }
+
+    /// A Recovery input or its threshold in the input's own unit.
+    private static func recoveryValue(_ value: Double, _ check: Recovery.Check, decimals: Int) -> String {
+        let number = value.formatted(.number.precision(.fractionLength(decimals)))
+        switch check.kind {
+        case .sleep: return SnapshotBuilder.hoursMinutes(value)
+        case .breathing: return "\(number) \(QuantityMetric.respiratoryRate.unit)"
+        case .hrv: return "\(number) \(QuantityMetric.hrv.unit)"
+        case .restingHeartRate: return "\(number) \(QuantityMetric.restingHeartRate.unit)"
+        }
+    }
+
+    /// Whole numbers, or one decimal more when the value and its threshold would otherwise read the same,
+    /// so an input flagged off never looks equal to its limit.
+    private static func decimals(_ check: Recovery.Check) -> Int {
+        let base = check.kind == .breathing ? 1 : 0
+        let style = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(base))
+        return check.value.formatted(style) == check.limit.formatted(style) ? base + 1 : base
     }
 
     private func row(_ label: String, _ value: String, dot: Color? = nil) -> some View {

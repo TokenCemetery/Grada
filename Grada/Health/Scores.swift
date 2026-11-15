@@ -37,30 +37,63 @@ nonisolated enum Recovery {
     /// 0.05 in log terms is about ±3 ms at 60 ms, the same floor as the HRV normal range.
     static let minimumLogHRVSD = 0.05
 
-    /// Nil while HRV and resting heart rate are both missing or still calibrating.
-    static func status(_ input: Input) -> Result? {
-        // Each checked input, in the order they're named: whether it's off and how it's described.
-        var checks: [(isOff: Bool, reason: String)] = []
+    /// One input against its threshold, for the detail screen.
+    struct Check: Equatable {
+        enum Kind { case hrv, restingHeartRate, sleep, breathing }
+
+        let kind: Kind
+        let value: Double
+        /// The threshold: the lowest healthy value when `higherIsBetter`, otherwise the highest.
+        let limit: Double
+        let higherIsBetter: Bool
+        /// How it's described when off, e.g. "HRV below normal".
+        let reason: String
+
+        var isOff: Bool { higherIsBetter ? value < limit : value > limit }
+
+        var name: String {
+            switch kind {
+            case .hrv: "HRV"
+            case .restingHeartRate: "Resting HR"
+            case .sleep: "Sleep"
+            case .breathing: "Breathing"
+            }
+        }
+    }
+
+    /// Each measured input against its threshold, in the order they're named. Nil while HRV and resting heart
+    /// rate are both missing or still calibrating.
+    static func checks(_ input: Input) -> [Check]? {
+        var checks: [Check] = []
+        // A z-score of −0.5 on the log scale, back in ms.
         if let hrv = input.hrv, hrv > 0,
-           let z = Baseline.zScore(log(hrv), history: input.hrvHistory.filter { $0 > 0 }.map(log), minimumSD: minimumLogHRVSD) {
-            checks.append((z < -smallestWorthwhileChangeInSD, "HRV below normal"))
+           let spread = Baseline.spread(history: input.hrvHistory.filter { $0 > 0 }.map(log), minimumSD: minimumLogHRVSD) {
+            checks.append(Check(kind: .hrv, value: hrv, limit: exp(spread.mean - smallestWorthwhileChangeInSD * spread.sd),
+                                higherIsBetter: true, reason: "HRV below normal"))
         }
         if let rhr = input.restingHeartRate,
-           let z = Baseline.zScore(rhr, history: input.restingHeartRateHistory,
-                                   minimumSD: QuantityMetric.restingHeartRate.minimumHalfWidth / 2) {
-            checks.append((z > smallestWorthwhileChangeInSD, "Resting HR high"))
+           let spread = Baseline.spread(history: input.restingHeartRateHistory,
+                                        minimumSD: QuantityMetric.restingHeartRate.minimumHalfWidth / 2) {
+            checks.append(Check(kind: .restingHeartRate, value: rhr, limit: spread.mean + smallestWorthwhileChangeInSD * spread.sd,
+                                higherIsBetter: false, reason: "Resting HR high"))
         }
         guard !checks.isEmpty else { return nil }
         if let asleep = input.asleep {
-            checks.append((asleep < minimumSleep, "Short sleep"))
+            checks.append(Check(kind: .sleep, value: asleep, limit: minimumSleep, higherIsBetter: true, reason: "Short sleep"))
         }
         // Breathing uses the same ±2 SD normal range as the Respiratory Rate card; only a rise counts.
         if let rate = input.respiratoryRate,
            let normal = Baseline.normalRange(history: input.respiratoryRateHistory,
                                              minimumHalfWidth: QuantityMetric.respiratoryRate.minimumHalfWidth) {
-            checks.append((rate > normal.upperBound, "Breathing rate up"))
+            checks.append(Check(kind: .breathing, value: rate, limit: normal.upperBound, higherIsBetter: false,
+                                reason: "Breathing rate up"))
         }
+        return checks
+    }
 
+    /// Nil while HRV and resting heart rate are both missing or still calibrating.
+    static func status(_ input: Input) -> Result? {
+        guard let checks = checks(input) else { return nil }
         let off = checks.filter(\.isOff)
         let reason = switch off.count {
         case 0: "Close to your normal"
@@ -121,6 +154,30 @@ nonisolated enum Resources {
     /// Heart rate is carried forward over gaps up to this long (watches sample every few minutes).
     private static let heartRateCarry: TimeInterval = 15 * 60
 
+    /// What charged or drained the level during a step.
+    enum Cause: CaseIterable {
+        case sleep, rest, awake, raisedHeartRate, workout
+
+        var title: String {
+            switch self {
+            case .sleep: "Sleep"
+            case .rest: "Calm rest"
+            case .awake: "Being awake"
+            case .raisedHeartRate: "Raised heart rate"
+            case .workout: "Workouts"
+            }
+        }
+    }
+
+    /// One 5-minute step: the level at its start, and what changed it by the next step.
+    struct Step: Equatable {
+        let date: Date
+        let level: Double
+        let cause: Cause
+        /// The change actually applied, after the level is held within 0–100.
+        let change: Double
+    }
+
     /// The level at the start of every 5-minute step from `interval.start` to `interval.end`,
     /// starting at `startLevel`. Start a few days back so the starting guess no longer matters.
     static func timeline(
@@ -132,15 +189,38 @@ nonisolated enum Resources {
         maxHeartRate: Double,
         startLevel: Double = 50
     ) -> [TimedValue] {
+        steps(interval: interval, heartRate: heartRate, sleep: sleep, workouts: workouts, restingHeartRate: restingHeartRate,
+              maxHeartRate: maxHeartRate, startLevel: startLevel).map { TimedValue(date: $0.date, value: $0.level) }
+    }
+
+    /// How much each cause moved the level from `start` to the last step of `steps`. The amounts add up
+    /// to the change between the two levels.
+    static func contributions(_ steps: [Step], from start: Date) -> [Cause: Double] {
+        var amounts: [Cause: Double] = [:]
+        for step in steps.dropLast() where step.date >= start {
+            amounts[step.cause, default: 0] += step.change
+        }
+        return amounts
+    }
+
+    /// The simulation behind `timeline`, step by step.
+    static func steps(
+        interval: DateInterval,
+        heartRate: [TimedValue],
+        sleep: [SleepPeriod],
+        workouts: [DateInterval],
+        restingHeartRate: Double,
+        maxHeartRate: Double,
+        startLevel: Double = 50
+    ) -> [Step] {
         let reserve = max(maxHeartRate - restingHeartRate, 1)
         var level = startLevel
-        var result: [TimedValue] = []
+        var result: [Step] = []
         var heartRateIndex = 0
         var lastHeartRate: TimedValue?
         var time = interval.start
 
         while time <= interval.end {
-            result.append(TimedValue(date: time, value: level))
             while heartRateIndex < heartRate.count, heartRate[heartRateIndex].date < time + step {
                 lastHeartRate = heartRate[heartRateIndex]
                 heartRateIndex += 1
@@ -150,22 +230,25 @@ nonisolated enum Resources {
             let sleepStage = sleep.first { $0.start <= middle && middle < $0.end }.map(\.stage)
 
             let change: Double
+            let cause: Cause
             if let stage = sleepStage {
                 var charge = sleepCharge(stage)
                 if let hr { charge *= hr <= restingHeartRate ? 1.2 : (hr > restingHeartRate + 10 ? 0.5 : 1) }
-                change = charge
+                (change, cause) = (charge, .sleep)
             } else if workouts.contains(where: { $0.contains(middle) }) {
                 // Without heart rate, assume moderate effort.
                 let intensity = hr.map { min(max(($0 - restingHeartRate) / reserve, 0), 1) } ?? 0.5
-                change = -(calmDrain + 3 * pow(intensity, 1.5))
+                (change, cause) = (-(calmDrain + 3 * pow(intensity, 1.5)), .workout)
             } else if let hr, (hr - restingHeartRate) / reserve > stressThreshold {
-                change = -1.5 * min((hr - restingHeartRate) / reserve, 1)
+                (change, cause) = (-1.5 * min((hr - restingHeartRate) / reserve, 1), .raisedHeartRate)
             } else if let hr, hr <= restingHeartRate + restMargin {
-                change = restCharge
+                (change, cause) = (restCharge, .rest)
             } else {
-                change = -calmDrain
+                (change, cause) = (-calmDrain, .awake)
             }
-            level = min(max(level + change, 0), 100)
+            let next = min(max(level + change, 0), 100)
+            result.append(Step(date: time, level: level, cause: cause, change: next - level))
+            level = next
             time += step
         }
         return result

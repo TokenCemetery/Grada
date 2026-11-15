@@ -266,9 +266,10 @@ struct SnapshotBuilder {
         }
     }
 
-    /// Recovery for each of the last `count` days, oldest first. `hasData` is false without overnight
-    /// HRV or heart rate; `result` is also nil while calibrating.
-    func recoveryDays(_ count: Int) async throws -> [(day: Date, hasData: Bool, result: Recovery.Result?)] {
+    /// Recovery for each of the last `count` days, oldest first, with each input's check. `hasData` is false
+    /// without overnight HRV or heart rate; `result` is also nil while calibrating, and `checks` empty.
+    func recoveryDays(_ count: Int) async throws
+        -> [(day: Date, hasData: Bool, result: Recovery.Result?, checks: [Recovery.Check])] {
         let overnight = try await source.overnight(days: baselineDays + count)
         let breathing = try await source.daily(.respiratoryRate, days: overnight.count)
         let nights = try await source.sleepNights(days: overnight.count)
@@ -276,7 +277,7 @@ struct SnapshotBuilder {
 
         return (overnight.count - count..<overnight.count).map { index in
             let history = (index - baselineDays)..<index
-            let result = Recovery.status(Recovery.Input(
+            let input = Recovery.Input(
                 hrv: overnight[index].hrv,
                 hrvHistory: overnight[history].compactMap(\.hrv),
                 restingHeartRate: overnight[index].heartRate,
@@ -284,9 +285,9 @@ struct SnapshotBuilder {
                 asleep: asleep[overnight[index].wakeDay],
                 respiratoryRate: breathing[index].value,
                 respiratoryRateHistory: breathing[history].compactMap(\.value)
-            ))
+            )
             let hasData = overnight[index].hrv != nil || overnight[index].heartRate != nil
-            return (overnight[index].wakeDay, hasData, result)
+            return (overnight[index].wakeDay, hasData, Recovery.status(input), Recovery.checks(input) ?? [])
         }
     }
 
@@ -297,18 +298,10 @@ struct SnapshotBuilder {
         let heartRate = try await source.heartRate(in: interval)
         guard heartRate.contains(where: { $0.date >= today }) else { return .noData(period: nowLabel) }
 
-        let restingHeartRate = Baseline.average(try await source.daily(.restingHeartRate, days: 8).compactMap(\.value))
-        let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
-                                                  highestRecorded: try await source.highestHeartRate(days: 365))
-        guard let restingHeartRate, let maxHeartRate, maxHeartRate > restingHeartRate + 20 else {
+        guard let (steps, sleep) = try await resourcesSteps(interval: interval, heartRate: heartRate) else {
             return CardSnapshot(period: nowLabel, value: "Calibrating", comparison: "Needs resting and max heart rate")
         }
-
-        let sleep = try await source.sleepPeriods(in: interval)
-        let workouts = try await source.workouts(days: 4).map { DateInterval(start: $0.start, duration: $0.duration) }
-        let timeline = Resources.timeline(interval: interval, heartRate: heartRate, sleep: sleep, workouts: workouts,
-                                          restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate)
-        let todayLevels = timeline.filter { $0.date >= today }
+        let todayLevels = steps.filter { $0.date >= today }.map { TimedValue(date: $0.date, value: $0.level) }
         guard let current = todayLevels.last, let midnight = todayLevels.first else { return .noData(period: nowLabel) }
 
         // Change since this morning's wake-up; before then, since midnight.
@@ -386,6 +379,32 @@ struct SnapshotBuilder {
             input.recentNeed = Baseline.average(window.compactMap { needs[$0].value }) ?? SleepNeed.baseline
             return (days[index], TrainingReadiness.status(input))
         }
+    }
+
+    /// The Resources simulation over `interval`, and the sleep it used. Nil until resting and max heart rate are known.
+    private func resourcesSteps(interval: DateInterval, heartRate: [TimedValue]) async throws
+        -> (steps: [Resources.Step], sleep: [SleepPeriod])? {
+        let restingHeartRate = Baseline.average(try await source.daily(.restingHeartRate, days: 8).compactMap(\.value))
+        let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
+                                                  highestRecorded: try await source.highestHeartRate(days: 365))
+        guard let restingHeartRate, let maxHeartRate, maxHeartRate > restingHeartRate + 20 else { return nil }
+        let sleep = try await source.sleepPeriods(in: interval)
+        let workouts = try await source.workouts(days: 4).map { DateInterval(start: $0.start, duration: $0.duration) }
+        return (Resources.steps(interval: interval, heartRate: heartRate, sleep: sleep, workouts: workouts,
+                                restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate), sleep)
+    }
+
+    /// Today's Resources at midnight and now, and how much each cause moved it in between. Nil without
+    /// heart rate today or while calibrating.
+    func resourcesContributions() async throws -> (midnight: Double, now: Double, amounts: [Resources.Cause: Double])? {
+        let today = calendar.startOfDay(for: now)
+        let interval = DateInterval(start: calendar.date(byAdding: .day, value: -3, to: today)!, end: now)
+        let heartRate = try await source.heartRate(in: interval)
+        guard heartRate.contains(where: { $0.date >= today }),
+              let steps = try await resourcesSteps(interval: interval, heartRate: heartRate)?.steps,
+              let midnight = steps.first(where: { $0.date >= today }), let last = steps.last
+        else { return nil }
+        return (midnight.level, last.level, Resources.contributions(steps, from: today))
     }
 
     /// Health age from the last 30 days, against the user's age, with the three inputs that move it most.
