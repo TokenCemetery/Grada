@@ -605,7 +605,7 @@ struct SnapshotBuilder {
 
     /// Today's total against the goal, or without a goal, compared with the 7 days before it.
     /// Current shows a progress bar toward the goal or that average; 7 days shows bars filling toward the goal.
-    // TODO(#39, later): show the change as an arrow and amount, e.g. "▲ 1,200 vs 7-day avg", like Resources does.
+    // No arrow against the average: today's total is still building while the average covers full days (#39).
     private func totals(_ series: [DayValue], decimals: Int, unit: String, goal: Double? = nil,
                         variant: CardVariant) -> CardSnapshot {
         guard series.contains(where: { $0.value != nil }) else { return .noData(period: todayLabel) }
