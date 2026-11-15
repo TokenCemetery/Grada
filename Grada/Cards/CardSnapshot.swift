@@ -11,7 +11,8 @@ struct CardSnapshot {
         /// Seven nights, oldest first, each bar split by sleep stage; nil where there's no night.
         case sleep([SleepNight?])
         case line([Double?], normalRange: ClosedRange<Double>?)
-        // TODO(#38, v2, Goals): case progress(value:goal:) for a horizontal 0–100% goal bar, like Suunto's Steps card.
+        /// A horizontal 0–100% goal bar, like Suunto's Steps card.
+        case progress(value: Double, goal: Double)
         /// Today from 0:00: hours since midnight and value. A nil domain fits the values.
         case intraday([(hour: Double, value: Double)], domain: ClosedRange<Double>?)
 
@@ -19,7 +20,7 @@ struct CardSnapshot {
         var isBars: Bool {
             switch self {
             case .bars, .sleep: true
-            case .none, .line, .intraday: false
+            case .none, .line, .intraday, .progress: false
             }
         }
     }

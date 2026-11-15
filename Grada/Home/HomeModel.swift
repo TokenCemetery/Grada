@@ -27,14 +27,15 @@ final class HomeModel {
     }
 
     /// Pulls the latest days from Apple Health, then rebuilds the cards.
-    func refresh(_ kinds: [CardKind]) async {
+    func refresh(_ kinds: [CardKind], goals: GoalHistory) async {
         await importer?.importRecent()
-        await reload(kinds)
+        await reload(kinds, goals: goals)
     }
 
     /// Rebuilds the cards from data already imported.
-    func reload(_ kinds: [CardKind]) async {
-        let builder = SnapshotBuilder(source: source)
+    func reload(_ kinds: [CardKind], goals: GoalHistory) async {
+        var builder = SnapshotBuilder(source: source)
+        builder.goals = goals
         await withTaskGroup(of: (CardKind, Result<CardSnapshot, Error>).self) { group in
             for kind in Set(kinds) {
                 group.addTask {

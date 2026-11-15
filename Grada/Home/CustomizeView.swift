@@ -7,6 +7,7 @@ struct CustomizeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \HomeCard.position) private var cards: [HomeCard]
+    @Query private var goalChanges: [GoalChange]
 
     var body: some View {
         let onHome = Set(cards.compactMap(\.kind))
@@ -53,7 +54,7 @@ struct CustomizeView: View {
             }
             .task {
                 // Find out which gallery cards have data, for the "No data yet" labels.
-                await model.refresh(CardKind.gallery.filter { model.snapshots[$0] == nil })
+                await model.refresh(CardKind.gallery.filter { model.snapshots[$0] == nil }, goals: GoalHistory(goalChanges))
             }
         }
     }
@@ -106,5 +107,5 @@ private struct CardRow: View {
 #Preview {
     CustomizeView()
         .environment(HomeModel(source: SampleDataSource()))
-        .modelContainer(for: HomeCard.self, inMemory: true)
+        .modelContainer(for: [HomeCard.self, GoalChange.self], inMemory: true)
 }

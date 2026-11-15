@@ -52,7 +52,7 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
 
 /// The rules behind the calendar colours. All thresholds are starting points to tune with real data.
 nonisolated enum DayRatings {
-    // TODO(#37, v2, Goals): use the user's own goals instead of these defaults.
+    /// Used only before the user has goals. Sleep otherwise follows each night's Sleep need.
     static let stepsGoal = 10_000.0
     static let sleepGoal = SleepNeed.baseline
 

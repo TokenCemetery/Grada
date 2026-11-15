@@ -198,6 +198,28 @@ nonisolated enum Resources {
     }
 }
 
+/// Weekly moderate and vigorous minutes against the WHO target, like Garmin Intensity Minutes.
+nonisolated enum IntensityMinutes {
+    /// WHO: at least 150 minutes of moderate activity a week, or 75 vigorous.
+    static let weeklyTarget = 150.0
+    /// ACSM bands as a share of heart rate reserve: moderate 40–59%, vigorous from 60%.
+    private static let moderateReserve = 0.4
+    private static let vigorousReserve = 0.6
+
+    /// Moderate plus vigorous minutes, vigorous counted double, from 5-minute average heart rate.
+    static func total(heartRate: [TimedValue], restingHeartRate: Double, maxHeartRate: Double) -> Double {
+        let reserve = maxHeartRate - restingHeartRate
+        guard reserve > 0 else { return 0 }
+        let minutesPerValue = Resources.step / 60
+        return heartRate.reduce(0) { total, value in
+            let share = (value.value - restingHeartRate) / reserve
+            if share >= vigorousReserve { return total + 2 * minutesPerValue }
+            if share >= moderateReserve { return total + minutesPerValue }
+            return total
+        }
+    }
+}
+
 /// How much sleep the user needs tonight, like WHOOP's Sleep Planner and Garmin's Sleep Coach:
 /// a baseline, plus part of the recent sleep debt, plus extra after a training day.
 nonisolated enum SleepNeed {
@@ -255,6 +277,65 @@ nonisolated enum SleepConsistency {
     private static func spread(_ values: [Double]) -> Double {
         let mean = values.reduce(0, +) / Double(values.count)
         return (values.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(values.count)).squareRoot()
+    }
+}
+
+/// Like Garmin HRV Status: the average overnight HRV of the last 7 nights against a personal baseline
+/// from the nights before them.
+nonisolated enum HRVStatus {
+    enum State: Equatable {
+        case balanced, unbalanced, low
+
+        var word: String {
+            switch self {
+            case .balanced: "Balanced"
+            case .unbalanced: "Unbalanced"
+            case .low: "Low"
+            }
+        }
+
+        var tone: CardSnapshot.Tone { self == .balanced ? .good : .warning }
+    }
+
+    struct Result: Equatable {
+        let average: Double
+        let baseline: ClosedRange<Double>
+        let state: State
+    }
+
+    static let window = 7
+    /// Nights before the window that the baseline is built from.
+    static let baselineNights = 60
+    /// Garmin also needs about 3 weeks: 14 baseline nights plus a 7-night window.
+    static let minimumBaselineNights = 14
+    static let minimumWindowNights = 3
+    /// A 7-night average moves much less than a single night, so the balanced range is narrower than
+    /// the nightly ±2 SD normal range, but never narrower than 6% of the mean either side.
+    private static let halfWidthInSD = 0.6
+    private static let minimumHalfWidthShare = 0.06
+
+    /// Status for the window ending at `end`, from overnight HRV per night (nil without a reading),
+    /// oldest first. Nil while calibrating.
+    static func status(nights: [Double?], endingAt end: Int) -> Result? {
+        let windowStart = end - window + 1
+        guard windowStart >= 0, end < nights.count else { return nil }
+        let recent = nights[windowStart...end].compactMap { $0 }
+        let history = nights[max(windowStart - baselineNights, 0)..<windowStart].compactMap { $0 }
+        guard recent.count >= minimumWindowNights, history.count >= minimumBaselineNights,
+              let average = Baseline.average(recent), let mean = Baseline.average(history)
+        else { return nil }
+
+        let variance = history.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(history.count - 1)
+        let halfWidth = max(halfWidthInSD * variance.squareRoot(), minimumHalfWidthShare * mean)
+        let baseline = (mean - halfWidth)...(mean + halfWidth)
+        let state: State = if baseline.contains(average) {
+            .balanced
+        } else if average < mean - 2 * halfWidth {
+            .low
+        } else {
+            .unbalanced
+        }
+        return Result(average: average, baseline: baseline, state: state)
     }
 }
 
