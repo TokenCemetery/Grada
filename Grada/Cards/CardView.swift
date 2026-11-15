@@ -359,6 +359,11 @@ private struct WorkoutStats: View {
 /// minutes, bigger dots for longer days, today ringed. A legend names the sports, most days first.
 private struct DaysGrid: View {
     let days: [WorkoutDay]
+    @State private var width: CGFloat = 0
+
+    /// Day columns no wider than on the largest iPhone keep the base size; wider ones, as on iPad,
+    /// scale the whole grid up so the dots don't sit far apart.
+    private var scale: CGFloat { max(1, width / 7 / 56) }
 
     var body: some View {
         let calendar = Calendar.current
@@ -377,17 +382,17 @@ private struct DaysGrid: View {
                     Text(letter).font(.caption2).foregroundStyle(.secondary)
                 }
             }
-            LazyVGrid(columns: columns, spacing: 6) {
+            LazyVGrid(columns: columns, spacing: 6 * scale) {
                 ForEach(Array(cells.enumerated()), id: \.offset) { index, day in
                     ZStack {
                         if let day {
-                            SportPie(day: day, diameter: diameter(day.minutes))
+                            SportPie(day: day, diameter: diameter(day.minutes) * scale)
                         }
                         if index == cells.count - 1 {
-                            Circle().strokeBorder(Color.primary.opacity(0.6), lineWidth: 1.5).frame(width: 30, height: 30)
+                            Circle().strokeBorder(Color.primary.opacity(0.6), lineWidth: 1.5).frame(width: 30 * scale, height: 30 * scale)
                         }
                     }
-                    .frame(height: 30)
+                    .frame(height: 30 * scale)
                 }
             }
             HStack(spacing: 12) {
@@ -401,6 +406,7 @@ private struct DaysGrid: View {
             }
             .padding(.top, 2)
         }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(days.filter { $0.minutes > 0 }.count) active days in the last 30 days")
     }
