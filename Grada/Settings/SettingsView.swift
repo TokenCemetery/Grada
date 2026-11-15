@@ -23,44 +23,24 @@ enum Appearance: String, CaseIterable, Identifiable {
     }
 }
 
+/// Every group is a row that opens its own screen, like iOS Settings.
 struct SettingsView: View {
-    @AppStorage("appearance") private var appearance: Appearance = .system
-    @AppStorage("colorBlindPalette") private var colorBlind = false
-    @Environment(\.openURL) private var openURL
-
     var body: some View {
         NavigationStack {
             Form {
-                Section("Appearance") {
-                    Picker("Appearance", selection: $appearance) {
-                        ForEach(Appearance.allCases) { Text($0.title).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                }
                 Section {
-                    Toggle("Color-blind palette", isOn: $colorBlind)
-                } footer: {
-                    Text("Calendar days use blue, orange and dark instead of green, yellow and red.")
-                }
-                Section {
-                    NavigationLink("Goals") { GoalsView() }
-                }
-                ProfileSection()
-                Section {
-                    Button("Open Health app") {
-                        if let url = URL(string: "x-apple-health://") { openURL(url) }
-                    }
-                } header: {
-                    Text("Data source")
-                } footer: {
-                    Text("Grada reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps. Manage what Grada can read in Health › Sharing › Apps.")
-                }
+                    NavigationLink { ProfileView() } label: { SettingsRow("Profile", icon: "person.fill", color: .blue) }
+                    NavigationLink { GoalsView() } label: { SettingsRow("Goals", icon: "target", color: .green) }
+                    NavigationLink { ThemeView() } label: { SettingsRow("Theme", icon: "paintpalette.fill", color: .indigo) }
+                    NavigationLink { AccessibilityView() } label: { SettingsRow("Accessibility", icon: "accessibility", color: .cyan) }
+                    NavigationLink { DataSourceView() } label: { SettingsRow("Data Source", icon: "heart.fill", color: .pink) }
 #if DEBUG && targetEnvironment(simulator)
-                SimulatorDataSection()
+                    NavigationLink { SimulatorDataView() } label: { SettingsRow("Simulator Data", icon: "hammer.fill", color: .gray) }
 #endif
-                Section("About") {
-                    LabeledContent("Version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")
+                } footer: {
+                    Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
+                        .frame(maxWidth: .infinity)
+                        .padding(.top)
                 }
             }
             .navigationTitle("Settings")
@@ -68,16 +48,101 @@ struct SettingsView: View {
     }
 }
 
+/// White symbol on a colored tile, like the iOS Settings app.
+private struct SettingsRow: View {
+    let title: String
+    let icon: String
+    let color: Color
+
+    init(_ title: String, icon: String, color: Color) {
+        self.title = title
+        self.icon = icon
+        self.color = color
+    }
+
+    var body: some View {
+        Label {
+            Text(title)
+        } icon: {
+            Image(systemName: icon)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 28, height: 28)
+                .background(color.gradient, in: RoundedRectangle(cornerRadius: 7))
+        }
+    }
+}
+
+private struct ThemeView: View {
+    @AppStorage("appearance") private var appearance: Appearance = .system
+
+    var body: some View {
+        Form {
+            Section("Appearance") {
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(Appearance.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+        }
+        .navigationTitle("Theme")
+    }
+}
+
+private struct AccessibilityView: View {
+    @AppStorage("colorBlindPalette") private var colorBlind = false
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Color-Blind Palette", isOn: $colorBlind)
+            } footer: {
+                Text("Calendar days use blue, orange and dark instead of green, yellow and red.")
+            }
+        }
+        .navigationTitle("Accessibility")
+    }
+}
+
+private struct DataSourceView: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        Form {
+            Section {
+                Button("Open Health App") {
+                    if let url = URL(string: "x-apple-health://") { openURL(url) }
+                }
+            } footer: {
+                Text("Grada reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps. Manage what Grada can read in Health › Sharing › Apps.")
+            }
+        }
+        .navigationTitle("Data Source")
+    }
+}
+
 /// Read-only: these values come from Apple Health and are changed there.
-private struct ProfileSection: View {
+private struct ProfileView: View {
     @Environment(HomeModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
     @State private var profile: HealthProfile?
 
     var body: some View {
+        Form {
+            profileSection
+        }
+        .navigationTitle("Profile")
+        // Re-read when coming back from the Health app, where the user may have just changed them.
+        .task(id: scenePhase) {
+            if scenePhase == .active { profile = await model.loadProfile() }
+        }
+    }
+
+    private var profileSection: some View {
         Section {
             LabeledContent("Age", value: profile.map { $0.age.map { "\($0)" } ?? "Not available" } ?? "…")
-            LabeledContent("Max heart rate") {
+            LabeledContent("Max Heart Rate") {
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(profile?.maxHeartRate.map { "\(Int($0.rounded())) bpm" } ?? "–")
                     if let source = profile?.maxHeartRateSource {
@@ -85,7 +150,7 @@ private struct ProfileSection: View {
                     }
                 }
             }
-            LabeledContent("Resting heart rate") {
+            LabeledContent("Resting Heart Rate") {
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(profile?.restingHeartRate.map { "\(Int($0.rounded())) bpm" } ?? "–")
                     if profile?.restingHeartRate != nil {
@@ -93,19 +158,13 @@ private struct ProfileSection: View {
                     }
                 }
             }
-            LabeledContent("Sleep need", value: SnapshotBuilder.hoursMinutes(SleepNeed.baseline))
-        } header: {
-            Text("Profile")
+            LabeledContent("Sleep Need", value: SnapshotBuilder.hoursMinutes(SleepNeed.baseline))
         } footer: {
             if profile != nil, profile?.age == nil {
                 Text("Grada can't read your birth date. Add it in Health › your picture › Health Details, then allow Grada to read Date of Birth in Health › Sharing › Apps › Grada.")
             } else {
                 Text("Used for Resources, Health age and Sleep need. Read from Apple Health; change them there.")
             }
-        }
-        // Re-read when coming back from the Health app, where the user may have just changed them.
-        .task(id: scenePhase) {
-            if scenePhase == .active { profile = await model.loadProfile() }
         }
     }
 }
@@ -117,33 +176,34 @@ private struct ProfileSection: View {
 
 #if DEBUG && targetEnvironment(simulator)
 /// Fills the simulator's Apple Health with sample data. Not in device or release builds.
-private struct SimulatorDataSection: View {
+private struct SimulatorDataView: View {
     @Environment(HomeModel.self) private var model
     @State private var status: String?
     @State private var isWorking = false
     private let seeder = SimulatorHealthSeeder()
 
     var body: some View {
-        Section {
-            Button("Add 90 days of sample data") { run { try await seed(days: 90) } }
-            Button("Add 2 years of sample data") { run { try await seed(days: 730) } }
-            Button("Add 3 years of sample data") { run { try await seed(days: 1_095) } }
-            Button("Remove sample data", role: .destructive) {
-                run {
-                    status = "Removing…"
-                    try await seeder.removeSampleData()
-                    await reimport()
+        Form {
+            Section {
+                Button("Add 90 Days of Sample Data") { run { try await seed(days: 90) } }
+                Button("Add 2 Years of Sample Data") { run { try await seed(days: 730) } }
+                Button("Add 3 Years of Sample Data") { run { try await seed(days: 1_095) } }
+                Button("Remove Sample Data", role: .destructive) {
+                    run {
+                        status = "Removing…"
+                        try await seeder.removeSampleData()
+                        await reimport()
+                    }
                 }
+                if let status {
+                    Text(status).font(.caption).foregroundStyle(.secondary)
+                }
+            } footer: {
+                Text("Writes to the simulator's Apple Health, then imports it again. Only in simulator test builds. Tapping Add twice adds the data twice.")
             }
-            if let status {
-                Text(status).font(.caption).foregroundStyle(.secondary)
-            }
-        } header: {
-            Text("Simulator test data")
-        } footer: {
-            Text("Writes to the simulator's Apple Health, then imports it again. Only in simulator test builds. Tapping Add twice adds the data twice.")
+            .disabled(isWorking)
         }
-        .disabled(isWorking)
+        .navigationTitle("Simulator Data")
     }
 
     private func seed(days: Int) async throws {

@@ -78,7 +78,7 @@ struct GoalsView: View {
                 Text("Goals adjust every Monday: up 5% after a week you met them, down 5% after a week you missed them. A goal you change holds for a week, then adjusts from your value.")
             }
             Section {
-                Menu("Reset to a preset") {
+                Menu("Reset to a Preset") {
                     ForEach(GoalPreset.allCases) { preset in
                         Button("\(preset.title): \(preset.summary)") { pendingPreset = preset }
                     }
@@ -97,7 +97,7 @@ struct GoalsView: View {
         .confirmationDialog("Reset every goal to \(pendingPreset?.title ?? "")?", isPresented: Binding(
             get: { pendingPreset != nil }, set: { if !$0 { pendingPreset = nil } }
         ), titleVisibility: .visible) {
-            Button("Reset goals") {
+            Button("Reset Goals") {
                 if let pendingPreset {
                     GoalStore(context: modelContext, source: healthSource).start(with: pendingPreset.goals, reason: .preset)
                 }

@@ -11,7 +11,7 @@ Requires Xcode 27.2 or later. The app runs on iOS 17 or later.
 
 1. Open `Grada.xcodeproj` and run the `Grada` scheme on an iPhone simulator.
 2. Allow Apple Health access.
-3. In **Settings › Simulator test data**, add 90 days of sample data. The section appears only in Debug builds on the simulator.
+3. In **Settings › Simulator Data**, add 90 days of sample data. This screen appears only in Debug builds on the simulator.
 
 Run the unit tests (use any iPhone simulator listed by `xcrun simctl list devices available`):
 
