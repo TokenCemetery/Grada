@@ -116,8 +116,6 @@ nonisolated enum Resources {
     /// `restMargin` bpm of resting: close enough that ordinary sitting doesn't count.
     private static let restCharge = 0.15
     private static let restMargin = 3.0
-    /// Above this share of heart rate reserve, while not in a workout, counts as stress or activity.
-    private static let stressThreshold = 0.15
     /// Heart rate is carried forward over gaps up to this long (watches sample every few minutes).
     private static let heartRateCarry: TimeInterval = 15 * 60
 
@@ -158,7 +156,8 @@ nonisolated enum Resources {
                 // Without heart rate, assume moderate effort.
                 let intensity = hr.map { min(max(($0 - restingHeartRate) / reserve, 0), 1) } ?? 0.5
                 change = -(calmDrain + 3 * pow(intensity, 1.5))
-            } else if let hr, (hr - restingHeartRate) / reserve > stressThreshold {
+            } else if let hr, Stress.level(hr, restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate) > Stress.drainLevel {
+                // Stress or activity, as the Stress card detects it.
                 change = -1.5 * min((hr - restingHeartRate) / reserve, 1)
             } else if let hr, hr <= restingHeartRate + restMargin {
                 change = restCharge
@@ -185,6 +184,63 @@ nonisolated enum Resources {
     static func maxHeartRate(age: Int?, highestRecorded: Double?) -> Double? {
         if let age { return 208 - 0.7 * Double(age) }
         return highestRecorded
+    }
+}
+
+/// All-day stress, 0–100, from heart rate above resting while awake and outside workouts. Garmin and others measure
+/// stress from beat-to-beat HRV (Firstbeat), which iOS doesn't record through the day, so this reads heart rate
+/// alone. The scale is Grada's own: 0 at resting heart rate and 100 at ACSM's moderate-intensity floor, 40% of heart
+/// rate reserve (Garber et al. 2011), where the heart works as hard as in exercise. Walking or any movement raises
+/// it too, since heart rate can't tell effort from stress. The four bands are Garmin's quarters, for familiarity.
+nonisolated enum Stress {
+    enum Band: Int, CaseIterable {
+        case rest, low, medium, high
+
+        var title: String {
+            switch self {
+            case .rest: "Rest"
+            case .low: "Low"
+            case .medium: "Medium"
+            case .high: "High"
+            }
+        }
+
+        var rating: DayRating {
+            switch self {
+            case .rest, .low: .good
+            case .medium: .fair
+            case .high: .poor
+            }
+        }
+    }
+
+    static let fullScaleReserve = 0.4
+    /// Lower bounds of low, medium and high: Garmin's 26, 51 and 76.
+    static let bandLowerBounds = [26.0, 51.0, 76.0]
+    /// Resources drains above this level: 15% of heart rate reserve, 15/40 of the scale.
+    static let drainLevel = 37.5
+
+    static func level(_ heartRate: Double, restingHeartRate: Double, maxHeartRate: Double) -> Double {
+        let share = (heartRate - restingHeartRate) / max(maxHeartRate - restingHeartRate, 1)
+        return min(max(share / fullScaleReserve * 100, 0), 100)
+    }
+
+    static func band(_ level: Double) -> Band {
+        Band(rawValue: bandLowerBounds.filter { level.rounded() >= $0 }.count)!
+    }
+
+    /// The level of each 5-minute heart rate reading taken awake and outside workouts, oldest first.
+    static func timeline(heartRate: [TimedValue], sleep: [SleepPeriod], workouts: [DateInterval],
+                         restingHeartRate: Double, maxHeartRate: Double) -> [TimedValue] {
+        heartRate.compactMap { reading in
+            let end = reading.date + Resources.step
+            let middle = reading.date + Resources.step / 2
+            let asleep = sleep.contains { $0.stage != .awake && $0.start <= middle && middle < $0.end }
+            let inWorkout = workouts.contains { $0.start < end && reading.date < $0.end }
+            guard !asleep, !inWorkout else { return nil }
+            return TimedValue(date: reading.date, value: level(reading.value, restingHeartRate: restingHeartRate,
+                                                                maxHeartRate: maxHeartRate))
+        }
     }
 }
 

@@ -66,7 +66,7 @@ struct CardID: Hashable, Identifiable {
 
 /// Every card the home screen can show. The raw value is persisted, so don't rename cases.
 enum CardKind: String, CaseIterable, Identifiable {
-    case healthStatus, recovery, resources, healthAge
+    case healthStatus, recovery, resources, stress, healthAge
     case sleepDuration, sleepStages, sleepNeed, sleepConsistency, sleepScore
     case heartRate, restingHeartRate, hrv, hrvStatus, oxygenSaturation, respiratoryRate, wristTemperature
     case steps, activeEnergy, exerciseMinutes, intensityMinutes, distance, floors, standHours, dayIntensity
@@ -122,6 +122,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .healthStatus: "Health Status"
         case .recovery: "Recovery"
         case .resources: "Resources"
+        case .stress: "Stress"
         case .heartRate: "Heart Rate"
         case .sleepDuration, .sleepStages: "Sleep"
         case .sleepNeed: "Sleep Need"
@@ -159,6 +160,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .healthStatus: "checkmark.shield"
         case .recovery: "arrow.clockwise.heart"
         case .resources: "battery.75percent"
+        case .stress: "brain.head.profile"
         case .heartRate: "heart.circle"
         case .sleepDuration, .sleepStages: "moon.zzz"
         case .sleepNeed: "bed.double"
@@ -193,7 +195,7 @@ enum CardKind: String, CaseIterable, Identifiable {
 
     var category: CardCategory {
         switch self {
-        case .healthStatus, .recovery, .resources, .healthAge: .status
+        case .healthStatus, .recovery, .resources, .stress, .healthAge: .status
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .heartRate, .restingHeartRate, .hrv, .hrvStatus, .oxygenSaturation, .respiratoryRate, .wristTemperature: .heart
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity: .activity

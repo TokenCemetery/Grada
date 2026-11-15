@@ -34,7 +34,7 @@ extension CardKind {
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .lastWorkout, .weeklyTraining, .strain, .recoveryTime, .racePredictor, .trainingReadiness, .loadFocus: .training
-        case .healthStatus, .recovery, .resources, .healthAge, .hrvStatus: .score
+        case .healthStatus, .recovery, .resources, .stress, .healthAge, .hrvStatus: .score
         }
     }
 
@@ -71,9 +71,9 @@ extension CardKind {
         switch self {
         case .hrv: [.healthStatus, .recovery, .hrvStatus]
         case .respiratoryRate: [.healthStatus, .recovery]
-        case .restingHeartRate: [.healthStatus, .recovery, .resources, .healthAge, .dayIntensity]
+        case .restingHeartRate: [.healthStatus, .recovery, .resources, .stress, .healthAge, .dayIntensity]
         case .oxygenSaturation, .wristTemperature: [.healthStatus]
-        case .heartRate: [.resources, .dayIntensity, .strain]
+        case .heartRate: [.resources, .stress, .dayIntensity, .strain]
         case .vo2Max: [.racePredictor, .healthAge]
         case .sleepDuration, .sleepStages: [.recovery, .sleepNeed, .sleepScore, .resources, .healthAge]
         case .sleepNeed, .sleepConsistency: [.sleepScore]
@@ -90,6 +90,7 @@ extension CardKind {
         case .healthAge: [.steps, .sleepDuration, .restingHeartRate, .vo2Max, .exerciseMinutes]
         case .intensityMinutes: [.heartRate, .restingHeartRate, .exerciseMinutes]
         case .dayIntensity: [.heartRate, .restingHeartRate]
+        case .stress: [.heartRate, .restingHeartRate]
         case .hrvStatus: [.hrv]
         case .sleepScore: [.sleepStages, .sleepNeed, .sleepConsistency]
         case .strain: [.heartRate]
@@ -107,6 +108,8 @@ extension CardKind {
             "How ready your body is for strain today. Each input is checked against a published threshold: overnight HRV more than half a standard deviation below your baseline, resting heart rate more than half a standard deviation above it, under 7 hours of sleep, or breathing rate above your normal range. Good: nothing off, a good day to push. Fair: one input off. Poor: two or more; favour easy training and rest."
         case .resources:
             "An estimate of your energy through the day. Sleep and calm rest recharge it; activity and stress, seen as a raised heart rate, drain it. No published method exists for this without beat-to-beat HRV, which iPhone doesn't record through the day, so the charge and drain rates and the colour bands (borrowed from WHOOP) are Grada's own guesses. For measured effort, see Day Intensity."
+        case .stress:
+            "Your stress through the day while awake and not working out, from 0 to 100, and today's average. Garmin and others read stress from beat-to-beat heart rate variability, which iPhone doesn't record through the day, so Grada uses heart rate alone: 0 is your resting heart rate and 100 is 40% of your heart rate reserve (max minus resting), where the American College of Sports Medicine's moderate exercise begins. Heart rate can't tell stress from movement, so walking, standing up, caffeine or a warm room raise it too, and sitting still while worried may barely show. Bands follow Garmin's: rest up to 25, low 26–50, medium 51–75 (yellow) and high from 76 (red). Resources drains from the same heart rate."
         case .healthAge:
             "The age your fitness and habits over the last 30 days point to. Each input is compared with a typical adult of your age and sex, or with the guideline, and its link with lifespan from large studies is turned into years: the risk of dying doubles about every 8 years of age. Inputs: VO₂ max and resting heart rate (need your sex in Apple Health), steps, sleep (7–8 hours is the reference) and exercise (150 minutes a week is the reference). Fit people also tend to walk and exercise more, so the inputs overlap and the total is an estimate."
         case .sleepDuration, .sleepStages:

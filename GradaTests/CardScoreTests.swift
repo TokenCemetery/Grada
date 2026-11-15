@@ -166,3 +166,46 @@ struct RecoveryTimeTests {
         guard case .progress = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
     }
 }
+
+struct StressTests {
+    private let start = Date(timeIntervalSince1970: 1_700_000_000)
+
+    /// Resting 50, max 190: reserve 140, so 100 is 40% of it, 106 bpm.
+    @Test func levelRunsFromRestingToTheModerateFloor() {
+        #expect(Stress.level(50, restingHeartRate: 50, maxHeartRate: 190) == 0)
+        #expect(Stress.level(45, restingHeartRate: 50, maxHeartRate: 190) == 0)
+        #expect(Stress.level(78, restingHeartRate: 50, maxHeartRate: 190) == 50)
+        #expect(Stress.level(150, restingHeartRate: 50, maxHeartRate: 190) == 100)
+    }
+
+    @Test func bandsAreGarminsQuarters() {
+        #expect(Stress.band(25) == .rest)
+        #expect(Stress.band(26) == .low)
+        #expect(Stress.band(51) == .medium)
+        #expect(Stress.band(76) == .high)
+        #expect(Stress.band(76).rating == .poor)
+    }
+
+    /// Resources keeps draining from 15% of heart rate reserve.
+    @Test func resourcesDrainsAtTheSameShare() {
+        #expect(Stress.drainLevel == 37.5)
+    }
+
+    @Test func timelineSkipsSleepAndWorkouts() {
+        let readings = [50.0, 78, 150, 64].enumerated().map { TimedValue(date: start + Double($0.offset) * 300, value: $0.element) }
+        let sleep = [SleepPeriod(start: start, end: start + 300, stage: .core)]
+        let workout = DateInterval(start: start + 600, duration: 300)
+        let levels = Stress.timeline(heartRate: readings, sleep: sleep, workouts: [workout], restingHeartRate: 50, maxHeartRate: 190)
+        #expect(levels.map(\.value) == [50, 25])
+    }
+
+    @MainActor
+    @Test func cardShowsTodaysAverageAndTimeline() async throws {
+        #expect(CardKind.gallery.contains(.stress))
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .stress)
+        #expect(snapshot.value != nil)
+        #expect(snapshot.comparison?.hasSuffix("high") == true, "\(snapshot.comparison ?? "")")
+        guard case .intraday(_, let domain) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(domain == 0...100)
+    }
+}
