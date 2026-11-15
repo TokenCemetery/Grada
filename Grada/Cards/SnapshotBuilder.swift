@@ -607,7 +607,12 @@ struct SnapshotBuilder {
 
     private func lastWorkout() async throws -> CardSnapshot {
         guard let workout = try await source.workouts(days: 30).first else { return .noData(period: "Last 30 days") }
-        return CardSnapshot(
+        return workoutSnapshot(workout)
+    }
+
+    /// A Last Workout card for one workout.
+    func workoutSnapshot(_ workout: WorkoutSummary) -> CardSnapshot {
+        CardSnapshot(
             period: "\(dayLabel(workout.start)), \(workout.start.formatted(date: .omitted, time: .shortened))",
             value: Self.hoursMinutes(workout.duration),
             comparison: workout.name,
@@ -642,22 +647,10 @@ struct SnapshotBuilder {
         )
     }
 
-    /// Each day's total minutes and its longest sport, oldest first.
+    /// Each of the last `days` days' workouts by sport, oldest first.
     private func workoutDays(_ workouts: [WorkoutSummary], days: Int) -> [WorkoutDay] {
-        let dayStarts = lastDays(days)
-        var result = Array(repeating: WorkoutDay(), count: days)
-        for workout in workouts {
-            guard let index = dayStarts.firstIndex(of: calendar.startOfDay(for: workout.start)) else { continue }
-            if let sport = result[index].sports.firstIndex(where: { $0.name == workout.name }) {
-                result[index].sports[sport].minutes += workout.duration / 60
-            } else {
-                result[index].sports.append(.init(name: workout.name, symbol: workout.symbol, minutes: workout.duration / 60))
-            }
-        }
-        for index in result.indices {
-            result[index].sports.sort { $0.minutes > $1.minutes }
-        }
-        return result
+        let byDay = WorkoutDay.byDay(workouts, calendar: calendar)
+        return lastDays(days).map { byDay[$0] ?? WorkoutDay() }
     }
 
     private func workoutMinutesPerDay(_ workouts: [WorkoutSummary], days: Int) -> [Double] {

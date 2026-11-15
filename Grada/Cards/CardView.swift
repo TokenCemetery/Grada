@@ -390,7 +390,7 @@ private struct DaysGrid: View {
                 }
             }
             HStack(spacing: 12) {
-                ForEach(Self.sports(days), id: \.name) { sport in
+                ForEach(WorkoutDay.topSports(days, limit: 4), id: \.name) { sport in
                     HStack(spacing: 4) {
                         Circle().fill(WorkoutColors.color(symbol: sport.symbol)).frame(width: 8, height: 8)
                         Text(sport.name).font(.caption2).foregroundStyle(.secondary)
@@ -404,19 +404,6 @@ private struct DaysGrid: View {
         .accessibilityLabel("\(days.filter { $0.minutes > 0 }.count) active days in the last 30 days")
     }
 
-    /// Up to four sports by the days they appear on, most first.
-    private static func sports(_ days: [WorkoutDay]) -> [(name: String, symbol: String?)] {
-        var counts: [String: (symbol: String?, days: Int)] = [:]
-        for day in days {
-            for sport in day.sports {
-                counts[sport.name, default: (sport.symbol, 0)].days += 1
-            }
-        }
-        return counts.sorted { $0.value.days > $1.value.days || ($0.value.days == $1.value.days && $0.key < $1.key) }
-            .prefix(4)
-            .map { (name: $0.key, symbol: $0.value.symbol) }
-    }
-
     private func diameter(_ minutes: Double) -> CGFloat {
         minutes <= 0 ? 6 : min(12 + CGFloat(minutes) / 6, 26)
     }
@@ -424,7 +411,7 @@ private struct DaysGrid: View {
 
 /// A day's dot: one slice per sport, sized by its minutes, longest first from 12 o'clock. A rest day is a
 /// small grey dot.
-private struct SportPie: View {
+struct SportPie: View {
     let day: WorkoutDay
     let diameter: CGFloat
 

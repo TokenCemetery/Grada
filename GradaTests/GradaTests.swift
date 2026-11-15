@@ -728,6 +728,50 @@ struct PastDaySourceTests {
 }
 
 @MainActor
+struct CalendarTypeTests {
+    private let calendar = Calendar.current
+
+    @Test func savedMetricsMapToTheirType() {
+        #expect(CalendarMetric(rawValue: "healthStatus") == .health)
+        #expect(CalendarMetric(rawValue: "hrv") == .health)
+        #expect(CalendarMetric(rawValue: "restingHeartRate") == .health)
+        #expect(CalendarMetric(rawValue: "sleep") == .recovery)
+        #expect(CalendarMetric(rawValue: "steps") == .training)
+        #expect(CalendarMetric.allCases.allSatisfy { CalendarMetric(rawValue: $0.rawValue) == $0 })
+    }
+
+    @Test func cardsOpenTheirType() {
+        #expect(CardKind.healthStatus.calendarMetric == .health)
+        #expect(CardKind.wristTemperature.calendarMetric == .health)
+        #expect(CardKind.recovery.calendarMetric == .recovery)
+        #expect(CardKind.sleepStages.calendarMetric == .recovery)
+        #expect(CardKind.steps.calendarMetric == .training)
+        #expect(CardKind.last30Days.calendarMetric == .training)
+        for metric in CalendarMetric.allCases {
+            #expect(metric.kinds.allSatisfy { $0.calendarMetric == metric }, "\(metric) sheet holds only its own cards")
+        }
+    }
+
+    @Test func recoveryRatesDaysAndTrainingDoesnt() async {
+        let model = CalendarModel(source: SampleDataSource())
+        await model.load(.recovery, goals: GoalHistory())
+        #expect(!model.ratings.isEmpty)
+        await model.load(.training, goals: GoalHistory())
+        #expect(model.ratings.isEmpty)
+        let twoSports = model.workoutDays.values.first { $0.sports.count == 2 }
+        #expect(twoSports?.workouts == 2, "Sample strength days add an evening walk")
+    }
+
+    @Test func daySheetListsThatDaysWorkouts() async throws {
+        let model = CalendarModel(source: SampleDataSource())
+        await model.load(.training, goals: GoalHistory())
+        let day = try #require(model.workoutDays.first { $0.value.workouts == 2 }?.key)
+        let cards = await model.workoutSnapshots(for: day)
+        #expect(cards.map(\.comparison) == ["Strength", "Walk"], "Earliest first")
+    }
+}
+
+@MainActor
 struct TrendBuilderTests {
     private let calendar = Calendar.current
     private var today: Date { calendar.startOfDay(for: .now) }

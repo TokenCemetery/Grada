@@ -44,19 +44,44 @@ nonisolated enum DayRating: CaseIterable {
     }
 }
 
-/// Metrics the calendar can colour days by.
+/// What the calendar shows: how days are drawn and which cards a day's sheet holds.
 nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
-    case healthStatus, sleep, steps, hrv, restingHeartRate
+    /// Vitals against their normal range.
+    case health
+    /// The recovery score, which already covers sleep.
+    case recovery
+    /// Workouts by sport; rest days aren't rated.
+    case training
 
     var id: String { rawValue }
 
+    /// Also reads the five metrics the calendar had before, so a saved choice lands on its new type.
+    init?(rawValue: String) {
+        switch rawValue {
+        case "health", "healthStatus", "hrv", "restingHeartRate": self = .health
+        case "recovery", "sleep": self = .recovery
+        case "training", "steps": self = .training
+        default: return nil
+        }
+    }
+
     var title: String {
         switch self {
-        case .healthStatus: "Health Status"
-        case .sleep: "Sleep"
-        case .steps: "Steps"
-        case .hrv: "HRV"
-        case .restingHeartRate: "RHR"
+        case .health: "Health"
+        case .recovery: "Recovery"
+        case .training: "Training"
+        }
+    }
+
+    /// Health and Recovery colour days red, yellow or green; Training draws each day's sports.
+    var isRated: Bool { self != .training }
+
+    /// The day sheet's cards, in order. Training adds the day's workouts on top.
+    var kinds: [CardKind] {
+        switch self {
+        case .health: [.healthStatus, .hrvStatus, .heartRate, .oxygenSaturation, .respiratoryRate, .wristTemperature]
+        case .recovery: [.recovery, .resources, .sleepStages, .sleepNeed, .sleepConsistency]
+        case .training: [.steps, .activeEnergy, .intensityMinutes, .distance, .weeklyTraining, .vo2Max]
         }
     }
 }

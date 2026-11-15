@@ -80,7 +80,7 @@ struct GradaApp: App {
 
 struct RootView: View {
     @AppStorage("appearance") private var appearance: Appearance = .system
-    @AppStorage("calendarMetric") private var calendarMetric: CalendarMetric = .healthStatus
+    @AppStorage("calendarMetric") private var calendarMetric: CalendarMetric = .health
     @Environment(HomeModel.self) private var homeModel
     @Query private var goalChanges: [GoalChange]
     @State private var tab = Tab.home

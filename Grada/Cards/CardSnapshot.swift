@@ -79,8 +79,42 @@ struct WorkoutDay: Equatable {
     }
 
     var sports: [Sport] = []
+    var workouts = 0
 
     var minutes: Double { sports.reduce(0) { $0 + $1.minutes } }
+
+    /// Workouts grouped by the start of their day.
+    static func byDay(_ workouts: [WorkoutSummary], calendar: Calendar) -> [Date: WorkoutDay] {
+        var result: [Date: WorkoutDay] = [:]
+        for workout in workouts {
+            let day = calendar.startOfDay(for: workout.start)
+            var entry = result[day, default: WorkoutDay()]
+            entry.workouts += 1
+            if let sport = entry.sports.firstIndex(where: { $0.name == workout.name }) {
+                entry.sports[sport].minutes += workout.duration / 60
+            } else {
+                entry.sports.append(.init(name: workout.name, symbol: workout.symbol, minutes: workout.duration / 60))
+            }
+            result[day] = entry
+        }
+        for day in result.keys {
+            result[day]?.sports.sort { $0.minutes > $1.minutes }
+        }
+        return result
+    }
+
+    /// Up to `limit` sports by the days they appear on, most first.
+    static func topSports(_ days: some Sequence<WorkoutDay>, limit: Int) -> [(name: String, symbol: String)] {
+        var counts: [String: (symbol: String, days: Int)] = [:]
+        for day in days {
+            for sport in day.sports {
+                counts[sport.name, default: (sport.symbol, 0)].days += 1
+            }
+        }
+        return counts.sorted { $0.value.days > $1.value.days || ($0.value.days == $1.value.days && $0.key < $1.key) }
+            .prefix(limit)
+            .map { (name: $0.key, symbol: $0.value.symbol) }
+    }
 }
 
 struct VitalStatus: Equatable {
