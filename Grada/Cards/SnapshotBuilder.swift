@@ -583,10 +583,13 @@ struct SnapshotBuilder {
         let workouts = recent.count
         guard workouts > 0 else { return .noData(period: "Last 7 days") }
         let minutes = workoutMinutesPerDay(recent, days: 7)
+        let goal = goals.value(.workouts, on: calendar.startOfDay(for: now))
+        let count = workouts == 1 ? "1 workout" : "\(workouts) workouts"
         return CardSnapshot(
             period: "Last 7 days",
             value: Self.hoursMinutes(minutes.reduce(0, +) * 60),
-            comparison: workouts == 1 ? "1 workout" : "\(workouts) workouts",
+            comparison: goal.map { "\(count) of \(format($0, 0))" } ?? count,
+            rating: goal.map { DayRatings.goal(Double(workouts), goal: $0) },
             chart: .bars(minutes)
         )
     }
