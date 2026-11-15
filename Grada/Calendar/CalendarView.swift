@@ -24,30 +24,22 @@ struct CalendarView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollViewReader { proxy in
-                VStack(spacing: 0) {
-                    header
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 24) {
-                            ForEach(months, id: \.self) { month in
-                                MonthView(month: month, metric: metric, today: today, selected: selectedDay, colorBlind: colorBlind) { day in
-                                    selectedDay = day
-                                }
-                                .id(month)
+            VStack(spacing: 0) {
+                header
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 24) {
+                        ForEach(months, id: \.self) { month in
+                            MonthView(month: month, metric: metric, today: today, selected: selectedDay, colorBlind: colorBlind) { day in
+                                selectedDay = day
                             }
                         }
-                        .padding()
                     }
-                    .defaultScrollAnchor(.bottom)
+                    .padding()
                 }
-                .navigationTitle("Calendar")
-                .toolbar {
-                    Button("Today") {
-                        withAnimation { proxy.scrollTo(months.last, anchor: .bottom) }
-                        selectedDay = today
-                    }
-                }
+                // Opens on the current month; no Today button needed.
+                .defaultScrollAnchor(.bottom)
             }
+            .toolbar(.hidden, for: .navigationBar)
             .background(Color(.systemGroupedBackground))
             // A flag, not `sheet(item:)`: tapping another day while the sheet is open updates it in place.
             .sheet(isPresented: Binding(get: { selectedDay != nil }, set: { if !$0 { selectedDay = nil } })) {
@@ -73,6 +65,10 @@ struct CalendarView: View {
     /// Stays put while the months scroll, so the picker and legend are always in view.
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
+            Text("Calendar")
+                .font(.largeTitle.bold())
+                .accessibilityAddTraits(.isHeader)
+                .padding(.horizontal)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(CalendarMetric.allCases) { option in
