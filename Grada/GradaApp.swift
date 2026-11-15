@@ -37,7 +37,7 @@ struct GradaApp: App {
     ///
     /// Falls back to a local-only store so the app still works if iCloud can't be set up.
     private static func makeModelContainer() -> ModelContainer {
-        let schema = Schema([HomeCard.self, DaySummary.self, WorkoutRecord.self])
+        let schema = Schema([HomeCard.self, DaySummary.self, WorkoutRecord.self, GoalChange.self])
         do {
             let configuration = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
             return try ModelContainer(for: schema, configurations: configuration)
@@ -73,7 +73,10 @@ struct RootView: View {
     @AppStorage("appearance") private var appearance: Appearance = .system
     @AppStorage("calendarMetric") private var calendarMetric: CalendarMetric = .healthStatus
     @Environment(HomeModel.self) private var homeModel
+    @Query private var goalChanges: [GoalChange]
     @State private var tab = Tab.home
+    /// Goal setup waits until the Apple Health permission screen is answered.
+    @State private var isAuthorized = false
 
     private enum Tab { case home, calendar, settings }
 
@@ -94,6 +97,13 @@ struct RootView: View {
             tab = .calendar
         })
         .preferredColorScheme(appearance.colorScheme)
-        .task { await homeModel.importer?.importHistoryIfNeeded() }
+        .sheet(isPresented: Binding(get: { isAuthorized && goalChanges.isEmpty }, set: { _ in })) {
+            GoalSetupView()
+        }
+        .task {
+            await homeModel.importer?.authorize()
+            isAuthorized = true
+            await homeModel.importer?.importHistoryIfNeeded()
+        }
     }
 }

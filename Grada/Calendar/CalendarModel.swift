@@ -26,14 +26,14 @@ final class CalendarModel {
         self.calendar = calendar
     }
 
-    func load(_ metric: CalendarMetric) async {
+    func load(_ metric: CalendarMetric, goals: GoalHistory) async {
         do {
             let today = calendar.startOfDay(for: .now)
             let earliest = try await source.earliestDay().map { calendar.startOfDay(for: $0) }
                 ?? calendar.date(byAdding: .day, value: -fallbackDays + 1, to: today)!
             let days = (calendar.dateComponents([.day], from: earliest, to: today).day ?? 0) + 1
 
-            let newRatings = try await ratings(metric, days: days)
+            let newRatings = try await ratings(metric, days: days, goals: goals)
             let workouts = try await source.workouts(days: days)
             ratings = newRatings
             workoutDays = Set(workouts.map { calendar.startOfDay(for: $0.start) })
@@ -46,8 +46,9 @@ final class CalendarModel {
 
     /// Cards for `day` as they looked at the end of that day, without the 7-day charts
     /// (the month grid already shows the trend).
-    func snapshots(for day: Date, kinds: [CardKind]) async -> [CardKind: CardSnapshot] {
-        let builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
+    func snapshots(for day: Date, kinds: [CardKind], goals: GoalHistory) async -> [CardKind: CardSnapshot] {
+        var builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
+        builder.goals = goals
 
         var result: [CardKind: CardSnapshot] = [:]
         await withTaskGroup(of: (CardKind, CardSnapshot?).self) { group in
@@ -69,7 +70,7 @@ final class CalendarModel {
         return result
     }
 
-    private func ratings(_ metric: CalendarMetric, days: Int) async throws -> [Date: DayRating] {
+    private func ratings(_ metric: CalendarMetric, days: Int, goals: GoalHistory) async throws -> [Date: DayRating] {
         // Vitals need the baseline window before the first shown day.
         let withBaseline = days + baselineDays
         switch metric {
@@ -88,12 +89,18 @@ final class CalendarModel {
         case .steps:
             let series = try await source.daily(.steps, days: days)
             return Dictionary(uniqueKeysWithValues: series.compactMap { entry in
-                entry.value.map { (entry.day, DayRatings.goal($0, goal: DayRatings.stepsGoal)) }
+                entry.value.map { (entry.day, DayRatings.goal($0, goal: goals.value(.steps, on: entry.day) ?? DayRatings.stepsGoal)) }
             })
         case .sleep:
+            var builder = SnapshotBuilder(source: source)
+            builder.calendar = calendar
+            builder.goals = goals
+            let sleepGoals = Dictionary(try await builder.sleepGoals(days).map { ($0.day, $0.value) },
+                                        uniquingKeysWith: { first, _ in first })
             let nights = try await source.sleepNights(days: days).filter { $0.asleep > 0 }
-            return Dictionary(nights.map { ($0.wakeDay, DayRatings.goal($0.asleep, goal: DayRatings.sleepGoal)) },
-                              uniquingKeysWith: { first, _ in first })
+            return Dictionary(nights.map { night in
+                (night.wakeDay, DayRatings.goal(night.asleep, goal: (sleepGoals[night.wakeDay] ?? nil) ?? DayRatings.sleepGoal))
+            }, uniquingKeysWith: { first, _ in first })
         }
     }
 }

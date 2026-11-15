@@ -204,7 +204,7 @@ struct IntensityMinutesTests {
         let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .intensityMinutes)
         #expect(snapshot.period == "This week")
         let comparison = try #require(snapshot.comparison)
-        #expect(comparison.hasSuffix("of 150") || comparison == "150 target reached", "\(comparison)")
+        #expect(comparison.hasSuffix("of 150") || comparison == "Goal reached", "\(comparison)")
     }
 }
 
@@ -502,7 +502,7 @@ struct PastDaySourceTests {
     @Test func pastDayCardsDontSayToday() async throws {
         let calendar = Calendar.current
         let day = calendar.date(byAdding: .day, value: -5, to: calendar.startOfDay(for: .now))!
-        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, kinds: [.steps, .sleepNeed])
+        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, kinds: [.steps, .sleepNeed], goals: GoalHistory())
         #expect(snapshots[.steps]?.period == "That day")
         #expect(snapshots[.sleepNeed]?.period == "That night")
     }
@@ -541,5 +541,138 @@ struct TrendBuilderTests {
             #expect(!kind.explanation.isEmpty)
             #expect((kind.affects + kind.basedOn).allSatisfy { !$0.isPlanned })
         }
+    }
+}
+
+struct GoalTests {
+    private let calendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        calendar.firstWeekday = 2
+        return calendar
+    }()
+
+    /// Monday.
+    private var monday: Date { calendar.date(from: DateComponents(year: 2026, month: 11, day: 2))! }
+
+    private func day(_ offset: Int) -> Date { calendar.date(byAdding: .day, value: offset, to: monday)! }
+
+    private func history(_ entries: [GoalEntry]) -> GoalHistory { GoalHistory(entries, calendar: calendar) }
+
+    /// The 7 days before `weekEnding` with these values; nil leaves a day out.
+    private func week(ending weekEnding: Int, _ values: [Double?]) -> [Date: Double] {
+        var result: [Date: Double] = [:]
+        for (index, value) in values.enumerated() { result[day(weekEnding - 7 + index)] = value }
+        return result
+    }
+
+    private func steps(_ value: Double, from offset: Int, _ reason: GoalEntry.Reason = .preset) -> GoalEntry {
+        GoalEntry(metric: .steps, value: value, effectiveFrom: day(offset), reason: reason)
+    }
+
+    @Test func pastDaysUseTheGoalInEffectThen() {
+        let goals = history([steps(8_000, from: 0), steps(8_500, from: 7, .automatic)])
+        #expect(goals.value(.steps, on: day(-1)) == nil)
+        #expect(goals.value(.steps, on: day(3)) == 8_000)
+        #expect(goals.value(.steps, on: day(7)) == 8_500)
+    }
+
+    @Test func firstAdjustmentIsTheFirstMondayAtLeastAWeekLater() {
+        #expect(Goals.adjustmentDate(after: day(0), calendar: calendar) == day(7))
+        #expect(Goals.adjustmentDate(after: day(2), calendar: calendar) == day(14))
+    }
+
+    @Test func editedSleepHoldsUntilTheNextAdjustmentThenFollowsSleepNeed() {
+        let goals = history([GoalEntry(metric: .sleep, value: 8.5 * 3600, effectiveFrom: day(2), reason: .edit)])
+        #expect(goals.value(.sleep, on: day(13)) == 8.5 * 3600)
+        #expect(goals.value(.sleep, on: day(14)) == nil)
+    }
+
+    @Test func dailyGoalRisesAfterFiveHitsAndFallsAfterTwoOrFewer() {
+        let goals = history([steps(8_000, from: 0)])
+        let up = Goals.adjustments(.steps, history: goals, daily: week(ending: 7, [9_000, 9_000, 9_000, 9_000, 9_000, 1_000, 1_000]),
+                                   today: day(7), calendar: calendar)
+        #expect(up == [steps(8_500, from: 7, .automatic)])
+        let down = Goals.adjustments(.steps, history: goals, daily: week(ending: 7, [9_000, 9_000, 1_000, 1_000, 1_000, 1_000, 1_000]),
+                                     today: day(7), calendar: calendar)
+        #expect(down.map(\.value) == [7_500])
+        let same = Goals.adjustments(.steps, history: goals, daily: week(ending: 7, [9_000, 9_000, 9_000, 1_000, 1_000, 1_000, 1_000]),
+                                     today: day(7), calendar: calendar)
+        #expect(same.isEmpty)
+    }
+
+    @Test func dailyGoalKeepsWithFewerThanFourMeasuredDays() {
+        let goals = history([steps(8_000, from: 0)])
+        let daily = week(ending: 7, [1_000, 1_000, 1_000, nil, nil, nil, nil])
+        #expect(Goals.adjustments(.steps, history: goals, daily: daily, today: day(7), calendar: calendar).isEmpty)
+    }
+
+    @Test func editedGoalHoldsAWeekThenAdjustsFromTheUsersValue() {
+        let goals = history([steps(8_000, from: 0), steps(10_000, from: 9, .edit)])
+        let daily = week(ending: 14, Array(repeating: 1_000, count: 7)).merging(week(ending: 21, Array(repeating: 1_000, count: 7))) { a, _ in a }
+        #expect(Goals.adjustments(.steps, history: goals, daily: daily, today: day(14), calendar: calendar).isEmpty)
+        #expect(Goals.adjustments(.steps, history: goals, daily: daily, today: day(21), calendar: calendar).map(\.value) == [9_500])
+    }
+
+    @Test func weeklyGoalUsesTheWeekTotal() {
+        let goals = history([GoalEntry(metric: .intensityMinutes, value: 200, effectiveFrom: day(0), reason: .preset)])
+        let met = Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [50, 50, 50, 50, nil, nil, nil]),
+                                    today: day(7), calendar: calendar)
+        #expect(met.map(\.value) == [210])
+        let missed = Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [30, 30, 30, nil, nil, nil, nil]),
+                                       today: day(7), calendar: calendar)
+        #expect(missed.map(\.value) == [190])
+    }
+
+    @Test func intensityNeverDropsBelowTheWHOMinimum() {
+        let goals = history([GoalEntry(metric: .intensityMinutes, value: 150, effectiveFrom: day(0), reason: .preset)])
+        #expect(Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [0, 0, 0, 0, 0, 0, 0]),
+                                  today: day(7), calendar: calendar).isEmpty)
+    }
+
+    @Test func smallGoalsMoveByAtLeastOneStep() {
+        let goals = history([GoalEntry(metric: .workouts, value: 3, effectiveFrom: day(0), reason: .preset)])
+        let result = Goals.adjustments(.workouts, history: goals, daily: week(ending: 7, [1, 1, 1, 0, 0, 0, 0]),
+                                       today: day(7), calendar: calendar)
+        #expect(result.map(\.value) == [4])
+    }
+
+    @Test func missedMondaysAreCaughtUpButOnlyTheLastFour() {
+        let goals = history([steps(8_000, from: 0)])
+        var daily: [Date: Double] = [:]
+        for offset in 0..<70 { daily[day(offset)] = 30_000 }
+        let result = Goals.adjustments(.steps, history: goals, daily: daily, today: day(70), calendar: calendar)
+        #expect(result.map(\.effectiveFrom) == [42, 49, 56, 63, 70].map(day).filter { $0 >= day(42) })
+        #expect(result.count == 5)
+    }
+
+    @Test func lastWeekUsesTheMedianForDailyGoalsAndTheTotalForWeeklyOnes() {
+        let goals = Goals.fromLastWeek([.steps: [6_000, 8_100, 7_000, nil, 9_000, 1_000, 8_000, 8_200],
+                                        .workouts: [1, 0, 1, 0, 1, 0, 0],
+                                        .floors: [nil, nil]], fallback: .balanced)
+        #expect(goals[.steps] == 8_000)
+        #expect(goals[.workouts] == 3)
+        #expect(goals[.floors] == GoalPreset.balanced.goals[.floors])
+    }
+}
+
+struct GoalCardTests {
+    @Test func goalMetricsCompareWithTheGoalAndShowProgress() async throws {
+        var builder = SnapshotBuilder(source: SampleDataSource())
+        let today = Calendar.current.startOfDay(for: .now)
+        builder.goals = GoalHistory([GoalEntry(metric: .steps, value: 1_000_000, effectiveFrom: today, reason: .edit)])
+        let snapshot = try await builder.snapshot(for: .steps)
+        let goalText = 1_000_000.0.formatted(.number.precision(.fractionLength(0)))
+        #expect(snapshot.comparison?.hasSuffix("of \(goalText)") == true, "\(snapshot.comparison ?? "")")
+        guard case .progress(_, let goal) = snapshot.chart else {
+            Issue.record("Expected a progress bar")
+            return
+        }
+        #expect(goal == 1_000_000)
+    }
+
+    @Test func sleepComparesWithItsGoal() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepDuration)
+        #expect(snapshot.comparison?.hasSuffix("goal") == true, "\(snapshot.comparison ?? "")")
     }
 }

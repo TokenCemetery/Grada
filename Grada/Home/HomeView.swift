@@ -1,3 +1,4 @@
+import os
 import SwiftData
 import SwiftUI
 
@@ -6,10 +7,13 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \HomeCard.position) private var cards: [HomeCard]
+    @Query private var goalChanges: [GoalChange]
+    @Environment(\.healthSource) private var healthSource
     @AppStorage("didSeedHomeCards") private var didSeedHomeCards = false
     @State private var isCustomizing = false
 
     private var kinds: [CardKind] { cards.compactMap(\.kind) }
+    private var goals: GoalHistory { GoalHistory(goalChanges) }
 
     var body: some View {
         NavigationStack {
@@ -55,10 +59,13 @@ struct HomeView: View {
         .onChange(of: kinds) { oldKinds, newKinds in
             removeDuplicateCards()
             let added = newKinds.filter { !oldKinds.contains($0) && model.snapshots[$0] == nil }
-            if !added.isEmpty { Task { await model.reload(added) } }
+            if !added.isEmpty { Task { await model.reload(added, goals: goals) } }
         }
         .onChange(of: model.importer?.revision) {
-            Task { await model.reload([.healthStatus] + kinds) }
+            Task { await model.reload([.healthStatus] + kinds, goals: goals) }
+        }
+        .onChange(of: goals) {
+            Task { await model.reload([.healthStatus] + kinds, goals: goals) }
         }
     }
 
@@ -67,7 +74,11 @@ struct HomeView: View {
     }
 
     private func refresh() async {
-        await model.refresh([.healthStatus] + kinds)
+        let store = GoalStore(context: modelContext, source: healthSource)
+        do { try await store.adjustIfNeeded() } catch {
+            Logger(subsystem: "Grada", category: "Goals").error("Adjusting goals failed: \(error.localizedDescription)")
+        }
+        await model.refresh([.healthStatus] + kinds, goals: store.history())
     }
 
     private func seedDefaultCardsIfNeeded() {
@@ -110,5 +121,5 @@ private struct ImportProgressView: View {
 #Preview {
     HomeView()
         .environment(HomeModel(source: SampleDataSource()))
-        .modelContainer(for: HomeCard.self, inMemory: true)
+        .modelContainer(for: [HomeCard.self, GoalChange.self], inMemory: true)
 }

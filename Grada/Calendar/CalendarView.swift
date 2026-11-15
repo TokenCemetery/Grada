@@ -5,6 +5,7 @@ import SwiftUI
 /// Tapping a day opens a sheet with that day's Home cards.
 struct CalendarView: View {
     @Environment(CalendarModel.self) private var model
+    @Query private var goalChanges: [GoalChange]
     @AppStorage("calendarMetric") private var metric: CalendarMetric = .healthStatus
     @AppStorage("colorBlindPalette") private var colorBlind = false
     @State private var selectedDay: Date?
@@ -60,9 +61,12 @@ struct CalendarView: View {
                     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
             }
         }
-        .task(id: metric) { await model.load(metric) }
+        .task(id: metric) { await model.load(metric, goals: GoalHistory(goalChanges)) }
         .onChange(of: model.importer?.revision) {
-            Task { await model.load(metric) }
+            Task { await model.load(metric, goals: GoalHistory(goalChanges)) }
+        }
+        .onChange(of: GoalHistory(goalChanges)) {
+            Task { await model.load(metric, goals: GoalHistory(goalChanges)) }
         }
     }
 
@@ -274,6 +278,7 @@ private struct DayCell: View {
 private struct DaySheet: View {
     @Environment(CalendarModel.self) private var model
     @Query(sort: \HomeCard.position) private var cards: [HomeCard]
+    @Query private var goalChanges: [GoalChange]
     let day: Date
     @State private var snapshots: [CardKind: CardSnapshot] = [:]
     @State private var loadedDay: Date?
@@ -307,7 +312,7 @@ private struct DaySheet: View {
         }
         .background(Color(.systemGroupedBackground))
         .task(id: day) {
-            snapshots = await model.snapshots(for: day, kinds: [.healthStatus] + kinds)
+            snapshots = await model.snapshots(for: day, kinds: [.healthStatus] + kinds, goals: GoalHistory(goalChanges))
             loadedDay = day
         }
     }
@@ -323,5 +328,5 @@ private struct DaySheet: View {
     CalendarView()
         .environment(CalendarModel(source: SampleDataSource()))
         .environment(\.healthSource, SampleDataSource())
-        .modelContainer(for: HomeCard.self, inMemory: true)
+        .modelContainer(for: [HomeCard.self, GoalChange.self], inMemory: true)
 }

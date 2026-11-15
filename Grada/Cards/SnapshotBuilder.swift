@@ -6,6 +6,8 @@ struct SnapshotBuilder {
     var calendar: Calendar = .current
     var now: Date = .now
     var usesMetric: Bool = Locale.current.measurementSystem != .us
+    /// The user's goals; cards for goal metrics compare with the goal in effect on the shown day.
+    var goals = GoalHistory()
 
     /// History used for personal normal ranges.
     private let baselineDays = 30
@@ -29,12 +31,12 @@ struct SnapshotBuilder {
         case .oxygenSaturation: try await vital(.oxygenSaturation)
         case .respiratoryRate: try await vital(.respiratoryRate)
         case .wristTemperature: try await wristTemperature()
-        case .steps: try await cumulative(.steps)
-        case .activeEnergy: try await cumulative(.activeEnergy)
+        case .steps: try await cumulative(.steps, goal: .steps)
+        case .activeEnergy: try await cumulative(.activeEnergy, goal: .activeEnergy)
         case .exerciseMinutes: try await cumulative(.exerciseMinutes)
         case .intensityMinutes: try await intensityMinutes()
         case .distance: try await cumulative(.distance)
-        case .floors: try await cumulative(.floors)
+        case .floors: try await cumulative(.floors, goal: .floors)
         case .standHours: totals(try await source.standHours(days: 8), decimals: 0, unit: "h")
         case .lastWorkout: try await lastWorkout()
         case .weeklyTraining: try await weeklyTraining()
@@ -344,15 +346,16 @@ struct SnapshotBuilder {
 
     // MARK: - Activity
 
-    private func cumulative(_ metric: QuantityMetric) async throws -> CardSnapshot {
+    private func cumulative(_ metric: QuantityMetric, goal: GoalMetric? = nil) async throws -> CardSnapshot {
         var series = try await source.daily(metric, days: 8)
         if metric == .distance, !usesMetric {
             series = series.map { DayValue(day: $0.day, value: $0.value.map { $0 * 0.621_371 }) }
         }
-        return totals(series, decimals: metric.decimals, unit: metric == .distance && !usesMetric ? "mi" : metric.unit)
+        return totals(series, decimals: metric.decimals, unit: metric == .distance && !usesMetric ? "mi" : metric.unit,
+                      goal: goal.flatMap { goals.value($0, on: calendar.startOfDay(for: now)) })
     }
 
-    /// This week's total so far against the WHO target, with the last 7 days as bars.
+    /// This week's total so far against the goal, or the WHO target without one.
     private func intensityMinutes() async throws -> CardSnapshot {
         let period = isToday ? "This week" : "That week"
         let today = calendar.startOfDay(for: now)
@@ -362,15 +365,14 @@ struct SnapshotBuilder {
         guard days.contains(where: { $0.value != nil }) else { return .noData(period: period) }
 
         let total = days.suffix(daysThisWeek).compactMap(\.value).reduce(0, +)
-        let target = IntensityMinutes.weeklyTarget
-        let reached = total >= target
+        let target = goals.value(.intensityMinutes, on: today) ?? IntensityMinutes.weeklyTarget
         return CardSnapshot(
             period: period,
             value: format(total, 0),
             unit: "min",
-            comparison: reached ? "\(format(target, 0)) target reached" : "\(format(target - total, 0)) to go of \(format(target, 0))",
-            tone: reached ? .good : .neutral,
-            chart: .bars(days.suffix(7).map { $0.value ?? 0 })
+            comparison: Self.goalComparison(total, goal: target, decimals: 0),
+            tone: total >= target ? .good : .neutral,
+            chart: .progress(value: total, goal: target)
         )
     }
 
@@ -394,13 +396,21 @@ struct SnapshotBuilder {
         }
     }
 
-    /// Today's total compared with the 7 days before it.
-    // TODO(#38, v2, Goals): for metrics with a goal (steps, exercise, sleep), compare with the goal instead,
-    // e.g. "−1,580 of 10,000", and show a goal progress bar (CardSnapshot.Chart) instead of the 7-day bars.
+    /// Today's total against the goal with a progress bar, or without a goal, compared with the 7 days before it.
     // TODO(#39, later): show the change as an arrow and amount, e.g. "▲ 1,200 vs 7-day avg", like Resources does.
-    private func totals(_ series: [DayValue], decimals: Int, unit: String) -> CardSnapshot {
+    private func totals(_ series: [DayValue], decimals: Int, unit: String, goal: Double? = nil) -> CardSnapshot {
         guard series.contains(where: { $0.value != nil }) else { return .noData(period: todayLabel) }
         let today = series.last?.value ?? 0
+        if let goal {
+            return CardSnapshot(
+                period: todayLabel,
+                value: format(today, decimals),
+                unit: unit,
+                comparison: Self.goalComparison(today, goal: goal, decimals: decimals),
+                tone: today >= goal ? .good : .neutral,
+                chart: .progress(value: today, goal: goal)
+            )
+        }
         let average = Baseline.average(series.dropLast().compactMap(\.value))
         return CardSnapshot(
             period: todayLabel,
@@ -428,17 +438,32 @@ struct SnapshotBuilder {
             return .noData(period: "Last night")
         }
 
-        let previous = nights.filter { $0.wakeDay < shown.night.wakeDay }.map(\.asleep)
-        let comparison = Baseline.average(previous).map {
-            "\(Self.signedMinutes(shown.night.asleep - $0)) vs 7-day avg"
-        }
+        let goalIndex = shown.night.wakeDay == today ? 1 : 0
+        let goal = try await sleepGoals(2)[goalIndex].value ?? SleepNeed.baseline
         return CardSnapshot(
             period: shown.period,
             value: Self.hoursMinutes(shown.night.asleep),
-            comparison: comparison,
+            comparison: "\(Self.signedMinutes(shown.night.asleep - goal)) of \(Self.hoursMinutes(goal)) goal",
             chart: .sleep(days.map { byDay[$0] }),
             detail: withStages ? .sleepStages(shown.night.stages) : .none
         )
+    }
+
+    /// The sleep goal for each night ending on the last `count` days, oldest first: the user's edited goal
+    /// while it holds, otherwise that night's Sleep need.
+    func sleepGoals(_ count: Int) async throws -> [DayValue] {
+        // Extra days so the sleep debt has built up by the first night, plus the day before it.
+        let warmUp = 22
+        let days = lastDays(count + warmUp)
+        let nights = try await source.sleepNights(days: days.count)
+        let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
+        let debt = SleepNeed.debt(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } })
+        let training = workoutMinutesPerDay(try await source.workouts(days: days.count), days: days.count)
+        // The need for the night ending on a day comes from the debt and training of the day before.
+        return (warmUp..<days.count).map { index in
+            DayValue(day: days[index], value: goals.value(.sleep, on: days[index])
+                ?? SleepNeed.need(debt: debt[index - 1], trainingTime: training[index - 1] * 60))
+        }
     }
 
     /// Tonight's need: baseline, plus part of the sleep debt, plus extra after today's training.
@@ -568,6 +593,13 @@ struct SnapshotBuilder {
     private func format(_ value: Double, _ decimals: Int, signed: Bool = false) -> String {
         value.formatted(.number.precision(.fractionLength(decimals))
             .sign(strategy: signed ? .always(includingZero: false) : .automatic))
+    }
+
+    /// "−1,580 of 10,000", or "Goal reached" at or above it.
+    static func goalComparison(_ value: Double, goal: Double, decimals: Int) -> String {
+        guard value < goal else { return "Goal reached" }
+        let style = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(decimals))
+        return "−\((goal - value).formatted(style)) of \(goal.formatted(style))"
     }
 
     static func hoursMinutes(_ seconds: TimeInterval) -> String {

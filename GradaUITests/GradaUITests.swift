@@ -12,6 +12,12 @@ final class GradaUITests: XCTestCase {
         app.launchArguments = ["-SampleData"]
         app.launch()
 
+        // First launch on this simulator asks for starting goals.
+        if app.navigationBars["Choose your goals"].waitForExistence(timeout: 5) {
+            attachScreenshot("Goal setup")
+            app.staticTexts["Balanced"].tap()
+        }
+
         XCTAssertTrue(app.staticTexts["Health status"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["All in range"].waitForExistence(timeout: 5))
         attachScreenshot("Home top")
