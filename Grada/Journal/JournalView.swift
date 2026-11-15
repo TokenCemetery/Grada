@@ -29,10 +29,9 @@ struct JournalView: View {
         NavigationStack {
             List {
                 Section {
-                    DayPicker(day: $day, today: today)
-                    SaveStatus(count: entries.count, saves: saves)
+                    DayPicker(day: $day, today: today, isSaved: !entries.isEmpty, saves: saves)
                 } footer: {
-                    Text("Tags save as you tap them. Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.")
+                    Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nTags are saved as you tap them.")
                 }
                 ForEach(JournalTag.Group.allCases, id: \.self) { group in
                     let tags = group.tags.filter { !hiddenTags.contains($0) }
@@ -85,31 +84,14 @@ struct JournalView: View {
     }
 }
 
-/// Every tap saves at once; this says so, since there's no Save button.
-private struct SaveStatus: View {
-    let count: Int
-    let saves: Int
-
-    var body: some View {
-        if count == 0 {
-            Label("Nothing logged yet", systemImage: "circle.dashed")
-                .foregroundStyle(.secondary)
-        } else {
-            Label {
-                Text("Saved · \(count == 1 ? "1 tag" : "\(count) tags") logged")
-            } icon: {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .symbolEffect(.bounce, value: saves)
-            }
-        }
-    }
-}
-
 /// Previous and next day around the date, which opens a calendar to jump to any past day.
 private struct DayPicker: View {
     @Binding var day: Date
     let today: Date
+    /// Every tap saves at once, and there's no Save button: a checkmark beside the date says so.
+    let isSaved: Bool
+    /// Changes on every save, to bounce the checkmark.
+    let saves: Int
     @State private var isPickingDay = false
     private let calendar = Calendar.current
 
@@ -120,6 +102,15 @@ private struct DayPicker: View {
             Spacer()
             Button { isPickingDay = true } label: {
                 Text(title).font(.headline).foregroundStyle(.primary)
+            }
+            .overlay(alignment: .trailing) {
+                if isSaved {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .symbolEffect(.bounce, value: saves)
+                        .offset(x: 26)
+                        .accessibilityLabel("Saved")
+                }
             }
             .popover(isPresented: $isPickingDay) {
                 DatePicker("Day", selection: Binding(get: { day }, set: {
