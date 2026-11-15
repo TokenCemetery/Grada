@@ -82,4 +82,6 @@ struct VitalStatus: Equatable {
 
     let name: String
     let state: State
+    /// Green, yellow or red for a measured vital; nil while calibrating or without data.
+    var rating: DayRating?
 }

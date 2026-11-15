@@ -316,6 +316,12 @@ struct AfterMidnightTests {
         let snapshot = try await builder.snapshot(for: .healthStatus)
         #expect(snapshot.period == "Yesterday")
         #expect(snapshot.value != nil)
+        guard case .vitals(let vitals) = snapshot.detail else { Issue.record("\(snapshot.detail)"); return }
+        for vital in vitals {
+            let measured = vital.state == .inRange || vital.state == .outOfRange
+            #expect((vital.rating != nil) == measured, "\(vital.name): only measured vitals are colored")
+            #expect((vital.rating == .good) == (vital.state == .inRange), "\(vital.name): green means in range")
+        }
     }
 
     @Test func todaysNightWinsOnceRecorded() async throws {
@@ -668,6 +674,15 @@ struct DayRatingTests {
         #expect(DayRatings.healthStatus(outOfRange: 0) == .good)
         #expect(DayRatings.healthStatus(outOfRange: 1) == .fair)
         #expect(DayRatings.healthStatus(outOfRange: 2) == .poor)
+    }
+
+    @Test func vitalTilesRateBothDirections() {
+        let normal = 49.0...55.0  // slightly off means less than 1.5 outside
+        #expect(DayRatings.vital(52, normal: normal) == .good)
+        #expect(DayRatings.vital(48, normal: normal) == .fair)
+        #expect(DayRatings.vital(56, normal: normal) == .fair)
+        #expect(DayRatings.vital(47, normal: normal) == .poor)
+        #expect(DayRatings.vital(57, normal: normal) == .poor)
     }
 
     @Test func daysStayUnratedWhileCalibrating() {

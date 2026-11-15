@@ -243,44 +243,34 @@ private struct CardDetailView: View {
     }
 }
 
+/// A vital's tile, filled green, yellow or red by its rating, like the calendar's days. Vitals still
+/// calibrating or without data stay grey.
 private struct VitalChip: View {
     let vital: VitalStatus
+    @AppStorage("colorBlindPalette") private var colorBlind = false
 
     var body: some View {
-        VStack(spacing: 2) {
-            Image(systemName: symbol).font(.caption2).foregroundStyle(tint)
-            Text(vital.name).font(.caption2).foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
-        .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(vital.name): \(stateLabel)")
-    }
-
-    private var symbol: String {
-        switch vital.state {
-        case .inRange: "checkmark.circle"
-        case .outOfRange: "exclamationmark.circle"
-        case .calibrating: "hourglass"
-        case .noData: "minus.circle"
-        }
-    }
-
-    private var tint: Color {
-        switch vital.state {
-        case .inRange: .green
-        case .outOfRange: .orange
-        case .calibrating, .noData: .secondary
-        }
+        Text(vital.name)
+            .font(.caption.weight(vital.rating == nil ? .regular : .semibold))
+            .foregroundStyle(vital.rating?.foreground(colorBlind: colorBlind) ?? .secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(vital.rating?.fill(colorBlind: colorBlind) ?? Color(.tertiarySystemGroupedBackground),
+                        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(vital.name): \(stateLabel)")
     }
 
     private var stateLabel: String {
-        switch vital.state {
-        case .inRange: "in range"
-        case .outOfRange: "out of range"
-        case .calibrating: "calibrating"
-        case .noData: "no data"
+        switch (vital.state, vital.rating) {
+        case (.calibrating, _): "calibrating"
+        case (.noData, _): "no data"
+        case (_, .fair): "slightly out of range"
+        case (_, .poor): "well out of range"
+        case (.outOfRange, _): "out of range"
+        default: "in range"
         }
     }
 }

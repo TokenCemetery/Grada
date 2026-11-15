@@ -70,17 +70,19 @@ struct SnapshotBuilder {
         var statuses: [VitalStatus] = []
         for (metric, name, series) in allSeries {
             let state: VitalStatus.State
+            var rating: DayRating?
             if let value = series[nightIndex].value {
                 let history = series[..<nightIndex].compactMap(\.value)
                 if let range = Baseline.normalRange(history: history, minimumHalfWidth: metric.minimumHalfWidth) {
                     state = range.contains(value) ? .inRange : .outOfRange
+                    rating = DayRatings.vital(value, normal: range)
                 } else {
                     state = .calibrating
                 }
             } else {
                 state = .noData
             }
-            statuses.append(VitalStatus(name: name, state: state))
+            statuses.append(VitalStatus(name: name, state: state, rating: rating))
         }
 
         let measured = statuses.filter { $0.state != .noData }
