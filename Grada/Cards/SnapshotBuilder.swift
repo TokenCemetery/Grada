@@ -226,8 +226,10 @@ struct SnapshotBuilder {
             unit: "%",
             comparison: "\(status.word) · \(shown.reason)",
             tone: status.tone,
+            rating: Recovery.rating(shown.score),
             chart: variant == .week
-                ? .bars(days.map { $0.result.map { Double($0.score) } ?? 0 }, target: 100)
+                ? .bars(days.map { $0.result.map { Double($0.score) } ?? 0 }, target: 100,
+                        ratings: days.map { $0.result.map { Recovery.rating($0.score) } })
                 : .progress(value: Double(shown.score), goal: 100)
         )
     }

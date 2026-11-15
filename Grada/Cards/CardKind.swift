@@ -92,8 +92,10 @@ enum CardKind: String, CaseIterable, Identifiable {
     var variants: [CardVariant] {
         switch self {
         case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours,
-             .sleepDuration, .restingHeartRate, .hrv, .wristTemperature, .recovery:
+             .sleepDuration, .restingHeartRate, .hrv, .wristTemperature:
             [.current, .week]
+        case .recovery:
+            [.week]
         default:
             [.current]
         }

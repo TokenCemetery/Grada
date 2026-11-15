@@ -83,6 +83,15 @@ nonisolated enum Recovery {
         return Result(score: Int(score.rounded()), reason: reason)
     }
 
+    /// Whoop's bands: green from 67, yellow from 34, red below.
+    static func rating(_ score: Int) -> DayRating {
+        switch score {
+        case 67...: .good
+        case 34...: .fair
+        default: .poor
+        }
+    }
+
     static func status(_ score: Int) -> (word: String, tone: CardSnapshot.Tone) {
         switch score {
         case 67...: ("Good", .good)

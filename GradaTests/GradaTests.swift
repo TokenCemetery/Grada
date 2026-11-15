@@ -29,6 +29,8 @@ struct CardVariantTests {
     @Test func unsupportedVariantFallsBackToTheDefault() {
         let card = HomeCard(CardID(kind: .heartRate, variant: .week), position: 0)
         #expect(card.cardID == CardID(kind: .heartRate, variant: .current))
+        let recovery = HomeCard(CardID(kind: .recovery, variant: .current), position: 0)
+        #expect(recovery.cardID == CardID(kind: .recovery, variant: .week))
     }
 
     @Test func everyVariantBuildsFromSampleData() async throws {
@@ -74,11 +76,18 @@ struct CardVariantTests {
         #expect(range != nil)
     }
 
-    @Test func recoveryFillsTowardHundred() async throws {
-        let current = try await builder.snapshot(for: .recovery, variant: .current)
+    @Test func recoveryColorsEachDay() async throws {
         let week = try await builder.snapshot(for: .recovery, variant: .week)
-        guard case .progress(_, 100, false) = current.chart else { Issue.record("\(current.chart)"); return }
-        guard case .bars(_, 100, _) = week.chart else { Issue.record("\(week.chart)"); return }
+        guard case .bars(let scores, 100, let ratings?) = week.chart else { Issue.record("\(week.chart)"); return }
+        #expect(ratings.count == scores.count)
+        #expect(week.rating != nil)
+    }
+}
+
+struct RatingTests {
+    @Test func recoveryBands() {
+        #expect([Recovery.rating(80), Recovery.rating(50), Recovery.rating(20)] == [.good, .fair, .poor])
+        #expect([Recovery.rating(67), Recovery.rating(66), Recovery.rating(34), Recovery.rating(33)] == [.good, .fair, .fair, .poor])
     }
 }
 
