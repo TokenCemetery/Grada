@@ -97,6 +97,42 @@ struct SampleDataSource: HealthDataSource {
         }
     }
 
+    /// Minute by minute: heart rate climbing through a warm-up with a surge every 10 minutes, steady
+    /// distance for distance sports, and a loop route sized to the distance.
+    func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {
+        let profile: (heartRate: Double, metersPerSecond: Double?, climb: Double?) = switch workout.name {
+        case "Run": (150, 2.9, 45)
+        case "Ride": (138, 7.5, 160)
+        case "Walk": (102, 1.4, 12)
+        default: (118, nil, nil)
+        }
+        var random = SeededRandom(seed: UInt64(workout.start.timeIntervalSince1970))
+        var heartRate: [TimedValue] = []
+        var track: [TimedValue] = []
+        for minute in 0...Int(workout.duration / 60) {
+            let date = workout.start.addingTimeInterval(Double(minute) * 60)
+            let warmUp = min(Double(minute) / 8, 1)
+            let surge = minute % 10 >= 7 ? 14.0 : 0
+            heartRate.append(TimedValue(date: date, value: 85 + (profile.heartRate - 85 + surge) * warmUp + 3 * random.nextSigned()))
+            if let speed = profile.metersPerSecond, minute > 0 {
+                track.append(TimedValue(date: date, value: (track.last?.value ?? 0) + speed * 60 * (1 + 0.1 * random.nextSigned())))
+            }
+        }
+        let distance = track.last?.value
+        var route: [RoutePoint] = []
+        if let distance {
+            // A loop around a park whose length matches the distance; a degree of longitude is shorter here.
+            let radius = distance / (2 * .pi) / 111_000
+            route = (0...160).map { step in
+                let angle = Double(step) / 160 * 2 * .pi
+                return RoutePoint(latitude: 51.5073 + radius * sin(angle) * (1 + 0.08 * sin(angle * 4)),
+                                  longitude: -0.1657 + radius * 1.6 * cos(angle))
+            }
+        }
+        return WorkoutDetail(heartRate: heartRate, maxHeartRate: heartRate.map(\.value).max(), distance: distance,
+                             distanceTrack: track, elevationGain: profile.climb, route: route)
+    }
+
     /// About 50 bpm asleep, 70 awake, and workout effort during the sample workouts.
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
         let asleep = try await sleepPeriods(in: interval)

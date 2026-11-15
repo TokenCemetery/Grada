@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 import HealthKit
 
 /// Reads raw data from Apple Health for a date range. Garmin, Oura and others arrive here
@@ -16,6 +17,10 @@ final class HealthKitReader {
             HKCategoryType(.sleepAnalysis),
             HKCategoryType(.appleStandHour),
             HKObjectType.workoutType(),
+            // Workout screens: ride and swim distance for splits, and the GPS route.
+            HKQuantityType(.distanceCycling),
+            HKQuantityType(.distanceSwimming),
+            HKSeriesType.workoutRoute(),
         ]
 
     func requestAuthorization() async throws {
@@ -27,8 +32,11 @@ final class HealthKitReader {
     /// in the background or not running (iOS relaunches it). `onChange` must call its completion
     /// handler when done, or iOS backs off delivery.
     func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws {
-        // Heart rate is sampled every few minutes; its changes come with the daily metrics anyway.
-        for type in Self.readTypes where type != HKQuantityType(.heartRate) {
+        // Heart rate is sampled every few minutes; its changes come with the daily metrics anyway. Workout
+        // screen data (ride and swim distance, routes) is read live and arrives with its workout.
+        let unobserved: Set<HKSampleType> = [HKQuantityType(.heartRate), HKQuantityType(.distanceCycling),
+                                             HKQuantityType(.distanceSwimming), HKSeriesType.workoutRoute()]
+        for type in Self.readTypes where !unobserved.contains(type) {
             store.execute(HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
                 guard error == nil else { completion(); return }
                 // HealthKit's completion handler may be called from any thread, but isn't annotated Sendable.
@@ -246,6 +254,70 @@ final class HealthKitReader {
                     .averageQuantity()?.doubleValue(for: .count().unitDivided(by: .minute()))
             )
         }
+    }
+
+    func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail {
+        guard let uuid = UUID(uuidString: summary.id),
+              let workout = try await HKSampleQueryDescriptor(
+                  predicates: [.workout(HKQuery.predicateForObject(with: uuid))], sortDescriptors: []
+              ).result(for: store).first
+        else { return WorkoutDetail() }
+
+        let during = HKQuery.predicateForSamples(withStart: workout.startDate, end: workout.endDate)
+        let heartRate = try await HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: HKQuantityType(.heartRate), predicate: during)],
+            sortDescriptors: [SortDescriptor(\.startDate)]
+        ).result(for: store).map { TimedValue(date: $0.startDate, value: $0.quantity.doubleValue(for: Self.bpm)) }
+
+        let distanceTypes: [HKQuantityTypeIdentifier] = [.distanceWalkingRunning, .distanceCycling, .distanceSwimming]
+        let distanceType = distanceTypes.map { HKQuantityType($0) }.first { workout.statistics(for: $0)?.sumQuantity() != nil }
+        let distance = distanceType.flatMap { workout.statistics(for: $0)?.sumQuantity()?.doubleValue(for: .meter()) }
+        var track: [TimedValue] = []
+        if let distanceType, let distance {
+            track = try await distanceTrack(distanceType, workout: workout, during: during, total: distance)
+        }
+
+        var route: [RoutePoint] = []
+        let routes = try await HKSampleQueryDescriptor(
+            predicates: [.workoutRoute(HKQuery.predicateForObjects(from: workout))],
+            sortDescriptors: [SortDescriptor(\.startDate)]
+        ).result(for: store)
+        for workoutRoute in routes {
+            for try await location in HKWorkoutRouteQueryDescriptor(workoutRoute).results(for: store) {
+                route.append(RoutePoint(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude))
+            }
+        }
+
+        return WorkoutDetail(
+            heartRate: heartRate,
+            maxHeartRate: workout.statistics(for: HKQuantityType(.heartRate))?.maximumQuantity()?.doubleValue(for: Self.bpm)
+                ?? heartRate.map(\.value).max(),
+            distance: distance,
+            distanceTrack: track,
+            elevationGain: (workout.metadata?[HKMetadataKeyElevationAscended] as? HKQuantity)?.doubleValue(for: .meter()),
+            route: route
+        )
+    }
+
+    /// Distance so far through the workout. Prefers the samples recorded with the workout; when a phone
+    /// and a watch both counted, the track is scaled to the workout's own total so splits aren't doubled.
+    private func distanceTrack(_ type: HKQuantityType, workout: HKWorkout, during: NSPredicate,
+                               total: Double) async throws -> [TimedValue] {
+        func samples(_ predicate: NSPredicate) async throws -> [HKQuantitySample] {
+            try await HKSampleQueryDescriptor(
+                predicates: [.quantitySample(type: type, predicate: predicate)],
+                sortDescriptors: [SortDescriptor(\.startDate)]
+            ).result(for: store)
+        }
+        var found = try await samples(HKQuery.predicateForObjects(from: workout))
+        if found.isEmpty { found = try await samples(during) }
+        var sum = 0.0
+        let track = found.map { sample in
+            sum += sample.quantity.doubleValue(for: .meter())
+            return TimedValue(date: sample.endDate, value: sum)
+        }
+        guard sum > 0 else { return [] }
+        return track.map { TimedValue(date: $0.date, value: $0.value * total / sum) }
     }
 
     private func earliest<Sample: HKSample>(_ predicate: HKSamplePredicate<Sample>) async throws -> Date? {

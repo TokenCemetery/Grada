@@ -1059,4 +1059,12 @@ struct WorkoutDetailTests {
         #expect(Splits.make(track: track, heartRate: [], start: start).map(\.meters) == [1000])
     }
 
+    @Test func sampleRunHasEverySection() async throws {
+        let run = try #require(try await SampleDataSource().workouts(days: 7).first { $0.name == "Run" })
+        let detail = try await SampleDataSource().workoutDetail(run)
+        #expect(detail.heartRate.count > 30)
+        #expect((detail.distance ?? 0) > 5000)
+        #expect(detail.route.count > 1)
+        #expect(Splits.make(track: detail.distanceTrack, heartRate: detail.heartRate, start: run.start).count > 4)
+    }
 }

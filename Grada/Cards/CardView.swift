@@ -215,7 +215,7 @@ private struct CardDetailView: View {
         case .sleepStages(let stages):
             SleepStagesBar(stages: stages, color: color)
         case .workout(let workout):
-            WorkoutDetail(workout: workout, color: color)
+            WorkoutStats(workout: workout, color: color)
         case .days(let days):
             DaysGrid(days: days)
         case .rows(let rows):
@@ -332,7 +332,7 @@ private struct WorkoutSport: View {
 
 /// Labelled stats in equal columns, like Suunto's Latest activity. A stat Apple Health doesn't have
 /// shows a dash, so the columns don't shift between workouts.
-private struct WorkoutDetail: View {
+private struct WorkoutStats: View {
     let workout: WorkoutSummary
     let color: Color
 
