@@ -70,7 +70,7 @@ enum CardKind: String, CaseIterable, Identifiable {
     case sleepDuration, sleepStages, sleepNeed, sleepConsistency, sleepScore
     case heartRate, restingHeartRate, hrv, hrvStatus, oxygenSaturation, respiratoryRate, wristTemperature
     case steps, activeEnergy, exerciseMinutes, intensityMinutes, distance, floors, standHours, dayIntensity
-    case lastWorkout, weeklyTraining, vo2Max, racePredictor, trainingReadiness, loadFocus
+    case lastWorkout, weeklyTraining, strain, vo2Max, racePredictor, trainingReadiness, loadFocus
     case last30Days
 
     var id: String { rawValue }
@@ -147,6 +147,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .dayIntensity: "Day Intensity"
         case .lastWorkout: "Last Workout"
         case .weeklyTraining: "Training Volume"
+        case .strain: "Strain"
         case .vo2Max: "VO₂ Max"
         case .last30Days: "Workouts Calendar"
         }
@@ -182,6 +183,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .dayIntensity: "figure.walk.motion"
         case .lastWorkout: "stopwatch"
         case .weeklyTraining: "chart.bar"
+        case .strain: "bolt.horizontal.circle"
         case .vo2Max: "bolt.heart"
         case .last30Days: "calendar"
         }
@@ -193,7 +195,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .heartRate, .restingHeartRate, .hrv, .hrvStatus, .oxygenSaturation, .respiratoryRate, .wristTemperature: .heart
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity: .activity
-        case .lastWorkout, .weeklyTraining, .vo2Max, .racePredictor, .trainingReadiness, .loadFocus: .training
+        case .lastWorkout, .weeklyTraining, .strain, .vo2Max, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .last30Days: .history
         }
     }

@@ -67,3 +67,51 @@ struct SleepScoreTests {
         #expect(target == 100)
     }
 }
+
+struct StrainTests {
+    private let start = Date(timeIntervalSince1970: 1_700_000_000)
+
+    /// Edwards: max 200, so 10 minutes at 150 bpm (zone 3) score 30 and 5 minutes at 185 (zone 5) score 25.
+    @Test func loadIsEdwardsTRIMPOverTheDay() {
+        let readings = [TimedValue(date: start, value: 150), TimedValue(date: start + 300, value: 150),
+                        TimedValue(date: start + 600, value: 185), TimedValue(date: start + 900, value: 80)]
+        #expect(Strain.load(heartRate: readings, end: start + 1_200, maxHeartRate: 200) == 55)
+    }
+
+    @Test func ratioIsSevenDayAgainstTwentyEightDayAverage() throws {
+        let loads: [Double?] = Array(repeating: 100, count: 21) + Array(repeating: 200, count: 7)
+        let ratio = try #require(Strain.ratio(loads: loads, endingAt: 27))
+        #expect(ratio.acute == 200)
+        #expect(ratio.chronic == 125)
+        #expect(ratio.value == 1.6)
+    }
+
+    @Test func calibratingWithoutThreeWeeksOfData() {
+        let loads: [Double?] = Array(repeating: nil, count: 8) + Array(repeating: 100, count: 20)
+        #expect(Strain.ratio(loads: loads, endingAt: 27) == nil)
+        #expect(Strain.ratio(loads: Array(repeating: 100, count: 28) + [nil, nil, nil, nil], endingAt: 31) == nil,
+                "Fewer than 4 of the last 7 days")
+    }
+
+    /// Gabbett 2016: sweet spot 0.8–1.3, danger zone from 1.5.
+    @Test func ratingFollowsGabbett() {
+        #expect(Strain.rating(1.0) == .good)
+        #expect(Strain.rating(0.8) == .good)
+        #expect(Strain.rating(1.3) == .good)
+        #expect(Strain.rating(0.7) == .fair)
+        #expect(Strain.rating(1.4) == .fair)
+        #expect(Strain.rating(1.5) == .poor)
+        #expect(Strain.word(1.5) == "Very high")
+        #expect(Strain.word(0.7) == "Low")
+    }
+
+    @MainActor
+    @Test func cardShowsTodaysLoadAndTheRatio() async throws {
+        #expect(CardKind.gallery.contains(.strain))
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .strain)
+        #expect(snapshot.unit == "TRIMP")
+        #expect(snapshot.comparison?.contains("ratio") == true, "\(snapshot.comparison ?? "")")
+        guard case .bars(let loads, _, _) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(loads.count == 7)
+    }
+}

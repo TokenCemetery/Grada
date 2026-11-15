@@ -713,6 +713,59 @@ nonisolated enum TrainingLoad {
     }
 }
 
+/// Daily strain and the acute:chronic workload ratio. A day's load is Edwards' TRIMP over all of its heart rate,
+/// so workouts and an active day both count. Acute load is the last 7 days' average and chronic the last 28 days'
+/// (Hulin et al. 2016, Br J Sports Med 50:231); Gabbett 2016 (Br J Sports Med 50:273) found the lowest injury risk
+/// at ratios of 0.8–1.3 and the highest from 1.5. Those studies are of team-sport athletes, and later work questions
+/// how well the ratio predicts injury (Impellizzeri et al. 2020, Int J Sports Physiol Perform 15:907), so it's a
+/// guide to how fast load is changing, not a risk score.
+nonisolated enum Strain {
+    struct Ratio: Equatable {
+        let acute: Double
+        let chronic: Double
+        var value: Double { acute / chronic }
+    }
+
+    static let acuteDays = 7
+    static let chronicDays = 28
+    /// Days with heart rate needed in each window. Grada's own data-sufficiency rule; the papers don't give one.
+    static let minimumAcuteDays = 4
+    static let minimumChronicDays = 21
+    /// Gabbett 2016's sweet spot and danger zone.
+    static let sweetSpot = 0.8...1.3
+    static let dangerRatio = 1.5
+
+    /// Edwards' TRIMP from a day's heart rate, oldest first; the last reading lasts until `end`.
+    static func load(heartRate: [TimedValue], end: Date, maxHeartRate: Double) -> Double {
+        TrainingLoad.edwardsTRIMP(timeInZones: HeartRateZones.time(heartRate, end: end, maxHeartRate: maxHeartRate))
+    }
+
+    /// Acute against chronic load for the day at `end` in `loads` (oldest first, nil without heart rate).
+    /// Days without heart rate are left out of the averages. Nil without enough days in either window.
+    static func ratio(loads: [Double?], endingAt end: Int) -> Ratio? {
+        guard end >= 0, end < loads.count else { return nil }
+        let acute = loads[max(end - acuteDays + 1, 0)...end].compactMap { $0 }
+        let chronic = loads[max(end - chronicDays + 1, 0)...end].compactMap { $0 }
+        guard acute.count >= minimumAcuteDays, chronic.count >= minimumChronicDays,
+              let acuteMean = Baseline.average(acute), let chronicMean = Baseline.average(chronic), chronicMean > 0
+        else { return nil }
+        return Ratio(acute: acuteMean, chronic: chronicMean)
+    }
+
+    static func word(_ ratio: Double) -> String {
+        if ratio >= dangerRatio { return "Very high" }
+        if ratio > sweetSpot.upperBound { return "High" }
+        return ratio < sweetSpot.lowerBound ? "Low" : "Optimal"
+    }
+
+    /// Green in the sweet spot, red from the danger zone, yellow between them or below the sweet spot,
+    /// where Gabbett also saw higher risk.
+    static func rating(_ ratio: Double) -> DayRating {
+        if ratio >= dangerRatio { return .poor }
+        return sweetSpot.contains(ratio) ? .good : .fair
+    }
+}
+
 /// Time and heart rate for each kilometer of a workout.
 nonisolated enum Splits {
     struct Split: Equatable {

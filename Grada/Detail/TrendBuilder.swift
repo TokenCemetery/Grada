@@ -122,6 +122,8 @@ struct TrendBuilder {
                         weeklyTotals: true, transform: { $0 / 60 })
         case .healthStatus:
             return try await healthStatus(period)
+        case .strain:
+            return try await strain(period)
         case .recovery:
             let inRange = try await cardBuilder.recoveryDays(days)
                 .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
@@ -206,6 +208,17 @@ struct TrendBuilder {
         var trend = make(averages, period, style: .line, unit: QuantityMetric.hrv.unit, format: .number(decimals: 0),
                          title: "7-night average HRV")
         trend.normalRange = HRVStatus.status(nights: nights, endingAt: nights.count - 1)?.baseline
+        return trend
+    }
+
+    /// The 7-day average load each day, with the shown day's sweet spot (0.8–1.3 × its 28-day average) as the range.
+    private func strain(_ period: TrendPeriod) async throws -> Trend? {
+        guard let days = try await cardBuilder.strainDays(period.days) else { return nil }
+        var trend = make(days.map { DayValue(day: $0.day, value: $0.ratio?.acute) }, period, style: .line, unit: "TRIMP",
+                         format: .number(decimals: 0), title: "7-day load against 28-day")
+        trend.normalRange = days.last?.ratio.map {
+            Strain.sweetSpot.lowerBound * $0.chronic...Strain.sweetSpot.upperBound * $0.chronic
+        }
         return trend
     }
 

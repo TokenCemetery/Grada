@@ -133,17 +133,19 @@ struct SampleDataSource: HealthDataSource {
                              distanceTrack: track, elevationGain: profile.climb, route: route)
     }
 
-    /// About 50 bpm asleep, 70 awake, and workout effort during the sample workouts.
+    /// About 50 bpm asleep, 70 awake, and workout effort during the sample workouts: runs at threshold, the rest easy.
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
         let asleep = try await sleepPeriods(in: interval)
-        let workouts = try await workouts(days: 8)
+        let daysBack = calendar.dateComponents([.day], from: calendar.startOfDay(for: interval.start),
+                                               to: calendar.startOfDay(for: .now)).day ?? 0
+        let workouts = try await workouts(days: max(daysBack + 1, 1))
         var random = SeededRandom(seed: 3)
         var values: [TimedValue] = []
         var time = interval.start
         while time < min(interval.end, .now) {
             let base: Double
-            if workouts.contains(where: { time >= $0.start && time < $0.start.addingTimeInterval($0.duration) }) {
-                base = 140
+            if let workout = workouts.first(where: { time >= $0.start && time < $0.start.addingTimeInterval($0.duration) }) {
+                base = workout.name == "Run" ? 155 : 140
             } else if asleep.contains(where: { time >= $0.start && time < $0.end && $0.stage != .awake }) {
                 base = 51
             } else if (12..<13).contains(calendar.component(.hour, from: time)) {

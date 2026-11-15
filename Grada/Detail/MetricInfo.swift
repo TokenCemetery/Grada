@@ -33,7 +33,7 @@ extension CardKind {
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity, .last30Days: .total
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
-        case .lastWorkout, .weeklyTraining, .racePredictor, .trainingReadiness, .loadFocus: .training
+        case .lastWorkout, .weeklyTraining, .strain, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .healthStatus, .recovery, .resources, .healthAge, .hrvStatus: .score
         }
     }
@@ -73,7 +73,7 @@ extension CardKind {
         case .respiratoryRate: [.healthStatus, .recovery]
         case .restingHeartRate: [.healthStatus, .recovery, .resources, .healthAge, .dayIntensity]
         case .oxygenSaturation, .wristTemperature: [.healthStatus]
-        case .heartRate: [.resources, .dayIntensity]
+        case .heartRate: [.resources, .dayIntensity, .strain]
         case .vo2Max: [.racePredictor, .healthAge]
         case .sleepDuration, .sleepStages: [.recovery, .sleepNeed, .sleepScore, .resources, .healthAge]
         case .sleepNeed, .sleepConsistency: [.sleepScore]
@@ -92,6 +92,7 @@ extension CardKind {
         case .dayIntensity: [.heartRate, .restingHeartRate]
         case .hrvStatus: [.hrv]
         case .sleepScore: [.sleepStages, .sleepNeed, .sleepConsistency]
+        case .strain: [.heartRate]
         default: []
         }
     }
@@ -147,6 +148,8 @@ extension CardKind {
             "Hours in which you stood and moved for at least a minute. Breaking up long sitting helps your health."
         case .lastWorkout, .weeklyTraining:
             "Time spent in recorded workouts. Steady weekly volume builds fitness; sudden jumps raise the risk of injury."
+        case .strain:
+            "Today's training load: minutes with your heart rate in each zone (50–60% of max counts 1 per minute, up to 90% and above counting 5), Edwards' TRIMP, over the whole day, so workouts and busy days both count. The ratio compares your average daily load over the last 7 days with the last 28. In studies of athletes, injuries were least common at ratios of 0.8–1.3 (green) and most common from 1.5 (red); below 0.8 or between 1.3 and 1.5 is yellow. Those studies were of team sports and the link is debated, so read the ratio as how fast your load is changing. Needs 21 of the last 28 days with heart rate."
         case .vo2Max:
             "The most oxygen your body can use during hard exercise, a key measure of cardio fitness. It changes slowly over weeks of training. The zones compare it with lab-measured VO₂ max of adults your age and sex in the US FRIEND registry: Poor below the bottom quarter, Fair up to the middle, Good from the middle, Excellent from the top quarter and Superior from the top tenth."
         case .racePredictor:

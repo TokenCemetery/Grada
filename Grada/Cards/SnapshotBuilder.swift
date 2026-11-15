@@ -44,6 +44,7 @@ struct SnapshotBuilder {
         case .standHours: totals(try await source.standHours(days: 8), decimals: 0, unit: "h", variant: variant)
         case .lastWorkout: try await lastWorkout()
         case .weeklyTraining: try await weeklyTraining()
+        case .strain: try await strain()
         case .vo2Max: try await vo2Max()
         case .last30Days: try await last30Days()
         }
@@ -673,6 +674,40 @@ struct SnapshotBuilder {
                 (value: Self.raceTime(RacePredictor.time(meters: $0.meters, vo2Max: vo2Max)), label: $0.name)
             })
         )
+    }
+
+    /// Today's load so far, with the 7-day against 28-day ratio and the last 7 days' loads.
+    private func strain() async throws -> CardSnapshot {
+        guard let days = try await strainDays(7) else {
+            return CardSnapshot(period: todayLabel, value: "Calibrating", comparison: "Needs your age or max heart rate")
+        }
+        guard let today = days.last, let load = today.load else { return .noData(period: todayLabel) }
+        var snapshot = CardSnapshot(period: todayLabel, value: format(load, 0), unit: "TRIMP",
+                                    chart: .bars(days.map { $0.load ?? 0 }))
+        if let ratio = today.ratio {
+            snapshot.comparison = "\(Strain.word(ratio.value)) · ratio \(format(ratio.value, 2))"
+            snapshot.rating = Strain.rating(ratio.value)
+            snapshot.tone = Self.tone(Strain.rating(ratio.value))
+        } else {
+            snapshot.comparison = "Ratio needs \(Strain.minimumChronicDays) days"
+        }
+        return snapshot
+    }
+
+    /// Each of the last `count` days' load (nil without heart rate) and its acute:chronic ratio, oldest first.
+    /// Nil altogether without a max heart rate to set the zones.
+    func strainDays(_ count: Int) async throws -> [(day: Date, load: Double?, ratio: Strain.Ratio?)]? {
+        guard let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
+                                                        highestRecorded: try await source.highestHeartRate(days: 365))
+        else { return nil }
+        let days = lastDays(count + Strain.chronicDays - 1)
+        let heartRate = try await source.heartRate(in: DateInterval(start: days[0], end: max(now, days[0])))
+        let byDay = Dictionary(grouping: heartRate) { calendar.startOfDay(for: $0.date) }
+        let loads = days.map { day in
+            byDay[day].map { Strain.load(heartRate: $0, end: min(now, calendar.date(byAdding: .day, value: 1, to: day)!),
+                                         maxHeartRate: maxHeartRate) }
+        }
+        return (days.count - count..<days.count).map { (days[$0], loads[$0], Strain.ratio(loads: loads, endingAt: $0)) }
     }
 
     private func lastWorkout() async throws -> CardSnapshot {
