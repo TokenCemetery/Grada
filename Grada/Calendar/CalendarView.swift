@@ -388,6 +388,7 @@ private struct TrainingDayCell: View {
 /// Fully expanded, this sheet is the day view.
 private struct DaySheet: View {
     @Environment(CalendarModel.self) private var model
+    @Query(sort: \HomeCard.position) private var homeCards: [HomeCard]
     @Query private var goalChanges: [GoalChange]
     @Query private var journalEntries: [JournalEntry]
     let day: Date
@@ -403,6 +404,17 @@ private struct DaySheet: View {
     }
 
     private var isLoaded: Bool { loaded == LoadKey(day: day, metric: metric) }
+
+    /// Each card as it looks on Home, preferring the 7-day variant when Home has both. Cards not on Home
+    /// use their default look.
+    private var cards: [CardID] {
+        let onHome = homeCards.compactMap(\.cardID)
+        return metric.kinds.map { kind in
+            let variants = onHome.filter { $0.kind == kind }.map(\.variant)
+            let variant = variants.contains(.week) ? .week : variants.first ?? kind.defaultVariant
+            return CardID(kind: kind, variant: variant)
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -439,9 +451,10 @@ private struct DaySheet: View {
             .padding(.bottom)
         }
         .background(Color(.systemGroupedBackground))
+        .environment(\.chartLastDay, day)
         .task(id: LoadKey(day: day, metric: metric)) {
             let key = LoadKey(day: day, metric: metric)
-            snapshots = await model.snapshots(for: day, kinds: metric.kinds, goals: GoalHistory(goalChanges))
+            snapshots = await model.snapshots(for: day, cards: cards, goals: GoalHistory(goalChanges))
             workouts = metric == .training ? await model.workoutSnapshots(for: day) : []
             loaded = key
         }

@@ -45,17 +45,17 @@ final class CalendarModel {
         }
     }
 
-    /// Cards for `day` as they looked at the end of that day, without the 7-day charts
-    /// (the month grid already shows the trend).
-    func snapshots(for day: Date, kinds: [CardKind], goals: GoalHistory) async -> [CardKind: CardSnapshot] {
+    /// Cards for `day` as they looked at the end of that day, with their charts ending on that day.
+    func snapshots(for day: Date, cards: [CardID], goals: GoalHistory) async -> [CardKind: CardSnapshot] {
         var builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
         builder.goals = goals
 
         var result: [CardKind: CardSnapshot] = [:]
         await withTaskGroup(of: (CardKind, CardSnapshot?).self) { group in
-            for kind in Set(kinds) {
+            for card in Set(cards) {
+                let kind = card.kind
                 group.addTask { [logger] in
-                    do { return (kind, try await builder.snapshot(for: kind)) }
+                    do { return (kind, try await builder.snapshot(for: kind, variant: card.variant)) }
                     catch {
                         logger.error("Loading \(kind.rawValue) for a past day failed: \(error.localizedDescription)")
                         return (kind, nil)
@@ -63,8 +63,6 @@ final class CalendarModel {
                 }
             }
             for await (kind, snapshot) in group {
-                guard var snapshot else { continue }
-                snapshot.chart = .none
                 result[kind] = snapshot
             }
         }

@@ -721,10 +721,11 @@ struct PastDaySourceTests {
     @Test func pastDayCardsDontSayToday() async throws {
         let calendar = Calendar.current
         let day = calendar.date(byAdding: .day, value: -5, to: calendar.startOfDay(for: .now))!
-        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, kinds: [.steps, .sleepNeed], goals: GoalHistory())
+        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, cards: [CardID(kind: .steps), CardID(kind: .sleepNeed)], goals: GoalHistory())
         #expect(snapshots[.steps]?.period == "That day")
         #expect(snapshots[.sleepNeed]?.period == "That night")
     }
+
 }
 
 @MainActor
@@ -760,6 +761,16 @@ struct CalendarTypeTests {
         #expect(model.ratings.isEmpty)
         let twoSports = model.workoutDays.values.first { $0.sports.count == 2 }
         #expect(twoSports?.workouts == 2, "Sample strength days add an evening walk")
+    }
+
+    @Test func daySheetChartsEndOnTheSelectedDay() async throws {
+        let day = calendar.date(byAdding: .day, value: -5, to: calendar.startOfDay(for: .now))!
+        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, cards: [CardID(kind: .steps, variant: .week), CardID(kind: .recovery, variant: .week)], goals: GoalHistory())
+        guard case .bars(let steps, _, _) = snapshots[.steps]?.chart else { Issue.record("Steps keeps its 7-day bars"); return }
+        #expect(steps.count == 7)
+        guard case .bars = snapshots[.recovery]?.chart else { Issue.record("Recovery keeps its chart"); return }
+        let letters = calendar.veryShortStandaloneWeekdaySymbols
+        #expect(WeekdayLabels.symbols(count: 7, endingOn: day).last == letters[calendar.component(.weekday, from: day) - 1])
     }
 
     @Test func daySheetListsThatDaysWorkouts() async throws {
