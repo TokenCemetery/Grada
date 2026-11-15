@@ -94,7 +94,7 @@ final class CalendarModel {
             builder.calendar = calendar
             builder.goals = goals
             return Dictionary(try await builder.recoveryDays(days).compactMap { day in
-                day.result.map { (day.day, Recovery.rating($0.score)) }
+                day.result.map { (day.day, $0.rating) }
             }, uniquingKeysWith: { first, _ in first })
         case .training:
             return [:]

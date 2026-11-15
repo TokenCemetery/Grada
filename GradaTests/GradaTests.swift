@@ -118,9 +118,10 @@ struct CardVariantTests {
 
     @Test func recoveryColorsEachDay() async throws {
         let week = try await builder.snapshot(for: .recovery, variant: .week)
-        guard case .bars(let scores, 100, let ratings?) = week.chart else { Issue.record("\(week.chart)"); return }
-        #expect(ratings.count == scores.count)
-        #expect(week.rating != nil)
+        guard case .bars(let shares, 1, let ratings?) = week.chart else { Issue.record("\(week.chart)"); return }
+        #expect(ratings.count == shares.count)
+        #expect(shares.allSatisfy { ($0 ?? 0) <= 1 }, "Each bar is the share of inputs in range")
+        #expect(week.rating.map(\.title) == week.value)
     }
 
     @Test func scoresAreRated() async throws {
@@ -132,9 +133,9 @@ struct CardVariantTests {
 }
 
 struct RatingTests {
-    @Test func recoveryBands() {
-        #expect([Recovery.rating(80), Recovery.rating(50), Recovery.rating(20)] == [.good, .fair, .poor])
-        #expect([Recovery.rating(67), Recovery.rating(66), Recovery.rating(34), Recovery.rating(33)] == [.good, .fair, .fair, .poor])
+    @Test func resourcesBands() {
+        #expect([Resources.rating(80), Resources.rating(50), Resources.rating(20)] == [.good, .fair, .poor])
+        #expect([Resources.rating(67), Resources.rating(66), Resources.rating(34), Resources.rating(33)] == [.good, .fair, .fair, .poor])
     }
 
     @Test func wristTempOnlyFlagsARise() {
@@ -423,64 +424,63 @@ struct HRVStatusTests {
 
 @MainActor
 struct RecoveryTests {
+    /// ln SD ≈ 0.035, below the 0.05 floor, so HRV is off below the geometric mean × e^−0.025 ≈ 59.46 ms.
     private let hrvHistory: [Double] = [58, 62, 60, 64, 60, 58, 62, 60, 64, 62]
+    /// Mean 54, SD ≈ 0.82 → 1.5 bpm floor, so resting HR is off above 54.75.
     private let rhrHistory: [Double] = [54, 55, 53, 54, 55, 53, 54, 54, 55, 53]
+    /// Mean 14.5, SD ≈ 0.2 → 1 breath floor, so breathing is off above 15.5.
+    private let breathingHistory: [Double] = [14.2, 14.6, 14.4, 14.8, 14.5, 14.3, 14.7, 14.5]
+
+    private func input(hrv: Double? = 61, rhr: Double? = 54, asleep: TimeInterval? = 8 * 3600,
+                       breathing: Double? = nil) -> Recovery.Input {
+        Recovery.Input(hrv: hrv, hrvHistory: hrv == nil ? [] : hrvHistory, restingHeartRate: rhr,
+                       restingHeartRateHistory: rhr == nil ? [] : rhrHistory, asleep: asleep,
+                       respiratoryRate: breathing, respiratoryRateHistory: breathing == nil ? [] : breathingHistory)
+    }
 
     @Test func calibratingWithoutEnoughHistory() {
         let input = Recovery.Input(hrv: 60, hrvHistory: [60, 61], restingHeartRate: 54, restingHeartRateHistory: [54], asleep: 8 * 3600)
-        #expect(Recovery.score(input) == nil)
+        #expect(Recovery.status(input) == nil)
     }
 
-    @Test func normalNightScoresGood() throws {
-        let input = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54,
-                                   restingHeartRateHistory: rhrHistory, asleep: 8 * 3600)
-        let result = try #require(Recovery.score(input))
-        #expect(result.score >= 67)
-        #expect(result.reason == "Close to your normal")
+    @Test func nothingOffIsGood() throws {
+        let result = try #require(Recovery.status(input(breathing: 14.6)))
+        #expect(result == Recovery.Result(rating: .good, measured: 4, inRange: 4, reason: "Close to your normal"))
     }
 
-    @Test func lowHRVDragsScoreDownAndIsNamed() throws {
-        let input = Recovery.Input(hrv: 48, hrvHistory: hrvHistory, restingHeartRate: 54,
-                                   restingHeartRateHistory: rhrHistory, asleep: 8 * 3600)
-        let result = try #require(Recovery.score(input))
-        #expect(result.score < 50)
-        #expect(result.reason == "HRV below normal")
+    /// HRV and resting HR flag at the smallest worthwhile change, 0.5 SD, and only in the direction of fatigue.
+    @Test func hrvAndRestingHeartRateFlagAtHalfASD() throws {
+        #expect(try #require(Recovery.status(input(hrv: 59.6))).rating == .good)
+        #expect(try #require(Recovery.status(input(hrv: 59.3))).reason == "HRV below normal")
+        #expect(try #require(Recovery.status(input(hrv: 80))).rating == .good, "High HRV isn't a fatigue sign")
+        #expect(try #require(Recovery.status(input(rhr: 54.7))).rating == .good)
+        #expect(try #require(Recovery.status(input(rhr: 55))).reason == "Resting HR high")
+        #expect(try #require(Recovery.status(input(rhr: 48))).rating == .good, "Low resting HR isn't a fatigue sign")
     }
 
-    @Test func shortSleepIsNamed() throws {
-        let input = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54,
-                                   restingHeartRateHistory: rhrHistory, asleep: 5 * 3600)
-        #expect(try #require(Recovery.score(input)).reason == "Short sleep")
+    /// AASM/SRS: at least 7 hours.
+    @Test func sleepUnderSevenHoursIsOff() throws {
+        #expect(try #require(Recovery.status(input(asleep: 7 * 3600))).rating == .good)
+        let short = try #require(Recovery.status(input(asleep: 7 * 3600 - 60)))
+        #expect(short.rating == .fair)
+        #expect(short.reason == "Short sleep")
     }
 
-    @Test func raisedBreathingLowersScoreAndIsNamed() throws {
-        let history: [Double] = [14.2, 14.6, 14.4, 14.8, 14.5, 14.3, 14.7, 14.5]
-        let normal = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54, restingHeartRateHistory: rhrHistory,
-                                    asleep: 8 * 3600, respiratoryRate: 14.5, respiratoryRateHistory: history)
-        var raised = normal
-        raised.respiratoryRate = 17.5
-        let normalResult = try #require(Recovery.score(normal))
-        let raisedResult = try #require(Recovery.score(raised))
-        #expect(raisedResult.score < normalResult.score - 10)
-        #expect(raisedResult.reason == "Breathing rate up")
+    @Test func onlyRaisedBreathingIsOff() throws {
+        #expect(try #require(Recovery.status(input(breathing: 15.4))).rating == .good)
+        #expect(try #require(Recovery.status(input(breathing: 12))).rating == .good)
+        #expect(try #require(Recovery.status(input(breathing: 15.6))).reason == "Breathing rate up")
     }
 
-    @Test func lowBreathingDoesNotRaiseScore() throws {
-        let history: [Double] = [14.2, 14.6, 14.4, 14.8, 14.5, 14.3, 14.7, 14.5]
-        let base = Recovery.Input(hrv: 61, hrvHistory: hrvHistory, restingHeartRate: 54, restingHeartRateHistory: rhrHistory,
-                                  asleep: 8 * 3600)
-        var low = base
-        low.respiratoryRate = 12
-        low.respiratoryRateHistory = history
-        #expect(Recovery.score(low) == Recovery.score(base))
+    @Test func twoOrMoreOffIsPoorAndCounted() throws {
+        let result = try #require(Recovery.status(input(hrv: 50, rhr: 58, asleep: 5 * 3600, breathing: 17)))
+        #expect(result == Recovery.Result(rating: .poor, measured: 4, inRange: 0, reason: "HRV below normal · 3 more off"))
+        #expect(try #require(Recovery.status(input(hrv: 50, asleep: 6 * 3600))).rating == .poor)
     }
 
     @Test func missingHRVUsesRestingHeartRateAlone() throws {
-        let input = Recovery.Input(hrv: nil, hrvHistory: [], restingHeartRate: 50,
-                                   restingHeartRateHistory: rhrHistory, asleep: nil)
-        let result = try #require(Recovery.score(input))
-        #expect(result.score > 65)
-        #expect(result.reason == "Resting HR low")
+        let result = try #require(Recovery.status(input(hrv: nil, asleep: nil)))
+        #expect(result == Recovery.Result(rating: .good, measured: 1, inRange: 1, reason: "Close to your normal"))
     }
 }
 

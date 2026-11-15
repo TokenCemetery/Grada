@@ -1,7 +1,8 @@
 import Foundation
 
-/// Morning recovery, 0–100, modelled on WHOOP: HRV and heart rate measured while asleep against
-/// the user's own baseline, plus sleep against their sleep need and a penalty for raised breathing rate.
+/// Morning recovery: each overnight input is checked against a published threshold, and the status counts
+/// how many crossed it, like Health Status. No study has validated a formula that weighs these inputs into one
+/// number (WHOOP's isn't published), so none is made up here.
 nonisolated enum Recovery {
     struct Input {
         /// Overnight HRV (ms).
@@ -12,92 +13,62 @@ nonisolated enum Recovery {
         var restingHeartRate: Double?
         var restingHeartRateHistory: [Double]
         var asleep: TimeInterval?
-        /// What the user needed that night; see `SleepNeed`.
-        var sleepNeed: TimeInterval = SleepNeed.baseline
         /// Sleeping respiratory rate; a rise above normal is an early sign of illness or fatigue.
         var respiratoryRate: Double? = nil
         var respiratoryRateHistory: [Double] = []
     }
 
     struct Result: Equatable {
-        let score: Int
-        /// The input that moved the score most, e.g. "HRV above normal".
+        /// Good with no input off, Fair with one, Poor with two or more.
+        let rating: DayRating
+        /// Inputs measured with enough history to judge, and how many of them were within their threshold.
+        let measured: Int
+        let inRange: Int
+        /// The first input that's off, e.g. "HRV below normal", or "Close to your normal".
         let reason: String
     }
 
-    /// A component score on a normal day; one standard deviation moves it by `pointsPerSD`.
-    private static let neutral = 65.0
-    private static let pointsPerSD = 20.0
-    /// Points lost per hour of sleep below the sleep need.
-    private static let pointsPerHourShort = 20.0
-    /// Points lost per SD of respiratory rate beyond the first SD above normal, up to `maxBreathingPenalty`.
-    private static let pointsPerBreathingSD = 10.0
-    private static let maxBreathingPenalty = 30.0
+    /// The smallest worthwhile change: 0.5 SD of the baseline (Hopkins 2000), as used for HRV-guided training
+    /// (Plews et al. 2013, Buchheit 2014). Recovery only flags the direction that signals fatigue.
+    static let smallestWorthwhileChangeInSD = 0.5
+    /// AASM/SRS consensus: adults need at least 7 hours (Watson et al. 2015).
+    static let minimumSleep: TimeInterval = 7 * 3600
     /// HRV is compared on a log scale, as in HRV research, because its spread grows with its size.
     /// 0.05 in log terms is about ±3 ms at 60 ms, the same floor as the HRV normal range.
     static let minimumLogHRVSD = 0.05
 
     /// Nil while HRV and resting heart rate are both missing or still calibrating.
-    static func score(_ input: Input) -> Result? {
-        // `effect` is how far, in standard deviations, the input pushes recovery up (+) or down (−).
-        var parts: [(weight: Double, score: Double, effect: Double, high: String?, low: String)] = []
+    static func status(_ input: Input) -> Result? {
+        // Each checked input, in the order they're named: whether it's off and how it's described.
+        var checks: [(isOff: Bool, reason: String)] = []
         if let hrv = input.hrv, hrv > 0,
            let z = Baseline.zScore(log(hrv), history: input.hrvHistory.filter { $0 > 0 }.map(log), minimumSD: minimumLogHRVSD) {
-            parts.append((0.5, neutral + pointsPerSD * z, z, "HRV above normal", "HRV below normal"))
+            checks.append((z < -smallestWorthwhileChangeInSD, "HRV below normal"))
         }
         if let rhr = input.restingHeartRate,
            let z = Baseline.zScore(rhr, history: input.restingHeartRateHistory,
                                    minimumSD: QuantityMetric.restingHeartRate.minimumHalfWidth / 2) {
-            // Lower resting heart rate means better recovery.
-            parts.append((0.25, neutral - pointsPerSD * z, -z, "Resting HR low", "Resting HR high"))
+            checks.append((z > smallestWorthwhileChangeInSD, "Resting HR high"))
         }
-        guard !parts.isEmpty else { return nil }
+        guard !checks.isEmpty else { return nil }
         if let asleep = input.asleep {
-            let hoursShort = max(input.sleepNeed - asleep, 0) / 3600
-            // An hour short counts like one standard deviation; enough sleep is expected, not a boost.
-            parts.append((0.25, 100 - pointsPerHourShort * hoursShort, -hoursShort, nil, "Short sleep"))
+            checks.append((asleep < minimumSleep, "Short sleep"))
         }
-
-        // Missing inputs don't count against the score: weights are shared among what's there.
-        let totalWeight = parts.reduce(0) { $0 + $1.weight }
-        var score = parts.reduce(0) { $0 + $1.weight * min(max($1.score, 0), 100) } / totalWeight
-
-        // Breathing only ever lowers the score: a normal rate says nothing about recovery.
+        // Breathing uses the same ±2 SD normal range as the Respiratory Rate card; only a rise counts.
         if let rate = input.respiratoryRate,
-           let z = Baseline.zScore(rate, history: input.respiratoryRateHistory,
-                                   minimumSD: QuantityMetric.respiratoryRate.minimumHalfWidth / 2), z >= 1 {
-            score = max(score - min((z - 1) * pointsPerBreathingSD, maxBreathingPenalty), 0)
-            parts.append((0.25, score, -z, nil, "Breathing rate up"))
+           let normal = Baseline.normalRange(history: input.respiratoryRateHistory,
+                                             minimumHalfWidth: QuantityMetric.respiratoryRate.minimumHalfWidth) {
+            checks.append((rate > normal.upperBound, "Breathing rate up"))
         }
 
-        // Only inputs at least one SD from normal are named; a drag explains more than a boost.
-        let reason: String
-        if let worst = parts.filter({ $0.effect <= -1 }).min(by: { $0.effect * $0.weight < $1.effect * $1.weight }) {
-            reason = worst.low
-        } else if let best = parts.filter({ $0.effect >= 1 && $0.high != nil })
-            .max(by: { $0.effect * $0.weight < $1.effect * $1.weight }), let high = best.high {
-            reason = high
-        } else {
-            reason = "Close to your normal"
+        let off = checks.filter(\.isOff)
+        let reason = switch off.count {
+        case 0: "Close to your normal"
+        case 1: off[0].reason
+        default: "\(off[0].reason) · \(off.count - 1) more off"
         }
-        return Result(score: Int(score.rounded()), reason: reason)
-    }
-
-    /// Whoop's bands: green from 67, yellow from 34, red below.
-    static func rating(_ score: Int) -> DayRating {
-        switch score {
-        case 67...: .good
-        case 34...: .fair
-        default: .poor
-        }
-    }
-
-    static func status(_ score: Int) -> (word: String, tone: CardSnapshot.Tone) {
-        switch score {
-        case 67...: ("Good", .good)
-        case 34...: ("Fair", .neutral)
-        default: ("Low", .warning)
-        }
+        return Result(rating: DayRatings.healthStatus(outOfRange: off.count),
+                      measured: checks.count, inRange: checks.count - off.count, reason: reason)
     }
 }
 
@@ -198,6 +169,15 @@ nonisolated enum Resources {
             time += step
         }
         return result
+    }
+
+    /// WHOOP's recovery bands (green from 67, yellow from 34), with no published basis; see #69.
+    static func rating(_ level: Int) -> DayRating {
+        switch level {
+        case 67...: .good
+        case 34...: .fair
+        default: .poor
+        }
     }
 
     /// 208 − 0.7 × age (Tanaka, Monahan & Seals 2001, a meta-analysis of 351 studies; 220 − age has no

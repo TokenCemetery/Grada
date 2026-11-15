@@ -113,9 +113,9 @@ struct TrendBuilder {
         case .healthStatus:
             return try await healthStatus(period)
         case .recovery:
-            let scores = try await cardBuilder.recoveryDays(days)
-                .map { DayValue(day: $0.day, value: $0.result.map { Double($0.score) }) }
-            return make(scores, period, style: .line, unit: "%", format: .number(decimals: 0))
+            let inRange = try await cardBuilder.recoveryDays(days)
+                .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
+            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: "Inputs in range")
         // TODO(#42, later): Resources needs each day's timeline re-simulated from 5-minute heart rate, and
         // Health age a 30-day window per point. Both are too slow to run per chart; store daily values first.
         case .resources, .healthAge:

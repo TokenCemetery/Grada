@@ -242,19 +242,24 @@ struct SnapshotBuilder {
         guard let shown = days[shownIndex].result else {
             return CardSnapshot(period: period, value: "Calibrating", comparison: "Needs \(Baseline.minimumDays) nights of data")
         }
-        let status = Recovery.status(shown.score)
         return CardSnapshot(
             period: period,
-            value: "\(shown.score)",
-            unit: "%",
-            comparison: "\(status.word) · \(shown.reason)",
-            tone: status.tone,
-            rating: Recovery.rating(shown.score),
-            chart: variant == .week
-                ? .bars(days.map { $0.result.map { Double($0.score) } ?? 0 }, target: 100,
-                        ratings: days.map { $0.result.map { Recovery.rating($0.score) } })
-                : .progress(value: Double(shown.score), goal: 100)
+            value: shown.rating.title,
+            comparison: shown.reason,
+            tone: Self.tone(shown.rating),
+            rating: shown.rating,
+            // Each bar is the share of inputs within their threshold; a full bar means none was off.
+            chart: .bars(days.map { $0.result.map { Double($0.inRange) / Double($0.measured) } }, target: 1,
+                         ratings: days.map { $0.result?.rating })
         )
+    }
+
+    static func tone(_ rating: DayRating) -> CardSnapshot.Tone {
+        switch rating {
+        case .good: .good
+        case .fair: .neutral
+        case .poor: .warning
+        }
     }
 
     /// Recovery for each of the last `count` days, oldest first. `hasData` is false without overnight
@@ -264,19 +269,15 @@ struct SnapshotBuilder {
         let breathing = try await source.daily(.respiratoryRate, days: overnight.count)
         let nights = try await source.sleepNights(days: overnight.count)
         let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let debt = SleepNeed.debt(asleep: overnight.map { asleep[$0.wakeDay] })
-        let training = workoutMinutesPerDay(try await source.workouts(days: overnight.count), days: overnight.count)
 
         return (overnight.count - count..<overnight.count).map { index in
             let history = (index - baselineDays)..<index
-            // The need for the night ending on `index` comes from the debt and training of the day before.
-            let result = Recovery.score(Recovery.Input(
+            let result = Recovery.status(Recovery.Input(
                 hrv: overnight[index].hrv,
                 hrvHistory: overnight[history].compactMap(\.hrv),
                 restingHeartRate: overnight[index].heartRate,
                 restingHeartRateHistory: overnight[history].compactMap(\.heartRate),
                 asleep: asleep[overnight[index].wakeDay],
-                sleepNeed: SleepNeed.need(debt: debt[index - 1], trainingTime: training[index - 1] * 60),
                 respiratoryRate: breathing[index].value,
                 respiratoryRateHistory: breathing[history].compactMap(\.value)
             ))
@@ -320,8 +321,8 @@ struct SnapshotBuilder {
             value: "\(level)",
             unit: "%",
             comparison: comparison,
-            tone: Recovery.status(level).tone,
-            rating: Recovery.rating(level),
+            tone: Self.tone(Resources.rating(level)),
+            rating: Resources.rating(level),
             chart: .intraday(todayLevels.map { (hour: $0.date.timeIntervalSince(today) / 3600, value: $0.value) }, domain: 0...100)
         )
     }

@@ -76,7 +76,6 @@ extension CardKind {
         case .heartRate: [.resources]
         case .vo2Max: [.racePredictor, .healthAge]
         case .sleepDuration, .sleepStages: [.recovery, .sleepNeed, .resources, .healthAge]
-        case .sleepNeed: [.recovery]
         case .sleepConsistency: [.healthAge]
         default: []
         }
@@ -86,7 +85,7 @@ extension CardKind {
     var basedOn: [CardKind] {
         switch self {
         case .healthStatus: [.hrv, .restingHeartRate, .respiratoryRate, .oxygenSaturation, .wristTemperature]
-        case .recovery: [.hrv, .restingHeartRate, .sleepDuration, .sleepNeed, .respiratoryRate]
+        case .recovery: [.hrv, .restingHeartRate, .sleepDuration, .respiratoryRate]
         case .resources: [.heartRate, .restingHeartRate, .sleepStages]
         case .healthAge: [.steps, .sleepDuration, .sleepConsistency, .restingHeartRate, .vo2Max, .exerciseMinutes]
         case .intensityMinutes: [.heartRate, .restingHeartRate, .exerciseMinutes]
@@ -101,7 +100,7 @@ extension CardKind {
         case .healthStatus:
             "Compares last night's HRV, resting heart rate, breathing rate, blood oxygen and wrist temperature with your own normal range from the last 30 days. Several vitals out of range together often come before illness or follow heavy training, alcohol or poor sleep."
         case .recovery:
-            "How ready your body is for strain today, from overnight HRV and heart rate against your baseline, sleep against your sleep need, and breathing rate. High: a good day to push. Low: favour easy training and rest."
+            "How ready your body is for strain today. Each input is checked against a published threshold: overnight HRV more than half a standard deviation below your baseline, resting heart rate more than half a standard deviation above it, under 7 hours of sleep, or breathing rate above your normal range. Good: nothing off, a good day to push. Fair: one input off. Poor: two or more; favour easy training and rest."
         case .resources:
             "An estimate of your energy through the day. Sleep and calm rest recharge it; activity and stress, seen as a raised heart rate, drain it."
         case .healthAge:
