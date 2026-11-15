@@ -257,3 +257,32 @@ struct TrainingReadinessTests {
         #expect(days.count == 7)
     }
 }
+
+struct LoadFocusTests {
+    private let start = Date(timeIntervalSince1970: 1_700_000_000)
+
+    /// Max 200: low below 164 bpm, threshold from 164, high from 176; each reading lasts until the next, up to 5 minutes.
+    @Test func timeSplitsBySeilerZone() {
+        let readings = [TimedValue(date: start, value: 140), TimedValue(date: start + 60, value: 170),
+                        TimedValue(date: start + 120, value: 180), TimedValue(date: start + 900, value: 120)]
+        #expect(IntensityZones.time(readings, end: start + 960, maxHeartRate: 200) == [120, 60, 300])
+    }
+
+    /// Seiler 2010: about 80% of training at low intensity.
+    @Test func eightyPercentLowMeetsTheTarget() throws {
+        let shares = try #require(LoadFocus.shares([8 * 3600, 600, 2 * 3600 - 600]))
+        #expect(shares[0] == 0.8)
+        #expect(LoadFocus.rating(lowShare: shares[0]) == .good)
+        #expect(LoadFocus.rating(lowShare: 0.79) == .fair)
+        #expect(LoadFocus.shares([0, 0, 0]) == nil)
+    }
+
+    @MainActor
+    @Test func cardSplitsFourWeeksIntoThreeZones() async throws {
+        #expect(CardKind.gallery.contains(.loadFocus))
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .loadFocus)
+        #expect(snapshot.unit == "low")
+        guard case .rows(let rows) = snapshot.detail else { Issue.record("\(snapshot.detail)"); return }
+        #expect(rows.map(\.label) == ["Low · <82% max HR", "Threshold · ≥82% max HR", "High · ≥88% max HR"])
+    }
+}

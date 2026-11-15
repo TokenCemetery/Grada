@@ -94,6 +94,7 @@ extension CardKind {
         case .hrvStatus: [.hrv]
         case .sleepScore: [.sleepStages, .sleepNeed, .sleepConsistency]
         case .strain: [.heartRate]
+        case .loadFocus: [.lastWorkout]
         case .trainingReadiness: [.sleepScore, .recoveryTime, .hrvStatus, .strain, .sleepNeed, .stress]
         case .recoveryTime: [.lastWorkout, .recovery]
         default: []
@@ -164,7 +165,7 @@ extension CardKind {
         case .trainingReadiness:
             "Whether today suits hard training, from the same inputs Garmin uses, each checked against the threshold its own card uses: last night's Sleep Score (off when red), Recovery Time (off while it's still counting down), HRV Status (off when not Balanced), the acute:chronic load ratio from Strain (off above 1.3, where studies saw injuries rise), your last 3 nights against your Sleep Need, and your last 3 days' average stress (off from medium). Garmin doesn't publish how it weighs these and no study has tested a weighting, so each counts the same. High: nothing off. Moderate: one off. Low: two or more; favour easy training. Needs at least 3 inputs."
         case .loadFocus:
-            "Coming in a later version."
+            "How your workout time over the last 4 weeks splits by intensity, from heart rate as a share of your max: low below 82%, threshold from 82% and high from 88%, the boundaries between the first and second ventilatory thresholds in Seiler's zones. Studies of successful endurance athletes found about 80% of their training at low intensity and most of the rest at high intensity, so green means at least 80% low. Counted by heart rate time rather than sessions, those athletes' low share was even higher, around 90%. Too little low-intensity work, often from making every session moderately hard, shows yellow."
         case .last30Days:
             "Your workouts over the last 30 days."
         }

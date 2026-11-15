@@ -25,7 +25,7 @@ struct SnapshotBuilder {
         case .sleepScore: try await sleepScore()
         case .racePredictor: try await racePredictor()
         case .trainingReadiness: try await trainingReadiness()
-        case .loadFocus: loadFocus()
+        case .loadFocus: try await loadFocus()
         case .heartRate: try await heartRate()
         case .sleepDuration: try await sleep(withStages: false, variant)
         case .sleepStages: try await sleep(withStages: true, .current)
@@ -468,10 +468,50 @@ struct SnapshotBuilder {
         )
     }
 
-    // TODO(#32, v4): the last 4 weeks of training load split into low aerobic, high aerobic and anaerobic
-    // by heart rate zone, against target ranges, like Garmin. Needs Strain's training-load model.
-    private func loadFocus() -> CardSnapshot {
-        .noData(period: "Last 4 weeks")
+    /// The last 4 weeks of workout time by intensity zone, against the 80% low-intensity target.
+    private func loadFocus() async throws -> CardSnapshot {
+        let period = "Last 4 weeks"
+        guard let days = try await loadFocusDays(1) else {
+            return CardSnapshot(period: period, value: "Calibrating", comparison: "Needs your age or max heart rate")
+        }
+        guard let shares = days.last.flatMap({ LoadFocus.shares($0.seconds) }) else { return .noData(period: period) }
+        let rating = LoadFocus.rating(lowShare: shares[0])
+        let percent = { (share: Double) in "\(Int((share * 100).rounded()))%" }
+        return CardSnapshot(
+            period: period,
+            value: percent(shares[0]),
+            unit: "low",
+            comparison: "Target \(percent(LoadFocus.lowTarget)) or more low",
+            tone: Self.tone(rating),
+            rating: rating,
+            detail: .rows(IntensityZones.Zone.allCases.map { zone in
+                let bound = zone == .low ? "<\(percent(IntensityZones.lowerBounds[0]))"
+                    : "≥\(percent(IntensityZones.lowerBounds[zone.rawValue - 1]))"
+                return (label: "\(zone.title) · \(bound) max HR", value: percent(shares[zone.rawValue]),
+                        rating: zone == .low ? rating : nil)
+            })
+        )
+    }
+
+    /// Seconds of workout heart rate in low, threshold and high over the 4 weeks ending on each of the last
+    /// `count` days, oldest first. Nil without a max heart rate to set the zones.
+    func loadFocusDays(_ count: Int) async throws -> [(day: Date, seconds: [TimeInterval])]? {
+        guard let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
+                                                        highestRecorded: try await source.highestHeartRate(days: 365))
+        else { return nil }
+        let days = lastDays(count + LoadFocus.days - 1)
+        var byDay: [Date: [TimeInterval]] = [:]
+        for workout in try await source.workouts(days: days.count) {
+            let heartRate = try await source.workoutDetail(workout).heartRate
+            let seconds = IntensityZones.time(heartRate, end: workout.start.addingTimeInterval(workout.duration),
+                                              maxHeartRate: maxHeartRate)
+            byDay[calendar.startOfDay(for: workout.start), default: [0, 0, 0]] =
+                zip(byDay[calendar.startOfDay(for: workout.start)] ?? [0, 0, 0], seconds).map { $0 + $1 }
+        }
+        return (days.count - count..<days.count).map { end in
+            let window = days[(end - LoadFocus.days + 1)...end].compactMap { byDay[$0] }
+            return (days[end], window.reduce([0, 0, 0]) { zip($0, $1).map { $0 + $1 } })
+        }
     }
 
     /// Today's heart rate from midnight: range of the 5-minute averages, and their mean.

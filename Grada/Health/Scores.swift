@@ -845,6 +845,38 @@ nonisolated enum IntensityZones {
     static func zone(_ heartRate: Double, maxHeartRate: Double) -> Zone {
         Zone(rawValue: lowerBounds.filter { heartRate / maxHeartRate >= $0 }.count)!
     }
+
+    /// Seconds in low, threshold and high. Each reading lasts until the next, up to `HeartRateZones.maxGap`;
+    /// the last one lasts until `end`.
+    static func time(_ heartRate: [TimedValue], end: Date, maxHeartRate: Double) -> [TimeInterval] {
+        var seconds = Array(repeating: 0.0, count: Zone.allCases.count)
+        for (index, reading) in heartRate.enumerated() {
+            let next = index + 1 < heartRate.count ? heartRate[index + 1].date : end
+            seconds[zone(reading.value, maxHeartRate: maxHeartRate).rawValue] +=
+                min(max(next.timeIntervalSince(reading.date), 0), HeartRateZones.maxGap)
+        }
+        return seconds
+    }
+}
+
+/// The last 4 weeks of workout time by intensity zone, against the polarized model: Seiler 2010 (Int J Sports
+/// Physiol Perform 5:276) found successful endurance athletes doing about 80% of their training at low intensity,
+/// below the first ventilatory threshold, and most of the rest at high intensity. Seiler counted sessions; counted
+/// by heart rate time, the same athletes' low share is higher still (Seiler & Kjerland 2006, Scand J Med Sci Sports
+/// 16:49: about 90%), so 80% is the lenient end of the target. The evidence comes from endurance athletes.
+nonisolated enum LoadFocus {
+    static let days = 28
+    static let lowTarget = 0.8
+
+    /// Each zone's share of the total, low first; nil without any workout time.
+    static func shares(_ seconds: [TimeInterval]) -> [Double]? {
+        let total = seconds.reduce(0, +)
+        return total > 0 ? seconds.map { $0 / total } : nil
+    }
+
+    static func rating(lowShare: Double) -> DayRating {
+        lowShare >= lowTarget ? .good : .fair
+    }
 }
 
 /// Hours until the heart's parasympathetic (rest) activity is back to normal after training. Stanley, Peake &

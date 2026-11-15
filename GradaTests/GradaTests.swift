@@ -229,7 +229,7 @@ struct SnapshotBuilderTests {
 
     @Test func everyCardBuildsFromSampleData() async throws {
         let builder = SnapshotBuilder(source: SampleDataSource())
-        for kind in CardKind.allCases where !kind.isPlanned {
+        for kind in CardKind.allCases {
             let snapshot = try await builder.snapshot(for: kind)
             #expect(snapshot.value != nil, "\(kind) has no value")
         }
@@ -744,13 +744,6 @@ struct RacePredictorTests {
 }
 
 @MainActor
-struct PlannedCardTests {
-    @Test func plannedCardsStayOutOfTheGallery() {
-        #expect(!CardKind.gallery.contains(.loadFocus))
-    }
-}
-
-@MainActor
 struct HealthProfileTests {
     @Test func maxHeartRateComesFromAgeWhenKnown() async throws {
         let profile = try await HealthProfile.load(from: SampleDataSource())
@@ -925,10 +918,9 @@ struct TrendBuilderTests {
         }
     }
 
-    @Test func everyCardWithADetailScreenHasAnExplanationAndValidLinks() {
+    @Test func everyCardWithADetailScreenHasAnExplanation() {
         for kind in CardKind.gallery + [.healthStatus] where !kind.opensCalendar {
             #expect(!kind.explanation.isEmpty)
-            #expect((kind.affects + kind.basedOn).allSatisfy { !$0.isPlanned })
         }
     }
 }

@@ -76,21 +76,13 @@ enum CardKind: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     /// Cards the user can add or remove. Health status is pinned on top.
-    static var gallery: [CardKind] { allCases.filter { $0 != .healthStatus && !$0.isPlanned && !$0.isRetired } }
+    static var gallery: [CardKind] { allCases.filter { $0 != .healthStatus && !$0.isRetired } }
 
     /// Cards no longer offered. HRV (the 7-night status) replaced them, and Health status already flags a
     /// single night's HRV or resting heart rate. Saved copies disappear from Home; the cases stay because
     /// the raw value is persisted.
     var isRetired: Bool { self == .restingHeartRate || self == .hrv }
 
-    /// Cards whose calculation isn't built yet. They stay out of the gallery until it is.
-    var isPlanned: Bool {
-        switch self {
-        // TODO(#32): build Load Focus, then remove it from this list.
-        case .loadFocus: true
-        default: false
-        }
-    }
 
     static let defaultSet: [CardID] = [CardKind.sleepStages, .hrvStatus, .recovery, .steps, .activeEnergy, .lastWorkout, .last30Days]
         .map { CardID(kind: $0, variant: $0.defaultVariant) }

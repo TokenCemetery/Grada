@@ -143,9 +143,12 @@ struct TrendBuilder {
             let inRange = try await cardBuilder.readinessDays(days)
                 .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
             return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: "Inputs in range")
-        // TODO(#32): a trend for Load focus, once it exists.
         case .loadFocus:
-            return nil
+            guard let days = try await cardBuilder.loadFocusDays(days) else { return nil }
+            var trend = make(days.map { DayValue(day: $0.day, value: LoadFocus.shares($0.seconds).map { $0[0] * 100 }) },
+                             period, style: .line, unit: "%", format: .number(decimals: 0), title: "Low intensity, 4 weeks")
+            trend.normalRange = LoadFocus.lowTarget * 100...100
+            return trend
         }
     }
 
