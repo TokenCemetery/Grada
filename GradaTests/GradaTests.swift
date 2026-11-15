@@ -10,6 +10,11 @@ struct HomeLayoutTests {
         #expect(rows == [[.sleepStages], [.restingHeartRate, .hrv], [.steps], [.lastWorkout], [.activeEnergy]])
     }
 
+    @Test func threeColumnsFillRowsOfThreeSquares() {
+        let rows = HomeLayout.rows(for: [CardKind.hrvStatus, .recovery, .steps, .activeEnergy, .lastWorkout, .hrv], columns: 3)
+        #expect(rows == [[.hrvStatus, .recovery, .steps], [.activeEnergy], [.lastWorkout], [.hrv]])
+    }
+
     @Test func defaultSetLayout() {
         let rows = HomeLayout.rows(for: CardKind.defaultSet).map { $0.map(\.kind) }
         #expect(rows == [[.sleepStages], [.hrvStatus, .recovery], [.steps, .activeEnergy], [.lastWorkout], [.last30Days]])

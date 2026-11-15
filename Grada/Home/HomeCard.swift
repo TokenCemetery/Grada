@@ -39,28 +39,22 @@ extension CardID: HomeLayoutItem {
 }
 
 enum HomeLayout {
-    /// Packs cards into rows: a wide card fills a row, squares pair up in order.
-    /// A square followed by a wide card sits alone in its row.
-    // TODO(#36, iPad release): 3 columns on iPad inside a centered column with a maximum width, like Suunto,
-    // so square cards stay square instead of stretching. Pass the column count in from HomeView.
-    static func rows<Item: HomeLayoutItem>(for items: [Item]) -> [[Item]] {
+    /// Packs cards into rows: a wide card fills a row, squares fill rows of `columns` in order.
+    /// Squares waiting when a wide card arrives sit in a short row of their own.
+    static func rows<Item: HomeLayoutItem>(for items: [Item], columns: Int = 2) -> [[Item]] {
         var rows: [[Item]] = []
-        var pendingSquare: Item?
+        var pendingSquares: [Item] = []
         for item in items {
             switch item.size {
             case .wide:
-                if let square = pendingSquare { rows.append([square]); pendingSquare = nil }
+                if !pendingSquares.isEmpty { rows.append(pendingSquares); pendingSquares = [] }
                 rows.append([item])
             case .square:
-                if let square = pendingSquare {
-                    rows.append([square, item])
-                    pendingSquare = nil
-                } else {
-                    pendingSquare = item
-                }
+                pendingSquares.append(item)
+                if pendingSquares.count == columns { rows.append(pendingSquares); pendingSquares = [] }
             }
         }
-        if let square = pendingSquare { rows.append([square]) }
+        if !pendingSquares.isEmpty { rows.append(pendingSquares) }
         return rows
     }
 }

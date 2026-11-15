@@ -10,7 +10,12 @@ struct HomeView: View {
     @Query private var goalChanges: [GoalChange]
     @Environment(\.healthSource) private var healthSource
     @AppStorage("didSeedHomeCards") private var didSeedHomeCards = false
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var isCustomizing = false
+
+    /// iPad shows 3 columns in a centered column of limited width so square cards stay square.
+    private var columns: Int { horizontalSizeClass == .regular ? 3 : 2 }
+    private let maxContentWidth: CGFloat = 720
 
     private var cardIDs: [CardID] { cards.compactMap(\.cardID) }
     private let healthStatus = CardID(kind: .healthStatus)
@@ -27,17 +32,21 @@ struct HomeView: View {
                         ImportProgressView(progress: progress)
                     }
                     card(healthStatus)
-                    ForEach(HomeLayout.rows(for: cardIDs), id: \.self) { row in
+                    ForEach(HomeLayout.rows(for: cardIDs, columns: columns), id: \.self) { row in
                         HStack(alignment: .top, spacing: 12) {
                             ForEach(row) { card($0) }
-                            if row.count == 1, row[0].size == .square {
-                                Color.clear.frame(maxWidth: .infinity)
+                            if row[0].size == .square {
+                                ForEach(0..<(columns - row.count), id: \.self) { _ in
+                                    Color.clear.frame(maxWidth: .infinity)
+                                }
                             }
                         }
                     }
                 }
                 .padding(.horizontal)
                 .padding(.bottom)
+                .frame(maxWidth: maxContentWidth)
+                .frame(maxWidth: .infinity)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Today")
