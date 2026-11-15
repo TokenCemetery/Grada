@@ -620,32 +620,17 @@ nonisolated enum HeartRateZones {
     }
 }
 
-/// How much a workout improves aerobic fitness, 0–5, on Garmin's Training Effect scale. Garmin's model
-/// (Firstbeat EPOC) isn't public, so this uses zone-weighted minutes (Edwards TRIMP) with a curve that
-/// gives a steady 45-minute zone 3 run about 3 and a hard hour in zone 4 about 4.
-nonisolated enum TrainingEffect {
-    /// TRIMP at which the effect reaches 63% of the scale.
-    private static let scale = 150.0
+/// A workout's training load as Edwards' TRIMP (Edwards 1993): minutes in each `HeartRateZones` zone weighted
+/// 1–5 and summed. There's no published scale for what a score means for fitness, so it's shown as the number,
+/// for comparing workouts with each other.
+nonisolated enum TrainingLoad {
+    /// Each zone's weighted minutes, zones 1–5.
+    static func edwardsTRIMPByZone(timeInZones: [TimeInterval]) -> [Double] {
+        timeInZones.enumerated().map { Double($0.offset + 1) * $0.element / 60 }
+    }
 
-    /// Edwards (1993): minutes in each `HeartRateZones` zone weighted 1–5 and summed.
     static func edwardsTRIMP(timeInZones: [TimeInterval]) -> Double {
-        timeInZones.enumerated().reduce(0) { $0 + Double($1.offset + 1) * $1.element / 60 }
-    }
-
-    static func aerobic(timeInZones: [TimeInterval]) -> Double {
-        let effect = 5 * (1 - exp(-edwardsTRIMP(timeInZones: timeInZones) / scale))
-        return (effect * 10).rounded() / 10
-    }
-
-    static func label(_ effect: Double) -> String {
-        switch effect {
-        case ..<1: "No benefit"
-        case ..<2: "Minor benefit"
-        case ..<3: "Maintaining"
-        case ..<4: "Improving"
-        case ..<5: "Highly improving"
-        default: "Overreaching"
-        }
+        edwardsTRIMPByZone(timeInZones: timeInZones).reduce(0, +)
     }
 }
 

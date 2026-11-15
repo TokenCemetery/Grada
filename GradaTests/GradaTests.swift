@@ -1105,13 +1105,9 @@ struct WorkoutDetailTests {
         #expect(seconds == [0, 0, 60, 0, HeartRateZones.maxGap])
     }
 
-    @Test func trainingEffectGrowsWithLoadAndCapsAtFive() {
-        #expect(TrainingEffect.aerobic(timeInZones: [0, 0, 0, 0, 0]) == 0)
-        let steadyRun = TrainingEffect.aerobic(timeInZones: [0, 0, 45 * 60, 0, 0])
-        #expect((2.8...3.2).contains(steadyRun))
-        #expect(TrainingEffect.label(steadyRun) == "Maintaining" || TrainingEffect.label(steadyRun) == "Improving")
-        #expect(TrainingEffect.aerobic(timeInZones: [0, 0, 0, 0, 300 * 60]) == 5)
-        #expect(TrainingEffect.label(5) == "Overreaching")
+    @Test func trainingLoadSplitsByZone() {
+        #expect(TrainingLoad.edwardsTRIMP(timeInZones: [0, 0, 0, 0, 0]) == 0)
+        #expect(TrainingLoad.edwardsTRIMPByZone(timeInZones: [600, 0, 1200, 0, 300]) == [10, 0, 60, 0, 25])
     }
 
     @Test func splitsInterpolateEachKilometer() {
@@ -1280,8 +1276,8 @@ struct PublishedReferenceTests {
             #expect(HeartRateZones.zone(200 * share, maxHeartRate: 200) == zone + 1)
         }
         // 10 minutes in each zone: 10 × (1 + 2 + 3 + 4 + 5).
-        #expect(TrainingEffect.edwardsTRIMP(timeInZones: Array(repeating: 600, count: 5)) == 150)
-        #expect(TrainingEffect.edwardsTRIMP(timeInZones: [0, 0, 45 * 60, 0, 0]) == 135)
+        #expect(TrainingLoad.edwardsTRIMP(timeInZones: Array(repeating: 600, count: 5)) == 150)
+        #expect(TrainingLoad.edwardsTRIMP(timeInZones: [0, 0, 45 * 60, 0, 0]) == 135)
     }
 
     /// ACSM (Garber et al. 2011, Table 1): very light below 30% of heart rate reserve, light 30–39%, moderate

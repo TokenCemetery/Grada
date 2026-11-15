@@ -7,7 +7,7 @@ struct WorkoutRoute: Hashable {
     let workout: WorkoutSummary
 }
 
-/// One workout, the way Garmin and Whoop show it: key stats, training effect, heart rate by zone,
+/// One workout, the way Garmin and Whoop show it: key stats, training load, heart rate by zone,
 /// splits and route. Sections without data are left out.
 struct WorkoutDetailView: View {
     let workout: WorkoutSummary
@@ -27,14 +27,14 @@ struct WorkoutDetailView: View {
                 DetailSection(title: "Summary") { stats }
                 if let detail, let maxHeartRate, !detail.heartRate.isEmpty {
                     let zones = HeartRateZones.time(detail.heartRate, end: end, maxHeartRate: maxHeartRate)
-                    DetailSection(title: "Training Effect") { TrainingEffectView(effect: TrainingEffect.aerobic(timeInZones: zones)) }
+                    DetailSection(title: "Training Load") { TrainingLoadView(timeInZones: zones) }
                     DetailSection(title: "Heart Rate") {
                         HeartRateChart(readings: detail.heartRate, start: workout.start, end: end, maxHeartRate: maxHeartRate)
                         ZoneRows(seconds: zones, maxHeartRate: maxHeartRate)
                     }
                 } else if loaded, detail?.heartRate.isEmpty == false {
                     DetailSection(title: "Heart Rate Zones") {
-                        Text("Add your birth date in Apple Health to see heart rate zones and training effect.")
+                        Text("Add your birth date in Apple Health to see heart rate zones and training load.")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                 }
@@ -166,39 +166,34 @@ enum ZoneColors {
     }
 }
 
-/// The effect as a big number and word over a 0–5 track, like Garmin's Training Effect.
-private struct TrainingEffectView: View {
-    let effect: Double
+/// Edwards TRIMP as a big number over a bar split by how much each heart rate zone added.
+private struct TrainingLoadView: View {
+    let timeInZones: [TimeInterval]
 
     var body: some View {
+        let byZone = TrainingLoad.edwardsTRIMPByZone(timeInZones: timeInZones)
+        let total = byZone.reduce(0, +)
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(effect.formatted(.number.precision(.fractionLength(1))))
+                Text("\(Int(total.rounded()))")
                     .font(.system(size: 40, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                Text("Aerobic · \(TrainingEffect.label(effect))").font(.headline).foregroundStyle(.secondary)
+                Text("TRIMP").font(.headline).foregroundStyle(.secondary)
             }
             GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    HStack(spacing: 2) {
-                        ForEach(1...5, id: \.self) { zone in
-                            Capsule().fill(ZoneColors.color(zone).opacity(Double(zone) <= effect.rounded(.up) ? 1 : 0.25))
-                        }
+                HStack(spacing: 2) {
+                    ForEach(byZone.indices.filter { byZone[$0] > 0 }, id: \.self) { index in
+                        Capsule().fill(ZoneColors.color(index + 1))
+                            .frame(width: max(proxy.size.width * byZone[index] / max(total, 1) - 2, 4))
                     }
-                    Capsule()
-                        .fill(Color.primary)
-                        .frame(width: 4, height: 18)
-                        .offset(x: max(0, min(proxy.size.width - 4, proxy.size.width * effect / 5 - 2)))
                 }
-                .frame(height: 18)
-                .frame(maxHeight: .infinity)
             }
-            .frame(height: 18)
-            Text("How much this workout builds aerobic fitness, from time in each heart rate zone. Estimated on your iPhone.")
+            .frame(height: 12)
+            Text("Minutes in each heart rate zone weighted 1 to 5 and added up (Edwards TRIMP). A higher number is a harder workout; compare it with your other workouts, as there's no published scale for what a score means.")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Aerobic training effect \(effect.formatted(.number.precision(.fractionLength(1)))) of 5, \(TrainingEffect.label(effect))")
+        .accessibilityLabel("Training load \(Int(total.rounded())) TRIMP")
     }
 }
 
