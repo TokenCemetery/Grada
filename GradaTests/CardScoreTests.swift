@@ -297,3 +297,23 @@ struct ScoreBreakdownTests {
         #expect(abs(amounts.values.reduce(0, +) - (now - midnight)) < 0.000_1)
     }
 }
+
+struct RelatedCardTests {
+    @Test func retiredInputsLinkToTheirReplacement() {
+        #expect(CardKind.recovery.related.title == "Based on")
+        #expect(CardKind.recovery.related.kinds == [.hrvStatus, .heartRate, .sleepDuration, .respiratoryRate])
+        #expect(CardKind.resources.related.kinds == [.heartRate, .sleepStages], "No duplicate Heart Rate")
+    }
+
+    @Test func replacementsListWhatTheRetiredCardAffected() {
+        #expect(CardKind.hrvStatus.related.title == "Affects", "HRV doesn't link to itself")
+        #expect(CardKind.hrvStatus.related.kinds == [.healthStatus, .recovery])
+        #expect(CardKind.heartRate.related.kinds == [.resources, .dayIntensity, .strain, .healthStatus, .recovery, .healthAge])
+    }
+
+    @Test func noDetailScreenLinksToARetiredCard() {
+        for kind in CardKind.allCases {
+            #expect(kind.related.kinds.allSatisfy { !$0.isRetired && $0 != kind }, "\(kind)")
+        }
+    }
+}

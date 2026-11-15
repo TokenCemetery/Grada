@@ -100,6 +100,20 @@ extension CardKind {
         }
     }
 
+    /// The cards a detail screen links to: what this score is based on, or else what this metric affects.
+    /// Retired inputs link to their replacement, which also lists what the retired card affected.
+    var related: (title: String, kinds: [CardKind]) {
+        let shown = { (kinds: [CardKind]) -> [CardKind] in
+            var seen: Set<CardKind> = [self]
+            return kinds.compactMap { $0.isRetired ? $0.replacement : $0 }
+                .filter { ($0 == .healthStatus || CardKind.gallery.contains($0)) && seen.insert($0).inserted }
+        }
+        let basedOn = shown(basedOn)
+        if !basedOn.isEmpty { return ("Based on", basedOn) }
+        let retired = CardKind.allCases.filter { $0.replacement == self }
+        return ("Affects", shown(affects + retired.flatMap(\.affects)))
+    }
+
     /// Fixed text for "What it means".
     var explanation: String {
         switch self {

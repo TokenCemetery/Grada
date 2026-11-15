@@ -20,12 +20,7 @@ struct MetricDetailView: View {
     private var source: HealthDataSource { PastDaySource.asOf(day, base: baseSource, calendar: calendar) }
     private var color: Color { kind.category.color }
 
-    private var related: (title: String, kinds: [CardKind]) {
-        let available = { (kind: CardKind) in kind == .healthStatus || CardKind.gallery.contains(kind) }
-        return kind.basedOn.isEmpty
-            ? ("Affects", kind.affects.filter(available))
-            : ("Based on", kind.basedOn.filter(available))
-    }
+    private var related: (title: String, kinds: [CardKind]) { kind.related }
 
     var body: some View {
         ScrollView {

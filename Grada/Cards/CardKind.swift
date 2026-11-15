@@ -83,6 +83,16 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// the raw value is persisted.
     var isRetired: Bool { self == .restingHeartRate || self == .hrv }
 
+    /// The card that shows a retired card's input now: HRV for nightly HRV, and Heart Rate, which shows and
+    /// charts resting heart rate, for Resting HR.
+    var replacement: CardKind? {
+        switch self {
+        case .hrv: .hrvStatus
+        case .restingHeartRate: .heartRate
+        default: nil
+        }
+    }
+
     /// What a fresh install shows under Health Status: WHOOP's Recovery and Strain, Garmin's Body Battery
     /// (Resources) and Steps, then last night's sleep and the latest workout.
     static let defaultSet: [CardID] = [CardKind.recovery, .resources, .strain, .steps, .sleepStages, .lastWorkout]
