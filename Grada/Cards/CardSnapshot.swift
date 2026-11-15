@@ -7,7 +7,8 @@ struct CardSnapshot {
     enum Chart {
         case none
         /// Seven values, oldest first; the last one is today. With a target, a full bar means the target was reached.
-        case bars([Double?], target: Double? = nil)
+        /// With ratings, each day's bar takes its rating's color.
+        case bars([Double?], target: Double? = nil, ratings: [DayRating?]? = nil)
         /// Seven nights, oldest first, each bar split by sleep stage; nil where there's no night.
         /// With a target in hours, a full bar means the target was reached.
         case sleep([SleepNight?], target: Double? = nil)
@@ -46,6 +47,8 @@ struct CardSnapshot {
     var unit: String = ""
     var comparison: String?
     var tone: Tone = .neutral
+    /// Colors the value red, yellow or green. Nil keeps it neutral.
+    var rating: DayRating?
     var chart: Chart = .none
     var detail: Detail = .none
 

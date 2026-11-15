@@ -23,6 +23,17 @@ nonisolated enum DayRating: CaseIterable {
         }
     }
 
+    /// A card value in this rating's color. Yellow text is unreadable on a light card, so fair is orange.
+    func text(colorBlind: Bool) -> Color {
+        switch (self, colorBlind) {
+        case (.good, false): .green
+        case (.fair, _): .orange
+        case (.poor, false): .red
+        case (.good, true): .blue
+        case (.poor, true): .primary
+        }
+    }
+
     /// Text and the workout dot drawn on top of `fill`.
     func foreground(colorBlind: Bool) -> Color {
         switch (self, colorBlind) {

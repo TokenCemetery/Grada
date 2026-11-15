@@ -5,6 +5,7 @@ import SwiftUI
 struct MiniChart: View {
     let chart: CardSnapshot.Chart
     let color: Color
+    @AppStorage("colorBlindPalette") private var colorBlind = false
 
     static let plotHeight: CGFloat = 34
 
@@ -12,8 +13,10 @@ struct MiniChart: View {
         switch chart {
         case .none:
             EmptyView()
-        case .bars(let values, let target):
-            TrackBars(days: values.map { [($0 ?? 0, color)] }, target: target)
+        case .bars(let values, let target, let ratings):
+            TrackBars(days: values.indices.map { index in
+                [(values[index] ?? 0, ratings?[index]?.fill(colorBlind: colorBlind) ?? color)]
+            }, target: target)
         case .sleep(let nights, let target):
             TrackBars(days: nights.map { night in
                 SleepStage.chartOrder.map { stage in ((night?.hours(in: stage) ?? 0), stage.color(base: color)) }

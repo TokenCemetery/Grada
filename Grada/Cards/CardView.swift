@@ -4,6 +4,7 @@ import SwiftUI
 struct CardView: View {
     let kind: CardKind
     let snapshot: CardSnapshot?
+    @AppStorage("colorBlindPalette") private var colorBlind = false
 
     static let squareHeight: CGFloat = 176
 
@@ -98,12 +99,12 @@ struct CardView: View {
         if kind == .healthStatus || !(snapshot.value ?? "").contains(where: \.isNumber) {
             Text(snapshot.value ?? "")
                 .font(.title2.weight(.bold))
-                .foregroundStyle(valueColor(snapshot.tone))
+                .foregroundStyle(valueColor(snapshot))
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
         } else {
             ValueText(value: snapshot.value ?? "", unit: snapshot.unit, numberFont: numberFont)
-                .foregroundStyle(valueColor(snapshot.tone))
+                .foregroundStyle(valueColor(snapshot))
         }
     }
 
@@ -113,10 +114,11 @@ struct CardView: View {
             .foregroundStyle(tone == .warning && !kind.isScore ? Color.orange : .secondary)
     }
 
-    /// Only scored cards color their value; plain metrics stay neutral.
-    private func valueColor(_ tone: CardSnapshot.Tone) -> Color {
+    /// A rating colors the value red, yellow or green; otherwise only scored cards color it by tone.
+    private func valueColor(_ snapshot: CardSnapshot) -> Color {
+        if let rating = snapshot.rating { return rating.text(colorBlind: colorBlind) }
         guard kind.isScore else { return .primary }
-        switch tone {
+        switch snapshot.tone {
         case .good: return .green
         case .warning: return .orange
         case .neutral: return .primary

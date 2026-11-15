@@ -44,7 +44,7 @@ struct CardVariantTests {
         let current = try await builder.snapshot(for: .steps, variant: .current)
         let week = try await builder.snapshot(for: .steps, variant: .week)
         guard case .progress(_, 9_000, false) = current.chart else { Issue.record("\(current.chart)"); return }
-        guard case .bars(let days, 9_000) = week.chart else { Issue.record("\(week.chart)"); return }
+        guard case .bars(let days, 9_000, nil) = week.chart else { Issue.record("\(week.chart)"); return }
         #expect(days.count == 7)
         #expect(current.value == week.value)
     }
@@ -53,7 +53,7 @@ struct CardVariantTests {
         let current = try await builder.snapshot(for: .distance, variant: .current)
         let week = try await builder.snapshot(for: .distance, variant: .week)
         guard case .progress(_, _, true) = current.chart else { Issue.record("\(current.chart)"); return }
-        guard case .bars(_, nil) = week.chart else { Issue.record("\(week.chart)"); return }
+        guard case .bars(_, nil, nil) = week.chart else { Issue.record("\(week.chart)"); return }
     }
 
     @Test func sleepFillsTowardItsGoal() async throws {
@@ -78,7 +78,7 @@ struct CardVariantTests {
         let current = try await builder.snapshot(for: .recovery, variant: .current)
         let week = try await builder.snapshot(for: .recovery, variant: .week)
         guard case .progress(_, 100, false) = current.chart else { Issue.record("\(current.chart)"); return }
-        guard case .bars(_, 100) = week.chart else { Issue.record("\(week.chart)"); return }
+        guard case .bars(_, 100, _) = week.chart else { Issue.record("\(week.chart)"); return }
     }
 }
 
