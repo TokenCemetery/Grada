@@ -414,7 +414,9 @@ private struct DaySheet: View {
 
     var body: some View {
         NavigationStack {
-            content.navigationDestination(for: MetricRoute.self) { MetricDetailView(route: $0) }
+            content
+                .navigationDestination(for: MetricRoute.self) { MetricDetailView(route: $0) }
+                .navigationDestination(for: WorkoutRoute.self) { WorkoutDetailView(workout: $0.workout) }
         }
     }
 

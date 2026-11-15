@@ -117,7 +117,7 @@ struct MetricDetailView: View {
 }
 
 /// A titled block in the same card style as Home.
-private struct DetailSection<Content: View>: View {
+struct DetailSection<Content: View>: View {
     let title: String
     @ViewBuilder let content: Content
 
@@ -343,6 +343,7 @@ private struct BreakdownView: View {
         case .workouts(let workouts):
             VStack(spacing: 0) {
                 ForEach(workouts, id: \.id) { workout in
+                    NavigationLink(value: WorkoutRoute(workout: workout)) {
                     HStack(spacing: 10) {
                         Image(systemName: workout.symbol).foregroundStyle(color).frame(width: 24)
                         VStack(alignment: .leading, spacing: 1) {
@@ -357,8 +358,12 @@ private struct BreakdownView: View {
                                 Text("\(Int(kcal.rounded())) kcal").font(.caption).foregroundStyle(.secondary)
                             }
                         }
+                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
                     }
                     .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                     if workout.id != workouts.last?.id { Divider() }
                 }
             }
