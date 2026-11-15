@@ -10,12 +10,7 @@ struct HomeView: View {
     @Query private var goalChanges: [GoalChange]
     @Environment(\.healthSource) private var healthSource
     @AppStorage("didSeedHomeCards") private var didSeedHomeCards = false
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var isCustomizing = false
-
-    /// iPad shows 3 columns in a centered column of limited width so square cards stay square.
-    private var columns: Int { horizontalSizeClass == .regular ? 3 : 2 }
-    private let maxContentWidth: CGFloat = 720
 
     private var cardIDs: [CardID] { cards.compactMap(\.cardID) }
     private let healthStatus = CardID(kind: .healthStatus)
@@ -32,12 +27,11 @@ struct HomeView: View {
                         ImportProgressView(progress: progress)
                     }
                     card(healthStatus)
-                    HomeGrid(items: cardIDs, columns: columns) { card($0) }
+                    HomeGrid(items: cardIDs) { card($0) }
                 }
                 .padding(.horizontal)
                 .padding(.bottom)
-                .frame(maxWidth: maxContentWidth)
-                .frame(maxWidth: .infinity)
+                .readableWidth()
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Today")
@@ -104,11 +98,19 @@ struct HomeView: View {
     }
 }
 
-/// Cards packed by `HomeLayout` into rows of equal columns.
+extension View {
+    /// Centers content in a column of limited width, so wide screens (iPad, landscape) don't stretch it.
+    func readableWidth() -> some View {
+        frame(maxWidth: 720).frame(maxWidth: .infinity)
+    }
+}
+
+/// Cards packed by `HomeLayout` into rows of equal columns: 3 where there's room, as on iPad
+/// or a landscape iPhone, otherwise 2.
 struct HomeGrid<Item: HomeLayoutItem & Identifiable, Card: View>: View {
     let items: [Item]
-    let columns: Int
     @ViewBuilder let card: (Item) -> Card
+    @State private var columns = 2
 
     var body: some View {
         VStack(spacing: ColumnsLayout.spacing) {
@@ -137,6 +139,8 @@ struct HomeGrid<Item: HomeLayoutItem & Identifiable, Card: View>: View {
                 }
             }
         }
+        // 540pt keeps 3 columns at least about as wide as a square card is tall.
+        .onGeometryChange(for: Int.self) { $0.size.width >= 540 ? 3 : 2 } action: { columns = $0 }
     }
 }
 

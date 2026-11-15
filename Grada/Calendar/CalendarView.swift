@@ -8,6 +8,7 @@ struct CalendarView: View {
     @Query private var goalChanges: [GoalChange]
     @AppStorage("calendarMetric") private var metric: CalendarMetric = .health
     @AppStorage("colorBlindPalette") private var colorBlind = false
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var selectedDay: Date?
     // TODO(#40, v3, Reports): a monthly summary like Whoop's "Month in Review" belongs in reports, not here.
 
@@ -35,6 +36,7 @@ struct CalendarView: View {
                         }
                     }
                     .padding()
+                    .readableWidth()
                 }
                 // Opens on the current month; no Today button needed.
                 .defaultScrollAnchor(.bottom)
@@ -65,10 +67,13 @@ struct CalendarView: View {
     /// Stays put while the months scroll, so the picker and legend are always in view.
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Calendar")
-                .font(.largeTitle.bold())
-                .accessibilityAddTraits(.isHeader)
-                .padding(.horizontal)
+            // A landscape iPhone is too short for the title; the tab bar already names the screen.
+            if verticalSizeClass != .compact {
+                Text("Calendar")
+                    .font(.largeTitle.bold())
+                    .accessibilityAddTraits(.isHeader)
+                    .padding(.horizontal)
+            }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(CalendarMetric.allCases) { option in
@@ -85,9 +90,11 @@ struct CalendarView: View {
             }
             legend.padding(.horizontal)
             WeekdayRow(calendar: calendar).padding(.horizontal)
-            Divider()
         }
+        .readableWidth()
         .padding(.top, 4)
+        .padding(.bottom, 10)
+        .overlay(alignment: .bottom) { Divider() }
     }
 
     @ViewBuilder
@@ -436,7 +443,7 @@ private struct DaySheet: View {
                         CardLink(kind: .lastWorkout, snapshot: workouts[index], day: pastDay)
                     }
                 }
-                HomeGrid(items: metric.kinds, columns: 2) { card($0) }
+                HomeGrid(items: metric.kinds) { card($0) }
             }
             .padding(.horizontal)
             .padding(.bottom)
