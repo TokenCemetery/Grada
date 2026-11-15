@@ -1103,3 +1103,93 @@ struct WorkoutDetailTests {
         #expect(DistanceUnits(sport: "Run", isUS: true).splitMeters == 1_609.344)
     }
 }
+
+/// Calculations checked against the numbers published in the papers and tables they come from.
+struct PublishedReferenceTests {
+    /// Tanaka, Monahan & Seals 2001 (JACC 37:153): 208 − 0.7 × age; the paper's example is 166 bpm at 60.
+    /// Cross-checked with maximal treadmill tests in the FRIEND registry (Kaminsky et al. 2015, Mayo Clin Proc
+    /// 90:1515, Table 2): the prediction at each decade's midpoint is within one SD of the measured mean.
+    @Test func maxHeartRateMatchesTanakaAndMeasuredFRIENDValues() throws {
+        #expect(Resources.maxHeartRate(age: 60, highestRecorded: nil) == 166)
+        // Decade → measured HRmax mean and SD for men, then women.
+        let measured: [(age: Int, men: (Double, Double), women: (Double, Double))] = [
+            (25, (190, 11), (189, 12)), (35, (185, 11), (184, 11)), (45, (176, 14), (176, 14)),
+            (55, (168, 14), (167, 15)), (65, (158, 17), (157, 17)), (75, (147, 20), (147, 21)),
+        ]
+        for decade in measured {
+            let predicted = try #require(Resources.maxHeartRate(age: decade.age, highestRecorded: nil))
+            #expect(abs(predicted - decade.men.0) <= decade.men.1, "Men at \(decade.age)")
+            #expect(abs(predicted - decade.women.0) <= decade.women.1, "Women at \(decade.age)")
+        }
+    }
+
+    /// FRIEND registry 50th percentiles of measured treadmill VO₂ max (Kaminsky et al. 2015, Table 3).
+    @Test func vo2MaxNormIsTheFRIENDMedian() {
+        let men = [48.0, 42.4, 37.8, 32.6, 28.2, 24.4]
+        let women = [37.6, 30.2, 26.7, 23.4, 20.0, 18.3]
+        for (index, age) in [25, 35, 45, 55, 65, 75].enumerated() {
+            #expect(HealthAge.expectedVO2Max(age: age, sex: .male) == men[index], "Men at \(age)")
+            #expect(HealthAge.expectedVO2Max(age: age, sex: .female) == women[index], "Women at \(age)")
+        }
+    }
+
+    /// Cooper Institute norms for men, lower bounds of Fair, Good, Excellent and Superior, ages 13–19 to 60+.
+    /// The women's rows aren't covered: no source confirming them has been found yet (#74).
+    @Test func vo2MaxZonesMatchTheCooperTableForMen() {
+        let rows: [(age: Int, bounds: [Double])] = [
+            (16, [38.4, 45.2, 51.0, 56.0]), (25, [36.5, 42.5, 46.5, 52.5]), (35, [35.5, 41.0, 45.0, 49.5]),
+            (45, [33.6, 39.0, 43.8, 48.1]), (55, [31.0, 35.8, 41.0, 45.4]), (65, [26.1, 32.3, 36.5, 44.3]),
+        ]
+        for row in rows {
+            #expect(VO2MaxZones.bounds(age: row.age, sex: .male) == row.bounds, "Men at \(row.age)")
+        }
+    }
+
+    /// Daniels & Gilbert (1979) equivalent race times for VDOT 30–70 (5K, 10K, half marathon, marathon), as the
+    /// published equations give them in VDOT calculators. The printed tables in Daniels' Running Formula round
+    /// a few seconds differently (`matchesDanielsTables` checks those).
+    @Test func raceTimesMatchTheDanielsTable() {
+        let table: [(vdot: Double, times: [TimeInterval])] = [
+            (30, [30 * 60 + 41, 3600 + 3 * 60 + 49, 2 * 3600 + 21 * 60 + 17, 4 * 3600 + 49 * 60 + 49]),
+            (40, [24 * 60 + 6, 50 * 60 + 1, 3600 + 50 * 60 + 54, 3 * 3600 + 49 * 60 + 37]),
+            (50, [19 * 60 + 56, 41 * 60 + 20, 3600 + 31 * 60 + 31, 3 * 3600 + 10 * 60 + 40]),
+            (60, [17 * 60 + 3, 35 * 60 + 22, 3600 + 18 * 60 + 9, 2 * 3600 + 43 * 60 + 22]),
+            (70, [14 * 60 + 56, 31 * 60 + 1, 3600 + 8 * 60 + 23, 2 * 3600 + 23 * 60 + 13]),
+        ]
+        for row in table {
+            for (distance, published) in zip(RacePredictor.distances, row.times) {
+                let time = RacePredictor.time(meters: distance.meters, vo2Max: row.vdot)
+                #expect(abs(time - published) <= 1, "VDOT \(row.vdot) \(distance.name)")
+            }
+        }
+    }
+
+    /// Edwards (1993): zones at 50, 60, 70, 80 and 90% of max heart rate, weighted 1–5.
+    @Test func zonesAndTRIMPFollowEdwards() {
+        #expect(HeartRateZones.zone(99.9, maxHeartRate: 200) == nil)
+        for (zone, share) in [0.5, 0.6, 0.7, 0.8, 0.9].enumerated() {
+            #expect(HeartRateZones.zone(200 * share, maxHeartRate: 200) == zone + 1)
+        }
+        // 10 minutes in each zone: 10 × (1 + 2 + 3 + 4 + 5).
+        #expect(TrainingEffect.edwardsTRIMP(timeInZones: Array(repeating: 600, count: 5)) == 150)
+        #expect(TrainingEffect.edwardsTRIMP(timeInZones: [0, 0, 45 * 60, 0, 0]) == 135)
+    }
+
+    /// ACSM (Garber et al. 2011, Med Sci Sports Exerc 43:1334, Table 1): moderate is 40–59% of heart rate reserve,
+    /// vigorous 60–89%. WHO 2020 (Bull et al., Br J Sports Med 54:1451): 150 minutes of moderate activity a week,
+    /// or 75 of vigorous, so a vigorous minute counts as two.
+    @Test func intensityMinutesFollowACSMAndWHO() {
+        // Resting 50, max 190: reserve 140, so moderate from 106 bpm and vigorous from 134.
+        func minutes(_ heartRate: Double, bins: Int = 1) -> Double {
+            let values = (0..<bins).map { TimedValue(date: Date(timeIntervalSince1970: Double($0) * 300), value: heartRate) }
+            return IntensityMinutes.total(heartRate: values, restingHeartRate: 50, maxHeartRate: 190)
+        }
+        #expect(minutes(105.9) == 0)
+        #expect(minutes(106) == 5)
+        #expect(minutes(133.9) == 5)
+        #expect(minutes(134) == 10)
+        // 75 vigorous minutes meet the weekly target, as do 150 moderate ones.
+        #expect(minutes(150, bins: 15) == IntensityMinutes.weeklyTarget)
+        #expect(minutes(120, bins: 30) == IntensityMinutes.weeklyTarget)
+    }
+}

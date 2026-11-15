@@ -563,9 +563,13 @@ nonisolated enum TrainingEffect {
     /// TRIMP at which the effect reaches 63% of the scale.
     private static let scale = 150.0
 
+    /// Edwards (1993): minutes in each `HeartRateZones` zone weighted 1–5 and summed.
+    static func edwardsTRIMP(timeInZones: [TimeInterval]) -> Double {
+        timeInZones.enumerated().reduce(0) { $0 + Double($1.offset + 1) * $1.element / 60 }
+    }
+
     static func aerobic(timeInZones: [TimeInterval]) -> Double {
-        let load = timeInZones.enumerated().reduce(0) { $0 + Double($1.offset + 1) * $1.element / 60 }
-        let effect = 5 * (1 - exp(-load / scale))
+        let effect = 5 * (1 - exp(-edwardsTRIMP(timeInZones: timeInZones) / scale))
         return (effect * 10).rounded() / 10
     }
 
