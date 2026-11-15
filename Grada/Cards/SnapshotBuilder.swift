@@ -701,7 +701,7 @@ struct SnapshotBuilder {
         return "−\((goal - value).formatted(style)) of \(goal.formatted(style))"
     }
 
-    static func hoursMinutes(_ seconds: TimeInterval) -> String {
+    nonisolated static func hoursMinutes(_ seconds: TimeInterval) -> String {
         let minutes = Int((seconds / 60).rounded())
         return minutes >= 60 ? "\(minutes / 60)h \(String(format: "%02d", minutes % 60))m" : "\(minutes)m"
     }
