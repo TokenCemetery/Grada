@@ -52,7 +52,7 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .healthStatus: "Health status"
+        case .healthStatus: "Health Status"
         case .sleep: "Sleep"
         case .steps: "Steps"
         case .hrv: "HRV"

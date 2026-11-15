@@ -85,6 +85,11 @@ struct CardVariantTests {
         }
     }
 
+    @Test func heartRateDrawsTodaysCurve() async throws {
+        let snapshot = try await builder.snapshot(for: .heartRate)
+        guard case .intraday(let points, _) = snapshot.chart, !points.isEmpty else { Issue.record("\(snapshot.chart)"); return }
+    }
+
     @Test func recoveryColorsEachDay() async throws {
         let week = try await builder.snapshot(for: .recovery, variant: .week)
         guard case .bars(let scores, 100, let ratings?) = week.chart else { Issue.record("\(week.chart)"); return }
