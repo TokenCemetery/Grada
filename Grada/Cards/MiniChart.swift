@@ -101,7 +101,7 @@ private struct GoalBar: View {
                     Capsule().fill(color).frame(width: proxy.size.width * min(max(share, 0), 1))
                 }
             }
-            .frame(height: 8)
+            .frame(height: 12)
             HStack(alignment: .top, spacing: 0) {
                 ForEach(0...10, id: \.self) { tick in
                     Rectangle().frame(width: 1, height: tick % 5 == 0 ? 5 : 3)
@@ -109,6 +109,7 @@ private struct GoalBar: View {
                 }
             }
             .foregroundStyle(.tertiary)
+            .padding(.top, 6)
             HStack {
                 Text("0%")
                 Spacer()
