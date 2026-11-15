@@ -41,7 +41,7 @@ struct CardView: View {
 
     private var header: some View {
         HStack {
-            Text(kind.title).font(.subheadline.weight(.semibold))
+            Text(kind.title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
             Spacer(minLength: 4)
             Image(systemName: kind.symbol).foregroundStyle(color)
         }
