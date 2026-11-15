@@ -8,6 +8,8 @@ struct JournalView: View {
     @AppStorage("hiddenJournalTags") private var hiddenTags = HiddenTags()
     @State private var day = Calendar.current.startOfDay(for: .now)
     @State private var isEditingTags = false
+    /// Changes on every save, for the haptic and the checkmark bounce.
+    @State private var saves = 0
 
     private let calendar = Calendar.current
     private var today: Date { calendar.startOfDay(for: .now) }
@@ -28,8 +30,9 @@ struct JournalView: View {
             List {
                 Section {
                     DayPicker(day: $day, today: today)
+                    SaveStatus(count: entries.count, saves: saves)
                 } footer: {
-                    Text("Log what happened during the day. Grada links it to the night after, so evening drinks go on the day you had them.")
+                    Text("Tags save as you tap them. Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.")
                 }
                 ForEach(JournalTag.Group.allCases, id: \.self) { group in
                     let tags = group.tags.filter { !hiddenTags.contains($0) }
@@ -47,13 +50,17 @@ struct JournalView: View {
             .sheet(isPresented: $isEditingTags) {
                 TagVisibilityView(hiddenTags: $hiddenTags)
             }
+            .sensoryFeedback(.selection, trigger: saves)
         }
     }
 
     @ViewBuilder
     private func row(_ tag: JournalTag) -> some View {
         let entry = entries[tag]
-        Button { store.toggle(tag, on: day) } label: {
+        Button {
+            store.toggle(tag, on: day)
+            saves += 1
+        } label: {
             HStack {
                 Label(tag.title, systemImage: tag.symbol)
                 Spacer()
@@ -68,9 +75,33 @@ struct JournalView: View {
         if let entry, let amount = tag.amount {
             Stepper(amount.formatted(entry.amount ?? amount.initial),
                     value: Binding(get: { entry.amount ?? amount.initial },
-                                   set: { store.setAmount($0, for: tag, on: day) }),
+                                   set: {
+                                       store.setAmount($0, for: tag, on: day)
+                                       saves += 1
+                                   }),
                     in: amount.range, step: amount.step)
                 .padding(.leading, 36)
+        }
+    }
+}
+
+/// Every tap saves at once; this says so, since there's no Save button.
+private struct SaveStatus: View {
+    let count: Int
+    let saves: Int
+
+    var body: some View {
+        if count == 0 {
+            Label("Nothing logged yet", systemImage: "circle.dashed")
+                .foregroundStyle(.secondary)
+        } else {
+            Label {
+                Text("Saved · \(count == 1 ? "1 tag" : "\(count) tags") logged")
+            } icon: {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .symbolEffect(.bounce, value: saves)
+            }
         }
     }
 }

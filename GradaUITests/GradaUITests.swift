@@ -41,6 +41,7 @@ final class GradaUITests: XCTestCase {
         alcohol.tap()
         if !wasMarked {
             XCTAssertTrue(app.staticTexts["1 drink"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.staticTexts["Saved · 1 tag logged"].waitForExistence(timeout: 5))
             attachScreenshot("Journal")
             alcohol.tap()
         }
