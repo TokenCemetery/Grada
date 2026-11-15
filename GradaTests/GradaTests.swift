@@ -59,9 +59,7 @@ struct CardVariantTests {
     }
 
     @Test func sleepFillsTowardItsGoal() async throws {
-        let current = try await builder.snapshot(for: .sleepDuration, variant: .current)
         let week = try await builder.snapshot(for: .sleepDuration, variant: .week)
-        guard case .progress = current.chart else { Issue.record("\(current.chart)"); return }
         guard case .sleep(let nights, let target?) = week.chart else { Issue.record("\(week.chart)"); return }
         #expect(nights.count == 7)
         #expect(target > 0)
