@@ -24,6 +24,8 @@ struct MiniChart: View {
                     .frame(height: Self.plotHeight)
                 WeekdayLabels()
             }
+        case .progress(let value, let goal):
+            GoalBar(share: goal > 0 ? value / goal : 0, color: color)
         case .intraday(let points, let domain):
             VStack(spacing: 2) {
                 DayLine(points: points, domain: domain, color: color)
@@ -65,6 +67,35 @@ private struct DayLine: View {
         .chartYAxis(.hidden)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Today")
+    }
+}
+
+/// Progress toward a goal on a full-width track, with 0% and 100% marks below.
+private struct GoalBar: View {
+    let share: Double
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Spacer(minLength: 0)
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color(.systemFill))
+                    Capsule().fill(color).frame(width: proxy.size.width * min(max(share, 0), 1))
+                }
+            }
+            .frame(height: 8)
+            HStack {
+                Text("0%")
+                Spacer()
+                Text("100%")
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
+        .frame(height: MiniChart.plotHeight + 16)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(Int((share * 100).rounded()))% of goal")
     }
 }
 

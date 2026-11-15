@@ -43,6 +43,9 @@ struct SettingsView: View {
                 } footer: {
                     Text("Calendar days use blue, orange and dark instead of green, yellow and red.")
                 }
+                Section {
+                    NavigationLink("Goals") { GoalsView() }
+                }
                 ProfileSection()
                 Section {
                     Button("Open Health app") {

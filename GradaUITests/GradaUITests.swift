@@ -12,6 +12,12 @@ final class GradaUITests: XCTestCase {
         app.launchArguments = ["-SampleData"]
         app.launch()
 
+        // First launch on this simulator asks for starting goals.
+        if app.navigationBars["Choose your goals"].waitForExistence(timeout: 5) {
+            attachScreenshot("Goal setup")
+            app.staticTexts["Balanced"].tap()
+        }
+
         XCTAssertTrue(app.staticTexts["Health status"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["All in range"].waitForExistence(timeout: 5))
         attachScreenshot("Home top")
@@ -24,6 +30,26 @@ final class GradaUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Customize"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Pinned"].exists)
         attachScreenshot("Customize")
+        app.navigationBars.buttons["Done"].tap()
+
+        app.tabBars.buttons["Journal"].tap()
+        XCTAssertTrue(app.navigationBars["Journal"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Today"].exists)
+        let alcohol = app.buttons["Alcohol"]
+        XCTAssertTrue(alcohol.waitForExistence(timeout: 5))
+        // Marking shows the amount stepper; tapping again unmarks, leaving the simulator's journal as it was.
+        let wasMarked = alcohol.isSelected
+        alcohol.tap()
+        if !wasMarked {
+            XCTAssertTrue(app.staticTexts["1 drink"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.images["Saved"].waitForExistence(timeout: 5))
+            attachScreenshot("Journal")
+            alcohol.tap()
+        }
+
+        app.buttons["Previous day"].tap()
+        XCTAssertFalse(app.buttons["Today"].exists)
+        attachScreenshot("Journal yesterday")
     }
 
     @MainActor

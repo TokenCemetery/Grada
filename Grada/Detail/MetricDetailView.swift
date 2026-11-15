@@ -1,10 +1,12 @@
 import Charts
+import SwiftData
 import SwiftUI
 
 /// One metric in depth: the card for the shown day, its trend, a breakdown, what it means, and related metrics.
 struct MetricDetailView: View {
     let route: MetricRoute
     @Environment(\.healthSource) private var baseSource
+    @Query private var goalChanges: [GoalChange]
     @Environment(\.openCalendar) private var openCalendar
     @State private var period: TrendPeriod = .month
     @State private var snapshot: CardSnapshot?
@@ -82,7 +84,9 @@ struct MetricDetailView: View {
             }
         }
         .task {
-            snapshot = try? await SnapshotBuilder.forDay(day, source: baseSource, calendar: calendar).snapshot(for: kind)
+            var builder = SnapshotBuilder.forDay(day, source: baseSource, calendar: calendar)
+            builder.goals = GoalHistory(goalChanges)
+            snapshot = try? await builder.snapshot(for: kind)
         }
         .task(id: period) {
             trend = try? await TrendBuilder(source: source, calendar: calendar).trend(for: kind, period: period)

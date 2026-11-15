@@ -51,6 +51,13 @@ struct SnapshotBuilderTests {
             #expect(snapshot.value != nil, "\(kind) has no value")
         }
     }
+
+    @Test func hrvStatusShowsAStatusWithEnoughHistory() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .hrvStatus)
+        #expect(snapshot.value != "Calibrating")
+        let comparison = try #require(snapshot.comparison)
+        #expect(["Balanced", "Unbalanced", "Low"].contains { comparison.hasPrefix($0) }, "\(comparison)")
+    }
 }
 
 @MainActor
@@ -182,6 +189,71 @@ struct SleepChartTests {
         guard case .sleep(let nights) = snapshot.chart else { Issue.record("Expected a sleep chart"); return }
         #expect(nights.count == 7)
         #expect(nights.last??.stages[.deep] != nil)
+    }
+}
+
+struct IntensityMinutesTests {
+    private func values(_ heartRates: [Double]) -> [TimedValue] {
+        heartRates.enumerated().map { TimedValue(date: Date(timeIntervalSince1970: Double($0.offset) * 300), value: $0.element) }
+    }
+
+    /// Resting 60 and max 180: moderate from 108 bpm, vigorous from 132.
+    @Test func vigorousCountsDoubleAndLightIsIgnored() {
+        let total = IntensityMinutes.total(heartRate: values([100, 107, 108, 131, 132, 170]), restingHeartRate: 60, maxHeartRate: 180)
+        #expect(total == 2 * 5 + 2 * 10)
+    }
+
+    @Test func noReserveCountsNothing() {
+        #expect(IntensityMinutes.total(heartRate: values([150]), restingHeartRate: 180, maxHeartRate: 180) == 0)
+    }
+
+    @Test func cardShowsTheLast7DaysAgainstTheTarget() async throws {
+        let builder = SnapshotBuilder(source: SampleDataSource())
+        let snapshot = try await builder.snapshot(for: .intensityMinutes)
+        #expect(snapshot.period == "Last 7 days")
+        let total = try await builder.intensityDays(7).compactMap(\.value).reduce(0, +)
+        #expect(snapshot.value == total.formatted(.number.precision(.fractionLength(0))))
+        let comparison = try #require(snapshot.comparison)
+        #expect(comparison.hasSuffix("of 150") || comparison == "Goal reached", "\(comparison)")
+    }
+}
+
+struct HRVStatusTests {
+    /// 20 nights around 60 ms: SD ≈ 2, so the 6% minimum applies and the baseline is 56.4–63.6.
+    private let history: [Double?] = (0..<20).map { $0.isMultiple(of: 2) ? 58 : 62 }
+
+    private func status(window: [Double?], history: [Double?]? = nil) -> HRVStatus.Result? {
+        let nights = (history ?? self.history) + window
+        return HRVStatus.status(nights: nights, endingAt: nights.count - 1)
+    }
+
+    @Test func calibratingWithoutTwoWeeksOfBaseline() {
+        #expect(status(window: Array(repeating: 60, count: 7), history: Array(repeating: 60, count: 13)) == nil)
+    }
+
+    @Test func calibratingWithFewerThanThreeNightsInTheWindow() {
+        #expect(status(window: [60, nil, nil, nil, nil, nil, 60]) == nil)
+    }
+
+    @Test func averageInsideBaselineIsBalanced() throws {
+        let result = try #require(status(window: Array(repeating: 61, count: 7)))
+        #expect(result.state == .balanced)
+        #expect(abs(result.baseline.lowerBound - 56.4) < 0.01)
+        #expect(abs(result.baseline.upperBound - 63.6) < 0.01)
+    }
+
+    @Test func averageAboveOrSlightlyBelowIsUnbalanced() throws {
+        #expect(try #require(status(window: Array(repeating: 66, count: 7))).state == .unbalanced)
+        #expect(try #require(status(window: Array(repeating: 54, count: 7))).state == .unbalanced)
+    }
+
+    @Test func averageWellBelowIsLow() throws {
+        #expect(try #require(status(window: Array(repeating: 50, count: 7))).state == .low)
+    }
+
+    @Test func missingNightsAreSkipped() throws {
+        let result = try #require(status(window: [nil, 61, nil, 61, nil, 61, 61]))
+        #expect(result.average == 61)
     }
 }
 
@@ -479,7 +551,7 @@ struct PastDaySourceTests {
     @Test func pastDayCardsDontSayToday() async throws {
         let calendar = Calendar.current
         let day = calendar.date(byAdding: .day, value: -5, to: calendar.startOfDay(for: .now))!
-        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, kinds: [.steps, .sleepNeed])
+        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, kinds: [.steps, .sleepNeed], goals: GoalHistory())
         #expect(snapshots[.steps]?.period == "That day")
         #expect(snapshots[.sleepNeed]?.period == "That night")
     }
@@ -518,5 +590,191 @@ struct TrendBuilderTests {
             #expect(!kind.explanation.isEmpty)
             #expect((kind.affects + kind.basedOn).allSatisfy { !$0.isPlanned })
         }
+    }
+}
+
+struct GoalTests {
+    private let calendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        calendar.firstWeekday = 2
+        return calendar
+    }()
+
+    /// Monday.
+    private var monday: Date { calendar.date(from: DateComponents(year: 2026, month: 11, day: 2))! }
+
+    private func day(_ offset: Int) -> Date { calendar.date(byAdding: .day, value: offset, to: monday)! }
+
+    private func history(_ entries: [GoalEntry]) -> GoalHistory { GoalHistory(entries, calendar: calendar) }
+
+    /// The 7 days before `weekEnding` with these values; nil leaves a day out.
+    private func week(ending weekEnding: Int, _ values: [Double?]) -> [Date: Double] {
+        var result: [Date: Double] = [:]
+        for (index, value) in values.enumerated() { result[day(weekEnding - 7 + index)] = value }
+        return result
+    }
+
+    private func steps(_ value: Double, from offset: Int, _ reason: GoalEntry.Reason = .preset) -> GoalEntry {
+        GoalEntry(metric: .steps, value: value, effectiveFrom: day(offset), reason: reason)
+    }
+
+    @Test func pastDaysUseTheGoalInEffectThen() {
+        let goals = history([steps(8_000, from: 0), steps(8_500, from: 7, .automatic)])
+        #expect(goals.value(.steps, on: day(-1)) == nil)
+        #expect(goals.value(.steps, on: day(3)) == 8_000)
+        #expect(goals.value(.steps, on: day(7)) == 8_500)
+    }
+
+    @Test func firstAdjustmentIsTheFirstMondayAtLeastAWeekLater() {
+        #expect(Goals.adjustmentDate(after: day(0), calendar: calendar) == day(7))
+        #expect(Goals.adjustmentDate(after: day(2), calendar: calendar) == day(14))
+    }
+
+    @Test func editedSleepHoldsUntilTheNextAdjustmentThenFollowsSleepNeed() {
+        let goals = history([GoalEntry(metric: .sleep, value: 8.5 * 3600, effectiveFrom: day(2), reason: .edit)])
+        #expect(goals.value(.sleep, on: day(13)) == 8.5 * 3600)
+        #expect(goals.value(.sleep, on: day(14)) == nil)
+    }
+
+    @Test func dailyGoalRisesAfterFiveHitsAndFallsAfterTwoOrFewer() {
+        let goals = history([steps(8_000, from: 0)])
+        let up = Goals.adjustments(.steps, history: goals, daily: week(ending: 7, [9_000, 9_000, 9_000, 9_000, 9_000, 1_000, 1_000]),
+                                   today: day(7), calendar: calendar)
+        #expect(up == [steps(8_500, from: 7, .automatic)])
+        let down = Goals.adjustments(.steps, history: goals, daily: week(ending: 7, [9_000, 9_000, 1_000, 1_000, 1_000, 1_000, 1_000]),
+                                     today: day(7), calendar: calendar)
+        #expect(down.map(\.value) == [7_500])
+        let same = Goals.adjustments(.steps, history: goals, daily: week(ending: 7, [9_000, 9_000, 9_000, 1_000, 1_000, 1_000, 1_000]),
+                                     today: day(7), calendar: calendar)
+        #expect(same.isEmpty)
+    }
+
+    @Test func dailyGoalKeepsWithFewerThanFourMeasuredDays() {
+        let goals = history([steps(8_000, from: 0)])
+        let daily = week(ending: 7, [1_000, 1_000, 1_000, nil, nil, nil, nil])
+        #expect(Goals.adjustments(.steps, history: goals, daily: daily, today: day(7), calendar: calendar).isEmpty)
+    }
+
+    @Test func editedGoalHoldsAWeekThenAdjustsFromTheUsersValue() {
+        let goals = history([steps(8_000, from: 0), steps(10_000, from: 9, .edit)])
+        let daily = week(ending: 14, Array(repeating: 1_000, count: 7)).merging(week(ending: 21, Array(repeating: 1_000, count: 7))) { a, _ in a }
+        #expect(Goals.adjustments(.steps, history: goals, daily: daily, today: day(14), calendar: calendar).isEmpty)
+        #expect(Goals.adjustments(.steps, history: goals, daily: daily, today: day(21), calendar: calendar).map(\.value) == [9_500])
+    }
+
+    @Test func weeklyGoalUsesTheWeekTotal() {
+        let goals = history([GoalEntry(metric: .intensityMinutes, value: 200, effectiveFrom: day(0), reason: .preset)])
+        let met = Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [50, 50, 50, 50, nil, nil, nil]),
+                                    today: day(7), calendar: calendar)
+        #expect(met.map(\.value) == [210])
+        let missed = Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [30, 30, 30, nil, nil, nil, nil]),
+                                       today: day(7), calendar: calendar)
+        #expect(missed.map(\.value) == [190])
+    }
+
+    @Test func intensityNeverDropsBelowTheWHOMinimum() {
+        let goals = history([GoalEntry(metric: .intensityMinutes, value: 150, effectiveFrom: day(0), reason: .preset)])
+        #expect(Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [0, 0, 0, 0, 0, 0, 0]),
+                                  today: day(7), calendar: calendar).isEmpty)
+    }
+
+    @Test func smallGoalsMoveByAtLeastOneStep() {
+        let goals = history([GoalEntry(metric: .workouts, value: 3, effectiveFrom: day(0), reason: .preset)])
+        let result = Goals.adjustments(.workouts, history: goals, daily: week(ending: 7, [1, 1, 1, 0, 0, 0, 0]),
+                                       today: day(7), calendar: calendar)
+        #expect(result.map(\.value) == [4])
+    }
+
+    @Test func missedMondaysAreCaughtUpButOnlyTheLastFour() {
+        let goals = history([steps(8_000, from: 0)])
+        var daily: [Date: Double] = [:]
+        for offset in 0..<70 { daily[day(offset)] = 30_000 }
+        let result = Goals.adjustments(.steps, history: goals, daily: daily, today: day(70), calendar: calendar)
+        #expect(result.map(\.effectiveFrom) == [42, 49, 56, 63, 70].map(day).filter { $0 >= day(42) })
+        #expect(result.count == 5)
+    }
+
+    @Test func lastWeekUsesTheMedianForDailyGoalsAndTheTotalForWeeklyOnes() {
+        let goals = Goals.fromLastWeek([.steps: [6_000, 8_100, 7_000, nil, 9_000, 1_000, 8_000, 8_200],
+                                        .workouts: [1, 0, 1, 0, 1, 0, 0],
+                                        .floors: [nil, nil]], fallback: .balanced)
+        #expect(goals[.steps] == 8_000)
+        #expect(goals[.workouts] == 3)
+        #expect(goals[.floors] == GoalPreset.balanced.goals[.floors])
+    }
+}
+
+struct GoalCardTests {
+    @Test func goalMetricsCompareWithTheGoalAndShowProgress() async throws {
+        var builder = SnapshotBuilder(source: SampleDataSource())
+        let today = Calendar.current.startOfDay(for: .now)
+        builder.goals = GoalHistory([GoalEntry(metric: .steps, value: 1_000_000, effectiveFrom: today, reason: .edit)])
+        let snapshot = try await builder.snapshot(for: .steps)
+        let goalText = 1_000_000.0.formatted(.number.precision(.fractionLength(0)))
+        #expect(snapshot.comparison?.hasSuffix("of \(goalText)") == true, "\(snapshot.comparison ?? "")")
+        guard case .progress(_, let goal) = snapshot.chart else {
+            Issue.record("Expected a progress bar")
+            return
+        }
+        #expect(goal == 1_000_000)
+    }
+
+    @Test func sleepComparesWithItsGoal() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepDuration)
+        #expect(snapshot.comparison?.hasSuffix("goal") == true, "\(snapshot.comparison ?? "")")
+    }
+}
+
+@MainActor
+struct JournalTests {
+    private let context: ModelContext
+    private let store: JournalStore
+    private let today = Calendar.current.startOfDay(for: .now)
+
+    init() throws {
+        let container = try ModelContainer(for: JournalEntry.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        context = ModelContext(container)
+        store = JournalStore(context: context)
+    }
+
+    @Test func togglingMarksAndUnmarksATag() {
+        store.toggle(.stress, on: today)
+        #expect(store.entries(on: today)[.stress] != nil)
+        store.toggle(.stress, on: today)
+        #expect(store.entries(on: today).isEmpty)
+    }
+
+    @Test func amountTagsStartAtTheirInitialAmountAndCanChange() {
+        store.toggle(.alcohol, on: today)
+        #expect(store.entries(on: today)[.alcohol]?.amount == 1)
+        store.setAmount(3, for: .alcohol, on: today)
+        #expect(store.entries(on: today)[.alcohol]?.amount == 3)
+        #expect(JournalTag.alcohol.label(amount: 3) == "Alcohol · 3 drinks")
+        #expect(JournalTag.stress.label(amount: nil) == "Stress")
+    }
+
+    @Test func tagsBelongToTheirOwnDay() {
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
+        store.toggle(.caffeine, on: yesterday)
+        #expect(store.entries(on: today).isEmpty)
+        #expect(store.entries(on: yesterday)[.caffeine] != nil)
+    }
+
+    @Test func duplicateEntriesFromSyncAreMerged() throws {
+        context.insert(JournalEntry(day: today, tag: .sauna, amount: nil))
+        context.insert(JournalEntry(day: today, tag: .sauna, amount: nil))
+        try context.save()
+        #expect(store.entries(on: today).count == 1)
+        try context.save()
+        #expect(try context.fetchCount(FetchDescriptor<JournalEntry>()) == 1)
+    }
+
+    @Test func hiddenTagsRoundTrip() throws {
+        var hidden = HiddenTags()
+        hidden.set(.nap, hidden: true)
+        hidden.set(.sauna, hidden: true)
+        let restored = try #require(HiddenTags(rawValue: hidden.rawValue))
+        #expect(restored.contains(.nap) && restored.contains(.sauna) && !restored.contains(.alcohol))
     }
 }
