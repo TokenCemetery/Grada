@@ -83,6 +83,15 @@ nonisolated enum DayRatings {
         return miss < halfWidth / 2 ? .fair : .poor
     }
 
+    /// Two-sided range metrics, e.g. temperature: off by less than half the range's half-width is yellow,
+    /// beyond that red, whichever side.
+    static func range(_ value: Double, normal: ClosedRange<Double>) -> DayRating {
+        let miss = max(normal.lowerBound - value, value - normal.upperBound)
+        if miss <= 0 { return .good }
+        let halfWidth = (normal.upperBound - normal.lowerBound) / 2
+        return miss < halfWidth / 2 ? .fair : .poor
+    }
+
     /// Green with every measured vital in range, yellow with one out, red with two or more.
     static func healthStatus(outOfRange: Int) -> DayRating {
         switch outOfRange {

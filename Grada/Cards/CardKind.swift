@@ -133,7 +133,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .hrvStatus: "HRV"
         case .oxygenSaturation: "Blood oxygen"
         case .respiratoryRate: "Respiratory rate"
-        case .wristTemperature: "Wrist temp"
+        case .wristTemperature: "Wrist Temp"
         case .steps: "Steps"
         case .activeEnergy: "Active energy"
         case .exerciseMinutes: "Exercise"

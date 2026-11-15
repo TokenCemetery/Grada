@@ -78,6 +78,7 @@ struct CardVariantTests {
         guard case .line(let values, let range) = week.chart else { Issue.record("\(week.chart)"); return }
         #expect(values.count == 7)
         #expect(range != nil)
+        #expect(current.rating != nil)
         for kind in [CardKind.oxygenSaturation, .respiratoryRate] {
             let snapshot = try await builder.snapshot(for: kind)
             guard case .range = snapshot.chart else { Issue.record("\(kind): \(snapshot.chart)"); continue }
@@ -103,6 +104,14 @@ struct RatingTests {
     @Test func recoveryBands() {
         #expect([Recovery.rating(80), Recovery.rating(50), Recovery.rating(20)] == [.good, .fair, .poor])
         #expect([Recovery.rating(67), Recovery.rating(66), Recovery.rating(34), Recovery.rating(33)] == [.good, .fair, .fair, .poor])
+    }
+
+    @Test func twoSidedRangePenalizesBothSides() {
+        let normal = 36.0...37.0
+        #expect(DayRatings.range(36.5, normal: normal) == .good)
+        #expect(DayRatings.range(37.2, normal: normal) == .fair)
+        #expect(DayRatings.range(35.8, normal: normal) == .fair)
+        #expect(DayRatings.range(37.5, normal: normal) == .poor)
     }
 }
 

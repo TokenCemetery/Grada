@@ -183,6 +183,7 @@ struct SnapshotBuilder {
             unit: unit,
             comparison: "vs your baseline",
             tone: range.map { $0.contains(latest) ? .neutral : .warning } ?? .neutral,
+            rating: range.map { DayRatings.range(latest, normal: $0) },
             chart: variant == .week
                 ? .line(series.suffix(7).map { $0.value.map { toDisplay($0 - mean) } }, normalRange: shownRange)
                 : shownRange.map { .range(value: deviation, normalRange: $0) } ?? .none
