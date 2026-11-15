@@ -110,6 +110,7 @@ private struct SaveStatus: View {
 private struct DayPicker: View {
     @Binding var day: Date
     let today: Date
+    @State private var isPickingDay = false
     private let calendar = Calendar.current
 
     var body: some View {
@@ -117,15 +118,35 @@ private struct DayPicker: View {
             Button { move(-1) } label: { Image(systemName: "chevron.left") }
                 .accessibilityLabel("Previous day")
             Spacer()
-            DatePicker("Day", selection: Binding(get: { day }, set: { day = calendar.startOfDay(for: $0) }),
-                       in: ...today, displayedComponents: .date)
-                .labelsHidden()
+            Button { isPickingDay = true } label: {
+                Text(title).font(.headline).foregroundStyle(.primary)
+            }
+            .popover(isPresented: $isPickingDay) {
+                DatePicker("Day", selection: Binding(get: { day }, set: {
+                    day = calendar.startOfDay(for: $0)
+                    isPickingDay = false
+                }), in: ...today, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .labelsHidden()
+                    .padding()
+                    .frame(minWidth: 320)
+                    .presentationCompactAdaptation(.popover)
+            }
             Spacer()
             Button { move(1) } label: { Image(systemName: "chevron.right") }
                 .disabled(day >= today)
                 .accessibilityLabel("Next day")
         }
         .buttonStyle(.borderless)
+    }
+
+    /// "Today", otherwise the weekday and date, with the year only outside the current one.
+    private var title: String {
+        if day == today { return "Today" }
+        let format = Date.FormatStyle.dateTime.weekday(.wide).day().month(.abbreviated)
+        return calendar.isDate(day, equalTo: today, toGranularity: .year)
+            ? day.formatted(format)
+            : day.formatted(format.year())
     }
 
     private func move(_ days: Int) {

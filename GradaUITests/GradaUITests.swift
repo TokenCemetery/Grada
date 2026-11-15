@@ -34,6 +34,7 @@ final class GradaUITests: XCTestCase {
 
         app.tabBars.buttons["Journal"].tap()
         XCTAssertTrue(app.navigationBars["Journal"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Today"].exists)
         let alcohol = app.buttons["Alcohol"]
         XCTAssertTrue(alcohol.waitForExistence(timeout: 5))
         // Marking shows the amount stepper; tapping again unmarks, leaving the simulator's journal as it was.
@@ -45,6 +46,10 @@ final class GradaUITests: XCTestCase {
             attachScreenshot("Journal")
             alcohol.tap()
         }
+
+        app.buttons["Previous day"].tap()
+        XCTAssertFalse(app.buttons["Today"].exists)
+        attachScreenshot("Journal yesterday")
     }
 
     @MainActor
