@@ -1,12 +1,12 @@
 import SwiftData
 import SwiftUI
 
-/// Months scroll vertically under a pinned metric picker; each day is a dot coloured by how good it was.
-/// Tapping a day opens a sheet with that day's Home cards.
+/// Months scroll vertically under a pinned type picker. Health and Recovery colour each day by how good
+/// it was; Training draws each day's sports. Tapping a day opens a sheet with that type's cards for the day.
 struct CalendarView: View {
     @Environment(CalendarModel.self) private var model
     @Query private var goalChanges: [GoalChange]
-    @AppStorage("calendarMetric") private var metric: CalendarMetric = .healthStatus
+    @AppStorage("calendarMetric") private var metric: CalendarMetric = .health
     @AppStorage("colorBlindPalette") private var colorBlind = false
     @State private var selectedDay: Date?
     // TODO(#40, v3, Reports): a monthly summary like Whoop's "Month in Review" belongs in reports, not here.
@@ -24,35 +24,27 @@ struct CalendarView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollViewReader { proxy in
-                VStack(spacing: 0) {
-                    header
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 24) {
-                            ForEach(months, id: \.self) { month in
-                                MonthView(month: month, today: today, selected: selectedDay, colorBlind: colorBlind) { day in
-                                    selectedDay = day
-                                }
-                                .id(month)
+            VStack(spacing: 0) {
+                header
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 24) {
+                        ForEach(months, id: \.self) { month in
+                            MonthView(month: month, metric: metric, today: today, selected: selectedDay, colorBlind: colorBlind) { day in
+                                selectedDay = day
                             }
                         }
-                        .padding()
                     }
-                    .defaultScrollAnchor(.bottom)
+                    .padding()
                 }
-                .navigationTitle("Calendar")
-                .toolbar {
-                    Button("Today") {
-                        withAnimation { proxy.scrollTo(months.last, anchor: .bottom) }
-                        selectedDay = today
-                    }
-                }
+                // Opens on the current month; no Today button needed.
+                .defaultScrollAnchor(.bottom)
             }
+            .toolbar(.hidden, for: .navigationBar)
             .background(Color(.systemGroupedBackground))
             // A flag, not `sheet(item:)`: tapping another day while the sheet is open updates it in place.
             .sheet(isPresented: Binding(get: { selectedDay != nil }, set: { if !$0 { selectedDay = nil } })) {
-                DaySheet(day: selectedDay ?? today)
-                    // The calendar is already showing behind the sheet: pick the metric and close the sheet.
+                DaySheet(day: selectedDay ?? today, metric: metric)
+                    // The calendar is already showing behind the sheet: pick the type and close the sheet.
                     .environment(\.openCalendar, OpenCalendarAction { picked in
                         if let picked { metric = picked }
                         selectedDay = nil
@@ -73,6 +65,10 @@ struct CalendarView: View {
     /// Stays put while the months scroll, so the picker and legend are always in view.
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
+            Text("Calendar")
+                .font(.largeTitle.bold())
+                .accessibilityAddTraits(.isHeader)
+                .padding(.horizontal)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(CalendarMetric.allCases) { option in
@@ -94,7 +90,16 @@ struct CalendarView: View {
         .padding(.top, 4)
     }
 
+    @ViewBuilder
     private var legend: some View {
+        if metric.isRated {
+            ratingLegend
+        } else {
+            sportLegend
+        }
+    }
+
+    private var ratingLegend: some View {
         HStack(spacing: 12) {
             ForEach(DayRating.allCases, id: \.self) { rating in
                 Label {
@@ -117,6 +122,28 @@ struct CalendarView: View {
         .labelStyle(LegendLabelStyle())
         .font(.caption)
         .foregroundStyle(.secondary)
+    }
+
+    /// The most common sports in the loaded history, then rest days.
+    private var sportLegend: some View {
+        HStack(spacing: 12) {
+            ForEach(WorkoutDay.topSports(model.workoutDays.values, limit: 4), id: \.name) { sport in
+                Label {
+                    Text(sport.name)
+                } icon: {
+                    Circle().fill(WorkoutColors.color(symbol: sport.symbol)).frame(width: 10, height: 10)
+                }
+            }
+            Label {
+                Text("Rest")
+            } icon: {
+                Circle().fill(Color(.tertiarySystemFill)).frame(width: 6, height: 6)
+            }
+        }
+        .labelStyle(LegendLabelStyle())
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
     }
 }
 
@@ -149,6 +176,7 @@ private struct WeekdayRow: View {
 private struct MonthView: View {
     @Environment(CalendarModel.self) private var model
     let month: Date
+    let metric: CalendarMetric
     let today: Date
     let selected: Date?
     let colorBlind: Bool
@@ -173,22 +201,43 @@ private struct MonthView: View {
                 Text(month.formatted(.dateTime.month(.wide).year()))
                     .font(.headline)
                 Spacer()
-                counts
+                if metric.isRated { counts } else { trainingTotals }
             }
             LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(0..<leadingBlanks, id: \.self) { _ in Color.clear.frame(height: 1) }
                 ForEach(days, id: \.self) { day in
-                    DayCell(day: day,
-                            rating: model.ratings[day],
-                            hasWorkout: model.workoutDays.contains(day),
-                            isToday: day == today,
-                            isFuture: day > today,
-                            isSelected: day == selected,
-                            colorBlind: colorBlind)
-                        .onTapGesture { if day <= today { onSelect(day) } }
+                    Group {
+                        if metric.isRated {
+                            DayCell(day: day,
+                                    rating: model.ratings[day],
+                                    hasWorkout: model.workoutDays[day] != nil,
+                                    isToday: day == today,
+                                    isFuture: day > today,
+                                    isSelected: day == selected,
+                                    colorBlind: colorBlind)
+                        } else {
+                            TrainingDayCell(day: day,
+                                            workouts: model.workoutDays[day],
+                                            isToday: day == today,
+                                            isFuture: day > today,
+                                            isSelected: day == selected)
+                        }
+                    }
+                    .onTapGesture { if day <= today { onSelect(day) } }
                 }
             }
         }
+    }
+
+    /// The month's workouts and their total time.
+    private var trainingTotals: some View {
+        let month = days.compactMap { model.workoutDays[$0] }
+        let count = month.reduce(0) { $0 + $1.workouts }
+        let minutes = month.reduce(0) { $0 + $1.minutes }
+        return Text(count == 0 ? "No workouts" : "\(count == 1 ? "1 workout" : "\(count) workouts") · \(SnapshotBuilder.hoursMinutes(minutes * 60))")
+            .font(.caption.weight(.semibold))
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
     }
 
     /// Green, yellow and red day counts for the month.
@@ -273,21 +322,94 @@ private struct DayCell: View {
     }
 }
 
-/// The selected day's Home cards in Home order, as they looked at the end of that day.
+/// A Training day: the date over a pie of the day's sports, bigger for longer days. A rest day is a small
+/// grey dot.
+private struct TrainingDayCell: View {
+    let day: Date
+    let workouts: WorkoutDay?
+    let isToday: Bool
+    let isFuture: Bool
+    let isSelected: Bool
+
+    private let size: CGFloat = 38
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("\(Calendar.current.component(.day, from: day))")
+                .font(.caption2.weight(isToday ? .bold : .regular))
+                .monospacedDigit()
+                .foregroundStyle(isFuture ? .secondary : .primary)
+            if isFuture {
+                Spacer(minLength: 0)
+            } else {
+                SportPie(day: workouts ?? WorkoutDay(), diameter: diameter)
+                    .frame(height: 20)
+            }
+        }
+        .frame(width: size, height: size)
+        .overlay {
+            if isToday {
+                Circle().strokeBorder(.primary, lineWidth: 2).padding(-4)
+            } else if isSelected {
+                Circle().strokeBorder(.primary, lineWidth: 1.5).padding(-3)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityAddTraits(isFuture ? [] : .isButton)
+    }
+
+    private var diameter: CGFloat {
+        guard let minutes = workouts?.minutes, minutes > 0 else { return 6 }
+        return min(10 + CGFloat(minutes) / 10, 20)
+    }
+
+    private var accessibilityText: String {
+        var parts = [day.formatted(date: .complete, time: .omitted)]
+        if isFuture {
+            parts.append("Upcoming")
+        } else if let workouts, !workouts.sports.isEmpty {
+            parts += workouts.sports.map { "\($0.name) \(SnapshotBuilder.hoursMinutes($0.minutes * 60))" }
+        } else {
+            parts.append("Rest day")
+        }
+        return parts.joined(separator: ", ")
+    }
+}
+
+/// The selected day's cards for the calendar type, as they looked at the end of that day.
 /// Fully expanded, this sheet is the day view.
 private struct DaySheet: View {
     @Environment(CalendarModel.self) private var model
-    @Query(sort: \HomeCard.position) private var cards: [HomeCard]
+    @Query(sort: \HomeCard.position) private var homeCards: [HomeCard]
     @Query private var goalChanges: [GoalChange]
     @Query private var journalEntries: [JournalEntry]
     let day: Date
+    let metric: CalendarMetric
     @State private var snapshots: [CardKind: CardSnapshot] = [:]
-    @State private var loadedDay: Date?
+    @State private var workouts: [CardSnapshot] = []
+    /// The day and type whose cards are loaded.
+    @State private var loaded: LoadKey?
 
-    /// Each metric once: past days show no charts, so both variants of a card would look the same.
-    private var kinds: [CardKind] {
-        var seen = Set<CardKind>()
-        return cards.compactMap(\.cardID?.kind).filter { seen.insert($0).inserted }
+    private struct LoadKey: Equatable {
+        let day: Date
+        let metric: CalendarMetric
+    }
+
+    private var isLoaded: Bool { loaded == LoadKey(day: day, metric: metric) }
+
+    /// Each card as it looks on Home, preferring the 7-day variant when Home has both. Cards not on Home
+    /// use their default look.
+    private var cards: [CardID] {
+        let onHome = homeCards.compactMap(\.cardID)
+        return metric.kinds.map { kind in
+            let variants = onHome.filter { $0.kind == kind }.map(\.variant)
+            let variant = variants.contains(.week) ? .week : variants.first ?? kind.defaultVariant
+            return CardID(kind: kind, variant: variant)
+        }
     }
 
     var body: some View {
@@ -304,8 +426,15 @@ private struct DaySheet: View {
                     .padding(.top, 20)
                 let dayKey = DayKey.make(day, calendar: .current)
                 DayTagsView(entries: journalEntries.filter { $0.dayKey == dayKey })
-                card(.healthStatus)
-                ForEach(HomeLayout.rows(for: kinds), id: \.self) { row in
+                if metric == .training, isLoaded {
+                    if workouts.isEmpty {
+                        Text("Rest day").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    ForEach(workouts.indices, id: \.self) { index in
+                        CardLink(kind: .lastWorkout, snapshot: workouts[index], day: pastDay)
+                    }
+                }
+                ForEach(HomeLayout.rows(for: metric.kinds), id: \.self) { row in
                     HStack(alignment: .top, spacing: 12) {
                         ForEach(row) { card($0) }
                         if row.count == 1, row[0].size == .square {
@@ -318,16 +447,20 @@ private struct DaySheet: View {
             .padding(.bottom)
         }
         .background(Color(.systemGroupedBackground))
-        .task(id: day) {
-            snapshots = await model.snapshots(for: day, kinds: [.healthStatus] + kinds, goals: GoalHistory(goalChanges))
-            loadedDay = day
+        .environment(\.chartLastDay, day)
+        .task(id: LoadKey(day: day, metric: metric)) {
+            let key = LoadKey(day: day, metric: metric)
+            snapshots = await model.snapshots(for: day, cards: cards, goals: GoalHistory(goalChanges))
+            workouts = metric == .training ? await model.workoutSnapshots(for: day) : []
+            loaded = key
         }
     }
 
+    private var pastDay: Date? { Calendar.current.isDateInToday(day) ? nil : day }
+
     /// Shows the loading state until this day's values arrive, never the previous day's.
     private func card(_ kind: CardKind) -> some View {
-        CardLink(kind: kind, snapshot: loadedDay == day ? snapshots[kind] : nil,
-                 day: Calendar.current.isDateInToday(day) ? nil : day)
+        CardLink(kind: kind, snapshot: isLoaded ? snapshots[kind] : nil, day: pastDay)
     }
 }
 

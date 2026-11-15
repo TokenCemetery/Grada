@@ -721,9 +721,75 @@ struct PastDaySourceTests {
     @Test func pastDayCardsDontSayToday() async throws {
         let calendar = Calendar.current
         let day = calendar.date(byAdding: .day, value: -5, to: calendar.startOfDay(for: .now))!
-        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, kinds: [.steps, .sleepNeed], goals: GoalHistory())
+        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, cards: [CardID(kind: .steps), CardID(kind: .sleepNeed)], goals: GoalHistory())
         #expect(snapshots[.steps]?.period == "That day")
         #expect(snapshots[.sleepNeed]?.period == "That night")
+    }
+
+    @Test func pastDayCardsDontSayNowOrLastNight() async throws {
+        let calendar = Calendar.current
+        let day = calendar.date(byAdding: .day, value: -5, to: calendar.startOfDay(for: .now))!
+        let kinds: [CardKind] = [.healthStatus, .resources, .sleepStages, .wristTemperature, .hrvStatus]
+        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, cards: kinds.map { CardID(kind: $0) }, goals: GoalHistory())
+        #expect(snapshots[.resources]?.period == "End of day")
+        #expect(snapshots[.sleepStages]?.period == "Night before")
+        for kind in kinds {
+            #expect(!["Now", "Last night", "Today", "Tonight"].contains(snapshots[kind]?.period ?? ""), "\(kind)")
+        }
+    }
+}
+
+@MainActor
+struct CalendarTypeTests {
+    private let calendar = Calendar.current
+
+    @Test func savedMetricsMapToTheirType() {
+        #expect(CalendarMetric(rawValue: "healthStatus") == .health)
+        #expect(CalendarMetric(rawValue: "hrv") == .health)
+        #expect(CalendarMetric(rawValue: "restingHeartRate") == .health)
+        #expect(CalendarMetric(rawValue: "sleep") == .recovery)
+        #expect(CalendarMetric(rawValue: "steps") == .training)
+        #expect(CalendarMetric.allCases.allSatisfy { CalendarMetric(rawValue: $0.rawValue) == $0 })
+    }
+
+    @Test func cardsOpenTheirType() {
+        #expect(CardKind.healthStatus.calendarMetric == .health)
+        #expect(CardKind.wristTemperature.calendarMetric == .health)
+        #expect(CardKind.recovery.calendarMetric == .recovery)
+        #expect(CardKind.sleepStages.calendarMetric == .recovery)
+        #expect(CardKind.steps.calendarMetric == .training)
+        #expect(CardKind.last30Days.calendarMetric == .training)
+        for metric in CalendarMetric.allCases {
+            #expect(metric.kinds.allSatisfy { $0.calendarMetric == metric }, "\(metric) sheet holds only its own cards")
+        }
+    }
+
+    @Test func recoveryRatesDaysAndTrainingDoesnt() async {
+        let model = CalendarModel(source: SampleDataSource())
+        await model.load(.recovery, goals: GoalHistory())
+        #expect(!model.ratings.isEmpty)
+        await model.load(.training, goals: GoalHistory())
+        #expect(model.ratings.isEmpty)
+        let twoSports = model.workoutDays.values.first { $0.sports.count == 2 }
+        #expect(twoSports?.workouts == 2, "Sample strength days add an evening walk")
+    }
+
+    @Test func daySheetChartsEndOnTheSelectedDay() async throws {
+        let day = calendar.date(byAdding: .day, value: -5, to: calendar.startOfDay(for: .now))!
+        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, cards: [CardID(kind: .steps, variant: .week), CardID(kind: .recovery, variant: .week)], goals: GoalHistory())
+        guard case .bars(let steps, _, _) = snapshots[.steps]?.chart else { Issue.record("Steps keeps its 7-day bars"); return }
+        #expect(steps.count == 7)
+        guard case .bars = snapshots[.recovery]?.chart else { Issue.record("Recovery keeps its chart"); return }
+        let letters = calendar.veryShortStandaloneWeekdaySymbols
+        #expect(WeekdayLabels.symbols(count: 7, endingOn: day).last == letters[calendar.component(.weekday, from: day) - 1])
+    }
+
+    @Test func daySheetListsThatDaysWorkouts() async throws {
+        let model = CalendarModel(source: SampleDataSource())
+        await model.load(.training, goals: GoalHistory())
+        let day = try #require(model.workoutDays.first { $0.value.workouts == 2 }?.key)
+        let cards = await model.workoutSnapshots(for: day)
+        #expect(cards.map(\.comparison) == ["Strength", "Walk"], "Earliest first")
     }
 }
 

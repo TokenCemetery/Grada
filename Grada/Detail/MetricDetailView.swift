@@ -58,19 +58,17 @@ struct MetricDetailView: View {
                         }
                     }
                 }
-                if let metric = kind.calendarMetric {
-                    Button { openCalendar(metric) } label: {
-                        HStack {
-                            Text("See in calendar").font(.subheadline.weight(.semibold))
-                            Spacer()
-                            Image(systemName: "calendar").foregroundStyle(.secondary)
-                        }
-                        .foregroundStyle(.primary)
-                        .padding(12)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                Button { openCalendar(kind.calendarMetric) } label: {
+                    HStack {
+                        Text("See in calendar").font(.subheadline.weight(.semibold))
+                        Spacer()
+                        Image(systemName: "calendar").foregroundStyle(.secondary)
                     }
-                    .buttonStyle(.plain)
+                    .foregroundStyle(.primary)
+                    .padding(12)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal)
             .padding(.bottom)

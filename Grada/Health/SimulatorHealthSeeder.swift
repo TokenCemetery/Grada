@@ -31,7 +31,7 @@ final class SimulatorHealthSeeder {
             var random = SeededRandom(seed: UInt64(day.timeIntervalSince1970))
             pending += dailySamples(day: day, random: &random)
             pending += sleepSamples(wakeDay: day, random: &random)
-            try await addWorkout(day: day, index: offset, random: &random)
+            try await addWorkouts(day: day, index: offset, random: &random)
 
             if pending.count > 500 || offset == 0 {
                 try await store.save(pending)
@@ -114,24 +114,52 @@ final class SimulatorHealthSeeder {
         return samples
     }
 
-    /// Workouts on most days, with heart rate and energy so the workout card has stats.
-    private func addWorkout(day: Date, index: Int, random: inout SeededRandom) async throws {
-        let pattern: [(HKWorkoutActivityType, Double)?] = [
-            (.running, 45), nil, (.traditionalStrengthTraining, 50), nil, (.cycling, 75), (.running, 32), nil,
-        ]
-        guard let (activity, minutes) = pattern[index % pattern.count] else { return }
-        let start = calendar.date(byAdding: .hour, value: 7, to: day)!
-        let end = start.addingTimeInterval(minutes * 60)
+    /// One session of a sample day: sport, length and start hour, with the heart rate and energy rate it
+    /// typically has.
+    private struct Session {
+        let activity: HKWorkoutActivityType
+        let minutes: Double
+        let hour: Int
+        let heartRate: Double
+        let kcalPerMinute: Double
+    }
+
+    /// A week of workouts, counted back from today: rest days, single-workout days, and days with two or
+    /// three sports, so the calendar's sport pies and the day sheet's workout list have something to show.
+    private static let week: [[Session]] = [
+        [Session(activity: .running, minutes: 45, hour: 7, heartRate: 145, kcalPerMinute: 11),
+         Session(activity: .walking, minutes: 30, hour: 18, heartRate: 100, kcalPerMinute: 4)],
+        [],
+        [Session(activity: .traditionalStrengthTraining, minutes: 50, hour: 7, heartRate: 120, kcalPerMinute: 7),
+         Session(activity: .walking, minutes: 30, hour: 18, heartRate: 100, kcalPerMinute: 4)],
+        [Session(activity: .yoga, minutes: 40, hour: 19, heartRate: 90, kcalPerMinute: 3)],
+        [Session(activity: .cycling, minutes: 75, hour: 7, heartRate: 135, kcalPerMinute: 9)],
+        [Session(activity: .running, minutes: 32, hour: 7, heartRate: 150, kcalPerMinute: 11),
+         Session(activity: .swimming, minutes: 40, hour: 12, heartRate: 130, kcalPerMinute: 9),
+         Session(activity: .yoga, minutes: 20, hour: 20, heartRate: 85, kcalPerMinute: 3)],
+        [],
+    ]
+
+    /// The day's workouts from the weekly pattern, each with heart rate and energy so the workout card has stats.
+    private func addWorkouts(day: Date, index: Int, random: inout SeededRandom) async throws {
+        for session in Self.week[index % Self.week.count] {
+            try await addWorkout(session, day: day, random: &random)
+        }
+    }
+
+    private func addWorkout(_ session: Session, day: Date, random: inout SeededRandom) async throws {
+        let start = calendar.date(byAdding: .hour, value: session.hour, to: day)!
+        let end = start.addingTimeInterval(session.minutes * 60)
         guard end <= .now else { return }
 
         let configuration = HKWorkoutConfiguration()
-        configuration.activityType = activity
+        configuration.activityType = session.activity
         let builder = HKWorkoutBuilder(healthStore: store, configuration: configuration, device: .local())
         try await builder.beginCollection(at: start)
 
         var samples: [HKSample] = [HKQuantitySample(
             type: HKQuantityType(.activeEnergyBurned),
-            quantity: HKQuantity(unit: .kilocalorie(), doubleValue: minutes * 9),
+            quantity: HKQuantity(unit: .kilocalorie(), doubleValue: session.minutes * session.kcalPerMinute),
             start: start, end: end
         )]
         var time = start
@@ -139,7 +167,8 @@ final class SimulatorHealthSeeder {
             let next = min(time.addingTimeInterval(300), end)
             samples.append(HKQuantitySample(
                 type: HKQuantityType(.heartRate),
-                quantity: HKQuantity(unit: .count().unitDivided(by: .minute()), doubleValue: 140 + 10 * random.nextSigned()),
+                quantity: HKQuantity(unit: .count().unitDivided(by: .minute()),
+                                     doubleValue: session.heartRate + 8 * random.nextSigned()),
                 start: time, end: next
             ))
             time = next

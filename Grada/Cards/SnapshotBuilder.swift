@@ -65,7 +65,7 @@ struct SnapshotBuilder {
         let todayIndex = baselineDays
         let hasToday = allSeries.contains { $0.2.last?.value != nil }
         let nightIndex = hasToday ? todayIndex : todayIndex - 1
-        let period = hasToday ? "Last night" : yesterdayLabel
+        let period = hasToday ? lastNightLabel : yesterdayLabel
 
         var statuses: [VitalStatus] = []
         for (metric, name, series) in allSeries {
@@ -86,7 +86,7 @@ struct SnapshotBuilder {
         }
 
         let measured = statuses.filter { $0.state != .noData }
-        guard !measured.isEmpty else { return .noData(period: "Last night") }
+        guard !measured.isEmpty else { return .noData(period: lastNightLabel) }
         let outOfRange = statuses.filter { $0.state == .outOfRange }.count
         let inRange = statuses.filter { $0.state == .inRange }.count
 
@@ -173,12 +173,12 @@ struct SnapshotBuilder {
         let series = try await source.daily(.wristTemperature, days: baselineDays + 1)
         guard let latestIndex = series.indices.suffix(2).last(where: { series[$0].value != nil }),
               let latest = series[latestIndex].value
-        else { return .noData(period: "Last night") }
+        else { return .noData(period: lastNightLabel) }
 
         let toDisplay: (Double) -> Double = { usesMetric ? $0 : $0 * 1.8 + 32 }
         let unit = usesMetric ? "°C" : "°F"
         let history = series[..<latestIndex].compactMap(\.value)
-        let period = latestIndex == series.count - 1 ? "Last night" : dayLabel(series[latestIndex].day)
+        let period = latestIndex == series.count - 1 ? lastNightLabel : dayLabel(series[latestIndex].day)
 
         let week = series.suffix(7).map { $0.value.map(toDisplay) }
         guard history.count >= Baseline.minimumDays, let mean = Baseline.average(history) else {
@@ -290,13 +290,13 @@ struct SnapshotBuilder {
         let today = calendar.startOfDay(for: now)
         let interval = DateInterval(start: calendar.date(byAdding: .day, value: -3, to: today)!, end: now)
         let heartRate = try await source.heartRate(in: interval)
-        guard heartRate.contains(where: { $0.date >= today }) else { return .noData(period: "Now") }
+        guard heartRate.contains(where: { $0.date >= today }) else { return .noData(period: nowLabel) }
 
         let restingHeartRate = Baseline.average(try await source.daily(.restingHeartRate, days: 8).compactMap(\.value))
         let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
                                                   highestRecorded: try await source.highestHeartRate(days: 365))
         guard let restingHeartRate, let maxHeartRate, maxHeartRate > restingHeartRate + 20 else {
-            return CardSnapshot(period: "Now", value: "Calibrating", comparison: "Needs resting and max heart rate")
+            return CardSnapshot(period: nowLabel, value: "Calibrating", comparison: "Needs resting and max heart rate")
         }
 
         let sleep = try await source.sleepPeriods(in: interval)
@@ -304,7 +304,7 @@ struct SnapshotBuilder {
         let timeline = Resources.timeline(interval: interval, heartRate: heartRate, sleep: sleep, workouts: workouts,
                                           restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate)
         let todayLevels = timeline.filter { $0.date >= today }
-        guard let current = todayLevels.last, let midnight = todayLevels.first else { return .noData(period: "Now") }
+        guard let current = todayLevels.last, let midnight = todayLevels.first else { return .noData(period: nowLabel) }
 
         // Change since this morning's wake-up; before then, since midnight.
         let noon = calendar.date(byAdding: .hour, value: 12, to: today)!
@@ -316,7 +316,7 @@ struct SnapshotBuilder {
         let level = Int(current.value.rounded())
 
         return CardSnapshot(
-            period: "Now",
+            period: nowLabel,
             value: "\(level)",
             unit: "%",
             comparison: comparison,
@@ -508,11 +508,11 @@ struct SnapshotBuilder {
         let today = days[days.count - 1], yesterday = days[days.count - 2]
         let shown: (night: SleepNight, period: String)
         if let night = byDay[today], night.asleep > 0 {
-            shown = (night, "Last night")
+            shown = (night, lastNightLabel)
         } else if let night = byDay[yesterday], night.asleep > 0 {
             shown = (night, yesterdayLabel)
         } else {
-            return .noData(period: "Last night")
+            return .noData(period: lastNightLabel)
         }
 
         let goalIndex = shown.night.wakeDay == today ? 1 : 0
@@ -607,7 +607,12 @@ struct SnapshotBuilder {
 
     private func lastWorkout() async throws -> CardSnapshot {
         guard let workout = try await source.workouts(days: 30).first else { return .noData(period: "Last 30 days") }
-        return CardSnapshot(
+        return workoutSnapshot(workout)
+    }
+
+    /// A Last Workout card for one workout.
+    func workoutSnapshot(_ workout: WorkoutSummary) -> CardSnapshot {
+        CardSnapshot(
             period: "\(dayLabel(workout.start)), \(workout.start.formatted(date: .omitted, time: .shortened))",
             value: Self.hoursMinutes(workout.duration),
             comparison: workout.name,
@@ -642,22 +647,10 @@ struct SnapshotBuilder {
         )
     }
 
-    /// Each day's total minutes and its longest sport, oldest first.
+    /// Each of the last `days` days' workouts by sport, oldest first.
     private func workoutDays(_ workouts: [WorkoutSummary], days: Int) -> [WorkoutDay] {
-        let dayStarts = lastDays(days)
-        var result = Array(repeating: WorkoutDay(), count: days)
-        for workout in workouts {
-            guard let index = dayStarts.firstIndex(of: calendar.startOfDay(for: workout.start)) else { continue }
-            if let sport = result[index].sports.firstIndex(where: { $0.name == workout.name }) {
-                result[index].sports[sport].minutes += workout.duration / 60
-            } else {
-                result[index].sports.append(.init(name: workout.name, symbol: workout.symbol, minutes: workout.duration / 60))
-            }
-        }
-        for index in result.indices {
-            result[index].sports.sort { $0.minutes > $1.minutes }
-        }
-        return result
+        let byDay = WorkoutDay.byDay(workouts, calendar: calendar)
+        return lastDays(days).map { byDay[$0] ?? WorkoutDay() }
     }
 
     private func workoutMinutesPerDay(_ workouts: [WorkoutSummary], days: Int) -> [Double] {
@@ -683,6 +676,9 @@ struct SnapshotBuilder {
     private var isToday: Bool { calendar.isDateInToday(now) }
     private var todayLabel: String { isToday ? "Today" : "That day" }
     private var tonightLabel: String { isToday ? "Tonight" : "That night" }
+    private var lastNightLabel: String { isToday ? "Last night" : "Night before" }
+    /// Resources at the end of a past day.
+    private var nowLabel: String { isToday ? "Now" : "End of day" }
     private var yesterdayLabel: String { dayLabel(calendar.date(byAdding: .day, value: -1, to: now)!) }
 
     private func dayLabel(_ date: Date) -> String {

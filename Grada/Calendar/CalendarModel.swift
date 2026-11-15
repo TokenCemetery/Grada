@@ -2,12 +2,13 @@ import Foundation
 import Observation
 import os
 
-/// Day colours and workout days for the calendar, and cards for a selected past day.
+/// Day colours and workouts for the calendar, and cards for a selected past day.
 @Observable
 final class CalendarModel {
-    /// Start of each rated day → its rating for the loaded metric.
+    /// Start of each rated day → its rating for the loaded type. Empty for Training.
     private(set) var ratings: [Date: DayRating] = [:]
-    private(set) var workoutDays: Set<Date> = []
+    /// Start of each day with a workout → its sports.
+    private(set) var workoutDays: [Date: WorkoutDay] = [:]
     /// Start of the first month shown; nil until loaded.
     private(set) var firstMonth: Date?
     let importer: HealthImporter?
@@ -36,7 +37,7 @@ final class CalendarModel {
             let newRatings = try await ratings(metric, days: days, goals: goals)
             let workouts = try await source.workouts(days: days)
             ratings = newRatings
-            workoutDays = Set(workouts.map { calendar.startOfDay(for: $0.start) })
+            workoutDays = WorkoutDay.byDay(workouts, calendar: calendar)
             firstMonth = calendar.dateInterval(of: .month, for: earliest)?.start
         } catch {
             // Keep the last good month grid; the next load retries.
@@ -44,17 +45,17 @@ final class CalendarModel {
         }
     }
 
-    /// Cards for `day` as they looked at the end of that day, without the 7-day charts
-    /// (the month grid already shows the trend).
-    func snapshots(for day: Date, kinds: [CardKind], goals: GoalHistory) async -> [CardKind: CardSnapshot] {
+    /// Cards for `day` as they looked at the end of that day, with their charts ending on that day.
+    func snapshots(for day: Date, cards: [CardID], goals: GoalHistory) async -> [CardKind: CardSnapshot] {
         var builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
         builder.goals = goals
 
         var result: [CardKind: CardSnapshot] = [:]
         await withTaskGroup(of: (CardKind, CardSnapshot?).self) { group in
-            for kind in Set(kinds) {
+            for card in Set(cards) {
+                let kind = card.kind
                 group.addTask { [logger] in
-                    do { return (kind, try await builder.snapshot(for: kind)) }
+                    do { return (kind, try await builder.snapshot(for: kind, variant: card.variant)) }
                     catch {
                         logger.error("Loading \(kind.rawValue) for a past day failed: \(error.localizedDescription)")
                         return (kind, nil)
@@ -62,45 +63,46 @@ final class CalendarModel {
                 }
             }
             for await (kind, snapshot) in group {
-                guard var snapshot else { continue }
-                snapshot.chart = .none
                 result[kind] = snapshot
             }
         }
         return result
     }
 
+    /// A Last Workout card for each of `day`'s workouts, earliest first.
+    func workoutSnapshots(for day: Date) async -> [CardSnapshot] {
+        let builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
+        do {
+            let today = calendar.startOfDay(for: .now)
+            let back = (calendar.dateComponents([.day], from: calendar.startOfDay(for: day), to: today).day ?? 0) + 1
+            return try await source.workouts(days: back)
+                .filter { calendar.isDate($0.start, inSameDayAs: day) }
+                .sorted { $0.start < $1.start }
+                .map(builder.workoutSnapshot)
+        } catch {
+            logger.error("Loading workouts for a past day failed: \(error.localizedDescription)")
+            return []
+        }
+    }
+
     private func ratings(_ metric: CalendarMetric, days: Int, goals: GoalHistory) async throws -> [Date: DayRating] {
-        // Vitals need the baseline window before the first shown day.
-        let withBaseline = days + baselineDays
         switch metric {
-        case .healthStatus:
+        case .health:
+            // Vitals need the baseline window before the first shown day.
             var series: [QuantityMetric: [DayValue]] = [:]
             for (vital, _) in SnapshotBuilder.vitals {
-                series[vital] = try await source.daily(vital, days: withBaseline)
+                series[vital] = try await source.daily(vital, days: days + baselineDays)
             }
             return DayRatings.rateHealthStatus(series, baselineDays: baselineDays)
-        case .hrv:
-            return DayRatings.rateVital(try await source.daily(.hrv, days: withBaseline), metric: .hrv,
-                                        higherIsBetter: true, baselineDays: baselineDays)
-        case .restingHeartRate:
-            return DayRatings.rateVital(try await source.daily(.restingHeartRate, days: withBaseline), metric: .restingHeartRate,
-                                        higherIsBetter: false, baselineDays: baselineDays)
-        case .steps:
-            let series = try await source.daily(.steps, days: days)
-            return Dictionary(uniqueKeysWithValues: series.compactMap { entry in
-                entry.value.map { (entry.day, DayRatings.goal($0, goal: goals.value(.steps, on: entry.day) ?? DayRatings.stepsGoal)) }
-            })
-        case .sleep:
+        case .recovery:
             var builder = SnapshotBuilder(source: source)
             builder.calendar = calendar
             builder.goals = goals
-            let sleepGoals = Dictionary(try await builder.sleepGoals(days).map { ($0.day, $0.value) },
-                                        uniquingKeysWith: { first, _ in first })
-            let nights = try await source.sleepNights(days: days).filter { $0.asleep > 0 }
-            return Dictionary(nights.map { night in
-                (night.wakeDay, DayRatings.goal(night.asleep, goal: (sleepGoals[night.wakeDay] ?? nil) ?? DayRatings.sleepGoal))
+            return Dictionary(try await builder.recoveryDays(days).compactMap { day in
+                day.result.map { (day.day, Recovery.rating($0.score)) }
             }, uniquingKeysWith: { first, _ in first })
+        case .training:
+            return [:]
         }
     }
 }

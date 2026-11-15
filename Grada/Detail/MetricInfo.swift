@@ -25,7 +25,7 @@ extension EnvironmentValues {
 }
 
 extension CardKind {
-    /// Workouts Calendar opens the Calendar tab instead of a detail screen.
+    /// Workouts Calendar opens the Calendar tab on Training instead of a detail screen.
     var opensCalendar: Bool { self == .last30Days }
 
     var family: DetailFamily {
@@ -56,15 +56,13 @@ extension CardKind {
         }
     }
 
-    /// The calendar colouring for this metric, if the calendar has one.
-    var calendarMetric: CalendarMetric? {
-        switch self {
-        case .healthStatus: .healthStatus
-        case .sleepDuration, .sleepStages: .sleep
-        case .steps: .steps
-        case .hrv: .hrv
-        case .restingHeartRate: .restingHeartRate
-        default: nil
+    /// The calendar type this metric belongs to.
+    var calendarMetric: CalendarMetric {
+        switch category {
+        case .heart: .health
+        case .sleep: .recovery
+        case .activity, .training, .history: .training
+        case .status: self == .recovery || self == .resources ? .recovery : .health
         }
     }
 
@@ -166,7 +164,7 @@ struct CardLink: View {
 
     var body: some View {
         if kind.opensCalendar {
-            Button { openCalendar() } label: { CardView(kind: kind, snapshot: snapshot) }
+            Button { openCalendar(kind.calendarMetric) } label: { CardView(kind: kind, snapshot: snapshot) }
                 .buttonStyle(.plain)
         } else {
             NavigationLink(value: MetricRoute(kind: kind, day: day)) { CardView(kind: kind, snapshot: snapshot) }

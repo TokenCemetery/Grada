@@ -307,12 +307,13 @@ private struct TrackBars: View {
     let days: [[(value: Double, color: Color)]]
     /// A full bar means the target was reached; days above it are cut off at the top of the track.
     var target: Double?
+    @Environment(\.chartLastDay) private var lastDay
 
     var body: some View {
         let totals = days.map { $0.reduce(0) { $0 + max($1.value, 0) } }
         // Headroom above the best day keeps the track visible when days are similar, e.g. sleep.
         let highest = max(target ?? (totals.max() ?? 0) * 1.2, .leastNonzeroMagnitude)
-        let labels = WeekdayLabels.symbols(count: days.count)
+        let labels = WeekdayLabels.symbols(count: days.count, endingOn: lastDay ?? .now)
         HStack(alignment: .bottom, spacing: 0) {
             ForEach(Array(days.enumerated()), id: \.offset) { index, segments in
                 VStack(spacing: 2) {
@@ -422,10 +423,17 @@ private struct AreaLine: View {
     }
 }
 
-/// Single-letter weekdays for the last 7 days, today last and bold.
+extension EnvironmentValues {
+    /// The last day a card's 7-day chart shows: the calendar's selected day, or nil for today.
+    @Entry var chartLastDay: Date?
+}
+
+/// Single-letter weekdays for the last 7 days, the chart's last day bold.
 struct WeekdayLabels: View {
+    @Environment(\.chartLastDay) private var lastDay
+
     var body: some View {
-        let symbols = Self.symbols(count: 7)
+        let symbols = Self.symbols(count: 7, endingOn: lastDay ?? .now)
         HStack(spacing: 0) {
             ForEach(Array(symbols.enumerated()), id: \.offset) { index, symbol in
                 Self.label(symbol, isToday: index == symbols.count - 1)
@@ -440,11 +448,11 @@ struct WeekdayLabels: View {
             .foregroundStyle(isToday ? .primary : .secondary)
     }
 
-    /// Weekday letters for the last `count` days, oldest first.
-    static func symbols(count: Int) -> [String] {
+    /// Weekday letters for the `count` days ending on `last`, oldest first.
+    static func symbols(count: Int, endingOn last: Date) -> [String] {
         let calendar = Calendar.current
         let letters = calendar.veryShortStandaloneWeekdaySymbols
-        let today = calendar.startOfDay(for: .now)
+        let today = calendar.startOfDay(for: last)
         return (0..<count).reversed().map {
             let day = calendar.date(byAdding: .day, value: -$0, to: today)!
             return letters[calendar.component(.weekday, from: day) - 1]

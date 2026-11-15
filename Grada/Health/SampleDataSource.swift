@@ -69,8 +69,10 @@ struct SampleDataSource: HealthDataSource {
             ("Run", "figure.run", 45), nil, ("Strength", "figure.strengthtraining.traditional", 50), nil,
             ("Ride", "figure.outdoor.cycle", 75), ("Run", "figure.run", 32), nil,
         ]
-        // Strength days end with an evening walk, so some days hold two sports.
-        return lastDays(days).enumerated().reversed().flatMap { index, day -> [WorkoutSummary] in
+        // Strength days end with an evening walk, so some days hold two sports. The pattern counts back
+        // from today, so a day keeps its workouts however many days are asked for.
+        return lastDays(days).enumerated().reversed().flatMap { offset, day -> [WorkoutSummary] in
+            let index = days - 1 - offset
             guard let (name, symbol, minutes) = pattern[index % pattern.count] else { return [] }
             let morning = WorkoutSummary(
                 id: "sample-\(index)",
