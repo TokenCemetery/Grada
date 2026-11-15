@@ -12,7 +12,7 @@ struct HomeLayoutTests {
 
     @Test func defaultSetLayout() {
         let rows = HomeLayout.rows(for: CardKind.defaultSet).map { $0.map(\.kind) }
-        #expect(rows == [[.sleepStages], [.restingHeartRate, .hrv], [.steps, .activeEnergy], [.lastWorkout], [.last30Days]])
+        #expect(rows == [[.sleepStages], [.hrvStatus, .recovery], [.steps, .activeEnergy], [.lastWorkout], [.last30Days]])
     }
 }
 
@@ -31,6 +31,12 @@ struct CardVariantTests {
         #expect(card.cardID == CardID(kind: .heartRate, variant: .current))
         let recovery = HomeCard(CardID(kind: .recovery, variant: .current), position: 0)
         #expect(recovery.cardID == CardID(kind: .recovery, variant: .week))
+    }
+
+    @Test func retiredCardsLeaveHomeAndTheGallery() {
+        #expect(HomeCard(CardID(kind: .restingHeartRate), position: 0).cardID == nil)
+        #expect(HomeCard(CardID(kind: .hrv), position: 0).cardID == nil)
+        #expect(!CardID.gallery.contains { $0.kind.isRetired })
     }
 
     @Test func everyVariantBuildsFromSampleData() async throws {
@@ -66,12 +72,16 @@ struct CardVariantTests {
     }
 
     @Test func vitalsMarkTheRangeOrDrawTheWeek() async throws {
-        let current = try await builder.snapshot(for: .restingHeartRate, variant: .current)
-        let week = try await builder.snapshot(for: .restingHeartRate, variant: .week)
+        let current = try await builder.snapshot(for: .wristTemperature, variant: .current)
+        let week = try await builder.snapshot(for: .wristTemperature, variant: .week)
         guard case .range = current.chart else { Issue.record("\(current.chart)"); return }
         guard case .line(let values, let range) = week.chart else { Issue.record("\(week.chart)"); return }
         #expect(values.count == 7)
         #expect(range != nil)
+        for kind in [CardKind.oxygenSaturation, .respiratoryRate] {
+            let snapshot = try await builder.snapshot(for: kind)
+            guard case .range = snapshot.chart else { Issue.record("\(kind): \(snapshot.chart)"); continue }
+        }
     }
 
     @Test func recoveryColorsEachDay() async throws {
@@ -82,7 +92,7 @@ struct CardVariantTests {
     }
 
     @Test func scoresAreRated() async throws {
-        for kind in [CardKind.resources] {
+        for kind in [CardKind.resources, .hrvStatus] {
             let snapshot = try await builder.snapshot(for: kind)
             #expect(snapshot.rating != nil, "\(kind) has no rating")
         }

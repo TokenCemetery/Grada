@@ -74,7 +74,12 @@ enum CardKind: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     /// Cards the user can add or remove. Health status is pinned on top.
-    static var gallery: [CardKind] { allCases.filter { $0 != .healthStatus && !$0.isPlanned } }
+    static var gallery: [CardKind] { allCases.filter { $0 != .healthStatus && !$0.isPlanned && !$0.isRetired } }
+
+    /// Cards no longer offered. HRV (the 7-night status) replaced them, and Health status already flags a
+    /// single night's HRV or resting heart rate. Saved copies disappear from Home; the cases stay because
+    /// the raw value is persisted.
+    var isRetired: Bool { self == .restingHeartRate || self == .hrv }
 
     /// Cards whose calculation isn't built yet. They stay out of the gallery until it is.
     var isPlanned: Bool {
@@ -85,14 +90,13 @@ enum CardKind: String, CaseIterable, Identifiable {
         }
     }
 
-    static let defaultSet: [CardID] = [CardKind.sleepStages, .restingHeartRate, .hrv, .steps, .activeEnergy, .lastWorkout, .last30Days]
+    static let defaultSet: [CardID] = [CardKind.sleepStages, .hrvStatus, .recovery, .steps, .activeEnergy, .lastWorkout, .last30Days]
         .map { CardID(kind: $0, variant: $0.defaultVariant) }
 
     /// Cards where today and the last 7 days answer different questions offer both; the rest only Current.
     var variants: [CardVariant] {
         switch self {
-        case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours,
-             .restingHeartRate, .hrv, .wristTemperature:
+        case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours, .wristTemperature:
             [.current, .week]
         case .sleepDuration, .recovery:
             [.week]
@@ -104,7 +108,7 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// The variant matching what the card showed before variants existed, so cards saved then keep their look.
     var defaultVariant: CardVariant {
         switch self {
-        case .exerciseMinutes, .distance, .standHours, .sleepDuration, .restingHeartRate, .hrv, .wristTemperature, .recovery:
+        case .exerciseMinutes, .distance, .standHours, .sleepDuration, .wristTemperature, .recovery:
             .week
         default:
             .current
@@ -125,8 +129,8 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .trainingReadiness: "Training readiness"
         case .loadFocus: "Load focus"
         case .restingHeartRate: "Resting HR"
-        case .hrv: "HRV"
-        case .hrvStatus: "HRV status"
+        case .hrv: "Nightly HRV"
+        case .hrvStatus: "HRV"
         case .oxygenSaturation: "Blood oxygen"
         case .respiratoryRate: "Respiratory rate"
         case .wristTemperature: "Wrist temp"

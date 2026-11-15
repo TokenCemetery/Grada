@@ -384,7 +384,7 @@ private struct DaysGrid: View {
                 PreviewCard(kind: kind, builder: builder)
             }
             HStack(spacing: 12) {
-                PreviewCard(kind: .restingHeartRate, builder: builder)
+                PreviewCard(kind: .hrvStatus, builder: builder)
                 PreviewCard(kind: .steps, builder: builder)
             }
         }

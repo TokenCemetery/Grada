@@ -304,6 +304,14 @@ nonisolated enum HRVStatus {
         }
 
         var tone: CardSnapshot.Tone { self == .balanced ? .good : .warning }
+
+        var rating: DayRating {
+            switch self {
+            case .balanced: .good
+            case .unbalanced: .fair
+            case .low: .poor
+            }
+        }
     }
 
     struct Result: Equatable {

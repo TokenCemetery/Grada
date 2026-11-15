@@ -19,9 +19,9 @@ final class HomeCard {
     /// Nil if the stored kind no longer exists in this app version.
     var kind: CardKind? { CardKind(rawValue: kindRawValue) }
 
-    /// Nil if the stored kind no longer exists. A variant the kind doesn't offer falls back to its default.
+    /// Nil if the stored kind no longer exists or is retired. A variant the kind doesn't offer falls back to its default.
     var cardID: CardID? {
-        guard let kind else { return nil }
+        guard let kind, !kind.isRetired else { return nil }
         let variant = CardVariant(rawValue: variantRawValue).flatMap { kind.variants.contains($0) ? $0 : nil }
         return CardID(kind: kind, variant: variant ?? kind.defaultVariant)
     }

@@ -151,6 +151,7 @@ struct SnapshotBuilder {
             unit: QuantityMetric.hrv.unit,
             comparison: "\(shown.state.word) · baseline \(baseline)",
             tone: shown.state.tone,
+            rating: shown.state.rating,
             chart: .line((end - chartDays + 1...end).map { HRVStatus.status(nights: nights, endingAt: $0)?.average },
                          normalRange: shown.baseline)
         )

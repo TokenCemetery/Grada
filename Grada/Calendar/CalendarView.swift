@@ -287,7 +287,7 @@ private struct DaySheet: View {
     /// Each metric once: past days show no charts, so both variants of a card would look the same.
     private var kinds: [CardKind] {
         var seen = Set<CardKind>()
-        return cards.compactMap(\.kind).filter { seen.insert($0).inserted }
+        return cards.compactMap(\.cardID?.kind).filter { seen.insert($0).inserted }
     }
 
     var body: some View {
