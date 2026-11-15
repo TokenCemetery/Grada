@@ -12,6 +12,8 @@ struct CardSnapshot {
         /// Seven nights, oldest first, each bar split by sleep stage; nil where there's no night.
         /// With a target in hours, a full bar means the target was reached.
         case sleep([SleepNight?], target: Double? = nil)
+        /// Seven days, oldest first, each bar split into light, moderate and vigorous time; nil without heart rate.
+        case intensity([[DayIntensity.Band: TimeInterval]?])
         case line([Double?], normalRange: ClosedRange<Double>?)
         /// A horizontal 0–100% goal bar, like Suunto's Steps card. Cards without a goal measure against
         /// their 7-day average instead.
@@ -35,7 +37,7 @@ struct CardSnapshot {
         /// Bar charts sit beside the value on wide cards.
         var isBars: Bool {
             switch self {
-            case .bars, .sleep: true
+            case .bars, .sleep, .intensity: true
             case .none, .line, .intraday, .progress, .range, .zones: false
             }
         }

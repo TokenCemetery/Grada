@@ -30,7 +30,7 @@ extension CardKind {
 
     var family: DetailFamily {
         switch self {
-        case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .last30Days: .total
+        case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity, .last30Days: .total
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: .sleep
         case .lastWorkout, .weeklyTraining, .racePredictor, .trainingReadiness, .loadFocus: .training
@@ -71,9 +71,9 @@ extension CardKind {
         switch self {
         case .hrv: [.healthStatus, .recovery, .hrvStatus]
         case .respiratoryRate: [.healthStatus, .recovery]
-        case .restingHeartRate: [.healthStatus, .recovery, .resources, .healthAge]
+        case .restingHeartRate: [.healthStatus, .recovery, .resources, .healthAge, .dayIntensity]
         case .oxygenSaturation, .wristTemperature: [.healthStatus]
-        case .heartRate: [.resources]
+        case .heartRate: [.resources, .dayIntensity]
         case .vo2Max: [.racePredictor, .healthAge]
         case .sleepDuration, .sleepStages: [.recovery, .sleepNeed, .resources, .healthAge]
         case .sleepConsistency: [.healthAge]
@@ -89,6 +89,7 @@ extension CardKind {
         case .resources: [.heartRate, .restingHeartRate, .sleepStages]
         case .healthAge: [.steps, .sleepDuration, .sleepConsistency, .restingHeartRate, .vo2Max, .exerciseMinutes]
         case .intensityMinutes: [.heartRate, .restingHeartRate, .exerciseMinutes]
+        case .dayIntensity: [.heartRate, .restingHeartRate]
         case .hrvStatus: [.hrv]
         default: []
         }
@@ -102,7 +103,7 @@ extension CardKind {
         case .recovery:
             "How ready your body is for strain today. Each input is checked against a published threshold: overnight HRV more than half a standard deviation below your baseline, resting heart rate more than half a standard deviation above it, under 7 hours of sleep, or breathing rate above your normal range. Good: nothing off, a good day to push. Fair: one input off. Poor: two or more; favour easy training and rest."
         case .resources:
-            "An estimate of your energy through the day. Sleep and calm rest recharge it; activity and stress, seen as a raised heart rate, drain it."
+            "An estimate of your energy through the day. Sleep and calm rest recharge it; activity and stress, seen as a raised heart rate, drain it. No published method exists for this without beat-to-beat HRV, which iPhone doesn't record through the day, so the charge and drain rates and the colour bands (borrowed from WHOOP) are Grada's own guesses. For measured effort, see Day Intensity."
         case .healthAge:
             "The age your habits and fitness point to, from steps, sleep, resting heart rate, VO₂ max and exercise over the last 30 days. VO₂ max is compared with the median for your age and sex, so it counts only when Apple Health has your sex. Pace shows whether it's moving faster or slower than time."
         case .sleepDuration, .sleepStages:
@@ -133,6 +134,8 @@ extension CardKind {
             "Minutes of brisk activity or more. Health guidelines recommend at least 150 minutes a week."
         case .intensityMinutes:
             "Minutes over the last 7 days with your heart rate at 40–59% of its reserve (moderate) or above (vigorous, counted double). The WHO recommends at least 150 a week. Days without heart rate use exercise minutes instead."
+        case .dayIntensity:
+            "Your waking time outside workouts by effort, from heart rate as a share of its reserve (max minus resting), in the American College of Sports Medicine's bands: very light below 30%, light 30–39%, moderate 40–59%, vigorous 60% and up. The big number is time at light effort or harder; workouts count in Intensity Minutes instead."
         case .distance:
             "Distance covered walking and running."
         case .floors:

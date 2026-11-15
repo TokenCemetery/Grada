@@ -67,7 +67,7 @@ enum CardKind: String, CaseIterable, Identifiable {
     case healthStatus, recovery, resources, healthAge
     case sleepDuration, sleepStages, sleepNeed, sleepConsistency
     case heartRate, restingHeartRate, hrv, hrvStatus, oxygenSaturation, respiratoryRate, wristTemperature
-    case steps, activeEnergy, exerciseMinutes, intensityMinutes, distance, floors, standHours
+    case steps, activeEnergy, exerciseMinutes, intensityMinutes, distance, floors, standHours, dayIntensity
     case lastWorkout, weeklyTraining, vo2Max, racePredictor, trainingReadiness, loadFocus
     case last30Days
 
@@ -98,7 +98,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         switch self {
         case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours, .hrvStatus, .wristTemperature:
             [.current, .week]
-        case .sleepDuration, .recovery:
+        case .sleepDuration, .recovery, .dayIntensity:
             [.week]
         default:
             [.current]
@@ -108,7 +108,7 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// The variant matching what the card showed before variants existed, so cards saved then keep their look.
     var defaultVariant: CardVariant {
         switch self {
-        case .exerciseMinutes, .distance, .standHours, .sleepDuration, .wristTemperature, .recovery, .hrvStatus:
+        case .exerciseMinutes, .distance, .standHours, .sleepDuration, .wristTemperature, .recovery, .hrvStatus, .dayIntensity:
             .week
         default:
             .current
@@ -141,6 +141,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .distance: "Distance"
         case .floors: "Floors"
         case .standHours: "Stand Hours"
+        case .dayIntensity: "Day Intensity"
         case .lastWorkout: "Last Workout"
         case .weeklyTraining: "Training Volume"
         case .vo2Max: "VO₂ Max"
@@ -174,6 +175,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .distance: "point.topleft.down.to.point.bottomright.curvepath"
         case .floors: "stairs"
         case .standHours: "figure.stand"
+        case .dayIntensity: "figure.walk.motion"
         case .lastWorkout: "stopwatch"
         case .weeklyTraining: "chart.bar"
         case .vo2Max: "bolt.heart"
@@ -186,7 +188,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .healthStatus, .recovery, .resources, .healthAge: .status
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: .sleep
         case .heartRate, .restingHeartRate, .hrv, .hrvStatus, .oxygenSaturation, .respiratoryRate, .wristTemperature: .heart
-        case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours: .activity
+        case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity: .activity
         case .lastWorkout, .weeklyTraining, .vo2Max, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .last30Days: .history
         }

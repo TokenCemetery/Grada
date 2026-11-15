@@ -21,6 +21,11 @@ struct MiniChart: View {
             TrackBars(days: nights.map { night in
                 SleepStage.chartOrder.map { stage in ((night?.hours(in: stage) ?? 0), stage.color(base: color)) }
             }, target: target)
+        case .intensity(let days):
+            // Very light time is most of the day and would flatten the rest, so it's left out of the bars.
+            TrackBars(days: days.map { day in
+                DayIntensity.Band.chartOrder.map { band in ((day?[band] ?? 0) / 3600, band.color(base: color)) }
+            })
         case .line(let values, let normalRange):
             VStack(spacing: 2) {
                 AreaLine(values: values, normalRange: normalRange, color: color)
@@ -341,6 +346,19 @@ private struct TrackBars: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Last 7 days")
+    }
+}
+
+extension DayIntensity.Band {
+    /// Bottom to top in the Day Intensity bars.
+    static let chartOrder: [DayIntensity.Band] = [.vigorous, .moderate, .light]
+
+    func color(base: Color) -> Color {
+        switch self {
+        case .vigorous: base
+        case .moderate: base.opacity(0.65)
+        case .light, .veryLight: base.opacity(0.35)
+        }
     }
 }
 

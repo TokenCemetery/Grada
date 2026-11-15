@@ -210,6 +210,54 @@ nonisolated enum IntensityMinutes {
     }
 }
 
+/// Waking time outside workouts split into the ACSM intensity bands by share of heart rate reserve
+/// (Garber et al. 2011, Med Sci Sports Exerc 43:1334, Table 1). Workouts are left to Intensity Minutes.
+nonisolated enum DayIntensity {
+    enum Band: Int, CaseIterable {
+        /// Below 30% of heart rate reserve.
+        case veryLight
+        /// 30–39%.
+        case light
+        /// 40–59%.
+        case moderate
+        /// 60% and up: ACSM's vigorous (60–89%) and near-maximal (90%+) together.
+        case vigorous
+
+        var title: String {
+            switch self {
+            case .veryLight: "Very light"
+            case .light: "Light"
+            case .moderate: "Moderate"
+            case .vigorous: "Vigorous"
+            }
+        }
+    }
+
+    /// Lower bounds of light, moderate and vigorous as a share of heart rate reserve.
+    static let lowerBounds = [0.3, 0.4, 0.6]
+
+    static func band(_ heartRate: Double, restingHeartRate: Double, maxHeartRate: Double) -> Band {
+        let share = (heartRate - restingHeartRate) / max(maxHeartRate - restingHeartRate, 1)
+        return Band(rawValue: lowerBounds.filter { share >= $0 }.count)!
+    }
+
+    /// Seconds in each band from 5-minute average heart rates, skipping readings taken asleep and any that
+    /// touch a workout, so workout time is never counted here as well as in Intensity Minutes.
+    static func time(heartRate: [TimedValue], sleep: [SleepPeriod], workouts: [DateInterval],
+                     restingHeartRate: Double, maxHeartRate: Double) -> [Band: TimeInterval] {
+        var seconds: [Band: TimeInterval] = [:]
+        for reading in heartRate {
+            let end = reading.date + Resources.step
+            let middle = reading.date + Resources.step / 2
+            let asleep = sleep.contains { $0.stage != .awake && $0.start <= middle && middle < $0.end }
+            let inWorkout = workouts.contains { $0.start < end && reading.date < $0.end }
+            guard !asleep, !inWorkout else { continue }
+            seconds[band(reading.value, restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate), default: 0] += Resources.step
+        }
+        return seconds
+    }
+}
+
 /// How much sleep the user needs tonight, like WHOOP's Sleep Planner and Garmin's Sleep Coach:
 /// a baseline, plus part of the recent sleep debt, plus extra after a training day.
 nonisolated enum SleepNeed {

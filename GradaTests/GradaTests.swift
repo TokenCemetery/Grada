@@ -1175,6 +1175,19 @@ struct PublishedReferenceTests {
         #expect(TrainingEffect.edwardsTRIMP(timeInZones: [0, 0, 45 * 60, 0, 0]) == 135)
     }
 
+    /// ACSM (Garber et al. 2011, Table 1): very light below 30% of heart rate reserve, light 30–39%, moderate
+    /// 40–59%, vigorous 60–89% (near-maximal 90%+ is folded into vigorous).
+    @Test func dayIntensityBandsFollowACSM() {
+        // Resting 50, max 190: reserve 140, so light from 92 bpm, moderate from 106 and vigorous from 134.
+        let expected: [(Double, DayIntensity.Band)] = [
+            (91.9, .veryLight), (92, .light), (105.9, .light), (106, .moderate),
+            (133.9, .moderate), (134, .vigorous), (190, .vigorous),
+        ]
+        for (heartRate, band) in expected {
+            #expect(DayIntensity.band(heartRate, restingHeartRate: 50, maxHeartRate: 190) == band, "\(heartRate) bpm")
+        }
+    }
+
     /// ACSM (Garber et al. 2011, Med Sci Sports Exerc 43:1334, Table 1): moderate is 40–59% of heart rate reserve,
     /// vigorous 60–89%. WHO 2020 (Bull et al., Br J Sports Med 54:1451): 150 minutes of moderate activity a week,
     /// or 75 of vigorous, so a vigorous minute counts as two.
@@ -1191,5 +1204,39 @@ struct PublishedReferenceTests {
         // 75 vigorous minutes meet the weekly target, as do 150 moderate ones.
         #expect(minutes(150, bins: 15) == IntensityMinutes.weeklyTarget)
         #expect(minutes(120, bins: 30) == IntensityMinutes.weeklyTarget)
+    }
+}
+
+struct DayIntensityTests {
+    private let start = Date(timeIntervalSince1970: 1_700_000_000)
+
+    /// One reading every 5 minutes from `start`.
+    private func readings(_ heartRates: [Double]) -> [TimedValue] {
+        heartRates.enumerated().map { TimedValue(date: start.addingTimeInterval(Double($0.offset) * 300), value: $0.element) }
+    }
+
+    @Test func countsFiveMinutesPerReadingByBand() {
+        let seconds = DayIntensity.time(heartRate: readings([60, 95, 95, 120, 150]), sleep: [], workouts: [],
+                                        restingHeartRate: 50, maxHeartRate: 190)
+        #expect(seconds == [.veryLight: 300, .light: 600, .moderate: 300, .vigorous: 300])
+    }
+
+    @Test func skipsSleepAndWorkoutsButNotAwakeInBed() {
+        let sleep = [SleepPeriod(start: start, end: start.addingTimeInterval(600), stage: .core),
+                     SleepPeriod(start: start.addingTimeInterval(600), end: start.addingTimeInterval(900), stage: .awake)]
+        let workout = DateInterval(start: start.addingTimeInterval(900), duration: 600)
+        let seconds = DayIntensity.time(heartRate: readings([55, 55, 60, 150, 150, 95]), sleep: sleep, workouts: [workout],
+                                        restingHeartRate: 50, maxHeartRate: 190)
+        #expect(seconds == [.veryLight: 300, .light: 300])
+    }
+
+    @MainActor
+    @Test func cardShowsTodayAndAWeekOfBands() async throws {
+        #expect(CardKind.gallery.contains(.dayIntensity))
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .dayIntensity, variant: .week)
+        #expect(snapshot.value != nil)
+        #expect(snapshot.comparison?.hasSuffix("very light") == true)
+        guard case .intensity(let days) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(days.count == 7)
     }
 }

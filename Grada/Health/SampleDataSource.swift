@@ -146,6 +146,9 @@ struct SampleDataSource: HealthDataSource {
                 base = 140
             } else if asleep.contains(where: { time >= $0.start && time < $0.end && $0.stage != .awake }) {
                 base = 51
+            } else if (12..<13).contains(calendar.component(.hour, from: time)) {
+                // A lunchtime walk: light effort, below moderate, so Intensity Minutes don't change.
+                base = 97
             } else {
                 base = 72
             }

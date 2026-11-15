@@ -88,6 +88,11 @@ struct TrendBuilder {
         case .intensityMinutes:
             return make(try await cardBuilder.intensityDays(days), period, style: .bars, unit: "min",
                         format: .number(decimals: 0), weeklyTotals: true)
+        case .dayIntensity:
+            let active = (try await cardBuilder.dayIntensityDays(days) ?? []).map { day in
+                DayValue(day: day.day, value: day.seconds.map { $0.filter { $0.key != .veryLight }.values.reduce(0, +) / 3600 })
+            }
+            return make(active, period, style: .bars, unit: "h", format: .number(decimals: 1), title: "Light or harder")
         case .standHours:
             return make(try await source.standHours(days: days), period, style: .bars, unit: "h", format: .number(decimals: 0))
         case .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .heartRate:

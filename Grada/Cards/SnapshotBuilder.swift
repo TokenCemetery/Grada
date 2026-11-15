@@ -37,6 +37,7 @@ struct SnapshotBuilder {
         case .activeEnergy: try await cumulative(.activeEnergy, goal: .activeEnergy, variant)
         case .exerciseMinutes: try await cumulative(.exerciseMinutes, variant)
         case .intensityMinutes: try await intensityMinutes()
+        case .dayIntensity: try await dayIntensity()
         case .distance: try await cumulative(.distance, variant)
         case .floors: try await cumulative(.floors, goal: .floors, variant)
         case .standHours: totals(try await source.standHours(days: 8), decimals: 0, unit: "h", variant: variant)
@@ -449,6 +450,40 @@ struct SnapshotBuilder {
             tone: total >= target ? .good : .neutral,
             chart: .progress(value: total, goal: target)
         )
+    }
+
+    /// Today's waking time at light effort or harder, with the last 7 days split by ACSM band.
+    private func dayIntensity() async throws -> CardSnapshot {
+        guard let days = try await dayIntensityDays(7) else {
+            return CardSnapshot(period: todayLabel, value: "Calibrating", comparison: "Needs resting and max heart rate")
+        }
+        guard let today = days.last?.seconds else { return .noData(period: todayLabel) }
+        let active = today.filter { $0.key != .veryLight }.values.reduce(0, +)
+        return CardSnapshot(
+            period: todayLabel,
+            value: Self.hoursMinutes(active),
+            comparison: "\(Self.hoursMinutes(today[.veryLight] ?? 0)) very light",
+            chart: .intensity(days.map(\.seconds))
+        )
+    }
+
+    /// Seconds per ACSM band for each of the last `count` days, oldest first; nil on days without heart rate.
+    /// Nil altogether until resting and max heart rate are known.
+    func dayIntensityDays(_ count: Int) async throws -> [(day: Date, seconds: [DayIntensity.Band: TimeInterval]?)]? {
+        let days = lastDays(count)
+        let restingHeartRate = Baseline.average(try await source.daily(.restingHeartRate, days: baselineDays).compactMap(\.value))
+        let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
+                                                  highestRecorded: try await source.highestHeartRate(days: 365))
+        guard let restingHeartRate, let maxHeartRate, maxHeartRate > restingHeartRate + 20 else { return nil }
+
+        let interval = DateInterval(start: days[0], end: max(now, days[count - 1]))
+        let byDay = Dictionary(grouping: try await source.heartRate(in: interval)) { calendar.startOfDay(for: $0.date) }
+        let sleep = try await source.sleepPeriods(in: interval)
+        let workouts = try await source.workouts(days: count).map { DateInterval(start: $0.start, duration: $0.duration) }
+        return days.map { day in
+            (day, byDay[day].map { DayIntensity.time(heartRate: $0, sleep: sleep, workouts: workouts,
+                                                      restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate) })
+        }
     }
 
     /// Intensity minutes for each of the last `count` days, oldest first: from heart rate where the day has
