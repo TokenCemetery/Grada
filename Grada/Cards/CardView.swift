@@ -88,7 +88,10 @@ struct CardView: View {
             MiniChart(chart: snapshot.chart, color: chartColor(snapshot))
             CardDetailView(detail: snapshot.detail, color: color)
         case .wide:
-            if snapshot.chart.isBars {
+            if case .days = snapshot.detail {
+                // The workout count is already the period line; the calendar takes the space.
+                EmptyView()
+            } else if snapshot.chart.isBars {
                 HStack(alignment: .bottom, spacing: 16) {
                     valueBlock(snapshot)
                     MiniChart(chart: snapshot.chart, color: color).frame(width: 150)
@@ -351,8 +354,8 @@ private struct WorkoutDetail: View {
     }
 }
 
-/// The last 30 days as a calendar: weekday columns, one dot per day in the color of its longest sport,
-/// bigger dots for longer workouts, today ringed. A legend names the sports, most days first.
+/// The last 30 days as a calendar: weekday columns, one dot per day split into a slice per sport by
+/// minutes, bigger dots for longer days, today ringed. A legend names the sports, most days first.
 private struct DaysGrid: View {
     let days: [WorkoutDay]
 
@@ -373,19 +376,17 @@ private struct DaysGrid: View {
                     Text(letter).font(.caption2).foregroundStyle(.secondary)
                 }
             }
-            LazyVGrid(columns: columns, spacing: 4) {
+            LazyVGrid(columns: columns, spacing: 6) {
                 ForEach(Array(cells.enumerated()), id: \.offset) { index, day in
                     ZStack {
                         if let day {
-                            Circle()
-                                .fill(day.minutes > 0 ? WorkoutColors.color(symbol: day.symbol) : Color(.tertiarySystemFill))
-                                .frame(width: diameter(day.minutes), height: diameter(day.minutes))
+                            SportPie(day: day, diameter: diameter(day.minutes))
                         }
                         if index == cells.count - 1 {
-                            Circle().strokeBorder(Color.primary.opacity(0.6), lineWidth: 1.5).frame(width: 24, height: 24)
+                            Circle().strokeBorder(Color.primary.opacity(0.6), lineWidth: 1.5).frame(width: 30, height: 30)
                         }
                     }
-                    .frame(height: 24)
+                    .frame(height: 30)
                 }
             }
             HStack(spacing: 12) {
@@ -403,12 +404,13 @@ private struct DaysGrid: View {
         .accessibilityLabel("\(days.filter { $0.minutes > 0 }.count) active days in the last 30 days")
     }
 
-    /// Up to four sports by days led, most first.
+    /// Up to four sports by the days they appear on, most first.
     private static func sports(_ days: [WorkoutDay]) -> [(name: String, symbol: String?)] {
         var counts: [String: (symbol: String?, days: Int)] = [:]
         for day in days {
-            guard let sport = day.sport else { continue }
-            counts[sport, default: (day.symbol, 0)].days += 1
+            for sport in day.sports {
+                counts[sport.name, default: (sport.symbol, 0)].days += 1
+            }
         }
         return counts.sorted { $0.value.days > $1.value.days || ($0.value.days == $1.value.days && $0.key < $1.key) }
             .prefix(4)
@@ -416,7 +418,33 @@ private struct DaysGrid: View {
     }
 
     private func diameter(_ minutes: Double) -> CGFloat {
-        minutes <= 0 ? 6 : min(10 + CGFloat(minutes) / 8, 20)
+        minutes <= 0 ? 6 : min(12 + CGFloat(minutes) / 6, 26)
+    }
+}
+
+/// A day's dot: one slice per sport, sized by its minutes, longest first from 12 o'clock. A rest day is a
+/// small grey dot.
+private struct SportPie: View {
+    let day: WorkoutDay
+    let diameter: CGFloat
+
+    var body: some View {
+        let total = max(day.minutes, .leastNonzeroMagnitude)
+        let starts = day.sports.indices.map { index in day.sports[..<index].reduce(0) { $0 + $1.minutes } / total }
+        ZStack {
+            if day.sports.isEmpty {
+                Circle().fill(Color(.tertiarySystemFill))
+            }
+            ForEach(day.sports.indices, id: \.self) { index in
+                // A stroke half the diameter wide, on a circle half the size, fills the pie slice.
+                Circle()
+                    .trim(from: starts[index], to: starts[index] + day.sports[index].minutes / total)
+                    .stroke(WorkoutColors.color(symbol: day.sports[index].symbol), lineWidth: diameter / 2)
+                    .frame(width: diameter / 2, height: diameter / 2)
+                    .rotationEffect(.degrees(-90))
+            }
+        }
+        .frame(width: diameter, height: diameter)
     }
 }
 

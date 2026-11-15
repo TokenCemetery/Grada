@@ -144,7 +144,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .lastWorkout: "Last Workout"
         case .weeklyTraining: "Training Volume"
         case .vo2Max: "VO₂ Max"
-        case .last30Days: "Last 30 Days"
+        case .last30Days: "Workouts Calendar"
         }
     }
 

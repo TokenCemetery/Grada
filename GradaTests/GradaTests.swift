@@ -312,6 +312,14 @@ struct AfterMidnightTests {
         }
     }
 
+    @Test func workoutsCalendarKeepsEverySportOfADay() async throws {
+        let snapshot = try await builder.snapshot(for: .last30Days)
+        guard case .days(let days) = snapshot.detail else { Issue.record("\(snapshot.detail)"); return }
+        let twoSports = try #require(days.first { $0.sports.count == 2 }, "Sample strength days add an evening walk")
+        #expect(twoSports.sports.map(\.name) == ["Strength", "Walk"], "Longest first")
+        #expect(twoSports.minutes == 80)
+    }
+
     @Test func healthStatusShowsYesterdaysVitals() async throws {
         let snapshot = try await builder.snapshot(for: .healthStatus)
         #expect(snapshot.period == "Yesterday")

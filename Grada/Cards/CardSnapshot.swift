@@ -70,11 +70,17 @@ struct CardSnapshot {
     }
 }
 
-/// One day's workouts: total minutes and the sport the day spent longest on.
+/// One day's workouts: minutes per sport, longest first.
 struct WorkoutDay: Equatable {
-    var minutes: Double = 0
-    var sport: String?
-    var symbol: String?
+    struct Sport: Equatable {
+        let name: String
+        let symbol: String
+        var minutes: Double
+    }
+
+    var sports: [Sport] = []
+
+    var minutes: Double { sports.reduce(0) { $0 + $1.minutes } }
 }
 
 struct VitalStatus: Equatable {

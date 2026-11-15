@@ -69,9 +69,10 @@ struct SampleDataSource: HealthDataSource {
             ("Run", "figure.run", 45), nil, ("Strength", "figure.strengthtraining.traditional", 50), nil,
             ("Ride", "figure.outdoor.cycle", 75), ("Run", "figure.run", 32), nil,
         ]
-        return lastDays(days).enumerated().reversed().compactMap { index, day in
-            guard let (name, symbol, minutes) = pattern[index % pattern.count] else { return nil }
-            return WorkoutSummary(
+        // Strength days end with an evening walk, so some days hold two sports.
+        return lastDays(days).enumerated().reversed().flatMap { index, day -> [WorkoutSummary] in
+            guard let (name, symbol, minutes) = pattern[index % pattern.count] else { return [] }
+            let morning = WorkoutSummary(
                 id: "sample-\(index)",
                 start: calendar.date(byAdding: .hour, value: 7, to: day)!,
                 duration: minutes * 60,
@@ -80,6 +81,17 @@ struct SampleDataSource: HealthDataSource {
                 energyKcal: minutes * 9,
                 averageHeartRate: 138
             )
+            guard name == "Strength" else { return [morning] }
+            let walk = WorkoutSummary(
+                id: "sample-\(index)-walk",
+                start: calendar.date(byAdding: .hour, value: 18, to: day)!,
+                duration: 30 * 60,
+                name: "Walk",
+                symbol: "figure.walk",
+                energyKcal: 120,
+                averageHeartRate: 98
+            )
+            return [walk, morning]
         }
     }
 

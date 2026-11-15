@@ -25,7 +25,7 @@ extension EnvironmentValues {
 }
 
 extension CardKind {
-    /// Last 30 days opens the Calendar tab instead of a detail screen.
+    /// Workouts Calendar opens the Calendar tab instead of a detail screen.
     var opensCalendar: Bool { self == .last30Days }
 
     var family: DetailFamily {
@@ -156,7 +156,7 @@ extension CardKind {
     }
 }
 
-/// A card that opens its detail screen when tapped; Last 30 days opens the calendar instead.
+/// A card that opens its detail screen when tapped; Workouts Calendar opens the calendar instead.
 struct CardLink: View {
     let kind: CardKind
     let snapshot: CardSnapshot?

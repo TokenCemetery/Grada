@@ -633,8 +633,9 @@ struct SnapshotBuilder {
 
     private func last30Days() async throws -> CardSnapshot {
         let workouts = try await source.workouts(days: 30)
+        // The count sits in the period line, so the calendar gets the card's height; the value isn't drawn.
         return CardSnapshot(
-            period: "Workouts",
+            period: workouts.isEmpty ? "No workouts" : workouts.count == 1 ? "1 workout" : "\(workouts.count) workouts",
             value: "\(workouts.count)",
             unit: workouts.count == 1 ? "workout" : "workouts",
             detail: .days(workoutDays(workouts, days: 30))
@@ -645,15 +646,16 @@ struct SnapshotBuilder {
     private func workoutDays(_ workouts: [WorkoutSummary], days: Int) -> [WorkoutDay] {
         let dayStarts = lastDays(days)
         var result = Array(repeating: WorkoutDay(), count: days)
-        var longest = Array(repeating: 0.0, count: days)
         for workout in workouts {
             guard let index = dayStarts.firstIndex(of: calendar.startOfDay(for: workout.start)) else { continue }
-            result[index].minutes += workout.duration / 60
-            if workout.duration > longest[index] {
-                longest[index] = workout.duration
-                result[index].sport = workout.name
-                result[index].symbol = workout.symbol
+            if let sport = result[index].sports.firstIndex(where: { $0.name == workout.name }) {
+                result[index].sports[sport].minutes += workout.duration / 60
+            } else {
+                result[index].sports.append(.init(name: workout.name, symbol: workout.symbol, minutes: workout.duration / 60))
             }
+        }
+        for index in result.indices {
+            result[index].sports.sort { $0.minutes > $1.minutes }
         }
         return result
     }
