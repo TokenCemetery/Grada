@@ -32,26 +32,13 @@ jobs:
           id=$(xcrun simctl list devices available iPhone -j \
             | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k in sorted(d, reverse=True) if 'iOS' in k for x in d[k] if x['name'].startswith('iPhone')))")
           echo "id=$id" >> "$GITHUB_OUTPUT"
-          # Cold boot takes minutes; overlap it with the build
-          xcrun simctl boot "$id" > /dev/null 2>&1 &
 
-      # Unsigned build of the unit tests (UI tests are skipped). A generic destination keeps
-      # xcodebuild from waiting on the simulator, so the boot above overlaps the build.
-      - name: Build
+      # Unsigned build and unit tests (UI tests are skipped)
+      - name: Build and test
         run: |
-          xcodebuild build-for-testing \
-            -project Grada.xcodeproj \
-            -scheme Grada \
-            -destination "generic/platform=iOS Simulator" \
-            -only-testing:GradaTests \
-            ARCHS=arm64 \
-            CODE_SIGNING_ALLOWED=NO
-
-      - name: Test
-        run: |
-          xcrun simctl bootstatus "${{ steps.simulator.outputs.id }}" -b
-          xcodebuild test-without-building \
+          xcodebuild test \
             -project Grada.xcodeproj \
             -scheme Grada \
             -destination "id=${{ steps.simulator.outputs.id }}" \
-            -only-testing:GradaTests
+            -only-testing:GradaTests \
+            CODE_SIGNING_ALLOWED=NO
