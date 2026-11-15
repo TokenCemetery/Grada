@@ -121,7 +121,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .sleepStages: "Sleep stages"
         case .sleepNeed: "Sleep need"
         case .sleepConsistency: "Consistency"
-        case .healthAge: "Health age"
+        case .healthAge: "Health Age"
         case .racePredictor: "Race predictor"
         case .trainingReadiness: "Training readiness"
         case .loadFocus: "Load focus"
@@ -200,14 +200,14 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// Wide cards whose value sits on the title row, just left of the icon, leaving the full width below for details.
     var valueBesideTitle: Bool {
         switch self {
-        case .healthAge, .lastWorkout, .racePredictor: true
+        case .lastWorkout, .racePredictor: true
         default: false
         }
     }
 
     var size: CardSize {
         switch self {
-        case .healthStatus, .sleepStages, .lastWorkout, .last30Days, .healthAge, .racePredictor, .loadFocus: .wide
+        case .healthStatus, .sleepStages, .lastWorkout, .last30Days, .racePredictor, .loadFocus: .wide
         default: .square
         }
     }

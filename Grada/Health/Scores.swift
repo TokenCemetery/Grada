@@ -381,7 +381,7 @@ nonisolated enum HealthAge {
         if let vo2 = input.vo2Max {
             // Typical VO₂ max falls about 0.35 per year from ~45 at 25.
             let expected = 45 - 0.35 * Double(max(input.age - 25, 0))
-            impacts.append(Impact(name: "VO₂ max", years: clamp((expected - vo2) * 0.4, -5, 5)))
+            impacts.append(Impact(name: "VO₂ Max", years: clamp((expected - vo2) * 0.4, -5, 5)))
         }
         if let rhr = input.restingHeartRate {
             impacts.append(Impact(name: "Resting HR", years: clamp((rhr - 60) * 0.15, -2, 4)))

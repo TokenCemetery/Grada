@@ -303,7 +303,8 @@ struct SnapshotBuilder {
         )
     }
 
-    /// Health age from the last 30 days, and pace of aging against the last 6 months.
+    /// Health age from the last 30 days, against the user's age, with the three inputs that move it most.
+    /// It changes too slowly for a 7-day chart to say anything.
     private func healthAge() async throws -> CardSnapshot {
         let period = "Last 30 days"
         guard let age = try await source.age() else {
@@ -314,15 +315,15 @@ struct SnapshotBuilder {
             return CardSnapshot(period: period, value: "Calibrating",
                                 comparison: "Needs \(HealthAge.minimumInputs) of: steps, sleep, resting HR, VO₂ max, exercise")
         }
-        let baseline = HealthAge.age(try await healthAgeInput(age: age, days: 180)) ?? recent
-        let pace = HealthAge.pace(recent: recent, baseline: baseline)
-        let contributors = HealthAge.impacts(recentInput).sorted { abs($0.years) > abs($1.years) }.prefix(4)
         return CardSnapshot(
             period: period,
             value: format(recent, 1),
             unit: "yrs",
-            comparison: "\(format(recent - Double(age), 1, signed: true)) yrs vs your age · pace \(format(pace, 1))×",
-            detail: .stats(contributors.map { (value: format($0.years, 1, signed: true), label: $0.name) })
+            comparison: "\(format(recent - Double(age), 1, signed: true)) yrs vs your age",
+            detail: .rows(HealthAge.impacts(recentInput).sorted { abs($0.years) > abs($1.years) }.prefix(3).map {
+                (label: $0.name, value: "\(format($0.years, 1, signed: true)) yrs",
+                 rating: $0.years < 0 ? .good : $0.years > 0 ? .poor : nil)
+            })
         )
     }
 

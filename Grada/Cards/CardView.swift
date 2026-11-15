@@ -70,6 +70,7 @@ struct CardView: View {
             valueBlock(snapshot)
             Spacer(minLength: 8)
             MiniChart(chart: snapshot.chart, color: color)
+            CardDetailView(detail: snapshot.detail, color: color)
         case .wide:
             if snapshot.chart.isBars {
                 HStack(alignment: .bottom, spacing: 16) {
@@ -172,10 +173,11 @@ private struct ValueText: View {
     }
 }
 
-/// Extra content for wide cards.
+/// Extra content below the value or chart.
 private struct CardDetailView: View {
     let detail: CardSnapshot.Detail
     let color: Color
+    @AppStorage("colorBlindPalette") private var colorBlind = false
 
     var body: some View {
         switch detail {
@@ -191,6 +193,19 @@ private struct CardDetailView: View {
             WorkoutDetail(workout: workout, color: color)
         case .days(let minutes):
             DaysGrid(minutes: minutes, color: color)
+        case .rows(let rows):
+            VStack(spacing: 2) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    HStack {
+                        Text(row.label).foregroundStyle(.secondary)
+                        Spacer(minLength: 4)
+                        Text(row.value).fontWeight(.semibold).monospacedDigit()
+                            .foregroundStyle(row.rating?.text(colorBlind: colorBlind) ?? .primary)
+                    }
+                    .font(.caption)
+                    .lineLimit(1)
+                }
+            }
         case .stats(let stats):
             HStack(alignment: .top, spacing: 16) {
                 ForEach(Array(stats.enumerated()), id: \.offset) { _, stat in

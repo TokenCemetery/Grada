@@ -37,8 +37,10 @@ struct CardSnapshot {
         /// Workout minutes per day for the last 30 days, oldest first.
         case days([Double])
         case vitals([VitalStatus])
-        /// A row of small labelled values, e.g. race times or health age contributors.
+        /// A row of small labelled values, e.g. race times.
         case stats([(value: String, label: String)])
+        /// A short list of labelled values, each colored by its rating, e.g. health age contributors.
+        case rows([(label: String, value: String, rating: DayRating?)])
     }
 
     var period: String
