@@ -609,8 +609,25 @@ struct SnapshotBuilder {
             period: "Workouts",
             value: "\(workouts.count)",
             unit: workouts.count == 1 ? "workout" : "workouts",
-            detail: .days(workoutMinutesPerDay(workouts, days: 30))
+            detail: .days(workoutDays(workouts, days: 30))
         )
+    }
+
+    /// Each day's total minutes and its longest sport, oldest first.
+    private func workoutDays(_ workouts: [WorkoutSummary], days: Int) -> [WorkoutDay] {
+        let dayStarts = lastDays(days)
+        var result = Array(repeating: WorkoutDay(), count: days)
+        var longest = Array(repeating: 0.0, count: days)
+        for workout in workouts {
+            guard let index = dayStarts.firstIndex(of: calendar.startOfDay(for: workout.start)) else { continue }
+            result[index].minutes += workout.duration / 60
+            if workout.duration > longest[index] {
+                longest[index] = workout.duration
+                result[index].sport = workout.name
+                result[index].symbol = workout.symbol
+            }
+        }
+        return result
     }
 
     private func workoutMinutesPerDay(_ workouts: [WorkoutSummary], days: Int) -> [Double] {

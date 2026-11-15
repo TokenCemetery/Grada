@@ -23,7 +23,7 @@ final class GradaUITests: XCTestCase {
         attachScreenshot("Home top")
 
         app.swipeUp()
-        XCTAssertTrue(app.staticTexts["Last 30 days"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Last 30 Days"].waitForExistence(timeout: 5))
         attachScreenshot("Home bottom")
 
         app.navigationBars.buttons["Edit"].tap()

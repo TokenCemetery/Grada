@@ -191,8 +191,8 @@ private struct CardDetailView: View {
             SleepStagesBar(stages: stages, color: color)
         case .workout(let workout):
             WorkoutDetail(workout: workout, color: color)
-        case .days(let minutes):
-            DaysGrid(minutes: minutes, color: color)
+        case .days(let days):
+            DaysGrid(days: days)
         case .rows(let rows):
             VStack(spacing: 2) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
@@ -329,18 +329,17 @@ private struct WorkoutDetail: View {
     }
 }
 
-/// The last 30 days as a calendar: weekday columns, one dot per day, bigger dots for longer
-/// workouts, today ringed.
+/// The last 30 days as a calendar: weekday columns, one dot per day in the color of its longest sport,
+/// bigger dots for longer workouts, today ringed. A legend names the sports, most days first.
 private struct DaysGrid: View {
-    let minutes: [Double]
-    let color: Color
+    let days: [WorkoutDay]
 
     var body: some View {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
-        let first = calendar.date(byAdding: .day, value: -(minutes.count - 1), to: today)!
+        let first = calendar.date(byAdding: .day, value: -(days.count - 1), to: today)!
         let leadingBlanks = (calendar.component(.weekday, from: first) - calendar.firstWeekday + 7) % 7
-        let cells: [Double?] = Array(repeating: nil, count: leadingBlanks) + minutes.map { $0 }
+        let cells: [WorkoutDay?] = Array(repeating: nil, count: leadingBlanks) + days.map { $0 }
         let letters = calendar.veryShortStandaloneWeekdaySymbols
         let header = (0..<7).map { letters[(calendar.firstWeekday - 1 + $0) % 7] }
         let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
@@ -353,12 +352,12 @@ private struct DaysGrid: View {
                 }
             }
             LazyVGrid(columns: columns, spacing: 4) {
-                ForEach(Array(cells.enumerated()), id: \.offset) { index, value in
+                ForEach(Array(cells.enumerated()), id: \.offset) { index, day in
                     ZStack {
-                        if let value {
+                        if let day {
                             Circle()
-                                .fill(value > 0 ? color : Color(.tertiarySystemFill))
-                                .frame(width: diameter(value), height: diameter(value))
+                                .fill(day.minutes > 0 ? WorkoutColors.color(symbol: day.symbol) : Color(.tertiarySystemFill))
+                                .frame(width: diameter(day.minutes), height: diameter(day.minutes))
                         }
                         if index == cells.count - 1 {
                             Circle().strokeBorder(Color.primary.opacity(0.6), lineWidth: 1.5).frame(width: 24, height: 24)
@@ -367,13 +366,55 @@ private struct DaysGrid: View {
                     .frame(height: 24)
                 }
             }
+            HStack(spacing: 12) {
+                ForEach(Self.sports(days), id: \.name) { sport in
+                    HStack(spacing: 4) {
+                        Circle().fill(WorkoutColors.color(symbol: sport.symbol)).frame(width: 8, height: 8)
+                        Text(sport.name).font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.top, 2)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(minutes.filter { $0 > 0 }.count) active days in the last 30 days")
+        .accessibilityLabel("\(days.filter { $0.minutes > 0 }.count) active days in the last 30 days")
+    }
+
+    /// Up to four sports by days led, most first.
+    private static func sports(_ days: [WorkoutDay]) -> [(name: String, symbol: String?)] {
+        var counts: [String: (symbol: String?, days: Int)] = [:]
+        for day in days {
+            guard let sport = day.sport else { continue }
+            counts[sport, default: (day.symbol, 0)].days += 1
+        }
+        return counts.sorted { $0.value.days > $1.value.days || ($0.value.days == $1.value.days && $0.key < $1.key) }
+            .prefix(4)
+            .map { (name: $0.key, symbol: $0.value.symbol) }
     }
 
     private func diameter(_ minutes: Double) -> CGFloat {
         minutes <= 0 ? 6 : min(10 + CGFloat(minutes) / 8, 20)
+    }
+}
+
+/// One color per sport, keyed by the workout symbol Apple Health workouts are stored with.
+enum WorkoutColors {
+    static func color(symbol: String?) -> Color {
+        switch symbol {
+        case "figure.run": .orange
+        case "figure.walk": .yellow
+        case "figure.hiking": .brown
+        case "figure.outdoor.cycle": .purple
+        case "figure.pool.swim": .blue
+        case "figure.strengthtraining.traditional": .red
+        case "figure.highintensity.intervaltraining": .pink
+        case "figure.yoga": .mint
+        case "figure.rower": .cyan
+        case "figure.elliptical": .indigo
+        case "figure.skiing.downhill": .teal
+        default: .gray
+        }
     }
 }
 

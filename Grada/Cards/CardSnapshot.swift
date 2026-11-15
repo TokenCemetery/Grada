@@ -36,8 +36,8 @@ struct CardSnapshot {
         case none
         case sleepStages([SleepStage: TimeInterval])
         case workout(WorkoutSummary)
-        /// Workout minutes per day for the last 30 days, oldest first.
-        case days([Double])
+        /// Workouts per day for the last 30 days, oldest first.
+        case days([WorkoutDay])
         case vitals([VitalStatus])
         /// A row of small labelled values, e.g. race times.
         case stats([(value: String, label: String)])
@@ -59,6 +59,13 @@ struct CardSnapshot {
     static func noData(period: String) -> CardSnapshot {
         CardSnapshot(period: period, value: nil)
     }
+}
+
+/// One day's workouts: total minutes and the sport the day spent longest on.
+struct WorkoutDay: Equatable {
+    var minutes: Double = 0
+    var sport: String?
+    var symbol: String?
 }
 
 struct VitalStatus: Equatable {
