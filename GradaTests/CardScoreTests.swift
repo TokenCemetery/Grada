@@ -32,12 +32,14 @@ struct SleepScoreTests {
         #expect(result == SleepScore.Result(score: 100, rating: .good, reason: "All indicators met"))
     }
 
-    /// NSF cut-offs: efficiency 85%, WASO 20 minutes, one awakening over 5 minutes (two from 65).
+    /// NSF cut-offs: efficiency 85%, WASO 20 minutes (30 from 65), one awakening over 5 minutes (two from 65).
     @Test func nsfCutOffs() throws {
         let short = try #require(SleepScore.score(quality: quality(asleepHours: 6.9), need: 7 * 3600, regularity: 85, age: 35))
         #expect(short == SleepScore.Result(score: 80, rating: .fair, reason: "Short sleep"))
         let awake = try #require(SleepScore.score(quality: quality(wakeMinutes: 21), need: 7 * 3600, regularity: 85, age: 35))
         #expect(awake.reason == "Long time awake")
+        #expect(try #require(SleepScore.score(quality: quality(wakeMinutes: 25), need: 7 * 3600, regularity: 85, age: 70)).rating == .good)
+        #expect(try #require(SleepScore.score(quality: quality(wakeMinutes: 31), need: 7 * 3600, regularity: 85, age: 70)).reason == "Long time awake")
         // 90 minutes awake in 8 hours asleep is 84% efficiency and over 20 minutes of WASO.
         let restless = try #require(SleepScore.score(quality: quality(wakeMinutes: 90), need: 7 * 3600, regularity: 85, age: 35))
         #expect(restless == SleepScore.Result(score: 60, rating: .poor, reason: "Low sleep efficiency · 1 more"))

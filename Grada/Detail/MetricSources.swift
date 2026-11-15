@@ -17,14 +17,14 @@ struct MetricSource: Hashable {
     }
 
     // Heart rate and HRV
-    static let hopkins2000 = MetricSource("Hopkins 2000 · Sports Medicine",
-                                          "Half a standard deviation as the smallest worthwhile change",
-                                          doi: "10.2165/00007256-200030010-00001")
-    static let plews2013 = MetricSource("Plews et al. 2013 · Sports Medicine",
-                                        "Tracking overnight HRV against a personal baseline",
-                                        doi: "10.1007/s40279-013-0071-8")
+    static let leMeur2013 = MetricSource("Le Meur et al. 2013 · Med Sci Sports Exerc",
+                                         "Half of HRV's usual variation as the smallest change that matters",
+                                         doi: "10.1249/mss.0b013e3182980125")
+    static let plews2012 = MetricSource("Plews et al. 2012 · Eur J Appl Physiol",
+                                        "Tracking the 7-day rolling average of HRV; a full variation below as a warning",
+                                        doi: "10.1007/s00421-012-2354-4")
     static let buchheit2014 = MetricSource("Buchheit 2014 · Frontiers in Physiology",
-                                           "The 7-day HRV average against its baseline range",
+                                           "Reviews both thresholds; no fraction has been validated",
                                            doi: "10.3389/fphys.2014.00073")
     static let tanaka2001 = MetricSource("Tanaka, Monahan & Seals 2001 · J Am Coll Cardiol",
                                          "Max heart rate from age: 208 − 0.7 × age",
@@ -72,10 +72,10 @@ struct MetricSource: Hashable {
                                          "Three intensity zones at 82% and 88% of max heart rate; about 80% of training easy",
                                          doi: "10.1123/ijspp.5.3.276")
     static let seilerKjerland2006 = MetricSource("Seiler & Kjerland 2006 · Scand J Med Sci Sports",
-                                                 "About 90% of training time easy when counted by heart rate",
+                                                 "Three intensity zones from the two ventilatory thresholds",
                                                  doi: "10.1111/j.1600-0838.2004.00418.x")
     static let sylta2014 = MetricSource("Sylta et al. 2014 · Int J Sports Physiol Perform",
-                                        "Grouping heart rate zones into three the same way",
+                                        "Counted by time, 96% of elite skiers' training was low intensity",
                                         doi: "10.1123/ijspp.2013-0298")
     static let stanley2013 = MetricSource("Stanley, Peake & Buchheit 2013 · Sports Medicine",
                                           "HRV recovers in 24 hours after easy exercise, 24–48 after threshold, 48+ after hard",
@@ -103,7 +103,7 @@ struct MetricSource: Hashable {
                                          "Mortality risk by daily steps",
                                          doi: "10.1016/S2468-2667(21)00302-9")
     static let cappuccio2010 = MetricSource("Cappuccio et al. 2010 · Sleep",
-                                            "Mortality risk of short and long sleep",
+                                            "Mortality risk of short and long sleep; studies drew the lines differently",
                                             doi: "10.1093/sleep/33.5.585")
     static let arem2015 = MetricSource("Arem et al. 2015 · JAMA Intern Med",
                                        "Mortality risk by weekly exercise",
@@ -114,8 +114,8 @@ extension CardKind {
     /// The studies a calculated metric rests on. Raw Apple Health readings have none.
     var sources: [MetricSource] {
         switch self {
-        case .recovery: [.hopkins2000, .plews2013, .buchheit2014, .watson2015]
-        case .hrvStatus: [.plews2013, .buchheit2014, .hopkins2000]
+        case .recovery: [.leMeur2013, .plews2012, .buchheit2014, .watson2015]
+        case .hrvStatus: [.plews2012, .leMeur2013, .buchheit2014]
         case .healthAge:
             [.finch1990, .kodama2009, .kaminsky2015, .zhang2016, .ostchega2011, .paluch2022, .cappuccio2010, .arem2015]
         case .sleepNeed: [.watson2015, .vanDongen2003, .kitamura2016]
@@ -125,7 +125,7 @@ extension CardKind {
         case .dayIntensity: [.garber2011, .tanaka2001]
         case .strain: [.edwards1993, .hulin2016, .gabbett2016, .impellizzeri2020, .tanaka2001]
         case .recoveryTime: [.stanley2013, .seiler2010, .tanaka2001]
-        case .trainingReadiness: [.ohayon2017, .stanley2013, .plews2013, .gabbett2016, .watson2015]
+        case .trainingReadiness: [.ohayon2017, .stanley2013, .plews2012, .gabbett2016, .watson2015]
         case .loadFocus: [.seiler2010, .seilerKjerland2006, .sylta2014, .tanaka2001]
         case .vo2Max: [.kaminsky2015]
         case .racePredictor: [.danielsGilbert1979]
@@ -144,6 +144,8 @@ extension CardKind {
             "No published method estimates energy through the day without beat-to-beat HRV, which iPhone doesn't record. The charge and drain rates are Grada's own, and the colour bands are borrowed from WHOOP."
         case .sleepScore:
             "The indicators come from the studies above. Counting each the same is Grada's choice; the experts didn't weigh them."
+        case .recoveryTime:
+            "The review grades intensity by physiological thresholds, not heart rate. Placing them at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices."
         case .trainingReadiness:
             "Garmin doesn't publish how it weighs these inputs and no study has tested a weighting, so each counts the same."
         default: nil

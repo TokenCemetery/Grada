@@ -28,8 +28,9 @@ nonisolated enum Recovery {
         let reason: String
     }
 
-    /// The smallest worthwhile change: 0.5 SD of the baseline (Hopkins 2000), as used for HRV-guided training
-    /// (Plews et al. 2013, Buchheit 2014). Recovery only flags the direction that signals fatigue.
+    /// The smallest worthwhile change: 0.5 SD of the baseline. On ln(HRV) one SD is about the coefficient of
+    /// variation, so this is the 0.5 × CV that Le Meur et al. 2013 used and Buchheit 2014 reviews; no study has
+    /// validated a particular fraction. Recovery only flags the direction that signals fatigue.
     static let smallestWorthwhileChangeInSD = 0.5
     /// AASM/SRS consensus: adults need at least 7 hours (Watson et al. 2015).
     static let minimumSleep = SleepNeed.baseline
@@ -413,7 +414,7 @@ nonisolated enum SleepConsistency {
 
 /// A 0–100 sleep score: the share of good-sleep indicators a night meets. The quality indicators and their cut-offs
 /// are the National Sleep Foundation's consensus (Ohayon et al. 2017, Sleep Health 3:6): sleep efficiency of 85% or
-/// more, at most 20 minutes awake after falling asleep, and at most one awakening longer than 5 minutes (two from 65).
+/// more, at most 20 minutes awake after falling asleep (30 from 65), and at most one awakening longer than 5 minutes (two from 65).
 /// Duration is checked against the night's Sleep Need, and timing against the Sleep Regularity Index. The panel found
 /// no consensus on sleep stages as a quality marker, so the stage mix isn't scored; sleep latency isn't either, as
 /// Apple Health doesn't reliably record time in bed before sleep. No study weighs the indicators, so each counts
@@ -440,8 +441,12 @@ nonisolated enum SleepScore {
     }
 
     static let minimumEfficiency = 0.85
-    static let maximumWakeAfterOnset: TimeInterval = 20 * 60
     static let longAwakening: TimeInterval = 5 * 60
+
+    /// NSF: up to 20 minutes awake is still good sleep for adults, and 30 from 65.
+    static func maximumWakeAfterOnset(age: Int?) -> TimeInterval {
+        (age ?? 0) >= 65 ? 30 * 60 : 20 * 60
+    }
 
     /// NSF: one awakening is still good sleep for adults, and two for older adults.
     static func maximumLongAwakenings(age: Int?) -> Int {
@@ -474,7 +479,7 @@ nonisolated enum SleepScore {
         let checks: [(met: Bool, miss: String)] = [
             (quality.asleep >= need, "Short sleep"),
             (quality.efficiency >= minimumEfficiency, "Low sleep efficiency"),
-            (quality.wakeAfterOnset <= maximumWakeAfterOnset, "Long time awake"),
+            (quality.wakeAfterOnset <= maximumWakeAfterOnset(age: age), "Long time awake"),
             (quality.longAwakenings <= maximumLongAwakenings(age: age), "Woke up often"),
             (SleepConsistency.rating(regularity) != .poor, "Irregular schedule"),
         ]
@@ -527,10 +532,12 @@ nonisolated enum HRVStatus {
     /// Garmin also needs about 3 weeks: 14 baseline nights plus a 7-night window.
     static let minimumBaselineNights = 14
     static let minimumWindowNights = 3
-    /// The HRV-guided training method (Plews et al. 2012/2013, Buchheit 2014): the 7-night average of ln(HRV)
-    /// against the baseline mean ± the smallest worthwhile change, 0.5 SD of ln(HRV) (Hopkins 2000).
+    /// The HRV-guided training method: the 7-day rolling average of ln(HRV) (Plews et al. 2012, Eur J Appl Physiol
+    /// 112:3729) against the baseline mean ± a fraction of its spread. On the log scale one SD is about the
+    /// coefficient of variation, so this is Le Meur et al. 2013's 0.5 × CV (Med Sci Sports Exerc 45:2061), and Low,
+    /// a full SD below, is Plews et al.'s 1 × CV. Buchheit 2014 (Front Physiol 5:73) reviews both and notes no
+    /// fraction has been validated.
     private static let smallestWorthwhileChangeInSD = 0.5
-    /// Low is a full SD below the baseline mean: twice the smallest worthwhile change.
     private static let lowInSD = 1.0
 
     /// Status for the window ending at `end`, from overnight HRV per night (nil without a reading),
@@ -633,7 +640,7 @@ nonisolated enum HealthAge {
         VO2MaxZones.bounds(age: age, sex: sex)[1]
     }
 
-    /// Median resting pulse for the age and sex in NHANES 1999–2008 (Ostchega et al. 2011, NHSR 41, Table 1):
+    /// Median resting pulse for the age and sex in NHANES 1999–2008 (Ostchega et al. 2011, NHSR 41, Tables 2 and 3):
     /// ages 20–39, 40–59, 60–79 and 80+. That pulse was taken seated after 4 minutes' rest; Apple's resting heart
     /// rate is usually a little lower, which errs toward a younger health age.
     static func expectedRestingHeartRate(age: Int, sex: BiologicalSex) -> Double {
@@ -643,8 +650,8 @@ nonisolated enum HealthAge {
 
     /// Mortality risk against the lowest quartile, from Paluch et al. 2022 (Lancet Public Health 7:e219): quartile
     /// medians of 3553, 5801, 7842 and 10 901 steps had HRs of 1, 0.60, 0.55 and 0.47. Between medians the
-    /// log-risk is interpolated; beyond them it stays flat. References are the pooled medians for under-60s
-    /// (7803) and 60 and over (5649).
+    /// log-risk is interpolated; beyond them it stays flat. References are the median of the cohorts' median steps
+    /// for under-60s (7803) and 60 and over (5649), as reported in the paper.
     static func stepsRisk(_ steps: Double) -> Double {
         let points: [(steps: Double, risk: Double)] = [(3_553, 1), (5_801, 0.60), (7_842, 0.55), (10_901, 0.47)]
         guard steps > points[0].steps else { return points[0].risk }
@@ -655,16 +662,16 @@ nonisolated enum HealthAge {
     }
 
     /// Cappuccio et al. 2010 (Sleep 33:585): RR 1.12 for short and 1.30 for long sleep against the studies'
-    /// reference, mostly 7 or 7–8 hours.
+    /// reference, mostly 7 or 7–8 hours. The pooled studies drew the lines differently (short from ≤4 to <7 hours,
+    /// long from >8 to ≥12), so under 7 and over 8 hours is the nearest single reading of their reference.
     static func sleepRisk(_ hours: Double) -> Double {
         if hours < 7 { return 1.12 }
         return hours > 8 ? 1.30 : 1
     }
 
     /// Arem et al. 2015 (JAMA Intern Med 175:959), as multiples of the 150-minute guideline against none:
-    /// below it HR 0.80, 1–2× 0.69, 2–3× 0.63, 3–5× 0.61 (5–10× is taken as the same; not confirmed), 10× and up
-    /// 0.69. Returned against the guideline
-    /// (1–2×), so meeting it adds nothing. Exercise minutes stand in for the study's moderate-intensity minutes.
+    /// below it HR 0.80, 1–2× 0.69, 2–3× 0.63, 3–5× 0.61, 5–10× 0.61, 10× and up
+    /// 0.69 (0.68 in the author manuscript). Returned against the guideline (1–2×), so meeting it adds nothing. Exercise minutes stand in for the study's moderate-intensity minutes.
     static func exerciseRisk(_ minutesPerWeek: Double) -> Double {
         let multiple = minutesPerWeek / 150
         let risk = switch multiple {
@@ -852,9 +859,10 @@ nonisolated enum Strain {
 }
 
 /// Seiler's three intensity zones by share of max heart rate: low below the first ventilatory threshold, threshold
-/// between the two, high above the second. Seiler 2010 (Int J Sports Physiol Perform 5:276, Table 1) puts the
-/// Norwegian Olympic scale's zone 3, the band between the thresholds, at 82–87% of max heart rate, and Sylta et al.
-/// 2014 (Int J Sports Physiol Perform 9:100) collapsed it into these three zones the same way.
+/// between the two, high above the second. Seiler & Kjerland 2006 (Scand J Med Sci Sports
+/// 16:49) built the three zones from those thresholds. Seiler 2010 (Int J Sports Physiol Perform 5:276, Table 1)
+/// shows the Norwegian Olympic five-zone scale, whose zone 3, the band between the thresholds, is 82–87% of max
+/// heart rate; Sylta et al. 2014 (Int J Sports Physiol Perform 9:100) collapsed that scale into three zones.
 nonisolated enum IntensityZones {
     enum Zone: Int, CaseIterable {
         case low, threshold, high
@@ -891,8 +899,9 @@ nonisolated enum IntensityZones {
 /// The last 4 weeks of workout time by intensity zone, against the polarized model: Seiler 2010 (Int J Sports
 /// Physiol Perform 5:276) found successful endurance athletes doing about 80% of their training at low intensity,
 /// below the first ventilatory threshold, and most of the rest at high intensity. Seiler counted sessions; counted
-/// by heart rate time, the same athletes' low share is higher still (Seiler & Kjerland 2006, Scand J Med Sci Sports
-/// 16:49: about 90%), so 80% is the lenient end of the target. The evidence comes from endurance athletes.
+/// by heart rate time the low share is higher still (Sylta et al. 2014, Int J Sports Physiol Perform 9:100: elite
+/// skiers spent 96% of their time in zone 1 though 87% of their sessions were low), so 80% is the lenient end of
+/// the target. The evidence comes from endurance athletes.
 nonisolated enum LoadFocus {
     static let days = 28
     static let lowTarget = 0.8
