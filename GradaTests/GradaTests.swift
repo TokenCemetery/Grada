@@ -6,13 +6,79 @@ import Testing
 @MainActor
 struct HomeLayoutTests {
     @Test func squaresPairUpAndWideCardsFillARow() {
-        let rows = HomeLayout.rows(for: [.sleepStages, .restingHeartRate, .hrv, .steps, .lastWorkout, .activeEnergy])
+        let rows = HomeLayout.rows(for: [CardKind.sleepStages, .restingHeartRate, .hrv, .steps, .lastWorkout, .activeEnergy])
         #expect(rows == [[.sleepStages], [.restingHeartRate, .hrv], [.steps], [.lastWorkout], [.activeEnergy]])
     }
 
     @Test func defaultSetLayout() {
-        let rows = HomeLayout.rows(for: CardKind.defaultSet)
+        let rows = HomeLayout.rows(for: CardKind.defaultSet).map { $0.map(\.kind) }
         #expect(rows == [[.sleepStages], [.restingHeartRate, .hrv], [.steps, .activeEnergy], [.lastWorkout], [.last30Days]])
+    }
+}
+
+@MainActor
+struct CardVariantTests {
+    private let builder = SnapshotBuilder(source: SampleDataSource())
+
+    @Test func cardsSavedBeforeVariantsKeepTheirLook() {
+        let card = HomeCard(CardID(kind: .distance), position: 0)
+        card.variantRawValue = ""
+        #expect(card.cardID == CardID(kind: .distance, variant: .week))
+    }
+
+    @Test func unsupportedVariantFallsBackToTheDefault() {
+        let card = HomeCard(CardID(kind: .heartRate, variant: .week), position: 0)
+        #expect(card.cardID == CardID(kind: .heartRate, variant: .current))
+    }
+
+    @Test func everyVariantBuildsFromSampleData() async throws {
+        for card in CardID.gallery {
+            let snapshot = try await builder.snapshot(for: card.kind, variant: card.variant)
+            #expect(snapshot.value != nil, "\(card) has no value")
+        }
+    }
+
+    @Test func totalsWithAGoal() async throws {
+        var builder = builder
+        builder.goals = GoalHistory([GoalEntry(metric: .steps, value: 9_000, effectiveFrom: Calendar.current.startOfDay(for: .now), reason: .edit)])
+        let current = try await builder.snapshot(for: .steps, variant: .current)
+        let week = try await builder.snapshot(for: .steps, variant: .week)
+        guard case .progress(_, 9_000, false) = current.chart else { Issue.record("\(current.chart)"); return }
+        guard case .bars(let days, 9_000) = week.chart else { Issue.record("\(week.chart)"); return }
+        #expect(days.count == 7)
+        #expect(current.value == week.value)
+    }
+
+    @Test func totalsWithoutAGoalUseTheAverage() async throws {
+        let current = try await builder.snapshot(for: .distance, variant: .current)
+        let week = try await builder.snapshot(for: .distance, variant: .week)
+        guard case .progress(_, _, true) = current.chart else { Issue.record("\(current.chart)"); return }
+        guard case .bars(_, nil) = week.chart else { Issue.record("\(week.chart)"); return }
+    }
+
+    @Test func sleepFillsTowardItsGoal() async throws {
+        let current = try await builder.snapshot(for: .sleepDuration, variant: .current)
+        let week = try await builder.snapshot(for: .sleepDuration, variant: .week)
+        guard case .progress = current.chart else { Issue.record("\(current.chart)"); return }
+        guard case .sleep(let nights, let target?) = week.chart else { Issue.record("\(week.chart)"); return }
+        #expect(nights.count == 7)
+        #expect(target > 0)
+    }
+
+    @Test func vitalsMarkTheRangeOrDrawTheWeek() async throws {
+        let current = try await builder.snapshot(for: .restingHeartRate, variant: .current)
+        let week = try await builder.snapshot(for: .restingHeartRate, variant: .week)
+        guard case .range = current.chart else { Issue.record("\(current.chart)"); return }
+        guard case .line(let values, let range) = week.chart else { Issue.record("\(week.chart)"); return }
+        #expect(values.count == 7)
+        #expect(range != nil)
+    }
+
+    @Test func recoveryFillsTowardHundred() async throws {
+        let current = try await builder.snapshot(for: .recovery, variant: .current)
+        let week = try await builder.snapshot(for: .recovery, variant: .week)
+        guard case .progress(_, 100, false) = current.chart else { Issue.record("\(current.chart)"); return }
+        guard case .bars(_, 100) = week.chart else { Issue.record("\(week.chart)"); return }
     }
 }
 
@@ -186,7 +252,7 @@ struct SleepChartTests {
 
     @Test func sleepCardsChartSevenNights() async throws {
         let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepStages)
-        guard case .sleep(let nights) = snapshot.chart else { Issue.record("Expected a sleep chart"); return }
+        guard case .sleep(let nights, _) = snapshot.chart else { Issue.record("Expected a sleep chart"); return }
         #expect(nights.count == 7)
         #expect(nights.last??.stages[.deep] != nil)
     }
@@ -713,7 +779,7 @@ struct GoalCardTests {
         let snapshot = try await builder.snapshot(for: .steps)
         let goalText = 1_000_000.0.formatted(.number.precision(.fractionLength(0)))
         #expect(snapshot.comparison?.hasSuffix("of \(goalText)") == true, "\(snapshot.comparison ?? "")")
-        guard case .progress(_, let goal) = snapshot.chart else {
+        guard case .progress(_, let goal, _) = snapshot.chart else {
             Issue.record("Expected a progress bar")
             return
         }

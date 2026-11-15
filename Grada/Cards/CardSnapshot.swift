@@ -6,13 +6,17 @@ struct CardSnapshot {
 
     enum Chart {
         case none
-        /// Seven values, oldest first; the last one is today.
-        case bars([Double?])
+        /// Seven values, oldest first; the last one is today. With a target, a full bar means the target was reached.
+        case bars([Double?], target: Double? = nil)
         /// Seven nights, oldest first, each bar split by sleep stage; nil where there's no night.
-        case sleep([SleepNight?])
+        /// With a target in hours, a full bar means the target was reached.
+        case sleep([SleepNight?], target: Double? = nil)
         case line([Double?], normalRange: ClosedRange<Double>?)
-        /// A horizontal 0–100% goal bar, like Suunto's Steps card.
-        case progress(value: Double, goal: Double)
+        /// A horizontal 0–100% goal bar, like Suunto's Steps card. Cards without a goal measure against
+        /// their 7-day average instead.
+        case progress(value: Double, goal: Double, isAverage: Bool = false)
+        /// Today's value as a marker on a track with the personal normal range shaded.
+        case range(value: Double, normalRange: ClosedRange<Double>)
         /// Today from 0:00: hours since midnight and value. A nil domain fits the values.
         case intraday([(hour: Double, value: Double)], domain: ClosedRange<Double>?)
 
@@ -20,7 +24,7 @@ struct CardSnapshot {
         var isBars: Bool {
             switch self {
             case .bars, .sleep: true
-            case .none, .line, .intraday, .progress: false
+            case .none, .line, .intraday, .progress, .range: false
             }
         }
     }

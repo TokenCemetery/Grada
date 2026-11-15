@@ -12,7 +12,8 @@ struct HomeView: View {
     @AppStorage("didSeedHomeCards") private var didSeedHomeCards = false
     @State private var isCustomizing = false
 
-    private var kinds: [CardKind] { cards.compactMap(\.kind) }
+    private var cardIDs: [CardID] { cards.compactMap(\.cardID) }
+    private let healthStatus = CardID(kind: .healthStatus)
     private var goals: GoalHistory { GoalHistory(goalChanges) }
 
     var body: some View {
@@ -25,8 +26,8 @@ struct HomeView: View {
                     if let progress = model.importer?.historyProgress {
                         ImportProgressView(progress: progress)
                     }
-                    card(.healthStatus)
-                    ForEach(HomeLayout.rows(for: kinds), id: \.self) { row in
+                    card(healthStatus)
+                    ForEach(HomeLayout.rows(for: cardIDs), id: \.self) { row in
                         HStack(alignment: .top, spacing: 12) {
                             ForEach(row) { card($0) }
                             if row.count == 1, row[0].size == .square {
@@ -56,21 +57,21 @@ struct HomeView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await refresh() } }
         }
-        .onChange(of: kinds) { oldKinds, newKinds in
+        .onChange(of: cardIDs) { oldCards, newCards in
             removeDuplicateCards()
-            let added = newKinds.filter { !oldKinds.contains($0) && model.snapshots[$0] == nil }
+            let added = newCards.filter { !oldCards.contains($0) && model.snapshots[$0] == nil }
             if !added.isEmpty { Task { await model.reload(added, goals: goals) } }
         }
         .onChange(of: model.importer?.revision) {
-            Task { await model.reload([.healthStatus] + kinds, goals: goals) }
+            Task { await model.reload([healthStatus] + cardIDs, goals: goals) }
         }
         .onChange(of: goals) {
-            Task { await model.reload([.healthStatus] + kinds, goals: goals) }
+            Task { await model.reload([healthStatus] + cardIDs, goals: goals) }
         }
     }
 
-    private func card(_ kind: CardKind) -> some View {
-        CardLink(kind: kind, snapshot: model.snapshots[kind])
+    private func card(_ card: CardID) -> some View {
+        CardLink(kind: card.kind, snapshot: model.snapshots[card])
     }
 
     private func refresh() async {
@@ -78,24 +79,25 @@ struct HomeView: View {
         do { try await store.adjustIfNeeded() } catch {
             Logger(subsystem: "Grada", category: "Goals").error("Adjusting goals failed: \(error.localizedDescription)")
         }
-        await model.refresh([.healthStatus] + kinds, goals: store.history())
+        await model.refresh([healthStatus] + cardIDs, goals: store.history())
     }
 
     private func seedDefaultCardsIfNeeded() {
         guard !didSeedHomeCards else { return }
         if cards.isEmpty {
-            for (position, kind) in CardKind.defaultSet.enumerated() {
-                modelContext.insert(HomeCard(kind: kind, position: position))
+            for (position, card) in CardKind.defaultSet.enumerated() {
+                modelContext.insert(HomeCard(card, position: position))
             }
         }
         didSeedHomeCards = true
     }
 
     /// A second device seeds the default cards before iCloud delivers the existing ones,
-    /// so the same card can arrive twice. Keep the first of each kind.
+    /// so the same card can arrive twice. Keep the first of each kind and variant.
     private func removeDuplicateCards() {
-        var seen = Set<String>()
-        for card in cards where !seen.insert(card.kindRawValue).inserted {
+        var seen = Set<CardID>()
+        for card in cards {
+            guard let id = card.cardID, !seen.insert(id).inserted else { continue }
             modelContext.delete(card)
         }
     }

@@ -284,7 +284,11 @@ private struct DaySheet: View {
     @State private var snapshots: [CardKind: CardSnapshot] = [:]
     @State private var loadedDay: Date?
 
-    private var kinds: [CardKind] { cards.compactMap(\.kind) }
+    /// Each metric once: past days show no charts, so both variants of a card would look the same.
+    private var kinds: [CardKind] {
+        var seen = Set<CardKind>()
+        return cards.compactMap(\.kind).filter { seen.insert($0).inserted }
+    }
 
     var body: some View {
         NavigationStack {

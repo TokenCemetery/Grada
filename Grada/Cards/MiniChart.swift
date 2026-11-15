@@ -12,20 +12,22 @@ struct MiniChart: View {
         switch chart {
         case .none:
             EmptyView()
-        case .bars(let values):
-            TrackBars(days: values.map { [($0 ?? 0, color)] })
-        case .sleep(let nights):
+        case .bars(let values, let target):
+            TrackBars(days: values.map { [($0 ?? 0, color)] }, target: target)
+        case .sleep(let nights, let target):
             TrackBars(days: nights.map { night in
                 SleepStage.chartOrder.map { stage in ((night?.hours(in: stage) ?? 0), stage.color(base: color)) }
-            })
+            }, target: target)
         case .line(let values, let normalRange):
             VStack(spacing: 2) {
                 AreaLine(values: values, normalRange: normalRange, color: color)
                     .frame(height: Self.plotHeight)
                 WeekdayLabels()
             }
-        case .progress(let value, let goal):
-            GoalBar(share: goal > 0 ? value / goal : 0, color: color)
+        case .progress(let value, let goal, let isAverage):
+            GoalBar(share: goal > 0 ? value / goal : 0, isAverage: isAverage, color: color)
+        case .range(let value, let normalRange):
+            RangeBar(value: value, normalRange: normalRange, color: color)
         case .intraday(let points, let domain):
             VStack(spacing: 2) {
                 DayLine(points: points, domain: domain, color: color)
@@ -70,9 +72,11 @@ private struct DayLine: View {
     }
 }
 
-/// Progress toward a goal on a full-width track, with 0% and 100% marks below.
+/// Progress toward a goal on a full-width track, with ticks every 10% and 0% and 100% marks below.
 private struct GoalBar: View {
     let share: Double
+    /// Measured against the 7-day average rather than a goal.
+    let isAverage: Bool
     let color: Color
 
     var body: some View {
@@ -85,17 +89,63 @@ private struct GoalBar: View {
                 }
             }
             .frame(height: 8)
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(0...10, id: \.self) { tick in
+                    Rectangle().frame(width: 1, height: tick % 5 == 0 ? 5 : 3)
+                    if tick < 10 { Spacer(minLength: 0) }
+                }
+            }
+            .foregroundStyle(.tertiary)
             HStack {
                 Text("0%")
                 Spacer()
-                Text("100%")
+                Text(isAverage ? "7-day avg" : "100%")
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
         .frame(height: MiniChart.plotHeight + 16)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(Int((share * 100).rounded()))% of goal")
+        .accessibilityLabel("\(Int((share * 100).rounded()))% of \(isAverage ? "7-day average" : "goal")")
+    }
+}
+
+/// Today's value as a marker on a track, with the personal normal range shaded.
+private struct RangeBar: View {
+    let value: Double
+    let normalRange: ClosedRange<Double>
+    let color: Color
+
+    var body: some View {
+        let domain = Self.domain(value, normalRange)
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+            GeometryReader { proxy in
+                let width = proxy.size.width
+                let x = { (v: Double) in width * (v - domain.lowerBound) / (domain.upperBound - domain.lowerBound) }
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color(.systemFill)).frame(height: 8)
+                    Rectangle().fill(color.opacity(0.35))
+                        .frame(width: x(normalRange.upperBound) - x(normalRange.lowerBound), height: 8)
+                        .offset(x: x(normalRange.lowerBound))
+                    Capsule().fill(Color.primary)
+                        .frame(width: 4, height: 18)
+                        .offset(x: min(max(x(value) - 2, 0), width - 4))
+                }
+                .frame(maxHeight: .infinity)
+            }
+            .frame(height: 18)
+        }
+        .frame(height: MiniChart.plotHeight + 16)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(normalRange.contains(value) ? "In your normal range"
+            : value > normalRange.upperBound ? "Above your normal range" : "Below your normal range")
+    }
+
+    /// The normal range fills the middle half of the track, widened to fit a value outside it.
+    private static func domain(_ value: Double, _ range: ClosedRange<Double>) -> ClosedRange<Double> {
+        let margin = max(range.upperBound - range.lowerBound, .leastNonzeroMagnitude) / 2
+        return min(value - margin / 4, range.lowerBound - margin)...max(value + margin / 4, range.upperBound + margin)
     }
 }
 
@@ -103,11 +153,13 @@ private struct GoalBar: View {
 /// Each day can stack several segments, listed bottom to top.
 private struct TrackBars: View {
     let days: [[(value: Double, color: Color)]]
+    /// A full bar means the target was reached; days above it are cut off at the top of the track.
+    var target: Double?
 
     var body: some View {
         let totals = days.map { $0.reduce(0) { $0 + max($1.value, 0) } }
         // Headroom above the best day keeps the track visible when days are similar, e.g. sleep.
-        let highest = max((totals.max() ?? 0) * 1.2, .leastNonzeroMagnitude)
+        let highest = max(target ?? (totals.max() ?? 0) * 1.2, .leastNonzeroMagnitude)
         let labels = WeekdayLabels.symbols(count: days.count)
         HStack(alignment: .bottom, spacing: 0) {
             ForEach(Array(days.enumerated()), id: \.offset) { index, segments in
@@ -122,6 +174,7 @@ private struct TrackBars: View {
                                         .frame(height: proxy.size.height * max(segment.value, 0) / highest)
                                 }
                             }
+                            .frame(height: proxy.size.height, alignment: .bottom)
                             .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
                         }
                         .frame(width: min(proxy.size.width * 0.55, 14))

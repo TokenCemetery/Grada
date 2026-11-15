@@ -34,6 +34,34 @@ enum CardCategory: CaseIterable {
     }
 }
 
+/// What a card's chart shows. The raw value is persisted, so don't rename cases.
+enum CardVariant: String, CaseIterable {
+    /// Today against the goal or the personal normal range.
+    case current
+    /// The last 7 days, today last.
+    case week
+
+    var title: String {
+        switch self {
+        case .current: "Current"
+        case .week: "7 days"
+        }
+    }
+}
+
+/// One card on Home: a metric and the variant it shows. A metric can sit on Home once per variant.
+struct CardID: Hashable, Identifiable {
+    let kind: CardKind
+    var variant: CardVariant = .current
+
+    var id: Self { self }
+
+    /// Every card the user can add, one per metric and variant.
+    static var gallery: [CardID] {
+        CardKind.gallery.flatMap { kind in kind.variants.map { CardID(kind: kind, variant: $0) } }
+    }
+}
+
 /// Every card the home screen can show. The raw value is persisted, so don't rename cases.
 enum CardKind: String, CaseIterable, Identifiable {
     case healthStatus, recovery, resources, healthAge
@@ -57,9 +85,29 @@ enum CardKind: String, CaseIterable, Identifiable {
         }
     }
 
-    static let defaultSet: [CardKind] = [
-        .sleepStages, .restingHeartRate, .hrv, .steps, .activeEnergy, .lastWorkout, .last30Days,
-    ]
+    static let defaultSet: [CardID] = [CardKind.sleepStages, .restingHeartRate, .hrv, .steps, .activeEnergy, .lastWorkout, .last30Days]
+        .map { CardID(kind: $0, variant: $0.defaultVariant) }
+
+    /// Cards where today and the last 7 days answer different questions offer both; the rest only Current.
+    var variants: [CardVariant] {
+        switch self {
+        case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours,
+             .sleepDuration, .restingHeartRate, .hrv, .wristTemperature, .recovery:
+            [.current, .week]
+        default:
+            [.current]
+        }
+    }
+
+    /// The variant matching what the card showed before variants existed, so cards saved then keep their look.
+    var defaultVariant: CardVariant {
+        switch self {
+        case .exerciseMinutes, .distance, .standHours, .sleepDuration, .restingHeartRate, .hrv, .wristTemperature, .recovery:
+            .week
+        default:
+            .current
+        }
+    }
 
     var title: String {
         switch self {

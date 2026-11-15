@@ -10,32 +10,32 @@ struct CustomizeView: View {
     @Query private var goalChanges: [GoalChange]
 
     var body: some View {
-        let onHome = Set(cards.compactMap(\.kind))
+        let onHome = Set(cards.compactMap(\.cardID))
         NavigationStack {
             List {
                 Section("On Home") {
                     HStack {
-                        CardRow(kind: .healthStatus)
+                        CardRow(card: CardID(kind: .healthStatus))
                         Text("Pinned").font(.caption).foregroundStyle(.secondary)
                     }
                     ForEach(cards) { card in
-                        if let kind = card.kind { CardRow(kind: kind) }
+                        if let id = card.cardID { CardRow(card: id) }
                     }
                     .onMove(perform: move)
                     .onDelete(perform: delete)
                 }
                 ForEach(CardCategory.allCases, id: \.self) { category in
-                    let available = CardKind.gallery.filter { $0.category == category && !onHome.contains($0) }
+                    let available = CardID.gallery.filter { $0.kind.category == category && !onHome.contains($0) }
                     if !available.isEmpty {
                         Section("Add \(category.title.lowercased())") {
-                            ForEach(available) { kind in
-                                Button { add(kind) } label: {
+                            ForEach(available) { card in
+                                Button { add(card) } label: {
                                     HStack {
                                         Image(systemName: "plus.circle.fill")
                                             .foregroundStyle(.green)
                                             .font(.title3)
-                                        CardRow(kind: kind)
-                                        if model.snapshots[kind].map({ $0.value == nil }) == true {
+                                        CardRow(card: card)
+                                        if model.snapshots[card].map({ $0.value == nil }) == true {
                                             Text("No data yet").font(.caption).foregroundStyle(.secondary)
                                         }
                                     }
@@ -54,14 +54,14 @@ struct CustomizeView: View {
             }
             .task {
                 // Find out which gallery cards have data, for the "No data yet" labels.
-                await model.refresh(CardKind.gallery.filter { model.snapshots[$0] == nil }, goals: GoalHistory(goalChanges))
+                await model.refresh(CardID.gallery.filter { model.snapshots[$0] == nil }, goals: GoalHistory(goalChanges))
             }
         }
     }
 
-    private func add(_ kind: CardKind) {
+    private func add(_ card: CardID) {
         withAnimation {
-            modelContext.insert(HomeCard(kind: kind, position: (cards.last?.position ?? -1) + 1))
+            modelContext.insert(HomeCard(card, position: (cards.last?.position ?? -1) + 1))
         }
     }
 
@@ -86,16 +86,18 @@ struct CustomizeView: View {
 }
 
 private struct CardRow: View {
-    let kind: CardKind
+    let card: CardID
 
     var body: some View {
+        let kind = card.kind
+        let size = kind.size == .wide ? "Wide" : "Square"
         HStack(spacing: 12) {
             Image(systemName: kind.symbol)
                 .foregroundStyle(kind.category.color)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 0) {
                 Text(kind.title)
-                Text(kind.size == .wide ? "Wide" : "Square")
+                Text(kind.variants.count > 1 ? "\(card.variant.title) · \(size)" : size)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
