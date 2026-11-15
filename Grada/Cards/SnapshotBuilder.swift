@@ -365,6 +365,7 @@ struct SnapshotBuilder {
         }
         return HealthAge.Input(
             age: age,
+            sex: try await source.biologicalSex(),
             sleepHours: Baseline.average(try await source.sleepNights(days: days).map(\.asleep).filter { $0 > 0 }).map { $0 / 3600 },
             sleepConsistency: Baseline.average(consistency),
             dailySteps: Baseline.average(try await source.daily(.steps, days: days).compactMap(\.value)),

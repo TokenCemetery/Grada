@@ -105,7 +105,7 @@ extension CardKind {
         case .resources:
             "An estimate of your energy through the day. Sleep and calm rest recharge it; activity and stress, seen as a raised heart rate, drain it."
         case .healthAge:
-            "The age your habits and fitness point to, from steps, sleep, resting heart rate, VO₂ max and exercise over the last 30 days. Pace shows whether it's moving faster or slower than time."
+            "The age your habits and fitness point to, from steps, sleep, resting heart rate, VO₂ max and exercise over the last 30 days. VO₂ max is compared with the median for your age and sex, so it counts only when Apple Health has your sex. Pace shows whether it's moving faster or slower than time."
         case .sleepDuration, .sleepStages:
             "Time asleep in the night that ended this morning. Deep sleep restores the body, REM supports memory and mood. Most adults need 7–9 hours."
         case .sleepNeed:

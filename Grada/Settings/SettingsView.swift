@@ -146,7 +146,7 @@ private struct ProfileView: View {
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(profile?.maxHeartRate.map { "\(Int($0.rounded())) bpm" } ?? "–")
                     if let source = profile?.maxHeartRateSource {
-                        Text(source == .age ? "220 − age" : "Highest recorded").font(.caption).foregroundStyle(.secondary)
+                        Text(source == .age ? "208 − 0.7 × age" : "Highest recorded").font(.caption).foregroundStyle(.secondary)
                     }
                 }
             }

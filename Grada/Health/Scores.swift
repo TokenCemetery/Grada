@@ -35,7 +35,7 @@ nonisolated enum Recovery {
     private static let maxBreathingPenalty = 30.0
     /// HRV is compared on a log scale, as in HRV research, because its spread grows with its size.
     /// 0.05 in log terms is about ±3 ms at 60 ms, the same floor as the HRV normal range.
-    private static let minimumLogHRVSD = 0.05
+    static let minimumLogHRVSD = 0.05
 
     /// Nil while HRV and resting heart rate are both missing or still calibrating.
     static func score(_ input: Input) -> Result? {
@@ -200,9 +200,10 @@ nonisolated enum Resources {
         return result
     }
 
-    /// 220 − age, or the highest heart rate on record when the age isn't known.
+    /// 208 − 0.7 × age (Tanaka, Monahan & Seals 2001, a meta-analysis of 351 studies; 220 − age has no
+    /// study behind it and underestimates older adults), or the highest heart rate on record without an age.
     static func maxHeartRate(age: Int?, highestRecorded: Double?) -> Double? {
-        if let age { return Double(220 - age) }
+        if let age { return 208 - 0.7 * Double(age) }
         return highestRecorded
     }
 }
@@ -326,33 +327,35 @@ nonisolated enum HRVStatus {
     /// Garmin also needs about 3 weeks: 14 baseline nights plus a 7-night window.
     static let minimumBaselineNights = 14
     static let minimumWindowNights = 3
-    /// A 7-night average moves much less than a single night, so the balanced range is narrower than
-    /// the nightly ±2 SD normal range, but never narrower than 6% of the mean either side.
-    private static let halfWidthInSD = 0.6
-    private static let minimumHalfWidthShare = 0.06
+    /// The HRV-guided training method (Plews et al. 2012/2013, Buchheit 2014): the 7-night average of ln(HRV)
+    /// against the baseline mean ± the smallest worthwhile change, 0.5 SD of ln(HRV) (Hopkins 2000).
+    private static let smallestWorthwhileChangeInSD = 0.5
+    /// Low is a full SD below the baseline mean: twice the smallest worthwhile change.
+    private static let lowInSD = 1.0
 
     /// Status for the window ending at `end`, from overnight HRV per night (nil without a reading),
-    /// oldest first. Nil while calibrating.
+    /// oldest first. Nil while calibrating. `average` and `baseline` are in ms, back from the log scale.
     static func status(nights: [Double?], endingAt end: Int) -> Result? {
         let windowStart = end - window + 1
         guard windowStart >= 0, end < nights.count else { return nil }
-        let recent = nights[windowStart...end].compactMap { $0 }
-        let history = nights[max(windowStart - baselineNights, 0)..<windowStart].compactMap { $0 }
+        let recent = nights[windowStart...end].compactMap { $0 }.filter { $0 > 0 }.map(log)
+        let history = nights[max(windowStart - baselineNights, 0)..<windowStart].compactMap { $0 }.filter { $0 > 0 }.map(log)
         guard recent.count >= minimumWindowNights, history.count >= minimumBaselineNights,
               let average = Baseline.average(recent), let mean = Baseline.average(history)
         else { return nil }
 
         let variance = history.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(history.count - 1)
-        let halfWidth = max(halfWidthInSD * variance.squareRoot(), minimumHalfWidthShare * mean)
-        let baseline = (mean - halfWidth)...(mean + halfWidth)
-        let state: State = if baseline.contains(average) {
+        // Keeps a very steady history from flagging tiny changes; the same floor Recovery uses.
+        let sd = max(variance.squareRoot(), Recovery.minimumLogHRVSD)
+        let change = smallestWorthwhileChangeInSD * sd
+        let state: State = if abs(average - mean) <= change {
             .balanced
-        } else if average < mean - 2 * halfWidth {
+        } else if average < mean - lowInSD * sd {
             .low
         } else {
             .unbalanced
         }
-        return Result(average: average, baseline: baseline, state: state)
+        return Result(average: exp(average), baseline: exp(mean - change)...exp(mean + change), state: state)
     }
 }
 
@@ -362,6 +365,8 @@ nonisolated enum HRVStatus {
 nonisolated enum HealthAge {
     struct Input {
         var age: Int
+        /// Needed to compare VO₂ max with the right norm; without it VO₂ max is left out.
+        var sex: BiologicalSex? = nil
         var sleepHours: Double?
         var sleepConsistency: Double?
         var dailySteps: Double?
@@ -386,9 +391,8 @@ nonisolated enum HealthAge {
     static func impacts(_ input: Input) -> [Impact] {
         func clamp(_ value: Double, _ low: Double, _ high: Double) -> Double { min(max(value, low), high) }
         var impacts: [Impact] = []
-        if let vo2 = input.vo2Max {
-            // Typical VO₂ max falls about 0.35 per year from ~45 at 25.
-            let expected = 45 - 0.35 * Double(max(input.age - 25, 0))
+        if let vo2 = input.vo2Max, let sex = input.sex {
+            let expected = expectedVO2Max(age: input.age, sex: sex)
             impacts.append(Impact(name: "VO₂ Max", years: clamp((expected - vo2) * 0.4, -5, 5)))
         }
         if let rhr = input.restingHeartRate {
@@ -417,6 +421,17 @@ nonisolated enum HealthAge {
         }
         return impacts
     }
+
+    /// Median measured VO₂ max (ml/kg·min) for the age and sex: the 50th percentiles of the FRIEND registry's
+    /// treadmill tests (Kaminsky et al. 2015, Mayo Clin Proc 90:1515, Table 3). Under 20 uses the 20s,
+    /// 80 and over the 70s.
+    static func expectedVO2Max(age: Int, sex: BiologicalSex) -> Double {
+        let row = min(max(age / 10 - 2, 0), 5)
+        return sex == .male ? medianMen[row] : medianWomen[row]
+    }
+
+    private static let medianMen = [48.0, 42.4, 37.8, 32.6, 28.2, 24.4]
+    private static let medianWomen = [37.6, 30.2, 26.7, 23.4, 20.0, 18.3]
 
     static func age(_ input: Input) -> Double? {
         let impacts = impacts(input)

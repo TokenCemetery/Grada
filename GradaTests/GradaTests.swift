@@ -380,7 +380,8 @@ struct IntensityMinutesTests {
 }
 
 struct HRVStatusTests {
-    /// 20 nights around 60 ms: SD ≈ 2, so the 6% minimum applies and the baseline is 56.4–63.6.
+    /// 20 nights of 58 and 62 ms: ln SD ≈ 0.034, so the 0.05 floor applies and the baseline is the geometric
+    /// mean 59.97 × e^±0.025, about 58.49–61.48.
     private let history: [Double?] = (0..<20).map { $0.isMultiple(of: 2) ? 58 : 62 }
 
     private func status(window: [Double?], history: [Double?]? = nil) -> HRVStatus.Result? {
@@ -399,22 +400,24 @@ struct HRVStatusTests {
     @Test func averageInsideBaselineIsBalanced() throws {
         let result = try #require(status(window: Array(repeating: 61, count: 7)))
         #expect(result.state == .balanced)
-        #expect(abs(result.baseline.lowerBound - 56.4) < 0.01)
-        #expect(abs(result.baseline.upperBound - 63.6) < 0.01)
+        #expect(abs(result.baseline.lowerBound - 58.487) < 0.01)
+        #expect(abs(result.baseline.upperBound - 61.484) < 0.01)
     }
 
     @Test func averageAboveOrSlightlyBelowIsUnbalanced() throws {
         #expect(try #require(status(window: Array(repeating: 66, count: 7))).state == .unbalanced)
-        #expect(try #require(status(window: Array(repeating: 54, count: 7))).state == .unbalanced)
+        #expect(try #require(status(window: Array(repeating: 57.5, count: 7))).state == .unbalanced)
     }
 
+    /// More than one SD (0.05 in ln terms) below the baseline mean: 54 ms is ln −0.105.
     @Test func averageWellBelowIsLow() throws {
+        #expect(try #require(status(window: Array(repeating: 54, count: 7))).state == .low)
         #expect(try #require(status(window: Array(repeating: 50, count: 7))).state == .low)
     }
 
     @Test func missingNightsAreSkipped() throws {
         let result = try #require(status(window: [nil, 61, nil, 61, nil, 61, 61]))
-        #expect(result.average == 61)
+        #expect(abs(result.average - 61) < 1e-9)
     }
 }
 
@@ -557,6 +560,7 @@ struct ResourcesTests {
 
     @Test func maxHeartRateFromAgeFirst() {
         #expect(Resources.maxHeartRate(age: 40, highestRecorded: 195) == 180)
+        #expect(Resources.maxHeartRate(age: 60, highestRecorded: nil) == 166, "Tanaka: 208 − 0.7 × age, not 220 − age")
         #expect(Resources.maxHeartRate(age: nil, highestRecorded: 195) == 195)
     }
 }
@@ -605,12 +609,24 @@ struct SleepConsistencyTests {
 @MainActor
 struct HealthAgeTests {
     @Test func fitHabitsLowerHealthAge() throws {
-        let fit = HealthAge.Input(age: 40, sleepHours: 7.5, sleepConsistency: 85, dailySteps: 11_000, restingHeartRate: 50,
+        let fit = HealthAge.Input(age: 40, sex: .male, sleepHours: 7.5, sleepConsistency: 85, dailySteps: 11_000, restingHeartRate: 50,
                                   vo2Max: 50, moderateMinutesPerWeek: 250, vigorousMinutesPerWeek: 90, strengthMinutesPerWeek: 90)
-        let unfit = HealthAge.Input(age: 40, sleepHours: 5.5, sleepConsistency: 50, dailySteps: 3_000, restingHeartRate: 75,
+        let unfit = HealthAge.Input(age: 40, sex: .male, sleepHours: 5.5, sleepConsistency: 50, dailySteps: 3_000, restingHeartRate: 75,
                                     vo2Max: 30, moderateMinutesPerWeek: 20, vigorousMinutesPerWeek: 0, strengthMinutesPerWeek: 0)
         #expect(try #require(HealthAge.age(fit)) < 35)
         #expect(try #require(HealthAge.age(unfit)) > 50)
+    }
+
+    /// FRIEND registry medians: a 45-year-old woman at 26.7 is average, while a man at 26.7 is 11.1 below his.
+    @Test func vo2MaxIsComparedWithTheNormForAgeAndSex() throws {
+        func vo2Years(_ sex: BiologicalSex?) -> Double? {
+            HealthAge.impacts(HealthAge.Input(age: 45, sex: sex, vo2Max: 26.7)).first { $0.name == "VO₂ Max" }?.years
+        }
+        #expect(vo2Years(.female) == 0)
+        #expect(try #require(vo2Years(.male)) > 4)
+        #expect(vo2Years(nil) == nil, "Without sex there is no norm to compare with")
+        #expect(HealthAge.expectedVO2Max(age: 18, sex: .male) == 48.0)
+        #expect(HealthAge.expectedVO2Max(age: 85, sex: .female) == 18.3)
     }
 
     @Test func needsThreeInputs() {
@@ -651,7 +667,7 @@ struct HealthProfileTests {
     @Test func maxHeartRateComesFromAgeWhenKnown() async throws {
         let profile = try await HealthProfile.load(from: SampleDataSource())
         #expect(profile.age == 35)
-        #expect(profile.maxHeartRate == 185)
+        #expect(profile.maxHeartRate == 183.5)
         #expect(profile.maxHeartRateSource == .age)
         #expect(profile.restingHeartRate != nil)
     }
