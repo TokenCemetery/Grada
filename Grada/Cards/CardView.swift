@@ -69,7 +69,7 @@ struct CardView: View {
         case .square:
             valueBlock(snapshot)
             Spacer(minLength: 8)
-            MiniChart(chart: snapshot.chart, color: color)
+            MiniChart(chart: snapshot.chart, color: chartColor(snapshot))
             CardDetailView(detail: snapshot.detail, color: color)
         case .wide:
             if snapshot.chart.isBars {
@@ -124,6 +124,12 @@ struct CardView: View {
         case .warning: return .orange
         case .neutral: return .primary
         }
+    }
+
+    /// A rated day line takes the rating's color, so the line reads like the value above it.
+    private func chartColor(_ snapshot: CardSnapshot) -> Color {
+        if case .intraday = snapshot.chart, let rating = snapshot.rating { return rating.text(colorBlind: colorBlind) }
+        return color
     }
 
     private var noData: some View {

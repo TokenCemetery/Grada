@@ -374,17 +374,31 @@ struct SnapshotBuilder {
     }
 
     /// Today's heart rate from midnight: range of the 5-minute averages, and their mean.
+    /// Workouts make the range itself unratable, so the color comes from today's resting heart rate
+    /// against its personal normal range: green at or below it, yellow slightly above, red well above.
     private func heartRate() async throws -> CardSnapshot {
         let today = calendar.startOfDay(for: now)
         let values = try await source.heartRate(in: DateInterval(start: today, end: max(now, today)))
         guard let low = values.map(\.value).min(), let high = values.map(\.value).max(),
               let average = Baseline.average(values.map(\.value))
         else { return .noData(period: todayLabel) }
+
+        let resting = try await source.daily(.restingHeartRate, days: baselineDays + 1)
+        var comparison = "Avg \(format(average, 0)) bpm"
+        var rating: DayRating?
+        if let todayResting = resting.last?.value {
+            comparison = "Avg \(format(average, 0)) · Resting \(format(todayResting, 0))"
+            let history = resting.dropLast().compactMap(\.value)
+            if let normal = Baseline.normalRange(history: history, minimumHalfWidth: QuantityMetric.restingHeartRate.minimumHalfWidth) {
+                rating = DayRatings.range(todayResting, normal: normal, higherIsBetter: false)
+            }
+        }
         return CardSnapshot(
             period: todayLabel,
             value: "\(format(low, 0))–\(format(high, 0))",
             unit: "bpm",
-            comparison: "Avg \(format(average, 0)) bpm",
+            comparison: comparison,
+            rating: rating,
             chart: .intraday(values.map { (hour: $0.date.timeIntervalSince(today) / 3600, value: $0.value) }, domain: nil)
         )
     }

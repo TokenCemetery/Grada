@@ -63,9 +63,17 @@ private struct DayLine: View {
             ForEach(Array(points.enumerated()), id: \.offset) { _, point in
                 AreaMark(x: .value("Hour", point.hour), yStart: .value("Base", yDomain.lowerBound), yEnd: .value("Value", point.value))
                     .foregroundStyle(fill)
-                LineMark(x: .value("Hour", point.hour), y: .value("Value", point.value))
+                LineMark(x: .value("Hour", point.hour), y: .value("Value", point.value), series: .value("Part", "Today"))
                     .foregroundStyle(color)
                     .lineStyle(StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            }
+            // The rest of the day as a dotted line from the latest value, like Suunto.
+            if let last = points.last, last.hour < 24 {
+                ForEach([last.hour, 24], id: \.self) { hour in
+                    LineMark(x: .value("Hour", hour), y: .value("Value", last.value), series: .value("Part", "Rest"))
+                        .foregroundStyle(Color.secondary.opacity(0.6))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 3]))
+                }
             }
         }
         .chartXScale(domain: 0...24)

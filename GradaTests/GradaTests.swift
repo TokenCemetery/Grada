@@ -94,6 +94,8 @@ struct CardVariantTests {
     @Test func heartRateDrawsTodaysCurve() async throws {
         let snapshot = try await builder.snapshot(for: .heartRate)
         guard case .intraday(let points, _) = snapshot.chart, !points.isEmpty else { Issue.record("\(snapshot.chart)"); return }
+        #expect(snapshot.rating != nil, "Rated by today's resting heart rate")
+        #expect(snapshot.comparison?.contains("Resting") == true)
     }
 
     @Test func recoveryColorsEachDay() async throws {
