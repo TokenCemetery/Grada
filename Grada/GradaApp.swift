@@ -38,6 +38,9 @@ struct GradaApp: App {
     /// Falls back to a local-only store so the app still works if iCloud can't be set up.
     private static func makeModelContainer() -> ModelContainer {
         let schema = Schema([HomeCard.self, DaySummary.self, WorkoutRecord.self])
+        if isTestHost {
+            return try! ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        }
         do {
             let configuration = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
             return try ModelContainer(for: schema, configurations: configuration)
@@ -53,9 +56,15 @@ struct GradaApp: App {
         }
     }
 
+    /// Unit tests run inside the app. Skipping iCloud and HealthKit setup there keeps CI from
+    /// stalling on the main actor for minutes before the tests can start.
+    private static var isTestHost: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
     private static func makeModels(context: ModelContext) -> (HomeModel, CalendarModel, HealthDataSource) {
 #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-SampleData") {
+        if isTestHost || ProcessInfo.processInfo.arguments.contains("-SampleData") {
             let source = SampleDataSource()
             return (HomeModel(source: source), CalendarModel(source: source), source)
         }
