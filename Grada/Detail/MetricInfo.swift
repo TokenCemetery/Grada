@@ -34,7 +34,7 @@ extension CardKind {
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: .sleep
         case .lastWorkout, .weeklyTraining, .racePredictor, .trainingReadiness, .loadFocus: .training
-        case .healthStatus, .recovery, .resources, .healthAge: .score
+        case .healthStatus, .recovery, .resources, .healthAge, .hrvStatus: .score
         }
     }
 
@@ -71,7 +71,8 @@ extension CardKind {
     /// Scores this metric feeds into.
     var affects: [CardKind] {
         switch self {
-        case .hrv, .respiratoryRate: [.healthStatus, .recovery]
+        case .hrv: [.healthStatus, .recovery, .hrvStatus]
+        case .respiratoryRate: [.healthStatus, .recovery]
         case .restingHeartRate: [.healthStatus, .recovery, .resources, .healthAge]
         case .oxygenSaturation, .wristTemperature: [.healthStatus]
         case .heartRate: [.resources]
@@ -90,6 +91,7 @@ extension CardKind {
         case .recovery: [.hrv, .restingHeartRate, .sleepDuration, .sleepNeed, .respiratoryRate]
         case .resources: [.heartRate, .restingHeartRate, .sleepStages]
         case .healthAge: [.steps, .sleepDuration, .sleepConsistency, .restingHeartRate, .vo2Max, .exerciseMinutes]
+        case .hrvStatus: [.hrv]
         default: []
         }
     }
@@ -117,6 +119,8 @@ extension CardKind {
             "Your heart rate at rest. A lower resting heart rate usually means better fitness. A rise above your normal can mean fatigue, stress, illness or alcohol."
         case .hrv:
             "Heart rate variability: the variation between heartbeats. Above your normal usually means you're well recovered. Below can mean stress, illness, alcohol or hard training."
+        case .hrvStatus:
+            "Your average overnight HRV over the last 7 nights, compared with your baseline from the 2 months before. Balanced: inside your baseline. Unbalanced: above or below it, often after hard training, stress or travel. Low: well below it; favour rest and sleep."
         case .oxygenSaturation:
             "How much oxygen your blood carries. 95–100% is typical; brief dips during sleep are common."
         case .respiratoryRate:

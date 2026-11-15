@@ -258,6 +258,65 @@ nonisolated enum SleepConsistency {
     }
 }
 
+/// Like Garmin HRV Status: the average overnight HRV of the last 7 nights against a personal baseline
+/// from the nights before them.
+nonisolated enum HRVStatus {
+    enum State: Equatable {
+        case balanced, unbalanced, low
+
+        var word: String {
+            switch self {
+            case .balanced: "Balanced"
+            case .unbalanced: "Unbalanced"
+            case .low: "Low"
+            }
+        }
+
+        var tone: CardSnapshot.Tone { self == .balanced ? .good : .warning }
+    }
+
+    struct Result: Equatable {
+        let average: Double
+        let baseline: ClosedRange<Double>
+        let state: State
+    }
+
+    static let window = 7
+    /// Nights before the window that the baseline is built from.
+    static let baselineNights = 60
+    /// Garmin also needs about 3 weeks: 14 baseline nights plus a 7-night window.
+    static let minimumBaselineNights = 14
+    static let minimumWindowNights = 3
+    /// A 7-night average moves much less than a single night, so the balanced range is narrower than
+    /// the nightly ±2 SD normal range, but never narrower than 6% of the mean either side.
+    private static let halfWidthInSD = 0.6
+    private static let minimumHalfWidthShare = 0.06
+
+    /// Status for the window ending at `end`, from overnight HRV per night (nil without a reading),
+    /// oldest first. Nil while calibrating.
+    static func status(nights: [Double?], endingAt end: Int) -> Result? {
+        let windowStart = end - window + 1
+        guard windowStart >= 0, end < nights.count else { return nil }
+        let recent = nights[windowStart...end].compactMap { $0 }
+        let history = nights[max(windowStart - baselineNights, 0)..<windowStart].compactMap { $0 }
+        guard recent.count >= minimumWindowNights, history.count >= minimumBaselineNights,
+              let average = Baseline.average(recent), let mean = Baseline.average(history)
+        else { return nil }
+
+        let variance = history.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Double(history.count - 1)
+        let halfWidth = max(halfWidthInSD * variance.squareRoot(), minimumHalfWidthShare * mean)
+        let baseline = (mean - halfWidth)...(mean + halfWidth)
+        let state: State = if baseline.contains(average) {
+            .balanced
+        } else if average < mean - 2 * halfWidth {
+            .low
+        } else {
+            .unbalanced
+        }
+        return Result(average: average, baseline: baseline, state: state)
+    }
+}
+
 /// Health age and pace of aging, inspired by WHOOP Healthspan. WHOOP's model isn't public, so this is
 /// a transparent heuristic: each habit or fitness marker adds or removes years from the user's real age,
 /// using rough sizes from published associations with mortality and fitness norms.

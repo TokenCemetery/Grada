@@ -38,7 +38,7 @@ enum CardCategory: CaseIterable {
 enum CardKind: String, CaseIterable, Identifiable {
     case healthStatus, recovery, resources, healthAge
     case sleepDuration, sleepStages, sleepNeed, sleepConsistency
-    case heartRate, restingHeartRate, hrv, oxygenSaturation, respiratoryRate, wristTemperature
+    case heartRate, restingHeartRate, hrv, hrvStatus, oxygenSaturation, respiratoryRate, wristTemperature
     case steps, activeEnergy, exerciseMinutes, distance, floors, standHours
     case lastWorkout, weeklyTraining, vo2Max, racePredictor, trainingReadiness, loadFocus
     case last30Days
@@ -77,6 +77,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .loadFocus: "Load focus"
         case .restingHeartRate: "Resting HR"
         case .hrv: "HRV"
+        case .hrvStatus: "HRV status"
         case .oxygenSaturation: "Blood oxygen"
         case .respiratoryRate: "Respiratory rate"
         case .wristTemperature: "Wrist temp"
@@ -108,6 +109,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .loadFocus: "chart.bar.xaxis"
         case .restingHeartRate: "heart"
         case .hrv: "waveform.path.ecg"
+        case .hrvStatus: "waveform.path.ecg.rectangle"
         case .oxygenSaturation: "drop"
         case .respiratoryRate: "lungs"
         case .wristTemperature: "thermometer.medium"
@@ -128,7 +130,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         switch self {
         case .healthStatus, .recovery, .resources, .healthAge: .status
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: .sleep
-        case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature: .heart
+        case .heartRate, .restingHeartRate, .hrv, .hrvStatus, .oxygenSaturation, .respiratoryRate, .wristTemperature: .heart
         case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours: .activity
         case .lastWorkout, .weeklyTraining, .vo2Max, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .last30Days: .history
@@ -138,7 +140,7 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// Scores color their value by how good it is; plain metrics stay neutral.
     var isScore: Bool {
         switch self {
-        case .healthStatus, .recovery, .resources: true
+        case .healthStatus, .recovery, .resources, .hrvStatus: true
         default: false
         }
     }
