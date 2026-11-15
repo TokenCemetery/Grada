@@ -94,6 +94,7 @@ extension CardKind {
         case .hrvStatus: [.hrv]
         case .sleepScore: [.sleepStages, .sleepNeed, .sleepConsistency]
         case .strain: [.heartRate]
+        case .trainingReadiness: [.sleepScore, .recoveryTime, .hrvStatus, .strain, .sleepNeed, .stress]
         case .recoveryTime: [.lastWorkout, .recovery]
         default: []
         }
@@ -160,7 +161,9 @@ extension CardKind {
             "The most oxygen your body can use during hard exercise, a key measure of cardio fitness. It changes slowly over weeks of training. The zones compare it with lab-measured VO₂ max of adults your age and sex in the US FRIEND registry: Poor below the bottom quarter, Fair up to the middle, Good from the middle, Excellent from the top quarter and Superior from the top tenth."
         case .racePredictor:
             "Race times your current VO₂ max points to, assuming you've trained for the distance."
-        case .trainingReadiness, .loadFocus:
+        case .trainingReadiness:
+            "Whether today suits hard training, from the same inputs Garmin uses, each checked against the threshold its own card uses: last night's Sleep Score (off when red), Recovery Time (off while it's still counting down), HRV Status (off when not Balanced), the acute:chronic load ratio from Strain (off above 1.3, where studies saw injuries rise), your last 3 nights against your Sleep Need, and your last 3 days' average stress (off from medium). Garmin doesn't publish how it weighs these and no study has tested a weighting, so each counts the same. High: nothing off. Moderate: one off. Low: two or more; favour easy training. Needs at least 3 inputs."
+        case .loadFocus:
             "Coming in a later version."
         case .last30Days:
             "Your workouts over the last 30 days."

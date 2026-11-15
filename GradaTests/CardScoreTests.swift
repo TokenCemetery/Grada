@@ -209,3 +209,51 @@ struct StressTests {
         #expect(domain == 0...100)
     }
 }
+
+struct TrainingReadinessTests {
+    private func input(sleep: DayRating? = .good, recovering: Bool? = false, hrv: HRVStatus.State? = .balanced,
+                       ratio: Double? = 1.0, recentSleep: TimeInterval? = 7.5 * 3600, stress: Double? = 30) -> TrainingReadiness.Input {
+        TrainingReadiness.Input(sleepScore: sleep, recovering: recovering, hrvStatus: hrv, loadRatio: ratio,
+                                recentSleep: recentSleep, recentStress: stress)
+    }
+
+    @Test func nothingOffIsHigh() throws {
+        let result = try #require(TrainingReadiness.status(input()))
+        #expect(result == TrainingReadiness.Result(rating: .good, measured: 6, inRange: 6, reason: "Ready for hard training"))
+        #expect(result.word == "High")
+    }
+
+    /// Each input uses its own card's threshold: red sleep, still recovering, HRV not balanced, ratio above 1.3,
+    /// 3 nights under the need, and medium stress or more.
+    @Test func eachInputFlagsAtItsCardsThreshold() throws {
+        #expect(try #require(TrainingReadiness.status(input(sleep: .fair))).rating == .good)
+        #expect(try #require(TrainingReadiness.status(input(sleep: .poor))).reason == "Poor sleep")
+        #expect(try #require(TrainingReadiness.status(input(recovering: true))).reason == "Still recovering")
+        #expect(try #require(TrainingReadiness.status(input(hrv: .low))).reason == "HRV low")
+        #expect(try #require(TrainingReadiness.status(input(ratio: 1.3))).rating == .good)
+        #expect(try #require(TrainingReadiness.status(input(ratio: 1.31))).reason == "Load rising fast")
+        #expect(try #require(TrainingReadiness.status(input(recentSleep: 6.9 * 3600))).reason == "Short sleep 3 nights")
+        #expect(try #require(TrainingReadiness.status(input(stress: 50))).rating == .good)
+        #expect(try #require(TrainingReadiness.status(input(stress: 51))).reason == "Stress high 3 days")
+    }
+
+    @Test func twoOffIsLow() throws {
+        let result = try #require(TrainingReadiness.status(input(recovering: true, hrv: .unbalanced)))
+        #expect(result.rating == .poor)
+        #expect(result.word == "Low")
+        #expect(result.reason == "Still recovering · 1 more off")
+    }
+
+    @Test func calibratingWithFewerThanThreeInputs() {
+        #expect(TrainingReadiness.status(input(sleep: nil, recovering: nil, hrv: nil, ratio: nil)) == nil)
+    }
+
+    @MainActor
+    @Test func cardBuildsFromSampleData() async throws {
+        #expect(CardKind.gallery.contains(.trainingReadiness))
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .trainingReadiness)
+        #expect(["High", "Moderate", "Low"].contains(snapshot.value ?? ""), "\(snapshot.value ?? "nil")")
+        guard case .bars(let days, _, _) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(days.count == 7)
+    }
+}

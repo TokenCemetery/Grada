@@ -24,7 +24,7 @@ struct SnapshotBuilder {
         case .sleepConsistency: try await sleepConsistency()
         case .sleepScore: try await sleepScore()
         case .racePredictor: try await racePredictor()
-        case .trainingReadiness: trainingReadiness()
+        case .trainingReadiness: try await trainingReadiness()
         case .loadFocus: loadFocus()
         case .heartRate: try await heartRate()
         case .sleepDuration: try await sleep(withStages: false, variant)
@@ -332,6 +332,65 @@ struct SnapshotBuilder {
         )
     }
 
+    /// Today's readiness and the share of inputs in range on each of the last 7 days.
+    private func trainingReadiness() async throws -> CardSnapshot {
+        let days = try await readinessDays(7)
+        guard let shown = days.last?.result else {
+            return CardSnapshot(period: todayLabel, value: "Calibrating",
+                                comparison: "Needs \(TrainingReadiness.minimumInputs) inputs, like sleep and HRV")
+        }
+        return CardSnapshot(
+            period: todayLabel,
+            value: shown.word,
+            comparison: shown.reason,
+            tone: Self.tone(shown.rating),
+            rating: shown.rating,
+            chart: .bars(days.map { $0.result.map { Double($0.inRange) / Double($0.measured) } }, target: 1,
+                         ratings: days.map { $0.result?.rating })
+        )
+    }
+
+    /// Training readiness on each of the last `count` days, oldest first: today as of now, earlier days as of
+    /// their end. Nil while fewer than `TrainingReadiness.minimumInputs` inputs are measured.
+    func readinessDays(_ count: Int) async throws -> [(day: Date, result: TrainingReadiness.Result?)] {
+        let days = lastDays(count)
+        let history = TrainingReadiness.historyDays
+        let sleepScores = try await sleepScoreDays(count)
+        let strain = try await strainDays(count)
+        let stress = try await stressDays(count + history - 1)
+        let recovery = try await recoveryDays(count)
+        let overnight = try await source.overnight(days: HRVStatus.baselineNights + HRVStatus.window + count - 1)
+        let hrv = overnight.map(\.hrv)
+        let nights = try await source.sleepNights(days: count + history - 1)
+        let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
+        let needs = sleepGoals(count + history - 1)
+        let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
+                                                  highestRecorded: try await source.highestHeartRate(days: 365))
+        let workouts = try await source.workouts(days: count + 3)
+            .map { RecoveryTime.Workout(end: $0.start.addingTimeInterval($0.duration), averageHeartRate: $0.averageHeartRate) }
+
+        return days.indices.map { index in
+            let at = min(now, calendar.date(byAdding: .day, value: 1, to: days[index])!)
+            let night = overnight.count - count + index
+            var input = TrainingReadiness.Input()
+            input.sleepScore = sleepScores[index].result?.rating
+            if let maxHeartRate {
+                let wake = overnight[night].wakeTime.flatMap { $0 <= at ? $0 : nil }
+                input.recovering = RecoveryTime.recoveredAt(workouts: workouts, maxHeartRate: maxHeartRate, now: at,
+                                                            wake: wake, morningRecovery: recovery[index].result?.rating) != nil
+            }
+            input.hrvStatus = HRVStatus.status(nights: hrv, endingAt: night)?.state
+            input.loadRatio = strain?[index].ratio?.value
+            // The 3 nights and days ending on this one; the history arrays start `history - 1` days earlier.
+            let window = index...(index + history - 1)
+            let slept = window.compactMap { asleep[needs[$0].day].flatMap { $0 > 0 ? $0 : nil } }
+            input.recentSleep = slept.count == history ? Baseline.average(slept) : nil
+            input.recentNeed = Baseline.average(window.compactMap { needs[$0].value }) ?? SleepNeed.baseline
+            input.recentStress = stress.flatMap { stress in Baseline.average(window.flatMap { stress[$0].levels.map(\.value) }) }
+            return (days[index], TrainingReadiness.status(input))
+        }
+    }
+
     /// Today's average stress while awake and outside workouts, with its timeline from midnight.
     private func stress() async throws -> CardSnapshot {
         guard let days = try await stressDays(1) else {
@@ -407,12 +466,6 @@ struct SnapshotBuilder {
             vo2Max: try await source.daily(.vo2Max, days: days).compactMap(\.value).last,
             exerciseMinutesPerWeek: exercise.isEmpty ? nil : exercise.reduce(0, +) / (Double(days) / 7)
         )
-    }
-
-    // TODO(#31, v4): Garmin-style readiness from sleep score, recovery time, HRV status, acute load,
-    // 3-night sleep history and 3-day stress history. Needs Strain's training-load model.
-    private func trainingReadiness() -> CardSnapshot {
-        .noData(period: todayLabel)
     }
 
     // TODO(#32, v4): the last 4 weeks of training load split into low aerobic, high aerobic and anaerobic

@@ -139,8 +139,12 @@ struct TrendBuilder {
         // Hours left change through the day; the explanation covers the inputs instead.
         case .recoveryTime:
             return nil
-        // TODO(#31, #32, v4): trends for Training readiness and Load focus, once they exist.
-        case .trainingReadiness, .loadFocus:
+        case .trainingReadiness:
+            let inRange = try await cardBuilder.readinessDays(days)
+                .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
+            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: "Inputs in range")
+        // TODO(#32): a trend for Load focus, once it exists.
+        case .loadFocus:
             return nil
         }
     }

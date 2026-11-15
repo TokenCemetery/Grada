@@ -884,6 +884,68 @@ nonisolated enum RecoveryTime {
     }
 }
 
+/// Readiness for hard training, from Garmin's inputs, each judged by the published threshold its own card uses:
+/// last night's Sleep Score, Recovery Time, HRV Status, the acute:chronic load ratio (above Gabbett's 0.8–1.3 sweet
+/// spot), the last 3 nights against Sleep Need, and the last 3 days' stress. Garmin's weighting isn't published and
+/// no study has validated one, so like Recovery the rating counts the inputs that are off.
+nonisolated enum TrainingReadiness {
+    struct Input {
+        var sleepScore: DayRating?
+        /// Whether Recovery Time is still counting down.
+        var recovering: Bool?
+        var hrvStatus: HRVStatus.State?
+        var loadRatio: Double?
+        /// Average sleep of the last 3 nights and their average need.
+        var recentSleep: TimeInterval?
+        var recentNeed: TimeInterval = SleepNeed.baseline
+        /// Average stress of the last 3 days.
+        var recentStress: Double?
+    }
+
+    struct Result: Equatable {
+        let rating: DayRating
+        let measured: Int
+        let inRange: Int
+        let reason: String
+
+        var word: String {
+            switch rating {
+            case .good: "High"
+            case .fair: "Moderate"
+            case .poor: "Low"
+            }
+        }
+    }
+
+    static let historyDays = 3
+    /// Fewer inputs than this and the rating would rest on too little; Grada's own rule.
+    static let minimumInputs = 3
+
+    static func status(_ input: Input) -> Result? {
+        var checks: [(isOff: Bool, reason: String)] = []
+        if let rating = input.sleepScore { checks.append((rating == .poor, "Poor sleep")) }
+        if let recovering = input.recovering { checks.append((recovering, "Still recovering")) }
+        if let state = input.hrvStatus { checks.append((state != .balanced, "HRV \(state.word.lowercased())")) }
+        if let ratio = input.loadRatio { checks.append((ratio > Strain.sweetSpot.upperBound, "Load rising fast")) }
+        if let sleep = input.recentSleep { checks.append((sleep < input.recentNeed, "Short sleep \(historyDays) nights")) }
+        if let stress = input.recentStress { checks.append((Stress.band(stress) >= .medium, "Stress high \(historyDays) days")) }
+        guard checks.count >= minimumInputs else { return nil }
+
+        let off = checks.filter(\.isOff)
+        let reason = switch off.count {
+        case 0: "Ready for hard training"
+        case 1: off[0].reason
+        default: "\(off[0].reason) · \(off.count - 1) more off"
+        }
+        return Result(rating: DayRatings.healthStatus(outOfRange: off.count), measured: checks.count,
+                      inRange: checks.count - off.count, reason: reason)
+    }
+}
+
+nonisolated extension Stress.Band: Comparable {
+    static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
+}
+
 /// Time and heart rate for each kilometer of a workout.
 nonisolated enum Splits {
     struct Split: Equatable {

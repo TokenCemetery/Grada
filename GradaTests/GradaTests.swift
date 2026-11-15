@@ -746,7 +746,6 @@ struct RacePredictorTests {
 @MainActor
 struct PlannedCardTests {
     @Test func plannedCardsStayOutOfTheGallery() {
-        #expect(!CardKind.gallery.contains(.trainingReadiness))
         #expect(!CardKind.gallery.contains(.loadFocus))
     }
 }
