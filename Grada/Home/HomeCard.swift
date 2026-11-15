@@ -7,7 +7,7 @@ import SwiftData
 final class HomeCard {
     var kindRawValue: String = ""
     var position: Int = 0
-    // TODO(after v1): multi-period cards, like Suunto. Store a period here (today, this week, last 7 days,
+    // TODO(#35, after v1): multi-period cards, like Suunto. Store a period here (today, this week, last 7 days,
     // last 30 days) so the same metric can sit on Home more than once, and pass it to SnapshotBuilder.
 
     init(kind: CardKind, position: Int) {
@@ -22,7 +22,7 @@ final class HomeCard {
 enum HomeLayout {
     /// Packs cards into rows: a wide card fills a row, squares pair up in order.
     /// A square followed by a wide card sits alone in its row.
-    // TODO(iPad release): 3 columns on iPad inside a centered column with a maximum width, like Suunto,
+    // TODO(#36, iPad release): 3 columns on iPad inside a centered column with a maximum width, like Suunto,
     // so square cards stay square instead of stretching. Pass the column count in from HomeView.
     static func rows(for kinds: [CardKind]) -> [[CardKind]] {
         var rows: [[CardKind]] = []

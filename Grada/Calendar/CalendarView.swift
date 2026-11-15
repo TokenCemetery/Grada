@@ -8,7 +8,7 @@ struct CalendarView: View {
     @AppStorage("calendarMetric") private var metric: CalendarMetric = .healthStatus
     @AppStorage("colorBlindPalette") private var colorBlind = false
     @State private var selectedDay: Date?
-    // TODO(v3, Reports): a monthly summary like Whoop's "Month in Review" belongs in reports, not here.
+    // TODO(#40, v3, Reports): a monthly summary like Whoop's "Month in Review" belongs in reports, not here.
 
     private var calendar: Calendar { .current }
     private var today: Date { calendar.startOfDay(for: .now) }

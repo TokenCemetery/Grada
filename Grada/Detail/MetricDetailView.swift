@@ -293,7 +293,7 @@ enum Breakdown {
             guard kind == .lastWorkout || kind == .weeklyTraining else { return nil }
             let workouts = try await source.workouts(days: period.days)
             return workouts.isEmpty ? nil : .workouts(workouts)
-        // TODO(v4, Scores): show how much each input raised or lowered Recovery and Resources.
+        // TODO(#41, v4, Scores): show how much each input raised or lowered Recovery and Resources.
         // Health status and Health age already list theirs on the card.
         case .score:
             return nil

@@ -116,11 +116,11 @@ struct TrendBuilder {
             let scores = try await builder.recoveryDays(days)
                 .map { DayValue(day: $0.day, value: $0.result.map { Double($0.score) }) }
             return make(scores, period, style: .line, unit: "%", format: .number(decimals: 0))
-        // TODO(later): Resources needs each day's timeline re-simulated from 5-minute heart rate, and
+        // TODO(#42, later): Resources needs each day's timeline re-simulated from 5-minute heart rate, and
         // Health age a 30-day window per point. Both are too slow to run per chart; store daily values first.
         case .resources, .healthAge:
             return nil
-        // TODO(v4): trends for Training readiness and Load focus, once they exist.
+        // TODO(#31, #32, v4): trends for Training readiness and Load focus, once they exist.
         case .trainingReadiness, .loadFocus:
             return nil
         }

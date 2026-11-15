@@ -51,7 +51,7 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// Cards whose calculation isn't built yet. They stay out of the gallery until it is.
     var isPlanned: Bool {
         switch self {
-        // TODO(v4): build with Strain's training-load model, then remove from this list.
+        // TODO(#31, #32, v4): build with Strain's training-load model, then remove from this list.
         case .trainingReadiness, .loadFocus: true
         default: false
         }
