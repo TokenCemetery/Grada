@@ -93,7 +93,7 @@ struct CardVariantTests {
     }
 
     @Test func scoresAreRated() async throws {
-        for kind in [CardKind.resources, .hrvStatus] {
+        for kind in [CardKind.resources, .hrvStatus, .vo2Max] {
             let snapshot = try await builder.snapshot(for: kind)
             #expect(snapshot.rating != nil, "\(kind) has no rating")
         }
@@ -112,6 +112,16 @@ struct RatingTests {
         #expect(DayRatings.range(37.2, normal: normal) == .fair)
         #expect(DayRatings.range(35.8, normal: normal) == .fair)
         #expect(DayRatings.range(37.5, normal: normal) == .poor)
+    }
+
+    @Test func vo2MaxZonesFollowTheCooperTable() {
+        let men = VO2MaxZones.bounds(age: 25, sex: .male)
+        #expect(men == [36.5, 42.5, 46.5, 52.5])
+        #expect(VO2MaxZones.zone(36.4, bounds: men) == .poor)
+        #expect(VO2MaxZones.zone(42.5, bounds: men) == .good)
+        #expect(VO2MaxZones.zone(60, bounds: men) == .superior)
+        #expect(VO2MaxZones.bounds(age: 25, sex: .female) == [29.0, 33.0, 37.0, 41.1])
+        #expect(VO2MaxZones.bounds(age: 70, sex: .male) == VO2MaxZones.bounds(age: 60, sex: .male))
     }
 }
 
@@ -249,6 +259,7 @@ private struct BeforeWakeUpSource: HealthDataSource {
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] { try await base.heartRate(in: interval) }
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { try await base.sleepPeriods(in: interval) }
     func age() async throws -> Int? { try await base.age() }
+    func biologicalSex() async throws -> BiologicalSex? { try await base.biologicalSex() }
     func highestHeartRate(days: Int) async throws -> Double? { try await base.highestHeartRate(days: days) }
 }
 

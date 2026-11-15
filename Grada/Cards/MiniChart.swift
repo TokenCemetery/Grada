@@ -31,6 +31,8 @@ struct MiniChart: View {
             GoalBar(share: goal > 0 ? value / goal : 0, isAverage: isAverage, color: color)
         case .range(let value, let normalRange):
             RangeBar(value: value, normalRange: normalRange, color: color)
+        case .zones(let value, let bounds):
+            ZoneBar(value: value, bounds: bounds, colorBlind: colorBlind)
         case .intraday(let points, let domain):
             VStack(spacing: 2) {
                 DayLine(points: points, domain: domain, color: color)
@@ -110,6 +112,63 @@ private struct GoalBar: View {
         .frame(height: MiniChart.plotHeight + 16)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(Int((share * 100).rounded()))% of \(isAverage ? "7-day average" : "goal")")
+    }
+}
+
+/// A value as a marker on a track split into fitness zones: Poor red, Fair yellow, Good to Superior
+/// in deepening greens. The zone edges are labelled underneath, like Suunto's VO₂max card.
+private struct ZoneBar: View {
+    let value: Double
+    /// Lower bounds of zones 2–5.
+    let bounds: [Double]
+    let colorBlind: Bool
+
+    var body: some View {
+        let domain = Self.domain(value, bounds)
+        let edges = [domain.lowerBound] + bounds + [domain.upperBound]
+        let good = DayRating.good.fill(colorBlind: colorBlind)
+        let colors = [DayRating.poor.fill(colorBlind: colorBlind), DayRating.fair.fill(colorBlind: colorBlind),
+                      good.opacity(0.55), good.opacity(0.78), good]
+        VStack(spacing: 2) {
+            Spacer(minLength: 0)
+            GeometryReader { proxy in
+                let width = proxy.size.width
+                let x = { (v: Double) in width * (v - domain.lowerBound) / (domain.upperBound - domain.lowerBound) }
+                ZStack(alignment: .leading) {
+                    HStack(spacing: 2) {
+                        ForEach(colors.indices, id: \.self) { index in
+                            colors[index].frame(width: max(x(edges[index + 1]) - x(edges[index]) - 2, 0), height: 8)
+                        }
+                    }
+                    .clipShape(Capsule())
+                    Capsule().fill(Color.primary)
+                        .frame(width: 4, height: 18)
+                        .offset(x: min(max(x(value) - 2, 0), width - 4))
+                }
+                .frame(maxHeight: .infinity)
+            }
+            .frame(height: 18)
+            GeometryReader { proxy in
+                let width = proxy.size.width
+                ForEach(bounds, id: \.self) { bound in
+                    Text(bound.formatted(.number.precision(.fractionLength(0))))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize()
+                        .position(x: width * (bound - domain.lowerBound) / (domain.upperBound - domain.lowerBound), y: 6)
+                }
+            }
+            .frame(height: 12)
+        }
+        .frame(height: MiniChart.plotHeight + 16)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(VO2MaxZones.zone(value, bounds: bounds).word)
+    }
+
+    /// Poor and Superior get a third of the inner zones' span each, widened to fit a value beyond them.
+    private static func domain(_ value: Double, _ bounds: [Double]) -> ClosedRange<Double> {
+        let outer = ((bounds.last ?? 1) - (bounds.first ?? 0)) / 3
+        return min(value - 1, (bounds.first ?? 0) - outer)...max(value + 1, (bounds.last ?? 1) + outer)
     }
 }
 

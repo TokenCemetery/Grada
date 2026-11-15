@@ -19,8 +19,8 @@ final class HealthKitReader {
         ]
 
     func requestAuthorization() async throws {
-        let birthDate = HKCharacteristicType(.dateOfBirth)
-        try await store.requestAuthorization(toShare: [], read: Set(Self.readTypes as [HKObjectType] + [birthDate]))
+        let characteristics = [HKCharacteristicType(.dateOfBirth), HKCharacteristicType(.biologicalSex)]
+        try await store.requestAuthorization(toShare: [], read: Set(Self.readTypes as [HKObjectType] + characteristics))
     }
 
     /// Calls `onChange` whenever Apple Health gets new data for any read type, even while the app is
@@ -200,6 +200,16 @@ final class HealthKitReader {
               let birth = calendar.date(from: components)
         else { return nil }
         return calendar.dateComponents([.year], from: birth, to: .now).year
+    }
+
+    /// Nil when not set, set to "Other", or reading it isn't allowed; like the birth date, HealthKit
+    /// doesn't say which.
+    func biologicalSex() -> BiologicalSex? {
+        switch try? store.biologicalSex().biologicalSex {
+        case .female: .female
+        case .male: .male
+        default: nil
+        }
     }
 
     func highestHeartRate(days: Int) async throws -> Double? {

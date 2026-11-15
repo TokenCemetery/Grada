@@ -108,6 +108,9 @@ nonisolated struct OvernightVitals: Equatable {
     }
 }
 
+/// Biological sex as Apple Health records it; zone tables like VO₂ max fitness depend on it.
+nonisolated enum BiologicalSex { case female, male }
+
 /// Where cards get their data: the imported store in the app, sample data in previews and demo mode.
 protocol HealthDataSource {
     /// Average heart rate per 5 minutes in `interval`, oldest first; intervals without data are left out.
@@ -116,6 +119,8 @@ protocol HealthDataSource {
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod]
     /// The user's age from Apple Health, if they entered a birth date.
     func age() async throws -> Int?
+    /// The user's biological sex from Apple Health, if they entered it as female or male.
+    func biologicalSex() async throws -> BiologicalSex?
     /// Highest heart rate recorded in the last `days` days.
     func highestHeartRate(days: Int) async throws -> Double?
     /// One value per day for the `days` days ending today, oldest first.

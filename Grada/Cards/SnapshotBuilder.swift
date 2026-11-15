@@ -193,18 +193,25 @@ struct SnapshotBuilder {
     private func vo2Max() async throws -> CardSnapshot {
         let readings = try await source.daily(.vo2Max, days: 90).filter { $0.value != nil }
         guard let latest = readings.last, let value = latest.value else { return .noData(period: "Latest") }
-        var comparison = "First reading"
-        if readings.count > 1, let previous = readings[readings.count - 2].value {
-            let change = value - previous
-            comparison = abs(change) < 0.05 ? "Same as before" : "\(format(change, 1, signed: true)) since last"
+        guard let age = try await source.age(), let sex = try await source.biologicalSex() else {
+            let points = readings.suffix(7).map(\.value)
+            return CardSnapshot(
+                period: dayLabel(latest.day),
+                value: format(value, 1),
+                unit: QuantityMetric.vo2Max.unit,
+                comparison: "Add your age and sex in Apple Health",
+                chart: .line(Array(repeating: nil, count: 7 - points.count) + points, normalRange: nil)
+            )
         }
-        let points = readings.suffix(7).map(\.value)
+        let bounds = VO2MaxZones.bounds(age: age, sex: sex)
+        let zone = VO2MaxZones.zone(value, bounds: bounds)
         return CardSnapshot(
             period: dayLabel(latest.day),
             value: format(value, 1),
             unit: QuantityMetric.vo2Max.unit,
-            comparison: comparison,
-            chart: .line(Array(repeating: nil, count: 7 - points.count) + points, normalRange: nil)
+            comparison: zone.word,
+            rating: zone.rating,
+            chart: .zones(value: value, bounds: bounds)
         )
     }
 

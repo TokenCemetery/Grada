@@ -18,6 +18,8 @@ struct CardSnapshot {
         case progress(value: Double, goal: Double, isAverage: Bool = false)
         /// Today's value as a marker on a track with the personal normal range shaded.
         case range(value: Double, normalRange: ClosedRange<Double>)
+        /// A value on a track split into VO₂ max fitness zones; `bounds` are the lower bounds of zones 2–5.
+        case zones(value: Double, bounds: [Double])
         /// Today from 0:00: hours since midnight and value. A nil domain fits the values.
         case intraday([(hour: Double, value: Double)], domain: ClosedRange<Double>?)
 
@@ -25,7 +27,7 @@ struct CardSnapshot {
         var isBars: Bool {
             switch self {
             case .bars, .sleep: true
-            case .none, .line, .intraday, .progress, .range: false
+            case .none, .line, .intraday, .progress, .range, .zones: false
             }
         }
     }

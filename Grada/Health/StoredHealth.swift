@@ -136,6 +136,10 @@ struct StoredHealthData: HealthDataSource {
         reader?.age()
     }
 
+    func biologicalSex() async throws -> BiologicalSex? {
+        reader?.biologicalSex()
+    }
+
     func highestHeartRate(days: Int) async throws -> Double? {
         try await reader?.highestHeartRate(days: days)
     }

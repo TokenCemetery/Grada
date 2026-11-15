@@ -20,7 +20,7 @@ When you grant access, Grada reads these types from Apple Health:
 - Activity: steps, active energy, exercise minutes, walking and running distance, flights climbed, and stand hours.
 - Sleep: sleep sessions and sleep stages.
 - Workouts: type, time, duration, energy and heart rate.
-- Date of birth, to work out your age for age-based scores.
+- Date of birth and biological sex, for scores that depend on age or sex, such as health age and VO2 max fitness zones.
 
 You choose which types to share in the iOS permission screen. Grada works with whatever you allow and shows no data for the rest.
 

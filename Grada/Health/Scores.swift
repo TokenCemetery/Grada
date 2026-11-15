@@ -433,6 +433,58 @@ nonisolated enum HealthAge {
 
 /// Race times from VO₂ max with Jack Daniels' running formula, as Garmin's race predictor does
 /// from its own VO₂ max. Assumes training for the distance; real results vary with it.
+/// VO₂ max fitness zones by age and sex, from the Cooper Institute norms (the 6-category table reproduced
+/// by most fitness references; Very poor is merged into Poor here).
+nonisolated enum VO2MaxZones {
+    enum Zone: Int, CaseIterable {
+        case poor, fair, good, excellent, superior
+
+        var word: String {
+            switch self {
+            case .poor: "Poor"
+            case .fair: "Fair"
+            case .good: "Good"
+            case .excellent: "Excellent"
+            case .superior: "Superior"
+            }
+        }
+
+        var rating: DayRating {
+            switch self {
+            case .poor: .poor
+            case .fair: .fair
+            case .good, .excellent, .superior: .good
+            }
+        }
+    }
+
+    /// Lower bounds of Fair, Good, Excellent and Superior in ml/kg·min. Under 20 uses the 13–19 row.
+    static func bounds(age: Int, sex: BiologicalSex) -> [Double] {
+        let row = switch age {
+        case ..<20: 0
+        case 20..<30: 1
+        case 30..<40: 2
+        case 40..<50: 3
+        case 50..<60: 4
+        default: 5
+        }
+        return sex == .male ? men[row] : women[row]
+    }
+
+    static func zone(_ value: Double, bounds: [Double]) -> Zone {
+        Zone(rawValue: bounds.filter { value >= $0 }.count) ?? .superior
+    }
+
+    private static let men: [[Double]] = [
+        [38.4, 45.2, 51.0, 56.0], [36.5, 42.5, 46.5, 52.5], [35.5, 41.0, 45.0, 49.5],
+        [33.6, 39.0, 43.8, 48.1], [31.0, 35.8, 41.0, 45.4], [26.1, 32.3, 36.5, 44.3],
+    ]
+    private static let women: [[Double]] = [
+        [31.0, 35.0, 39.0, 42.0], [29.0, 33.0, 37.0, 41.1], [27.0, 31.5, 35.7, 40.1],
+        [24.5, 29.0, 32.9, 37.0], [22.8, 27.0, 31.5, 35.8], [20.2, 24.5, 30.3, 31.5],
+    ]
+}
+
 nonisolated enum RacePredictor {
     static let distances: [(name: String, meters: Double)] = [
         ("5K", 5_000), ("10K", 10_000), ("Half", 21_097.5), ("Marathon", 42_195),

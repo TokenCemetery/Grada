@@ -21,6 +21,10 @@ struct PastDaySource: HealthDataSource {
         try await base.age()
     }
 
+    func biologicalSex() async throws -> BiologicalSex? {
+        try await base.biologicalSex()
+    }
+
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] {
         try await base.hourly(metric, on: day)
     }

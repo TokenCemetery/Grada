@@ -127,6 +127,7 @@ struct SampleDataSource: HealthDataSource {
     }
 
     func age() async throws -> Int? { 35 }
+    func biologicalSex() async throws -> BiologicalSex? { .male }
 
     func highestHeartRate(days: Int) async throws -> Double? { 184 }
 
