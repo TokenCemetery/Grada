@@ -72,23 +72,41 @@ struct CardVariantTests {
     }
 
     @Test func wristTempShowsTheTemperatureAndTheWeek() async throws {
-        #expect(CardKind.wristTemperature.variants == [.week])
+        #expect(CardKind.wristTemperature.defaultVariant == .week)
         var builder = builder
         builder.usesMetric = true
-        let snapshot = try await builder.snapshot(for: .wristTemperature)
+        let snapshot = try await builder.snapshot(for: .wristTemperature, variant: .week)
         guard case .line(let values, let range?) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
         #expect(values.count == 7)
         let value = try #require(snapshot.value.flatMap { Double($0.replacingOccurrences(of: ",", with: ".")) })
         #expect((30...40).contains(value), "Shows the temperature, not the change")
         #expect((30...40).contains(range.lowerBound))
         #expect(snapshot.rating != nil)
+
+        let current = try await builder.snapshot(for: .wristTemperature, variant: .current)
+        guard case .range(_, let gauge, nil, _?, 1) = current.chart else { Issue.record("\(current.chart)"); return }
+        #expect(gauge == range, "Only a rise warns, on the same range as the week")
     }
 
     @Test func vitalsMarkTheRange() async throws {
         for kind in [CardKind.oxygenSaturation, .respiratoryRate] {
             let snapshot = try await builder.snapshot(for: kind)
-            guard case .range = snapshot.chart else { Issue.record("\(kind): \(snapshot.chart)"); continue }
+            guard case .range(_, _, let below, let above, _) = snapshot.chart else { Issue.record("\(kind): \(snapshot.chart)"); continue }
+            if kind == .oxygenSaturation {
+                #expect(below != nil && above == nil, "Only low blood oxygen warns")
+            } else {
+                #expect(below == nil && above != nil, "Only a high respiratory rate warns")
+            }
+            #expect(snapshot.rating != nil)
         }
+    }
+
+    @Test func hrvCurrentWarnsOnBothSides() async throws {
+        #expect(CardKind.hrvStatus.defaultVariant == .week)
+        let snapshot = try await builder.snapshot(for: .hrvStatus, variant: .current)
+        guard case .range(_, let baseline, let below?, let above?, 0) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(below == (baseline.upperBound - baseline.lowerBound) / 2, "Red from twice the half-width under the mean")
+        #expect(above == .infinity, "Above the baseline stays yellow")
     }
 
     @Test func heartRateDrawsTodaysCurve() async throws {

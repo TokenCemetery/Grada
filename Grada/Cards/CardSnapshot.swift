@@ -16,12 +16,21 @@ struct CardSnapshot {
         /// A horizontal 0–100% goal bar, like Suunto's Steps card. Cards without a goal measure against
         /// their 7-day average instead.
         case progress(value: Double, goal: Double, isAverage: Bool = false)
-        /// Today's value as a marker on a track with the personal normal range shaded.
-        case range(value: Double, normalRange: ClosedRange<Double>)
+        /// Today's value as a marker on a track: green over the normal range, then yellow and red away from it.
+        /// `below` and `above` are how far past each bound stays yellow before red; nil keeps that side green,
+        /// infinity keeps it yellow. Edge labels show `decimals` digits; 0 snaps the scale to whole numbers.
+        case range(value: Double, normalRange: ClosedRange<Double>, below: Double?, above: Double?, decimals: Int = 0)
         /// A value on a track split into VO₂ max fitness zones; `bounds` are the lower bounds of zones 2–5.
         case zones(value: Double, bounds: [Double])
         /// Today from 0:00: hours since midnight and value. A nil domain fits the values.
         case intraday([(hour: Double, value: Double)], domain: ClosedRange<Double>?)
+
+        /// A one-sided range colored like `DayRatings.range`: only the unhealthy side turns yellow, then red.
+        static func range(value: Double, normalRange: ClosedRange<Double>, higherIsBetter: Bool, decimals: Int) -> Chart {
+            let slight = DayRatings.slightMiss(normalRange)
+            return .range(value: value, normalRange: normalRange,
+                          below: higherIsBetter ? slight : nil, above: higherIsBetter ? nil : slight, decimals: decimals)
+        }
 
         /// Bar charts sit beside the value on wide cards.
         var isBars: Bool {

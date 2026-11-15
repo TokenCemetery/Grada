@@ -29,10 +29,10 @@ struct SnapshotBuilder {
         case .sleepStages: try await sleep(withStages: true, .current)
         case .restingHeartRate: try await vital(.restingHeartRate, variant)
         case .hrv: try await vital(.hrv, variant)
-        case .hrvStatus: try await hrvStatus()
+        case .hrvStatus: try await hrvStatus(variant)
         case .oxygenSaturation: try await vital(.oxygenSaturation, .current)
         case .respiratoryRate: try await vital(.respiratoryRate, .current)
-        case .wristTemperature: try await wristTemperature()
+        case .wristTemperature: try await wristTemperature(variant)
         case .steps: try await cumulative(.steps, goal: .steps, variant)
         case .activeEnergy: try await cumulative(.activeEnergy, goal: .activeEnergy, variant)
         case .exerciseMinutes: try await cumulative(.exerciseMinutes, variant)
@@ -118,6 +118,8 @@ struct SnapshotBuilder {
         let comparison = range.map {
             "Normal \(format($0.lowerBound, metric.decimals))–\(format($0.upperBound, metric.decimals))"
         } ?? "Calibrating"
+        // Low blood oxygen or HRV is the worry; for the others, a high reading is.
+        let higherIsBetter = metric == .oxygenSaturation || metric == .hrv
 
         return CardSnapshot(
             period: dayLabel(series[latestIndex].day),
@@ -125,14 +127,17 @@ struct SnapshotBuilder {
             unit: metric.unit,
             comparison: comparison,
             tone: range.map { $0.contains(latest) ? .neutral : .warning } ?? .neutral,
+            rating: range.map { DayRatings.range(latest, normal: $0, higherIsBetter: higherIsBetter) },
             chart: variant == .week
                 ? .line(series.suffix(7).map(\.value), normalRange: range)
-                : range.map { .range(value: latest, normalRange: $0) } ?? .none
+                : range.map { .range(value: latest, normalRange: $0, higherIsBetter: higherIsBetter, decimals: 0) } ?? .none
         )
     }
 
     /// The 7 nights ending last night; until last night is recorded, the 7 ending yesterday.
-    private func hrvStatus() async throws -> CardSnapshot {
+    /// Current shows the 7-night average on a gauge: yellow above the baseline ("Unbalanced"), yellow then red
+    /// below it ("Low" from twice the half-width under the mean). 7 days draws the line through the baseline.
+    private func hrvStatus(_ variant: CardVariant) async throws -> CardSnapshot {
         let period = "Last \(HRVStatus.window) nights"
         let chartDays = 7
         let nights = try await source.overnight(days: HRVStatus.baselineNights + HRVStatus.window + chartDays - 1).map(\.hrv)
@@ -145,6 +150,7 @@ struct SnapshotBuilder {
                                 comparison: "Needs \(HRVStatus.minimumBaselineNights + HRVStatus.window) nights of data")
         }
         let baseline = "\(format(shown.baseline.lowerBound, 0))–\(format(shown.baseline.upperBound, 0))"
+        let halfWidth = (shown.baseline.upperBound - shown.baseline.lowerBound) / 2
         return CardSnapshot(
             period: period,
             value: format(shown.average, 0),
@@ -152,13 +158,16 @@ struct SnapshotBuilder {
             comparison: "\(shown.state.word) · baseline \(baseline)",
             tone: shown.state.tone,
             rating: shown.state.rating,
-            chart: .line((end - chartDays + 1...end).map { HRVStatus.status(nights: nights, endingAt: $0)?.average },
-                         normalRange: shown.baseline)
+            chart: variant == .week
+                ? .line((end - chartDays + 1...end).map { HRVStatus.status(nights: nights, endingAt: $0)?.average },
+                        normalRange: shown.baseline)
+                : .range(value: shown.average, normalRange: shown.baseline, below: halfWidth, above: .infinity)
         )
     }
 
-    /// Last night's wrist temperature with the last 7 nights in the personal normal range, colored by how far it rose.
-    private func wristTemperature() async throws -> CardSnapshot {
+    /// Last night's wrist temperature against the personal normal range, colored by how far it rose.
+    /// Current shows it on a gauge; 7 days draws the last 7 nights through the range.
+    private func wristTemperature(_ variant: CardVariant) async throws -> CardSnapshot {
         let series = try await source.daily(.wristTemperature, days: baselineDays + 1)
         guard let latestIndex = series.indices.suffix(2).last(where: { series[$0].value != nil }),
               let latest = series[latestIndex].value
@@ -169,21 +178,27 @@ struct SnapshotBuilder {
         let history = series[..<latestIndex].compactMap(\.value)
         let period = latestIndex == series.count - 1 ? "Last night" : dayLabel(series[latestIndex].day)
 
+        let week = series.suffix(7).map { $0.value.map(toDisplay) }
         guard history.count >= Baseline.minimumDays, let mean = Baseline.average(history) else {
             return CardSnapshot(period: period, value: format(toDisplay(latest), 1), unit: unit, comparison: "Calibrating",
-                                chart: .line(series.suffix(7).map { $0.value.map(toDisplay) }, normalRange: nil))
+                                chart: variant == .week ? .line(week, normalRange: nil) : .none)
         }
         let range = Baseline.normalRange(history: history, minimumHalfWidth: QuantityMetric.wristTemperature.minimumHalfWidth)
+        let shownRange = range.map { toDisplay($0.lowerBound)...toDisplay($0.upperBound) }
         let deviation = (latest - mean) * (usesMetric ? 1 : 1.8)
+        let chart: CardSnapshot.Chart = if variant == .week {
+            .line(week, normalRange: shownRange)
+        } else {
+            // A rise can mean illness or a cycle phase; a cooler night is no concern.
+            shownRange.map { .range(value: toDisplay(latest), normalRange: $0, higherIsBetter: false, decimals: 1) } ?? .none
+        }
         return CardSnapshot(
             period: period,
             value: format(toDisplay(latest), 1),
             unit: unit,
             comparison: "\(format(deviation, 1, signed: true))° vs baseline",
-            // A rise can mean illness or a cycle phase; a cooler night is no concern.
             rating: range.map { DayRatings.range(latest, normal: $0, higherIsBetter: false) },
-            chart: .line(series.suffix(7).map { $0.value.map(toDisplay) },
-                         normalRange: range.map { toDisplay($0.lowerBound)...toDisplay($0.upperBound) })
+            chart: chart
         )
     }
 

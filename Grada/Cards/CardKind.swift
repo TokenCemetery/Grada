@@ -96,9 +96,9 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// Cards where today and the last 7 days answer different questions offer both; the rest only Current.
     var variants: [CardVariant] {
         switch self {
-        case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours:
+        case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours, .hrvStatus, .wristTemperature:
             [.current, .week]
-        case .sleepDuration, .recovery, .wristTemperature:
+        case .sleepDuration, .recovery:
             [.week]
         default:
             [.current]
@@ -108,7 +108,7 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// The variant matching what the card showed before variants existed, so cards saved then keep their look.
     var defaultVariant: CardVariant {
         switch self {
-        case .exerciseMinutes, .distance, .standHours, .sleepDuration, .wristTemperature, .recovery:
+        case .exerciseMinutes, .distance, .standHours, .sleepDuration, .wristTemperature, .recovery, .hrvStatus:
             .week
         default:
             .current

@@ -79,8 +79,12 @@ nonisolated enum DayRatings {
     static func range(_ value: Double, normal: ClosedRange<Double>, higherIsBetter: Bool) -> DayRating {
         let miss = higherIsBetter ? normal.lowerBound - value : value - normal.upperBound
         if miss <= 0 { return .good }
-        let halfWidth = (normal.upperBound - normal.lowerBound) / 2
-        return miss < halfWidth / 2 ? .fair : .poor
+        return miss < slightMiss(normal) ? .fair : .poor
+    }
+
+    /// How far past the normal range still counts as "slightly" off: half the range's half-width.
+    static func slightMiss(_ normal: ClosedRange<Double>) -> Double {
+        (normal.upperBound - normal.lowerBound) / 4
     }
 
     /// Green with every measured vital in range, yellow with one out, red with two or more.

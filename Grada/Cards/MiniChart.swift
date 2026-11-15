@@ -29,8 +29,8 @@ struct MiniChart: View {
             }
         case .progress(let value, let goal, let isAverage):
             GoalBar(share: goal > 0 ? value / goal : 0, isAverage: isAverage, color: color)
-        case .range(let value, let normalRange):
-            RangeBar(value: value, normalRange: normalRange, color: color)
+        case .range(let value, let normalRange, let below, let above, let decimals):
+            RangeBar(value: value, normalRange: normalRange, below: below, above: above, decimals: decimals, colorBlind: colorBlind)
         case .zones(let value, let bounds):
             ZoneBar(value: value, bounds: bounds, colorBlind: colorBlind)
         case .intraday(let points, let domain):
@@ -180,31 +180,60 @@ private struct ZoneBar: View {
     }
 }
 
-/// Today's value as a marker on a track, with the personal normal range shaded.
+/// Today's value as a marker on a gauge like Suunto's VO₂max card: six equal-width sections with five
+/// labelled edges — where red starts, the normal range's bounds, its middle, and the mirror point on the
+/// other side. Green covers the normal range and any healthy side; the unhealthy side turns yellow, then red.
+/// Equal sections keep narrow yellow bands visible and the labels apart; values beyond the ends sit at the ends.
 private struct RangeBar: View {
     let value: Double
     let normalRange: ClosedRange<Double>
-    let color: Color
+    /// How far past each bound stays yellow; nil keeps that side green, infinity keeps it yellow.
+    let below: Double?
+    let above: Double?
+    let decimals: Int
+    let colorBlind: Bool
+
+    private static let sections = 6
 
     var body: some View {
-        let domain = Self.domain(value, normalRange)
-        VStack(spacing: 0) {
+        let edges = edges()
+        let ratings = sectionRatings()
+        VStack(spacing: 2) {
             Spacer(minLength: 0)
             GeometryReader { proxy in
                 let width = proxy.size.width
-                let x = { (v: Double) in width * (v - domain.lowerBound) / (domain.upperBound - domain.lowerBound) }
+                let section = width / Double(Self.sections)
+                let runs = Self.runs(ratings.count) { ratings[$0] == ratings[$1] }
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color(.systemFill)).frame(height: 8)
-                    Rectangle().fill(color.opacity(0.35))
-                        .frame(width: x(normalRange.upperBound) - x(normalRange.lowerBound), height: 8)
-                        .offset(x: x(normalRange.lowerBound))
+                    HStack(spacing: 2) {
+                        ForEach(runs.indices, id: \.self) { index in
+                            ratings[runs[index].lowerBound].fill(colorBlind: colorBlind)
+                                .frame(width: max(section * Double(runs[index].count) - 2, 0), height: 12)
+                        }
+                    }
+                    .clipShape(Capsule())
                     Capsule().fill(Color.primary)
-                        .frame(width: 4, height: 18)
-                        .offset(x: min(max(x(value) - 2, 0), width - 4))
+                        .frame(width: 5, height: 24)
+                        .overlay(Capsule().stroke(Color(.secondarySystemGroupedBackground), lineWidth: 1.5))
+                        .offset(x: min(max(width * position(value, edges) - 2.5, 0), width - 5))
                 }
                 .frame(maxHeight: .infinity)
             }
-            .frame(height: 18)
+            .frame(height: 24)
+            GeometryReader { proxy in
+                let section = proxy.size.width / Double(Self.sections)
+                let labels = labels(edges)
+                ForEach(1..<Self.sections, id: \.self) { index in
+                    Text(labels[index - 1])
+                        .font(.caption2.monospacedDigit())
+                        // Five labels share a square card; tighter digits keep one-decimal labels apart.
+                        .tracking(-0.4)
+                        .foregroundStyle(.secondary)
+                        .fixedSize()
+                        .position(x: section * Double(index), y: 6)
+                }
+            }
+            .frame(height: 12)
         }
         .frame(height: MiniChart.plotHeight + 16)
         .accessibilityElement(children: .ignore)
@@ -212,10 +241,62 @@ private struct RangeBar: View {
             : value > normalRange.upperBound ? "Above your normal range" : "Below your normal range")
     }
 
-    /// The normal range fills the middle half of the track, widened to fit a value outside it.
-    private static func domain(_ value: Double, _ range: ClosedRange<Double>) -> ClosedRange<Double> {
-        let margin = max(range.upperBound - range.lowerBound, .leastNonzeroMagnitude) / 2
-        return min(value - margin / 4, range.lowerBound - margin)...max(value + margin / 4, range.upperBound + margin)
+    /// Seven section edges, left to right. A side without a finite yellow band borrows the other side's
+    /// width, so the scale stays even. Whole-number gauges round the normal range's bounds, as the card's
+    /// "Normal" line does, keep them at least 2 apart, and use whole steps of at least 1 outside them, so
+    /// labels never repeat; zones move by half a unit at most.
+    private func edges() -> [Double] {
+        let finite = { (miss: Double?) in miss.flatMap { $0.isFinite ? $0 : nil } }
+        let fallback = DayRatings.slightMiss(normalRange)
+        var low = finite(below) ?? finite(above) ?? fallback
+        var high = finite(above) ?? finite(below) ?? fallback
+        var (lower, upper) = (normalRange.lowerBound, normalRange.upperBound)
+        if decimals == 0 {
+            let step = { (width: Double) in max(width.rounded(), 1) }
+            (lower, upper, low, high) = (lower.rounded(), max(upper.rounded(), lower.rounded() + 2), step(low), step(high))
+        }
+        return [lower - 2 * low, lower - low, lower, (lower + upper) / 2, upper, upper + high, upper + 2 * high]
+    }
+
+    /// The five inner edges at the card's precision, without trailing zeros. Close edges that would round
+    /// to the same label get one more decimal.
+    private func labels(_ edges: [Double]) -> [String] {
+        let inner = edges[1..<Self.sections]
+        let format = { (digits: Int) in inner.map { $0.formatted(.number.precision(.fractionLength(0...digits))) } }
+        let labels = format(decimals)
+        return Set(labels).count == labels.count ? labels : format(decimals + 1)
+    }
+
+    /// One rating per section, left to right.
+    private func sectionRatings() -> [DayRating] {
+        let side = { (miss: Double?) -> [DayRating] in
+            guard let miss else { return [.good, .good] }
+            return miss.isFinite ? [.poor, .fair] : [.fair, .fair]
+        }
+        return side(below) + [.good, .good] + side(above).reversed()
+    }
+
+    /// Where `value` sits on the track, 0 to 1, interpolating within its section.
+    private func position(_ value: Double, _ edges: [Double]) -> Double {
+        guard value > edges[0] else { return 0 }
+        for index in 1..<edges.count where value <= edges[index] {
+            let share = (value - edges[index - 1]) / max(edges[index] - edges[index - 1], .leastNonzeroMagnitude)
+            return (Double(index - 1) + share) / Double(Self.sections)
+        }
+        return 1
+    }
+
+    /// Consecutive indices that `same` groups together, so neighbouring sections of one rating draw as one.
+    private static func runs(_ count: Int, same: (Int, Int) -> Bool) -> [Range<Int>] {
+        var runs: [Range<Int>] = []
+        for index in 0..<count {
+            if let last = runs.last, same(last.lowerBound, index) {
+                runs[runs.count - 1] = last.lowerBound..<index + 1
+            } else {
+                runs.append(index..<index + 1)
+            }
+        }
+        return runs
     }
 }
 
