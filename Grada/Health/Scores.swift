@@ -32,7 +32,8 @@ nonisolated enum Recovery {
     /// variation, so this is the 0.5 × CV that Le Meur et al. 2013 used and Buchheit 2014 reviews; no study has
     /// validated a particular fraction. Recovery only flags the direction that signals fatigue.
     static let smallestWorthwhileChangeInSD = 0.5
-    /// AASM/SRS consensus: adults need at least 7 hours (Watson et al. 2015).
+    /// AASM/SRS consensus: adults up to 60 need at least 7 hours (Watson et al. 2015), and the NSF's 7–8 hours
+    /// from 65 keeps the same minimum for older adults (Hirshkowitz et al. 2015, Sleep Health 1:40).
     static let minimumSleep = SleepNeed.baseline
     /// HRV is compared on a log scale, as in HRV research, because its spread grows with its size.
     /// 0.05 in log terms is about ±3 ms at 60 ms, the same floor as the HRV normal range.
@@ -274,7 +275,8 @@ nonisolated enum Resources {
 
 /// Weekly moderate and vigorous minutes against the WHO target, like Garmin Intensity Minutes.
 nonisolated enum IntensityMinutes {
-    /// WHO: at least 150 minutes of moderate activity a week, or 75 vigorous.
+    /// WHO: at least 150 minutes of moderate activity a week, or 75 vigorous. The guideline doesn't say "counts
+    /// double"; that follows from the 150-to-75 ratio.
     static let weeklyTarget = 150.0
     /// ACSM bands as a share of heart rate reserve: moderate 40–59%, vigorous from 60%.
     private static let moderateReserve = 0.4
@@ -343,7 +345,8 @@ nonisolated enum DayIntensity {
 }
 
 /// How much sleep the user needs, and the debt from nights short of it. The need is the user's sleep goal, or
-/// the AASM/SRS adult minimum of 7 hours (Watson et al. 2015). No published method adds debt or training on
+/// the AASM/SRS adult minimum of 7 hours (Watson et al. 2015, for ages 18–60), which the NSF also sets from 65
+/// (Hirshkowitz et al. 2015). No published method adds debt or training on
 /// top of it, so nothing is added.
 nonisolated enum SleepNeed {
     static let baseline: TimeInterval = 7 * 3600

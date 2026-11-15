@@ -128,7 +128,7 @@ extension CardKind {
         case .sleepDuration, .sleepStages:
             "Time asleep in the night that ended this morning. Deep sleep restores the body, REM supports memory and mood. Most adults need 7–9 hours."
         case .sleepNeed:
-            "How much sleep you need tonight: your sleep goal, or 7 hours, the minimum sleep experts recommend for adults. Sleep debt adds up how far each of the last 14 nights fell short of that. A long night doesn't cancel it: an hour of debt can take several nights of extra sleep to recover, and the bars show each night's shortfall."
+            "How much sleep you need tonight: your sleep goal, or 7 hours, the minimum sleep experts recommend for adults of any age. Sleep debt adds up how far each of the last 14 nights fell short of that. A long night doesn't cancel it: an hour of debt can take several nights of extra sleep to recover, and the bars show each night's shortfall."
         case .sleepConsistency:
             "The Sleep Regularity Index for the last 7 days: how likely you were to be in the same state, asleep or awake, at the same time on consecutive days. 100 means identical days, 0 random ones. In a UK study of 60,000 adults the typical score was 81 and half scored between 74 and 86; the least regular fifth had the highest mortality risk. Green from 81, yellow from 74. Needs sleep records on 5 of the 7 days."
         case .sleepScore:
@@ -154,7 +154,7 @@ extension CardKind {
         case .exerciseMinutes:
             "Minutes of brisk activity or more. Health guidelines recommend at least 150 minutes a week."
         case .intensityMinutes:
-            "Minutes over the last 7 days with your heart rate at 40–59% of its reserve (moderate) or above (vigorous, counted double). The WHO recommends at least 150 a week. Days without heart rate use exercise minutes instead."
+            "Minutes over the last 7 days with your heart rate at 40–59% of its reserve (moderate) or above (vigorous, counted double). The WHO recommends at least 150 moderate or 75 vigorous minutes a week, so a vigorous minute counts as two. Days without heart rate use exercise minutes instead."
         case .dayIntensity:
             "Your waking time outside workouts by effort, from heart rate as a share of its reserve (max minus resting), in the American College of Sports Medicine's bands: very light below 30%, light 30–39%, moderate 40–59%, vigorous 60% and up. The big number is time at light effort or harder; workouts count in Intensity Minutes instead."
         case .distance:

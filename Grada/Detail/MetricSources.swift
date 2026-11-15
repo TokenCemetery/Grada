@@ -33,13 +33,16 @@ struct MetricSource: Hashable {
                                          "Effort bands as a share of heart rate reserve",
                                          doi: "10.1249/mss.0b013e318213fefb")
     static let bull2020 = MetricSource("Bull et al. 2020 · Br J Sports Med (WHO guidelines)",
-                                       "150 moderate minutes a week, vigorous counting double",
+                                       "150 moderate or 75 vigorous minutes a week, so a vigorous minute counts as two",
                                        doi: "10.1136/bjsports-2020-102955")
 
     // Sleep
     static let watson2015 = MetricSource("Watson et al. 2015 · Sleep (AASM/SRS consensus)",
-                                         "Adults need at least 7 hours of sleep",
+                                         "Adults up to 60 need at least 7 hours of sleep",
                                          doi: "10.5665/sleep.4716")
+    static let hirshkowitz2015 = MetricSource("Hirshkowitz et al. 2015 · Sleep Health (NSF)",
+                                              "7–9 hours for adults and 7–8 from 65: at least 7 at every adult age",
+                                              doi: "10.1016/j.sleh.2014.12.010")
     static let ohayon2017 = MetricSource("Ohayon et al. 2017 · Sleep Health (NSF consensus)",
                                          "Sleep efficiency, time awake and awakenings that mark good sleep",
                                          doi: "10.1016/j.sleh.2016.11.006")
@@ -114,18 +117,18 @@ extension CardKind {
     /// The studies a calculated metric rests on. Raw Apple Health readings have none.
     var sources: [MetricSource] {
         switch self {
-        case .recovery: [.leMeur2013, .plews2012, .buchheit2014, .watson2015]
+        case .recovery: [.leMeur2013, .plews2012, .buchheit2014, .watson2015, .hirshkowitz2015]
         case .hrvStatus: [.plews2012, .leMeur2013, .buchheit2014]
         case .healthAge:
             [.finch1990, .kodama2009, .kaminsky2015, .zhang2016, .ostchega2011, .paluch2022, .cappuccio2010, .arem2015]
-        case .sleepNeed: [.watson2015, .vanDongen2003, .kitamura2016]
+        case .sleepNeed: [.watson2015, .hirshkowitz2015, .vanDongen2003, .kitamura2016]
         case .sleepConsistency: [.phillips2017, .windred2024]
-        case .sleepScore: [.ohayon2017, .watson2015, .phillips2017, .windred2024]
+        case .sleepScore: [.ohayon2017, .watson2015, .hirshkowitz2015, .phillips2017, .windred2024]
         case .intensityMinutes: [.bull2020, .garber2011, .tanaka2001]
         case .dayIntensity: [.garber2011, .tanaka2001]
         case .strain: [.edwards1993, .hulin2016, .gabbett2016, .impellizzeri2020, .tanaka2001]
         case .recoveryTime: [.stanley2013, .seiler2010, .tanaka2001]
-        case .trainingReadiness: [.ohayon2017, .stanley2013, .plews2012, .gabbett2016, .watson2015]
+        case .trainingReadiness: [.ohayon2017, .stanley2013, .plews2012, .gabbett2016, .watson2015, .hirshkowitz2015]
         case .loadFocus: [.seiler2010, .seilerKjerland2006, .sylta2014, .tanaka2001]
         case .vo2Max: [.kaminsky2015]
         case .racePredictor: [.danielsGilbert1979]
