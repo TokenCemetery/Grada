@@ -33,6 +33,6 @@ commit_parsers = [
 ]
 
 [remote.github]
-owner = "olegshulyakov"
-repo = "grada"
+owner = "TokenCemetery"
+repo = "Grada"
 
