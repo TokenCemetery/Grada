@@ -567,23 +567,33 @@ struct ResourcesTests {
 
 @MainActor
 struct SleepNeedTests {
-    @Test func shortNightsBuildDebtAndLongNightsRepayIt() {
-        let debt = SleepNeed.debt(asleep: [6 * 3600, nil, 7 * 3600, 10 * 3600, 9 * 3600])
-        // 7 h after 2 h of debt: three quarters of it remain, plus the new hour.
-        #expect(debt.map { $0 / 3600 } == [2, 2, 2.5, 0, 0])
+    /// AASM/SRS (Watson et al. 2015): adults need at least 7 hours.
+    @Test func needIsTheSevenHourGuideline() {
+        #expect(SleepNeed.baseline == 7 * 3600)
+        #expect(Recovery.minimumSleep == SleepNeed.baseline)
     }
 
-    @Test func steadyShortfallSettlesInsteadOfGrowing() {
-        let debt = SleepNeed.debt(asleep: Array(repeating: 7.5 * 3600, count: 60))
-        #expect(abs(debt.last! - 2 * 3600) < 60)
+    @Test func shortfallCountsOnlyNightsBelowTheirNeed() {
+        let shortfalls = SleepNeed.shortfalls(asleep: [6 * 3600, nil, 7 * 3600, 9 * 3600, 7.5 * 3600],
+                                              need: [7 * 3600, 7 * 3600, 7 * 3600, 7 * 3600, 8 * 3600])
+        #expect(shortfalls.map { $0 / 3600 } == [1, 0, 0, 0, 0.5])
     }
 
-    @Test func needAddsPartOfDebtAndTraining() {
-        #expect(SleepNeed.need(debt: 0, trainingTime: 0) == 8 * 3600)
-        // A quarter of 2 h debt, plus 15 min for an hour of training.
-        #expect(SleepNeed.need(debt: 2 * 3600, trainingTime: 3600) == 8 * 3600 + 30 * 60 + 15 * 60)
-        // Both extras are capped.
-        #expect(SleepNeed.need(debt: 10 * 3600, trainingTime: 6 * 3600) == 8 * 3600 + 90 * 60 + 45 * 60)
+    /// Van Dongen et al. 2003: deficits build over 14 nights. Long nights don't pay it back early.
+    @Test func debtSumsTheLastFourteenNights() {
+        let shortfalls: [TimeInterval] = [3600] + Array(repeating: 0, count: 13) + [1800, 0]
+        let debt = SleepNeed.debt(shortfalls: shortfalls)
+        #expect(debt[0] == 3600)
+        #expect(debt[13] == 3600, "Still inside the 14-night window")
+        #expect(debt[14] == 1800, "The first night has dropped out")
+        #expect(debt[15] == 1800)
+    }
+
+    @Test func cardShowsNeedDebtAndAWeekOfShortfalls() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepNeed)
+        #expect(snapshot.value == "7h 00m")
+        guard case .bars(let shortfalls, _, _) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(shortfalls.count == 7)
     }
 }
 

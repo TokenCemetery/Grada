@@ -109,7 +109,7 @@ extension CardKind {
         case .sleepDuration, .sleepStages:
             "Time asleep in the night that ended this morning. Deep sleep restores the body, REM supports memory and mood. Most adults need 7–9 hours."
         case .sleepNeed:
-            "How much sleep you need tonight: your baseline, plus part of any sleep debt, plus extra after a hard training day."
+            "How much sleep you need tonight: your sleep goal, or 7 hours, the minimum sleep experts recommend for adults. Sleep debt adds up how far each of the last 14 nights fell short of that. A long night doesn't cancel it: an hour of debt can take several nights of extra sleep to recover, and the bars show each night's shortfall."
         case .sleepConsistency:
             "How regular your bed and wake times were over the last 4 nights. A steady rhythm improves sleep quality, even on weekends."
         case .heartRate:

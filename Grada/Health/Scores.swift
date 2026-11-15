@@ -32,7 +32,7 @@ nonisolated enum Recovery {
     /// (Plews et al. 2013, Buchheit 2014). Recovery only flags the direction that signals fatigue.
     static let smallestWorthwhileChangeInSD = 0.5
     /// AASM/SRS consensus: adults need at least 7 hours (Watson et al. 2015).
-    static let minimumSleep: TimeInterval = 7 * 3600
+    static let minimumSleep = SleepNeed.baseline
     /// HRV is compared on a log scale, as in HRV research, because its spread grows with its size.
     /// 0.05 in log terms is about ±3 ms at 60 ms, the same floor as the HRV normal range.
     static let minimumLogHRVSD = 0.05
@@ -258,33 +258,24 @@ nonisolated enum DayIntensity {
     }
 }
 
-/// How much sleep the user needs tonight, like WHOOP's Sleep Planner and Garmin's Sleep Coach:
-/// a baseline, plus part of the recent sleep debt, plus extra after a training day.
+/// How much sleep the user needs, and the debt from nights short of it. The need is the user's sleep goal, or
+/// the AASM/SRS adult minimum of 7 hours (Watson et al. 2015). No published method adds debt or training on
+/// top of it, so nothing is added.
 nonisolated enum SleepNeed {
-    /// Until Goals (v2) let the user set it.
-    static let baseline: TimeInterval = 8 * 3600
-    /// Share of the debt to win back in one night, so a big debt is repaid over several nights.
-    private static let debtShare = 0.25
-    private static let maxDebtExtra: TimeInterval = 90 * 60
-    /// Extra sleep per hour of workout, up to `maxTrainingExtra`.
-    private static let extraPerTrainingHour: TimeInterval = 15 * 60
-    private static let maxTrainingExtra: TimeInterval = 45 * 60
-    /// Share of the debt that fades each night, so it reflects recent nights only: always sleeping
-    /// 30 minutes short settles at 2 hours of debt instead of growing forever.
-    private static let nightlyFade = 0.25
+    static let baseline: TimeInterval = 7 * 3600
+    /// Van Dongen et al. 2003 saw deficits keep building over 14 nights of short sleep.
+    static let debtNights = 14
 
-    /// Running debt after each night, oldest first. Short nights add to it and long nights repay it;
-    /// nights without data leave it unchanged.
-    static func debt(asleep: [TimeInterval?]) -> [TimeInterval] {
-        var debt: TimeInterval = 0
-        return asleep.map { night in
-            if let night { debt = max(debt * (1 - nightlyFade) + baseline - night, 0) }
-            return debt
-        }
+    /// How far each night fell short of its need, oldest first; nights without data count nothing.
+    static func shortfalls(asleep: [TimeInterval?], need: [TimeInterval]) -> [TimeInterval] {
+        zip(asleep, need).map { night, need in night.map { max(need - $0, 0) } ?? 0 }
     }
 
-    static func need(debt: TimeInterval, trainingTime: TimeInterval) -> TimeInterval {
-        baseline + min(debt * debtShare, maxDebtExtra) + min(trainingTime / 3600 * extraPerTrainingHour, maxTrainingExtra)
+    /// Debt after each night, oldest first: the shortfalls of the last `debtNights` nights. A long night doesn't
+    /// cancel earlier ones: no paper gives a payback rate, and Kitamura et al. 2016 found an hour of debt took
+    /// four days of extended sleep to recover.
+    static func debt(shortfalls: [TimeInterval]) -> [TimeInterval] {
+        shortfalls.indices.map { shortfalls[max($0 - debtNights + 1, 0)...$0].reduce(0, +) }
     }
 }
 

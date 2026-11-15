@@ -553,7 +553,7 @@ struct SnapshotBuilder {
         }
 
         let goalIndex = shown.night.wakeDay == today ? 1 : 0
-        let goal = try await sleepGoals(2)[goalIndex].value ?? SleepNeed.baseline
+        let goal = sleepGoals(2)[goalIndex].value ?? SleepNeed.baseline
         return CardSnapshot(
             period: shown.period,
             value: Self.hoursMinutes(shown.night.asleep),
@@ -565,37 +565,35 @@ struct SnapshotBuilder {
         )
     }
 
-    /// The sleep goal for each night ending on the last `count` days, oldest first: the user's edited goal
-    /// while it holds, otherwise that night's Sleep need.
-    func sleepGoals(_ count: Int) async throws -> [DayValue] {
-        // Extra days so the sleep debt has built up by the first night, plus the day before it.
-        let warmUp = 22
-        let days = lastDays(count + warmUp)
-        let nights = try await source.sleepNights(days: days.count)
-        let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let debt = SleepNeed.debt(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } })
-        let training = workoutMinutesPerDay(try await source.workouts(days: days.count), days: days.count)
-        // The need for the night ending on a day comes from the debt and training of the day before.
-        return (warmUp..<days.count).map { index in
-            DayValue(day: days[index], value: goals.value(.sleep, on: days[index])
-                ?? SleepNeed.need(debt: debt[index - 1], trainingTime: training[index - 1] * 60))
-        }
+    /// The sleep need for each night ending on the last `count` days, oldest first: the user's edited goal
+    /// while it holds, otherwise the 7-hour guideline.
+    func sleepGoals(_ count: Int) -> [DayValue] {
+        lastDays(count).map { DayValue(day: $0, value: goals.value(.sleep, on: $0) ?? SleepNeed.baseline) }
     }
 
-    /// Tonight's need: baseline, plus part of the sleep debt, plus extra after today's training.
-    private func sleepNeed() async throws -> CardSnapshot {
-        let days = lastDays(21)
+    /// Each of the last `count` nights' shortfall below its need, and the sleep debt after it, oldest first.
+    /// Nil when there are no sleep records at all.
+    func sleepDebt(_ count: Int) async throws -> [(shortfall: TimeInterval, debt: TimeInterval)]? {
+        let days = lastDays(count + SleepNeed.debtNights - 1)
         let nights = try await source.sleepNights(days: days.count)
-        guard !nights.isEmpty else { return .noData(period: tonightLabel) }
+        guard !nights.isEmpty else { return nil }
         let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let debt = SleepNeed.debt(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } })
-        let trainingToday = workoutMinutesPerDay(try await source.workouts(days: 1), days: 1)[0] * 60
-        let owed = debt[debt.count - 1]
+        let shortfalls = SleepNeed.shortfalls(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } },
+                                              need: sleepGoals(days.count).map { $0.value ?? SleepNeed.baseline })
+        return Array(zip(shortfalls, SleepNeed.debt(shortfalls: shortfalls)).suffix(count))
+            .map { (shortfall: $0.0, debt: $0.1) }
+    }
+
+    /// Tonight's need, the debt from the last 14 nights, and each of the last 7 nights' shortfall.
+    private func sleepNeed() async throws -> CardSnapshot {
+        guard let nights = try await sleepDebt(7) else { return .noData(period: tonightLabel) }
+        let need = goals.value(.sleep, on: calendar.startOfDay(for: now)) ?? SleepNeed.baseline
+        let owed = nights[nights.count - 1].debt
         return CardSnapshot(
             period: tonightLabel,
-            value: Self.hoursMinutes(SleepNeed.need(debt: owed, trainingTime: trainingToday)),
-            comparison: owed >= 5 * 60 ? "Sleep debt \(Self.hoursMinutes(owed))" : "No sleep debt",
-            chart: .bars(debt.suffix(7).map { $0 / 3600 })
+            value: Self.hoursMinutes(need),
+            comparison: owed >= 5 * 60 ? "Sleep debt \(Self.hoursMinutes(owed)) · \(SleepNeed.debtNights) nights" : "No sleep debt",
+            chart: .bars(nights.map { $0.shortfall / 3600 })
         )
     }
 

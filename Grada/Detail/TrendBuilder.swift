@@ -68,6 +68,8 @@ struct TrendBuilder {
     let source: HealthDataSource
     var calendar: Calendar = .current
     var usesMetric: Bool = Locale.current.measurementSystem != .us
+    /// The user's goals, for series that depend on them, e.g. sleep debt.
+    var goals = GoalHistory()
 
     /// History used for personal normal ranges, as on the cards.
     private let baselineDays = 30
@@ -178,18 +180,11 @@ struct TrendBuilder {
                      average: Baseline.average(values), low: values.min(), high: values.max())
     }
 
-    private func sleepNeed(_ period: TrendPeriod) async throws -> Trend {
-        // Extra days so the sleep debt has built up by the first shown day.
-        let warmUp = 21
-        let days = lastDays(period.days + warmUp)
-        let nights = try await source.sleepNights(days: days.count)
-        let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let debt = SleepNeed.debt(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } })
-        let training = minutesPerDay(try await source.workouts(days: days.count), days: days.count)
-        let needs = days.indices.map { index in
-            DayValue(day: days[index], value: SleepNeed.need(debt: debt[index], trainingTime: training[index].value! * 60) / 3600)
-        }
-        return make(Array(needs.suffix(period.days)), period, style: .bars, unit: "", format: .hours, title: "Sleep need")
+    /// Sleep debt after each night, as the Sleep Need card counts it.
+    private func sleepNeed(_ period: TrendPeriod) async throws -> Trend? {
+        guard let nights = try await cardBuilder.sleepDebt(period.days) else { return nil }
+        let debt = zip(lastDays(period.days), nights).map { DayValue(day: $0, value: $1.debt / 3600) }
+        return make(debt, period, style: .bars, unit: "", format: .hours, title: "Sleep debt")
     }
 
     private func sleepConsistency(_ period: TrendPeriod) async throws -> Trend {
@@ -285,6 +280,7 @@ struct TrendBuilder {
     private var cardBuilder: SnapshotBuilder {
         var builder = SnapshotBuilder(source: source)
         builder.calendar = calendar
+        builder.goals = goals
         if !calendar.isDateInToday(shownDay) {
             builder.now = calendar.date(byAdding: .day, value: 1, to: shownDay)!.addingTimeInterval(-1)
         }
