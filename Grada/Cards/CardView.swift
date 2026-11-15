@@ -207,14 +207,15 @@ private struct CardDetailView: View {
                 }
             }
         case .stats(let stats):
-            HStack(alignment: .top, spacing: 16) {
+            // Equal columns, so a long label shrinks inside its share instead of crowding its neighbours.
+            HStack(alignment: .top, spacing: 8) {
                 ForEach(Array(stats.enumerated()), id: \.offset) { _, stat in
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(stat.value).font(.headline).monospacedDigit()
-                        Text(stat.label).font(.caption2).foregroundStyle(.secondary)
+                        Text(stat.value).font(.headline).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
+                        Text(stat.label).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                Spacer(minLength: 0)
             }
         }
     }

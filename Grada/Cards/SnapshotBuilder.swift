@@ -561,17 +561,19 @@ struct SnapshotBuilder {
 
     // MARK: - Training
 
-    /// Race times from the latest VO₂ max.
+    /// Race times from the latest VO₂ max, and their trend against the reading about 4 weeks before it.
     private func racePredictor() async throws -> CardSnapshot {
-        guard let latest = try await source.daily(.vo2Max, days: 90).last(where: { $0.value != nil }),
-              let vo2Max = latest.value
-        else { return .noData(period: "Latest") }
-        let times = RacePredictor.distances.map { (name: $0.name, time: RacePredictor.time(meters: $0.meters, vo2Max: vo2Max)) }
+        let readings = try await source.daily(.vo2Max, days: 90).filter { $0.value != nil }
+        guard let latest = readings.last, let vo2Max = latest.value else { return .noData(period: "Latest") }
+        let monthBefore = calendar.date(byAdding: .day, value: -28, to: latest.day)!
+        let earlier = readings.last(where: { $0.day <= monthBefore }) ?? (readings.count > 1 ? readings.first : nil)
         return CardSnapshot(
             period: dayLabel(latest.day),
-            value: Self.raceTime(times[0].time),
-            comparison: "\(times[0].name) · from VO₂ max \(format(vo2Max, 1))",
-            detail: .stats(times.dropFirst().map { (value: Self.raceTime($0.time), label: $0.name) })
+            value: earlier?.value.map { RacePredictor.trend(from: $0, to: vo2Max) } ?? "First estimate",
+            comparison: "From VO₂ max \(format(vo2Max, 1))",
+            detail: .stats(RacePredictor.distances.map {
+                (value: Self.raceTime(RacePredictor.time(meters: $0.meters, vo2Max: vo2Max)), label: $0.name)
+            })
         )
     }
 

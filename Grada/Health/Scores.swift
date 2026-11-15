@@ -490,6 +490,15 @@ nonisolated enum RacePredictor {
         ("5K", 5_000), ("10K", 10_000), ("Half", 21_097.5), ("Marathon", 42_195),
     ]
 
+    /// Direction of the race times from a VO₂ max change. Watches estimate VO₂ max to about ±0.5, so
+    /// smaller changes count as steady.
+    static func trend(from earlier: Double, to latest: Double) -> String {
+        let change = latest - earlier
+        if change >= 0.5 { return "Improving" }
+        if change <= -0.5 { return "Declining" }
+        return "Steady"
+    }
+
     /// Seconds to run `meters` at the given VO₂ max.
     static func time(meters: Double, vo2Max: Double) -> TimeInterval {
         // Oxygen cost of running at v m/min, and the share of VO₂ max sustainable for t minutes.

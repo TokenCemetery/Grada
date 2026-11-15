@@ -123,6 +123,12 @@ struct RatingTests {
         #expect(VO2MaxZones.bounds(age: 25, sex: .female) == [29.0, 33.0, 37.0, 41.1])
         #expect(VO2MaxZones.bounds(age: 70, sex: .male) == VO2MaxZones.bounds(age: 60, sex: .male))
     }
+
+    @Test func raceTrendIgnoresSmallChanges() {
+        #expect(RacePredictor.trend(from: 48, to: 48.4) == "Steady")
+        #expect(RacePredictor.trend(from: 48, to: 48.6) == "Improving")
+        #expect(RacePredictor.trend(from: 48, to: 47.4) == "Declining")
+    }
 }
 
 @MainActor

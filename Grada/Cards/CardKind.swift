@@ -125,7 +125,7 @@ enum CardKind: String, CaseIterable, Identifiable {
         case .sleepNeed: "Sleep Need"
         case .sleepConsistency: "Sleep Consistency"
         case .healthAge: "Health Age"
-        case .racePredictor: "Race predictor"
+        case .racePredictor: "Race Predictor"
         case .trainingReadiness: "Training readiness"
         case .loadFocus: "Load focus"
         case .restingHeartRate: "Resting HR"
