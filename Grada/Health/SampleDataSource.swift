@@ -81,7 +81,7 @@ struct SampleDataSource: HealthDataSource {
                 name: name,
                 symbol: symbol,
                 energyKcal: minutes * 9,
-                averageHeartRate: 138
+                averageHeartRate: name == "Run" ? 152 : 138
             )
             guard name == "Strength" else { return [morning] }
             let walk = WorkoutSummary(

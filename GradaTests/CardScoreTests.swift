@@ -115,3 +115,54 @@ struct StrainTests {
         #expect(loads.count == 7)
     }
 }
+
+struct RecoveryTimeTests {
+    private let now = Date(timeIntervalSince1970: 1_700_000_000)
+    private func hoursAgo(_ hours: Double) -> Date { now.addingTimeInterval(-hours * 3600) }
+
+    /// Seiler 2010: threshold from 82% of max heart rate, high from 88%.
+    @Test func zonesFollowSeiler() {
+        #expect(IntensityZones.zone(163, maxHeartRate: 200) == .low)
+        #expect(IntensityZones.zone(164, maxHeartRate: 200) == .threshold)
+        #expect(IntensityZones.zone(176, maxHeartRate: 200) == .high)
+    }
+
+    /// Stanley et al. 2013: up to 24 h after low, 24–48 h after threshold, at least 48 h after high intensity.
+    @Test func hoursFollowIntensity() {
+        let start = { (heartRate: Double?) in
+            RecoveryTime.recoveredAt(workouts: [.init(end: self.hoursAgo(10), averageHeartRate: heartRate)],
+                                     maxHeartRate: 200, now: self.now, wake: nil, morningRecovery: nil)
+        }
+        #expect(start(140) == hoursAgo(10 - 24))
+        #expect(start(nil) == hoursAgo(10 - 24), "Without heart rate a workout counts as low")
+        #expect(start(170) == hoursAgo(10 - 36))
+        #expect(start(180) == hoursAgo(10 - 48))
+    }
+
+    @Test func latestRecoveryWinsAndEndsOnTime() {
+        let workouts: [RecoveryTime.Workout] = [.init(end: hoursAgo(40), averageHeartRate: 180),
+                                                .init(end: hoursAgo(2), averageHeartRate: 140)]
+        #expect(RecoveryTime.recoveredAt(workouts: workouts, maxHeartRate: 200, now: now, wake: nil, morningRecovery: nil)
+                == hoursAgo(2 - 24))
+        #expect(RecoveryTime.recoveredAt(workouts: [.init(end: hoursAgo(30), averageHeartRate: 140)], maxHeartRate: 200,
+                                         now: now, wake: nil, morningRecovery: nil) == nil)
+    }
+
+    /// Waking up still recovering with this morning's Recovery off runs on to the next morning.
+    @Test func morningRecoveryExtendsToTheNextMorning() {
+        let workouts: [RecoveryTime.Workout] = [.init(end: hoursAgo(30), averageHeartRate: 170)]
+        let wake = hoursAgo(3)
+        #expect(RecoveryTime.recoveredAt(workouts: workouts, maxHeartRate: 200, now: now, wake: wake, morningRecovery: .fair)
+                == wake.addingTimeInterval(24 * 3600))
+        #expect(RecoveryTime.recoveredAt(workouts: workouts, maxHeartRate: 200, now: now, wake: wake, morningRecovery: .good)
+                == hoursAgo(30 - 36))
+    }
+
+    @MainActor
+    @Test func cardBuildsFromSampleData() async throws {
+        #expect(CardKind.gallery.contains(.recoveryTime))
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .recoveryTime)
+        #expect(snapshot.value != nil)
+        guard case .progress = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+    }
+}

@@ -45,6 +45,7 @@ struct SnapshotBuilder {
         case .lastWorkout: try await lastWorkout()
         case .weeklyTraining: try await weeklyTraining()
         case .strain: try await strain()
+        case .recoveryTime: try await recoveryTime()
         case .vo2Max: try await vo2Max()
         case .last30Days: try await last30Days()
         }
@@ -708,6 +709,46 @@ struct SnapshotBuilder {
                                          maxHeartRate: maxHeartRate) }
         }
         return (days.count - count..<days.count).map { (days[$0], loads[$0], Strain.ratio(loads: loads, endingAt: $0)) }
+    }
+
+    /// Hours left until recovered from the last few days' workouts, counting down with the clock.
+    private func recoveryTime() async throws -> CardSnapshot {
+        guard let status = try await recoveryTimeStatus() else {
+            return CardSnapshot(period: nowLabel, value: "Calibrating", comparison: "Needs your age or max heart rate")
+        }
+        guard let recovered = status.recoveredAt, let lastEnd = status.lastWorkoutEnd else {
+            if status.lastWorkoutEnd == nil, try await source.workouts(days: 30).isEmpty { return .noData(period: nowLabel) }
+            return CardSnapshot(period: nowLabel, value: "Recovered", comparison: "Ready for hard training",
+                                tone: .good, rating: .good, chart: .progress(value: 1, goal: 1))
+        }
+        let left = recovered.timeIntervalSince(now)
+        let total = recovered.timeIntervalSince(lastEnd)
+        let day = calendar.isDate(recovered, inSameDayAs: now) ? "" : "\(recovered.formatted(.dateTime.weekday(.abbreviated))) "
+        return CardSnapshot(
+            period: nowLabel,
+            value: "\(Int((left / 3600).rounded(.up)))",
+            unit: "h",
+            comparison: "Until \(day)\(recovered.formatted(date: .omitted, time: .shortened))",
+            rating: .fair,
+            chart: .progress(value: total - left, goal: total)
+        )
+    }
+
+    /// When recovery from the last 3 days' workouts ends (nil once recovered) and when the latest workout ended
+    /// (nil without workouts). Nil altogether without a max heart rate to set the zones.
+    func recoveryTimeStatus() async throws -> (recoveredAt: Date?, lastWorkoutEnd: Date?)? {
+        guard let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
+                                                        highestRecorded: try await source.highestHeartRate(days: 365))
+        else { return nil }
+        let workouts = try await source.workouts(days: 4)
+            .map { RecoveryTime.Workout(end: $0.start.addingTimeInterval($0.duration), averageHeartRate: $0.averageHeartRate) }
+            .filter { $0.end <= now }
+        guard let lastEnd = workouts.map(\.end).max() else { return (nil, nil) }
+        let today = calendar.startOfDay(for: now)
+        let wake = try await source.overnight(days: 1).last.flatMap { $0.wakeDay == today ? $0.wakeTime : nil }
+        let morning = try await recoveryDays(1).last?.result?.rating
+        return (RecoveryTime.recoveredAt(workouts: workouts, maxHeartRate: maxHeartRate, now: now,
+                                         wake: wake, morningRecovery: morning), lastEnd)
     }
 
     private func lastWorkout() async throws -> CardSnapshot {

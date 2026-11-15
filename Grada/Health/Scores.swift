@@ -766,6 +766,68 @@ nonisolated enum Strain {
     }
 }
 
+/// Seiler's three intensity zones by share of max heart rate: low below the first ventilatory threshold, threshold
+/// between the two, high above the second. Seiler 2010 (Int J Sports Physiol Perform 5:276, Table 1) puts the
+/// Norwegian Olympic scale's zone 3, the band between the thresholds, at 82–87% of max heart rate, and Sylta et al.
+/// 2014 (Int J Sports Physiol Perform 9:100) collapsed it into these three zones the same way.
+nonisolated enum IntensityZones {
+    enum Zone: Int, CaseIterable {
+        case low, threshold, high
+
+        var title: String {
+            switch self {
+            case .low: "Low"
+            case .threshold: "Threshold"
+            case .high: "High"
+            }
+        }
+    }
+
+    /// Lower bounds of threshold and high.
+    static let lowerBounds = [0.82, 0.88]
+
+    static func zone(_ heartRate: Double, maxHeartRate: Double) -> Zone {
+        Zone(rawValue: lowerBounds.filter { heartRate / maxHeartRate >= $0 }.count)!
+    }
+}
+
+/// Hours until the heart's parasympathetic (rest) activity is back to normal after training. Stanley, Peake &
+/// Buchheit 2013 (Sports Med 43:1259) pooled the studies: up to 24 h after low-intensity exercise, 24–48 h after
+/// threshold intensity and at least 48 h after high intensity, with duration mattering less than intensity. A
+/// workout's intensity is its average heart rate's `IntensityZones` zone; threshold takes the middle of its range.
+/// The morning's overnight HRV and resting heart rate measure that recovery directly, so when this morning's
+/// Recovery isn't Good while a workout's time hadn't run out, recovery runs on to the next morning's check.
+nonisolated enum RecoveryTime {
+    struct Workout: Equatable {
+        let end: Date
+        /// Nil without heart rate, counted as low intensity.
+        let averageHeartRate: Double?
+    }
+
+    static func hours(_ zone: IntensityZones.Zone) -> Double {
+        switch zone {
+        case .low: 24
+        case .threshold: 36
+        case .high: 48
+        }
+    }
+
+    /// When the latest-finishing recovery among `workouts` ends; nil when none is still running at `now`.
+    /// `wake` is this morning's wake-up, `morningRecovery` this morning's Recovery rating.
+    static func recoveredAt(workouts: [Workout], maxHeartRate: Double, now: Date,
+                            wake: Date?, morningRecovery: DayRating?) -> Date? {
+        let ends = workouts.filter { $0.end <= now }.map { workout in
+            let zone = workout.averageHeartRate.map { IntensityZones.zone($0, maxHeartRate: maxHeartRate) } ?? .low
+            return workout.end.addingTimeInterval(hours(zone) * 3600)
+        }
+        guard var recovered = ends.max() else { return nil }
+        if let wake, let morningRecovery, morningRecovery != .good, recovered > wake, wake <= now {
+            recovered = max(recovered, wake.addingTimeInterval(24 * 3600))
+        }
+        return recovered > now ? recovered : nil
+    }
+}
+
 /// Time and heart rate for each kilometer of a workout.
 nonisolated enum Splits {
     struct Split: Equatable {

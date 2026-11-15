@@ -132,6 +132,9 @@ struct TrendBuilder {
         // Health age a 30-day window per point. Both are too slow to run per chart; store daily values first.
         case .resources, .healthAge:
             return nil
+        // Hours left change through the day; the explanation covers the inputs instead.
+        case .recoveryTime:
+            return nil
         // TODO(#31, #32, v4): trends for Training readiness and Load focus, once they exist.
         case .trainingReadiness, .loadFocus:
             return nil
