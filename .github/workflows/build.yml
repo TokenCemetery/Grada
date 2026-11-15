@@ -1,0 +1,33 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Pick whichever iPhone simulator the runner image provides
+      - name: Select simulator
+        id: simulator
+        run: |
+          id=$(xcrun simctl list devices available iPhone -j \
+            | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k in sorted(d, reverse=True) if 'iOS' in k for x in d[k] if x['name'].startswith('iPhone')))")
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      # Unsigned build and unit tests (UI tests are skipped)
+      - name: Build and test
+        run: |
+          xcodebuild test \
+            -project Grada.xcodeproj \
+            -scheme Grada \
+            -destination "id=${{ steps.simulator.outputs.id }}" \
+            -only-testing:GradaTests \
+            CODE_SIGNING_ALLOWED=NO
