@@ -452,8 +452,11 @@ private struct DaySheet: View {
         .environment(\.chartLastDay, day)
         .task(id: LoadKey(day: day, metric: metric)) {
             let key = LoadKey(day: day, metric: metric)
-            snapshots = await model.snapshots(for: day, cards: cards, goals: GoalHistory(goalChanges))
-            workouts = metric == .training ? await model.workoutSnapshots(for: day) : []
+            let newSnapshots = await model.snapshots(for: day, cards: cards, goals: GoalHistory(goalChanges))
+            // A load cancelled by tapping another day can finish after the newer one; drop it.
+            guard !Task.isCancelled else { return }
+            snapshots = newSnapshots
+            workouts = metric == .training ? model.workoutSnapshots(for: day) : []
             loaded = key
         }
     }

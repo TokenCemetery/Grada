@@ -9,6 +9,8 @@ final class CalendarModel {
     private(set) var ratings: [Date: DayRating] = [:]
     /// Start of each day with a workout → its sports.
     private(set) var workoutDays: [Date: WorkoutDay] = [:]
+    /// Start of each day with a workout → its workouts, for the Training day sheet.
+    private var workoutsByDay: [Date: [WorkoutSummary]] = [:]
     /// Start of the first month shown; nil until loaded.
     private(set) var firstMonth: Date?
     let importer: HealthImporter?
@@ -38,6 +40,7 @@ final class CalendarModel {
             let workouts = try await source.workouts(days: days)
             ratings = newRatings
             workoutDays = WorkoutDay.byDay(workouts, calendar: calendar)
+            workoutsByDay = Dictionary(grouping: workouts) { calendar.startOfDay(for: $0.start) }
             firstMonth = calendar.dateInterval(of: .month, for: earliest)?.start
         } catch {
             // Keep the last good month grid; the next load retries.
@@ -69,20 +72,12 @@ final class CalendarModel {
         return result
     }
 
-    /// A Last Workout card for each of `day`'s workouts, earliest first.
-    func workoutSnapshots(for day: Date) async -> [CardSnapshot] {
+    /// A Last Workout card for each of `day`'s workouts, earliest first, from the workouts `load` read.
+    func workoutSnapshots(for day: Date) -> [CardSnapshot] {
         let builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
-        do {
-            let today = calendar.startOfDay(for: .now)
-            let back = (calendar.dateComponents([.day], from: calendar.startOfDay(for: day), to: today).day ?? 0) + 1
-            return try await source.workouts(days: back)
-                .filter { calendar.isDate($0.start, inSameDayAs: day) }
-                .sorted { $0.start < $1.start }
-                .map(builder.workoutSnapshot)
-        } catch {
-            logger.error("Loading workouts for a past day failed: \(error.localizedDescription)")
-            return []
-        }
+        return (workoutsByDay[calendar.startOfDay(for: day)] ?? [])
+            .sorted { $0.start < $1.start }
+            .map(builder.workoutSnapshot)
     }
 
     private func ratings(_ metric: CalendarMetric, days: Int, goals: GoalHistory) async throws -> [Date: DayRating] {

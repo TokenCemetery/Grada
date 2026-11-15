@@ -788,7 +788,7 @@ struct CalendarTypeTests {
         let model = CalendarModel(source: SampleDataSource())
         await model.load(.training, goals: GoalHistory())
         let day = try #require(model.workoutDays.first { $0.value.workouts == 2 }?.key)
-        let cards = await model.workoutSnapshots(for: day)
+        let cards = model.workoutSnapshots(for: day)
         #expect(cards.map(\.comparison) == ["Strength", "Walk"], "Earliest first")
     }
 }
@@ -1066,5 +1066,24 @@ struct WorkoutDetailTests {
         #expect((detail.distance ?? 0) > 5000)
         #expect(detail.route.count > 1)
         #expect(Splits.make(track: detail.distanceTrack, heartRate: detail.heartRate, start: run.start).count > 4)
+    }
+
+    @Test func swimsSplitAndPacePer100() {
+        let metric = DistanceUnits(sport: "Swim", isUS: false)
+        #expect(metric.splitMeters == 100)
+        #expect(metric.splitName == "100 m")
+        #expect(metric.distance(1500) == "1500 m")
+        #expect(metric.paceOrSpeed(meters: 1000, seconds: 1200).value == "2:00 /100m")
+        #expect(metric.pace(meters: 100, seconds: 110) == "1:50")
+
+        let us = DistanceUnits(sport: "Swim", isUS: true)
+        #expect(us.splitName == "100 yd")
+        #expect(us.distance(914.4) == "1000 yd")
+        #expect(us.paceOrSpeed(meters: 914.4, seconds: 1200).value == "2:00 /100yd")
+    }
+
+    @Test func runsSplitPerKilometerOrMile() {
+        #expect(DistanceUnits(sport: "Run", isUS: false).paceOrSpeed(meters: 5000, seconds: 1500).value == "5:00 /km")
+        #expect(DistanceUnits(sport: "Run", isUS: true).splitMeters == 1_609.344)
     }
 }

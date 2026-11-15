@@ -105,37 +105,38 @@ struct WorkoutDetailView: View {
     }
 }
 
-/// Kilometers, or miles in the US. Swims are measured per 100 m (or 100 yd), rides by speed.
-private struct DistanceUnits {
+/// Kilometers, or miles in the US. Swims are measured in meters per 100 m (yards per 100 yd in the US),
+/// rides by speed.
+struct DistanceUnits {
     let sport: String
-    private var isUS: Bool { Locale.current.measurementSystem == .us }
-    private var meters: Double { isUS ? 1_609.344 : 1_000 }
-    private var name: String { isUS ? "mi" : "km" }
+    var isUS = Locale.current.measurementSystem == .us
+    private var isSwim: Bool { sport == "Swim" }
 
-    var splitMeters: Double { meters }
-    var splitName: String { isUS ? "Mile" : "Km" }
+    /// One split, and the length pace is given for.
+    var splitMeters: Double {
+        isSwim ? (isUS ? 91.44 : 100) : (isUS ? 1_609.344 : 1_000)
+    }
+    var splitName: String { isSwim ? (isUS ? "100 yd" : "100 m") : (isUS ? "Mile" : "Km") }
+    private var paceName: String { isSwim ? (isUS ? "100yd" : "100m") : (isUS ? "mi" : "km") }
 
     func distance(_ value: Double) -> String {
-        sport == "Swim" && !isUS
-            ? "\(Int(value.rounded())) m"
-            : "\((value / meters).formatted(.number.precision(.fractionLength(2)))) \(name)"
+        if isSwim {
+            return isUS ? "\(Int((value / 0.9144).rounded())) yd" : "\(Int(value.rounded())) m"
+        }
+        return "\((value / splitMeters).formatted(.number.precision(.fractionLength(2)))) \(isUS ? "mi" : "km")"
     }
 
     func paceOrSpeed(meters value: Double, seconds: TimeInterval) -> (label: String, value: String) {
-        switch sport {
-        case "Ride":
-            let speed = value / meters / (seconds / 3600)
+        if sport == "Ride" {
+            let speed = value / splitMeters / (seconds / 3600)
             return ("Avg Speed", "\(speed.formatted(.number.precision(.fractionLength(1)))) \(isUS ? "mph" : "km/h")")
-        case "Swim":
-            let hundred = isUS ? 91.44 : 100
-            return ("Avg Pace", "\(Self.clock(seconds / (value / hundred))) /100\(isUS ? "yd" : "m")")
-        default:
-            return ("Avg Pace", "\(pace(meters: value, seconds: seconds)) /\(name)")
         }
+        return ("Avg Pace", "\(pace(meters: value, seconds: seconds)) /\(paceName)")
     }
 
+    /// Time per split length.
     func pace(meters value: Double, seconds: TimeInterval) -> String {
-        Self.clock(seconds / (value / meters))
+        Self.clock(seconds / (value / splitMeters))
     }
 
     func elevation(_ value: Double) -> String {
