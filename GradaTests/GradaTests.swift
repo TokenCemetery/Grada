@@ -82,6 +82,13 @@ struct CardVariantTests {
         #expect(ratings.count == scores.count)
         #expect(week.rating != nil)
     }
+
+    @Test func scoresAreRated() async throws {
+        for kind in [CardKind.resources] {
+            let snapshot = try await builder.snapshot(for: kind)
+            #expect(snapshot.rating != nil, "\(kind) has no rating")
+        }
+    }
 }
 
 struct RatingTests {

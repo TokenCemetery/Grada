@@ -298,6 +298,7 @@ struct SnapshotBuilder {
             unit: "%",
             comparison: comparison,
             tone: Recovery.status(level).tone,
+            rating: Recovery.rating(level),
             chart: .intraday(todayLevels.map { (hour: $0.date.timeIntervalSince(today) / 3600, value: $0.value) }, domain: 0...100)
         )
     }
