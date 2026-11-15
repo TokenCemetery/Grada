@@ -8,11 +8,15 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    # The project uses the Xcode 27 format (project.xcproj), which Xcode 26 cannot read
+    runs-on: xcode-27
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_27.2.app
 
       # Pick whichever iPhone simulator the runner image provides
       - name: Select simulator
