@@ -32,16 +32,7 @@ struct HomeView: View {
                         ImportProgressView(progress: progress)
                     }
                     card(healthStatus)
-                    ForEach(HomeLayout.rows(for: cardIDs, columns: columns), id: \.self) { row in
-                        HStack(alignment: .top, spacing: 12) {
-                            ForEach(row) { card($0) }
-                            if row[0].size == .square {
-                                ForEach(0..<(columns - row.count), id: \.self) { _ in
-                                    Color.clear.frame(maxWidth: .infinity)
-                                }
-                            }
-                        }
-                    }
+                    HomeGrid(items: cardIDs, columns: columns) { card($0) }
                 }
                 .padding(.horizontal)
                 .padding(.bottom)
@@ -109,6 +100,78 @@ struct HomeView: View {
         for card in cards {
             guard let id = card.cardID, !seen.insert(id).inserted else { continue }
             modelContext.delete(card)
+        }
+    }
+}
+
+/// Cards packed by `HomeLayout` into rows of equal columns.
+struct HomeGrid<Item: HomeLayoutItem & Identifiable, Card: View>: View {
+    let items: [Item]
+    let columns: Int
+    @ViewBuilder let card: (Item) -> Card
+
+    var body: some View {
+        VStack(spacing: ColumnsLayout.spacing) {
+            ForEach(HomeLayout.rows(for: items, columns: columns), id: \.self) { row in
+                switch row {
+                case .cards(let cards):
+                    let squares = cards.count { $0.size == .square }
+                    ColumnsLayout(columns: columns) {
+                        ForEach(cards) { item in
+                            card(item).layoutValue(key: ColumnSpan.self, value: item.size == .square ? 1 : columns - squares)
+                        }
+                    }
+                case .big(let item, let beside):
+                    let besideColumns = columns - 2
+                    ColumnsLayout(columns: columns) {
+                        card(item).layoutValue(key: ColumnSpan.self, value: 2)
+                        VStack(spacing: ColumnsLayout.spacing) {
+                            ForEach([beside.prefix(besideColumns), beside.dropFirst(besideColumns)], id: \.self) { squares in
+                                ColumnsLayout(columns: besideColumns) {
+                                    ForEach(squares) { card($0) }
+                                }
+                            }
+                        }
+                        .layoutValue(key: ColumnSpan.self, value: besideColumns)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct ColumnSpan: LayoutValueKey {
+    static let defaultValue = 1
+}
+
+/// Places cards side by side on a grid of equal columns. Each card spans `ColumnSpan` columns,
+/// and every card is stretched to the row's tallest card.
+private struct ColumnsLayout: Layout {
+    static let spacing: CGFloat = 12
+    let columns: Int
+
+    private func widths(_ subviews: Subviews, in width: CGFloat) -> [CGFloat] {
+        let column = (width - Self.spacing * CGFloat(columns - 1)) / CGFloat(columns)
+        return subviews.map {
+            let span = CGFloat($0[ColumnSpan.self])
+            return column * span + Self.spacing * (span - 1)
+        }
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.replacingUnspecifiedDimensions().width
+        let height = zip(subviews, widths(subviews, in: width))
+            .map { $0.sizeThatFits(ProposedViewSize(width: $1, height: nil)).height }
+            .max() ?? 0
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX
+        for (subview, width) in zip(subviews, widths(subviews, in: bounds.width)) {
+            subview.place(at: CGPoint(x: x, y: bounds.minY), anchor: .topLeading,
+                          proposal: ProposedViewSize(width: width, height: bounds.height))
+            x += width + Self.spacing
         }
     }
 }

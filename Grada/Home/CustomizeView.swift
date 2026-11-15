@@ -90,7 +90,11 @@ private struct CardRow: View {
 
     var body: some View {
         let kind = card.kind
-        let size = kind.size == .wide ? "Wide" : "Square"
+        let size = switch kind.size {
+        case .square: "Square"
+        case .wide: "Wide"
+        case .big: "Big"
+        }
         HStack(spacing: 12) {
             Image(systemName: kind.symbol)
                 .foregroundStyle(kind.category.color)

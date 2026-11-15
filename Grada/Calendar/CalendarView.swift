@@ -436,14 +436,7 @@ private struct DaySheet: View {
                         CardLink(kind: .lastWorkout, snapshot: workouts[index], day: pastDay)
                     }
                 }
-                ForEach(HomeLayout.rows(for: metric.kinds), id: \.self) { row in
-                    HStack(alignment: .top, spacing: 12) {
-                        ForEach(row) { card($0) }
-                        if row.count == 1, row[0].size == .square {
-                            Color.clear.frame(maxWidth: .infinity)
-                        }
-                    }
-                }
+                HomeGrid(items: metric.kinds, columns: 2) { card($0) }
             }
             .padding(.horizontal)
             .padding(.bottom)

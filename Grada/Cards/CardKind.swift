@@ -1,10 +1,12 @@
 import SwiftUI
 
 enum CardSize {
-    /// Half the screen width.
+    /// One column.
     case square
-    /// Full screen width.
+    /// Two columns with a square beside it when one is available, otherwise the full width.
     case wide
+    /// Like wide, but two squares tall: two stacked squares sit beside it when available.
+    case big
 }
 
 enum CardCategory: CaseIterable {
@@ -212,7 +214,8 @@ enum CardKind: String, CaseIterable, Identifiable {
 
     var size: CardSize {
         switch self {
-        case .healthStatus, .sleepStages, .lastWorkout, .last30Days, .racePredictor, .loadFocus: .wide
+        case .healthStatus, .sleepStages, .lastWorkout, .racePredictor, .loadFocus: .wide
+        case .last30Days: .big
         default: .square
         }
     }

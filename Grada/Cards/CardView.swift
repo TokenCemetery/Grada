@@ -51,7 +51,8 @@ struct CardView: View {
             }
         }
         .padding(12)
-        .frame(maxWidth: .infinity, minHeight: kind.size == .square ? Self.squareHeight : nil, alignment: .topLeading)
+        // maxHeight lets a card stretch to the tallest card in its grid row.
+        .frame(maxWidth: .infinity, minHeight: kind.size == .square ? Self.squareHeight : nil, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
@@ -87,7 +88,7 @@ struct CardView: View {
             Spacer(minLength: 8)
             MiniChart(chart: snapshot.chart, color: chartColor(snapshot))
             CardDetailView(detail: snapshot.detail, color: color)
-        case .wide:
+        case .wide, .big:
             if case .days = snapshot.detail {
                 // The workout count is already the period line; the calendar takes the space.
                 EmptyView()

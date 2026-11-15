@@ -5,19 +5,50 @@ import Testing
 
 @MainActor
 struct HomeLayoutTests {
-    @Test func squaresPairUpAndWideCardsFillARow() {
-        let rows = HomeLayout.rows(for: [CardKind.sleepStages, .restingHeartRate, .hrv, .steps, .lastWorkout, .activeEnergy])
-        #expect(rows == [[.sleepStages], [.restingHeartRate, .hrv], [.steps], [.lastWorkout], [.activeEnergy]])
+    private func kinds(_ rows: [HomeRow<CardID>]) -> [HomeRow<CardKind>] {
+        rows.map {
+            switch $0 {
+            case .cards(let cards): .cards(cards.map(\.kind))
+            case .big(let card, let beside): .big(card.kind, beside: beside.map(\.kind))
+            }
+        }
     }
 
-    @Test func threeColumnsFillRowsOfThreeSquares() {
-        let rows = HomeLayout.rows(for: [CardKind.hrvStatus, .recovery, .steps, .activeEnergy, .lastWorkout, .hrv], columns: 3)
-        #expect(rows == [[.hrvStatus, .recovery, .steps], [.activeEnergy], [.lastWorkout], [.hrv]])
+    @Test func squaresPairUpAndWideCardsFillARow() {
+        let rows = HomeLayout.rows(for: [CardKind.sleepStages, .restingHeartRate, .hrv, .steps, .lastWorkout, .activeEnergy])
+        #expect(rows == [.cards([.sleepStages]), .cards([.restingHeartRate, .hrv]), .cards([.steps]), .cards([.lastWorkout]), .cards([.activeEnergy])])
     }
 
     @Test func defaultSetLayout() {
-        let rows = HomeLayout.rows(for: CardKind.defaultSet).map { $0.map(\.kind) }
-        #expect(rows == [[.sleepStages], [.hrvStatus, .recovery], [.steps, .activeEnergy], [.lastWorkout], [.last30Days]])
+        #expect(kinds(HomeLayout.rows(for: CardKind.defaultSet)) == [
+            .cards([.sleepStages]), .cards([.hrvStatus, .recovery]), .cards([.steps, .activeEnergy]), .cards([.lastWorkout]), .cards([.last30Days]),
+        ])
+    }
+
+    @Test func threeColumnsPutAWideCardBesideTheNextSquare() {
+        #expect(kinds(HomeLayout.rows(for: CardKind.defaultSet, columns: 3)) == [
+            .cards([.sleepStages, .hrvStatus]), .cards([.recovery, .steps, .activeEnergy]), .cards([.lastWorkout]), .cards([.last30Days]),
+        ])
+    }
+
+    @Test func threeColumnsPutASquareBeforeAWideCard() {
+        let rows = HomeLayout.rows(for: [CardKind.hrvStatus, .recovery, .steps, .activeEnergy, .lastWorkout, .hrv], columns: 3)
+        #expect(rows == [.cards([.hrvStatus, .recovery, .steps]), .cards([.activeEnergy, .lastWorkout]), .cards([.hrv])])
+    }
+
+    @Test func threeColumnsFillAShortRowWithALaterSquare() {
+        let rows = HomeLayout.rows(for: [CardKind.steps, .hrv, .lastWorkout, .recovery], columns: 3)
+        #expect(rows == [.cards([.steps, .hrv, .recovery]), .cards([.lastWorkout])])
+    }
+
+    @Test func threeColumnsStackTwoSquaresBesideABigCard() {
+        let rows = HomeLayout.rows(for: [CardKind.last30Days, .steps, .hrv, .recovery], columns: 3)
+        #expect(rows == [.big(.last30Days, beside: [.steps, .hrv]), .cards([.recovery])])
+    }
+
+    @Test func bigCardTakesTheFullWidthWithoutTwoSquares() {
+        let rows = HomeLayout.rows(for: [CardKind.last30Days, .steps], columns: 3)
+        #expect(rows == [.cards([.last30Days]), .cards([.steps])])
     }
 }
 
