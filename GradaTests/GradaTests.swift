@@ -71,14 +71,20 @@ struct CardVariantTests {
         #expect(target > 0)
     }
 
-    @Test func vitalsMarkTheRangeOrDrawTheWeek() async throws {
-        let current = try await builder.snapshot(for: .wristTemperature, variant: .current)
-        let week = try await builder.snapshot(for: .wristTemperature, variant: .week)
-        guard case .range = current.chart else { Issue.record("\(current.chart)"); return }
-        guard case .line(let values, let range) = week.chart else { Issue.record("\(week.chart)"); return }
+    @Test func wristTempShowsTheTemperatureAndTheWeek() async throws {
+        #expect(CardKind.wristTemperature.variants == [.week])
+        var builder = builder
+        builder.usesMetric = true
+        let snapshot = try await builder.snapshot(for: .wristTemperature)
+        guard case .line(let values, let range?) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
         #expect(values.count == 7)
-        #expect(range != nil)
-        #expect(current.rating != nil)
+        let value = try #require(snapshot.value.flatMap { Double($0.replacingOccurrences(of: ",", with: ".")) })
+        #expect((30...40).contains(value), "Shows the temperature, not the change")
+        #expect((30...40).contains(range.lowerBound))
+        #expect(snapshot.rating != nil)
+    }
+
+    @Test func vitalsMarkTheRange() async throws {
         for kind in [CardKind.oxygenSaturation, .respiratoryRate] {
             let snapshot = try await builder.snapshot(for: kind)
             guard case .range = snapshot.chart else { Issue.record("\(kind): \(snapshot.chart)"); continue }
@@ -111,12 +117,12 @@ struct RatingTests {
         #expect([Recovery.rating(67), Recovery.rating(66), Recovery.rating(34), Recovery.rating(33)] == [.good, .fair, .fair, .poor])
     }
 
-    @Test func twoSidedRangePenalizesBothSides() {
-        let normal = 36.0...37.0
-        #expect(DayRatings.range(36.5, normal: normal) == .good)
-        #expect(DayRatings.range(37.2, normal: normal) == .fair)
-        #expect(DayRatings.range(35.8, normal: normal) == .fair)
-        #expect(DayRatings.range(37.5, normal: normal) == .poor)
+    @Test func wristTempOnlyFlagsARise() {
+        let normal = 35.2...36.0
+        #expect(DayRatings.range(34.6, normal: normal, higherIsBetter: false) == .good)
+        #expect(DayRatings.range(35.6, normal: normal, higherIsBetter: false) == .good)
+        #expect(DayRatings.range(36.1, normal: normal, higherIsBetter: false) == .fair)
+        #expect(DayRatings.range(36.4, normal: normal, higherIsBetter: false) == .poor)
     }
 
     @Test func vo2MaxZonesFollowTheCooperTable() {

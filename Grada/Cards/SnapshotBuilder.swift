@@ -32,7 +32,7 @@ struct SnapshotBuilder {
         case .hrvStatus: try await hrvStatus()
         case .oxygenSaturation: try await vital(.oxygenSaturation, .current)
         case .respiratoryRate: try await vital(.respiratoryRate, .current)
-        case .wristTemperature: try await wristTemperature(variant)
+        case .wristTemperature: try await wristTemperature()
         case .steps: try await cumulative(.steps, goal: .steps, variant)
         case .activeEnergy: try await cumulative(.activeEnergy, goal: .activeEnergy, variant)
         case .exerciseMinutes: try await cumulative(.exerciseMinutes, variant)
@@ -157,36 +157,33 @@ struct SnapshotBuilder {
         )
     }
 
-    /// Shown as the change from the personal baseline, like the Health app does.
-    private func wristTemperature(_ variant: CardVariant) async throws -> CardSnapshot {
+    /// Last night's wrist temperature with the last 7 nights in the personal normal range, colored by how far it rose.
+    private func wristTemperature() async throws -> CardSnapshot {
         let series = try await source.daily(.wristTemperature, days: baselineDays + 1)
         guard let latestIndex = series.indices.suffix(2).last(where: { series[$0].value != nil }),
               let latest = series[latestIndex].value
         else { return .noData(period: "Last night") }
 
-        let toDisplay: (Double) -> Double = { usesMetric ? $0 : $0 * 1.8 }
+        let toDisplay: (Double) -> Double = { usesMetric ? $0 : $0 * 1.8 + 32 }
         let unit = usesMetric ? "°C" : "°F"
         let history = series[..<latestIndex].compactMap(\.value)
         let period = latestIndex == series.count - 1 ? "Last night" : dayLabel(series[latestIndex].day)
 
         guard history.count >= Baseline.minimumDays, let mean = Baseline.average(history) else {
-            let absolute = usesMetric ? latest : latest * 1.8 + 32
-            return CardSnapshot(period: period, value: format(absolute, 1), unit: unit, comparison: "Calibrating",
-                                chart: variant == .week ? .line(series.suffix(7).map(\.value), normalRange: nil) : .none)
+            return CardSnapshot(period: period, value: format(toDisplay(latest), 1), unit: unit, comparison: "Calibrating",
+                                chart: .line(series.suffix(7).map { $0.value.map(toDisplay) }, normalRange: nil))
         }
-        let deviation = toDisplay(latest - mean)
         let range = Baseline.normalRange(history: history, minimumHalfWidth: QuantityMetric.wristTemperature.minimumHalfWidth)
-        let shownRange = range.map { toDisplay($0.lowerBound - mean)...toDisplay($0.upperBound - mean) }
+        let deviation = (latest - mean) * (usesMetric ? 1 : 1.8)
         return CardSnapshot(
             period: period,
-            value: deviation.formatted(.number.precision(.fractionLength(1)).sign(strategy: .always(includingZero: false))),
+            value: format(toDisplay(latest), 1),
             unit: unit,
-            comparison: "vs your baseline",
-            tone: range.map { $0.contains(latest) ? .neutral : .warning } ?? .neutral,
-            rating: range.map { DayRatings.range(latest, normal: $0) },
-            chart: variant == .week
-                ? .line(series.suffix(7).map { $0.value.map { toDisplay($0 - mean) } }, normalRange: shownRange)
-                : shownRange.map { .range(value: deviation, normalRange: $0) } ?? .none
+            comparison: "\(format(deviation, 1, signed: true))° vs baseline",
+            // A rise can mean illness or a cycle phase; a cooler night is no concern.
+            rating: range.map { DayRatings.range(latest, normal: $0, higherIsBetter: false) },
+            chart: .line(series.suffix(7).map { $0.value.map(toDisplay) },
+                         normalRange: range.map { toDisplay($0.lowerBound)...toDisplay($0.upperBound) })
         )
     }
 
