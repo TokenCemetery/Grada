@@ -585,6 +585,8 @@ nonisolated enum HealthAge {
 
     /// Fewer inputs than this and the age would rest on too little.
     static let minimumInputs = 3
+    /// Each input is averaged over the last 30 days.
+    static let windowDays = 30
     /// Gompertz mortality doubling time for adults (Finch et al. 1990).
     static let mortalityDoublingYears = 8.0
 

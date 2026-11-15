@@ -317,3 +317,34 @@ struct RelatedCardTests {
         }
     }
 }
+
+@MainActor
+struct HealthAgeTrendTests {
+    /// Each point uses the same 30-day window as the card, so the chart ends on the card's value.
+    @Test func trendEndsOnTheCardsValue() async throws {
+        let source = StableDailySource()
+        let card = try await SnapshotBuilder(source: source).snapshot(for: .healthAge)
+        let trend = try #require(try await TrendBuilder(source: source).trend(for: .healthAge, period: .month))
+        #expect(trend.points.count == 30)
+        let last = try #require(trend.points.last?.value)
+        #expect(last.formatted(.number.precision(.fractionLength(1))) == card.value)
+    }
+}
+
+/// Sample data whose daily values don't depend on how many days are asked for: `SampleDataSource` generates
+/// them from the start of the requested range.
+private struct StableDailySource: HealthDataSource {
+    let base = SampleDataSource()
+    func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
+        Array(try await base.daily(metric, days: 400).suffix(days))
+    }
+    func sleepNights(days: Int) async throws -> [SleepNight] { Array(try await base.sleepNights(days: 400).suffix(days)) }
+    func standHours(days: Int) async throws -> [DayValue] { try await base.standHours(days: days) }
+    func overnight(days: Int) async throws -> [OvernightVitals] { try await base.overnight(days: days) }
+    func workouts(days: Int) async throws -> [WorkoutSummary] { try await base.workouts(days: days) }
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] { try await base.heartRate(in: interval) }
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { try await base.sleepPeriods(in: interval) }
+    func age() async throws -> Int? { try await base.age() }
+    func biologicalSex() async throws -> BiologicalSex? { try await base.biologicalSex() }
+    func highestHeartRate(days: Int) async throws -> Double? { try await base.highestHeartRate(days: days) }
+}

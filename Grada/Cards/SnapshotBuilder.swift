@@ -414,8 +414,8 @@ struct SnapshotBuilder {
         guard let age = try await source.age() else {
             return CardSnapshot(period: period, value: "Needs your age", comparison: "Add your birth date in Apple Health")
         }
-        let recentInput = try await healthAgeInput(age: age, days: 30)
-        guard let recent = HealthAge.age(recentInput) else {
+        guard let recentInput = try await healthAgeInputs(age: age, count: 1).last?.input,
+              let recent = HealthAge.age(recentInput) else {
             return CardSnapshot(period: period, value: "Calibrating",
                                 comparison: "Needs \(HealthAge.minimumInputs) of: steps, sleep, resting HR, VO₂ max, exercise")
         }
@@ -431,17 +431,31 @@ struct SnapshotBuilder {
         )
     }
 
-    private func healthAgeInput(age: Int, days: Int) async throws -> HealthAge.Input {
-        let exercise = try await source.daily(.exerciseMinutes, days: days).compactMap(\.value)
-        return HealthAge.Input(
-            age: age,
-            sex: try await source.biologicalSex(),
-            sleepHours: Baseline.average(try await source.sleepNights(days: days).map(\.asleep).filter { $0 > 0 }).map { $0 / 3600 },
-            dailySteps: Baseline.average(try await source.daily(.steps, days: days).compactMap(\.value)),
-            restingHeartRate: Baseline.average(try await source.daily(.restingHeartRate, days: days).compactMap(\.value)),
-            vo2Max: try await source.daily(.vo2Max, days: days).compactMap(\.value).last,
-            exerciseMinutesPerWeek: exercise.isEmpty ? nil : exercise.reduce(0, +) / (Double(days) / 7)
-        )
+    /// Health age's inputs for each of the last `count` days, oldest first, each from the 30 days ending on it.
+    /// One read of each daily series, then a sliding window, so a year of points stays cheap.
+    func healthAgeInputs(age: Int, count: Int) async throws -> [(day: Date, input: HealthAge.Input)] {
+        let window = HealthAge.windowDays
+        let days = lastDays(count + window - 1)
+        let steps = try await source.daily(.steps, days: days.count).map(\.value)
+        let resting = try await source.daily(.restingHeartRate, days: days.count).map(\.value)
+        let vo2Max = try await source.daily(.vo2Max, days: days.count).map(\.value)
+        let exercise = try await source.daily(.exerciseMinutes, days: days.count).map(\.value)
+        let nights = try await source.sleepNights(days: days.count)
+        let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
+        let sex = try await source.biologicalSex()
+        return (window - 1..<days.count).map { end in
+            let range = (end - window + 1)...end
+            let minutes = exercise[range].compactMap { $0 }
+            return (days[end], HealthAge.Input(
+                age: age,
+                sex: sex,
+                sleepHours: Baseline.average(range.compactMap { asleep[days[$0]] }.filter { $0 > 0 }).map { $0 / 3600 },
+                dailySteps: Baseline.average(steps[range].compactMap { $0 }),
+                restingHeartRate: Baseline.average(resting[range].compactMap { $0 }),
+                vo2Max: vo2Max[range].compactMap { $0 }.last,
+                exerciseMinutesPerWeek: minutes.isEmpty ? nil : minutes.reduce(0, +) / (Double(window) / 7)
+            ))
+        }
     }
 
     /// The last 4 weeks of workout time by intensity zone, against the 80% low-intensity target.
