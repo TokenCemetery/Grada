@@ -203,7 +203,7 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// Wide cards whose value sits on the title row, just left of the icon, leaving the full width below for details.
     var valueBesideTitle: Bool {
         switch self {
-        case .lastWorkout, .racePredictor: true
+        case .racePredictor: true
         default: false
         }
     }

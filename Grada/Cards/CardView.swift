@@ -29,6 +29,22 @@ struct CardView: View {
                 }
                 CardDetailView(detail: snapshot.detail, color: color)
                     .padding(.top, 8)
+            } else if case .workout(let workout)? = snapshot?.detail, let snapshot {
+                // The sport leads the title row, like Suunto's Latest activity; the stats run underneath.
+                HStack(alignment: .top, spacing: 10) {
+                    WorkoutSport(workout: workout)
+                    // The sport name takes the title's place; the icon and stats already say it's a workout.
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(workout.name).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                        Text(snapshot.period).font(.caption).foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(kind.title): \(workout.name), \(snapshot.period)")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: kind.symbol).foregroundStyle(color)
+                }
+                CardDetailView(detail: snapshot.detail, color: color)
+                    .padding(.top, 10)
             } else {
                 header
                 periodAndContent(snapshot)
@@ -306,32 +322,42 @@ private struct SleepStagesBar: View {
     }
 }
 
+/// The workout's sport icon in its color, like Suunto's Latest activity; it leads the card's title row.
+private struct WorkoutSport: View {
+    let workout: WorkoutSummary
+
+    var body: some View {
+        let sportColor = WorkoutColors.color(symbol: workout.symbol)
+        Image(systemName: workout.symbol)
+            .font(.body)
+            .foregroundStyle(sportColor)
+            .frame(width: 36, height: 36)
+            .background(sportColor.opacity(0.15), in: Circle())
+            .accessibilityHidden(true)
+    }
+}
+
+/// Labelled stats in equal columns, like Suunto's Latest activity. A stat Apple Health doesn't have
+/// shows a dash, so the columns don't shift between workouts.
 private struct WorkoutDetail: View {
     let workout: WorkoutSummary
     let color: Color
 
     var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: workout.symbol)
-                .font(.title3)
-                .foregroundStyle(color)
-                .frame(width: 36, height: 36)
-                .background(color.opacity(0.15), in: Circle())
-            if let energy = workout.energyKcal {
-                stat(energy.formatted(.number.precision(.fractionLength(0))), "kcal")
-            }
-            if let heartRate = workout.averageHeartRate {
-                stat(heartRate.formatted(.number.precision(.fractionLength(0))), "avg bpm")
-            }
-            Spacer()
+        let whole = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0))
+        HStack(alignment: .top, spacing: 8) {
+            stat("Duration", SnapshotBuilder.hoursMinutes(workout.duration))
+            stat("Calories", workout.energyKcal.map { "\($0.formatted(whole)) kcal" })
+            stat("Avg Heart Rate", workout.averageHeartRate.map { "\($0.formatted(whole)) bpm" })
         }
     }
 
-    private func stat(_ value: String, _ label: String) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(value).font(.headline)
-            Text(label).font(.caption2).foregroundStyle(.secondary)
+    private func stat(_ label: String, _ value: String?) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label).font(.caption).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+            Text(value ?? "–").font(.headline).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
