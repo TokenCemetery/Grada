@@ -726,6 +726,17 @@ struct PastDaySourceTests {
         #expect(snapshots[.sleepNeed]?.period == "That night")
     }
 
+    @Test func pastDayCardsDontSayNowOrLastNight() async throws {
+        let calendar = Calendar.current
+        let day = calendar.date(byAdding: .day, value: -5, to: calendar.startOfDay(for: .now))!
+        let kinds: [CardKind] = [.healthStatus, .resources, .sleepStages, .wristTemperature, .hrvStatus]
+        let snapshots = await CalendarModel(source: SampleDataSource()).snapshots(for: day, cards: kinds.map { CardID(kind: $0) }, goals: GoalHistory())
+        #expect(snapshots[.resources]?.period == "End of day")
+        #expect(snapshots[.sleepStages]?.period == "Night before")
+        for kind in kinds {
+            #expect(!["Now", "Last night", "Today", "Tonight"].contains(snapshots[kind]?.period ?? ""), "\(kind)")
+        }
+    }
 }
 
 @MainActor
