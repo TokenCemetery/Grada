@@ -35,12 +35,23 @@ jobs:
           # Cold boot takes minutes; overlap it with the build
           xcrun simctl boot "$id" > /dev/null 2>&1 &
 
-      # Unsigned build and unit tests (UI tests are skipped)
-      - name: Build and test
+      # Unsigned build of the unit tests (UI tests are skipped). A generic destination keeps
+      # xcodebuild from waiting on the simulator, so the boot above overlaps the build.
+      - name: Build
         run: |
-          xcodebuild test \
+          xcodebuild build-for-testing \
+            -project Grada.xcodeproj \
+            -scheme Grada \
+            -destination "generic/platform=iOS Simulator" \
+            -only-testing:GradaTests \
+            ARCHS=arm64 \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Test
+        run: |
+          xcrun simctl bootstatus "${{ steps.simulator.outputs.id }}" -b
+          xcodebuild test-without-building \
             -project Grada.xcodeproj \
             -scheme Grada \
             -destination "id=${{ steps.simulator.outputs.id }}" \
-            -only-testing:GradaTests \
-            CODE_SIGNING_ALLOWED=NO
+            -only-testing:GradaTests
