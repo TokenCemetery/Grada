@@ -23,7 +23,8 @@ final class GradaUITests: XCTestCase {
         attachScreenshot("Home top")
 
         app.swipeUp()
-        XCTAssertTrue(app.staticTexts["Workouts Calendar"].waitForExistence(timeout: 5))
+        // The Last Workout card is titled by its sport, so look for its Duration stat.
+        XCTAssertTrue(app.staticTexts["Duration"].waitForExistence(timeout: 5))
         attachScreenshot("Home bottom")
 
         app.navigationBars.buttons["Edit"].tap()

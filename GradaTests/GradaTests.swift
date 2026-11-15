@@ -21,13 +21,13 @@ struct HomeLayoutTests {
 
     @Test func defaultSetLayout() {
         #expect(kinds(HomeLayout.rows(for: CardKind.defaultSet)) == [
-            .cards([.sleepStages]), .cards([.hrvStatus, .recovery]), .cards([.steps, .activeEnergy]), .cards([.lastWorkout]), .cards([.last30Days]),
+            .cards([.recovery, .resources]), .cards([.strain, .steps]), .cards([.sleepStages]), .cards([.lastWorkout]),
         ])
     }
 
     @Test func threeColumnsPutAWideCardBesideTheNextSquare() {
         #expect(kinds(HomeLayout.rows(for: CardKind.defaultSet, columns: 3)) == [
-            .cards([.sleepStages, .hrvStatus]), .cards([.recovery, .steps, .activeEnergy]), .cards([.lastWorkout]), .cards([.last30Days]),
+            .cards([.recovery, .resources, .strain]), .cards([.steps, .sleepStages]), .cards([.lastWorkout]),
         ])
     }
 
