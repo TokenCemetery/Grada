@@ -34,6 +34,34 @@ enum CardCategory: CaseIterable {
     }
 }
 
+/// What a card's chart shows. The raw value is persisted, so don't rename cases.
+enum CardVariant: String, CaseIterable {
+    /// Today against the goal or the personal normal range.
+    case current
+    /// The last 7 days, today last.
+    case week
+
+    var title: String {
+        switch self {
+        case .current: "Current"
+        case .week: "7 days"
+        }
+    }
+}
+
+/// One card on Home: a metric and the variant it shows. A metric can sit on Home once per variant.
+struct CardID: Hashable, Identifiable {
+    let kind: CardKind
+    var variant: CardVariant = .current
+
+    var id: Self { self }
+
+    /// Every card the user can add, one per metric and variant.
+    static var gallery: [CardID] {
+        CardKind.gallery.flatMap { kind in kind.variants.map { CardID(kind: kind, variant: $0) } }
+    }
+}
+
 /// Every card the home screen can show. The raw value is persisted, so don't rename cases.
 enum CardKind: String, CaseIterable, Identifiable {
     case healthStatus, recovery, resources, healthAge
@@ -46,7 +74,12 @@ enum CardKind: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     /// Cards the user can add or remove. Health status is pinned on top.
-    static var gallery: [CardKind] { allCases.filter { $0 != .healthStatus && !$0.isPlanned } }
+    static var gallery: [CardKind] { allCases.filter { $0 != .healthStatus && !$0.isPlanned && !$0.isRetired } }
+
+    /// Cards no longer offered. HRV (the 7-night status) replaced them, and Health status already flags a
+    /// single night's HRV or resting heart rate. Saved copies disappear from Home; the cases stay because
+    /// the raw value is persisted.
+    var isRetired: Bool { self == .restingHeartRate || self == .hrv }
 
     /// Cards whose calculation isn't built yet. They stay out of the gallery until it is.
     var isPlanned: Bool {
@@ -57,41 +90,61 @@ enum CardKind: String, CaseIterable, Identifiable {
         }
     }
 
-    static let defaultSet: [CardKind] = [
-        .sleepStages, .restingHeartRate, .hrv, .steps, .activeEnergy, .lastWorkout, .last30Days,
-    ]
+    static let defaultSet: [CardID] = [CardKind.sleepStages, .hrvStatus, .recovery, .steps, .activeEnergy, .lastWorkout, .last30Days]
+        .map { CardID(kind: $0, variant: $0.defaultVariant) }
+
+    /// Cards where today and the last 7 days answer different questions offer both; the rest only Current.
+    var variants: [CardVariant] {
+        switch self {
+        case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors, .standHours, .hrvStatus, .wristTemperature:
+            [.current, .week]
+        case .sleepDuration, .recovery:
+            [.week]
+        default:
+            [.current]
+        }
+    }
+
+    /// The variant matching what the card showed before variants existed, so cards saved then keep their look.
+    var defaultVariant: CardVariant {
+        switch self {
+        case .exerciseMinutes, .distance, .standHours, .sleepDuration, .wristTemperature, .recovery, .hrvStatus:
+            .week
+        default:
+            .current
+        }
+    }
 
     var title: String {
         switch self {
-        case .healthStatus: "Health status"
+        case .healthStatus: "Health Status"
         case .recovery: "Recovery"
         case .resources: "Resources"
-        case .heartRate: "Heart rate"
-        case .sleepDuration: "Sleep"
-        case .sleepStages: "Sleep stages"
-        case .sleepNeed: "Sleep need"
-        case .sleepConsistency: "Consistency"
-        case .healthAge: "Health age"
-        case .racePredictor: "Race predictor"
-        case .trainingReadiness: "Training readiness"
-        case .loadFocus: "Load focus"
+        case .heartRate: "Heart Rate"
+        case .sleepDuration, .sleepStages: "Sleep"
+        case .sleepNeed: "Sleep Need"
+        case .sleepConsistency: "Sleep Consistency"
+        case .healthAge: "Health Age"
+        case .racePredictor: "Race Predictor"
+        case .trainingReadiness: "Training Readiness"
+        case .loadFocus: "Load Focus"
         case .restingHeartRate: "Resting HR"
-        case .hrv: "HRV"
-        case .hrvStatus: "HRV status"
-        case .oxygenSaturation: "Blood oxygen"
-        case .respiratoryRate: "Respiratory rate"
-        case .wristTemperature: "Wrist temp"
+        case .hrv: "Nightly HRV"
+        case .hrvStatus: "HRV"
+        case .oxygenSaturation: "Blood Oxygen"
+        case .respiratoryRate: "Respiratory Rate"
+        case .wristTemperature: "Wrist Temp"
         case .steps: "Steps"
-        case .activeEnergy: "Active energy"
+        case .activeEnergy: "Active Energy"
         case .exerciseMinutes: "Exercise"
-        case .intensityMinutes: "Intensity minutes"
+        case .intensityMinutes: "Intensity Minutes"
         case .distance: "Distance"
         case .floors: "Floors"
-        case .standHours: "Stand hours"
-        case .lastWorkout: "Last workout"
-        case .weeklyTraining: "Training volume"
-        case .vo2Max: "VO₂ max"
-        case .last30Days: "Last 30 days"
+        case .standHours: "Stand Hours"
+        case .lastWorkout: "Last Workout"
+        case .weeklyTraining: "Training Volume"
+        case .vo2Max: "VO₂ Max"
+        case .last30Days: "Workouts Calendar"
         }
     }
 
@@ -150,14 +203,14 @@ enum CardKind: String, CaseIterable, Identifiable {
     /// Wide cards whose value sits on the title row, just left of the icon, leaving the full width below for details.
     var valueBesideTitle: Bool {
         switch self {
-        case .healthAge, .lastWorkout, .racePredictor: true
+        case .racePredictor: true
         default: false
         }
     }
 
     var size: CardSize {
         switch self {
-        case .healthStatus, .sleepStages, .lastWorkout, .last30Days, .healthAge, .racePredictor, .loadFocus: .wide
+        case .healthStatus, .sleepStages, .lastWorkout, .last30Days, .racePredictor, .loadFocus: .wide
         default: .square
         }
     }

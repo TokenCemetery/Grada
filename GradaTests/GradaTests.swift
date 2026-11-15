@@ -6,13 +6,159 @@ import Testing
 @MainActor
 struct HomeLayoutTests {
     @Test func squaresPairUpAndWideCardsFillARow() {
-        let rows = HomeLayout.rows(for: [.sleepStages, .restingHeartRate, .hrv, .steps, .lastWorkout, .activeEnergy])
+        let rows = HomeLayout.rows(for: [CardKind.sleepStages, .restingHeartRate, .hrv, .steps, .lastWorkout, .activeEnergy])
         #expect(rows == [[.sleepStages], [.restingHeartRate, .hrv], [.steps], [.lastWorkout], [.activeEnergy]])
     }
 
     @Test func defaultSetLayout() {
-        let rows = HomeLayout.rows(for: CardKind.defaultSet)
-        #expect(rows == [[.sleepStages], [.restingHeartRate, .hrv], [.steps, .activeEnergy], [.lastWorkout], [.last30Days]])
+        let rows = HomeLayout.rows(for: CardKind.defaultSet).map { $0.map(\.kind) }
+        #expect(rows == [[.sleepStages], [.hrvStatus, .recovery], [.steps, .activeEnergy], [.lastWorkout], [.last30Days]])
+    }
+}
+
+@MainActor
+struct CardVariantTests {
+    private let builder = SnapshotBuilder(source: SampleDataSource())
+
+    @Test func cardsSavedBeforeVariantsKeepTheirLook() {
+        let card = HomeCard(CardID(kind: .distance), position: 0)
+        card.variantRawValue = ""
+        #expect(card.cardID == CardID(kind: .distance, variant: .week))
+    }
+
+    @Test func unsupportedVariantFallsBackToTheDefault() {
+        let card = HomeCard(CardID(kind: .heartRate, variant: .week), position: 0)
+        #expect(card.cardID == CardID(kind: .heartRate, variant: .current))
+        let recovery = HomeCard(CardID(kind: .recovery, variant: .current), position: 0)
+        #expect(recovery.cardID == CardID(kind: .recovery, variant: .week))
+    }
+
+    @Test func retiredCardsLeaveHomeAndTheGallery() {
+        #expect(HomeCard(CardID(kind: .restingHeartRate), position: 0).cardID == nil)
+        #expect(HomeCard(CardID(kind: .hrv), position: 0).cardID == nil)
+        #expect(!CardID.gallery.contains { $0.kind.isRetired })
+    }
+
+    @Test func everyVariantBuildsFromSampleData() async throws {
+        for card in CardID.gallery {
+            let snapshot = try await builder.snapshot(for: card.kind, variant: card.variant)
+            #expect(snapshot.value != nil, "\(card) has no value")
+        }
+    }
+
+    @Test func totalsWithAGoal() async throws {
+        var builder = builder
+        builder.goals = GoalHistory([GoalEntry(metric: .steps, value: 9_000, effectiveFrom: Calendar.current.startOfDay(for: .now), reason: .edit)])
+        let current = try await builder.snapshot(for: .steps, variant: .current)
+        let week = try await builder.snapshot(for: .steps, variant: .week)
+        guard case .progress(_, 9_000, false) = current.chart else { Issue.record("\(current.chart)"); return }
+        guard case .bars(let days, 9_000, nil) = week.chart else { Issue.record("\(week.chart)"); return }
+        #expect(days.count == 7)
+        #expect(current.value == week.value)
+    }
+
+    @Test func totalsWithoutAGoalUseTheAverage() async throws {
+        let current = try await builder.snapshot(for: .distance, variant: .current)
+        let week = try await builder.snapshot(for: .distance, variant: .week)
+        guard case .progress(_, _, true) = current.chart else { Issue.record("\(current.chart)"); return }
+        guard case .bars(_, nil, nil) = week.chart else { Issue.record("\(week.chart)"); return }
+    }
+
+    @Test func sleepFillsTowardItsGoal() async throws {
+        let week = try await builder.snapshot(for: .sleepDuration, variant: .week)
+        guard case .sleep(let nights, let target?) = week.chart else { Issue.record("\(week.chart)"); return }
+        #expect(nights.count == 7)
+        #expect(target > 0)
+    }
+
+    @Test func wristTempShowsTheTemperatureAndTheWeek() async throws {
+        #expect(CardKind.wristTemperature.defaultVariant == .week)
+        var builder = builder
+        builder.usesMetric = true
+        let snapshot = try await builder.snapshot(for: .wristTemperature, variant: .week)
+        guard case .line(let values, let range?) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(values.count == 7)
+        let value = try #require(snapshot.value.flatMap { Double($0.replacingOccurrences(of: ",", with: ".")) })
+        #expect((30...40).contains(value), "Shows the temperature, not the change")
+        #expect((30...40).contains(range.lowerBound))
+        #expect(snapshot.rating != nil)
+
+        let current = try await builder.snapshot(for: .wristTemperature, variant: .current)
+        guard case .range(_, let gauge, nil, _?, 1) = current.chart else { Issue.record("\(current.chart)"); return }
+        #expect(gauge == range, "Only a rise warns, on the same range as the week")
+    }
+
+    @Test func vitalsMarkTheRange() async throws {
+        for kind in [CardKind.oxygenSaturation, .respiratoryRate] {
+            let snapshot = try await builder.snapshot(for: kind)
+            guard case .range(_, _, let below, let above, _) = snapshot.chart else { Issue.record("\(kind): \(snapshot.chart)"); continue }
+            if kind == .oxygenSaturation {
+                #expect(below != nil && above == nil, "Only low blood oxygen warns")
+            } else {
+                #expect(below == nil && above != nil, "Only a high respiratory rate warns")
+            }
+            #expect(snapshot.rating != nil)
+        }
+    }
+
+    @Test func hrvCurrentWarnsOnBothSides() async throws {
+        #expect(CardKind.hrvStatus.defaultVariant == .week)
+        let snapshot = try await builder.snapshot(for: .hrvStatus, variant: .current)
+        guard case .range(_, let baseline, let below?, let above?, 0) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
+        #expect(below == (baseline.upperBound - baseline.lowerBound) / 2, "Red from twice the half-width under the mean")
+        #expect(above == .infinity, "Above the baseline stays yellow")
+    }
+
+    @Test func heartRateDrawsTodaysCurve() async throws {
+        let snapshot = try await builder.snapshot(for: .heartRate)
+        guard case .intraday(let points, _) = snapshot.chart, !points.isEmpty else { Issue.record("\(snapshot.chart)"); return }
+        #expect(snapshot.rating != nil, "Rated by today's resting heart rate")
+        #expect(snapshot.comparison?.contains("Resting") == true)
+    }
+
+    @Test func recoveryColorsEachDay() async throws {
+        let week = try await builder.snapshot(for: .recovery, variant: .week)
+        guard case .bars(let scores, 100, let ratings?) = week.chart else { Issue.record("\(week.chart)"); return }
+        #expect(ratings.count == scores.count)
+        #expect(week.rating != nil)
+    }
+
+    @Test func scoresAreRated() async throws {
+        for kind in [CardKind.resources, .hrvStatus, .vo2Max] {
+            let snapshot = try await builder.snapshot(for: kind)
+            #expect(snapshot.rating != nil, "\(kind) has no rating")
+        }
+    }
+}
+
+struct RatingTests {
+    @Test func recoveryBands() {
+        #expect([Recovery.rating(80), Recovery.rating(50), Recovery.rating(20)] == [.good, .fair, .poor])
+        #expect([Recovery.rating(67), Recovery.rating(66), Recovery.rating(34), Recovery.rating(33)] == [.good, .fair, .fair, .poor])
+    }
+
+    @Test func wristTempOnlyFlagsARise() {
+        let normal = 35.2...36.0
+        #expect(DayRatings.range(34.6, normal: normal, higherIsBetter: false) == .good)
+        #expect(DayRatings.range(35.6, normal: normal, higherIsBetter: false) == .good)
+        #expect(DayRatings.range(36.1, normal: normal, higherIsBetter: false) == .fair)
+        #expect(DayRatings.range(36.4, normal: normal, higherIsBetter: false) == .poor)
+    }
+
+    @Test func vo2MaxZonesFollowTheCooperTable() {
+        let men = VO2MaxZones.bounds(age: 25, sex: .male)
+        #expect(men == [36.5, 42.5, 46.5, 52.5])
+        #expect(VO2MaxZones.zone(36.4, bounds: men) == .poor)
+        #expect(VO2MaxZones.zone(42.5, bounds: men) == .good)
+        #expect(VO2MaxZones.zone(60, bounds: men) == .superior)
+        #expect(VO2MaxZones.bounds(age: 25, sex: .female) == [29.0, 33.0, 37.0, 41.1])
+        #expect(VO2MaxZones.bounds(age: 70, sex: .male) == VO2MaxZones.bounds(age: 60, sex: .male))
+    }
+
+    @Test func raceTrendIgnoresSmallChanges() {
+        #expect(RacePredictor.trend(from: 48, to: 48.4) == "Steady")
+        #expect(RacePredictor.trend(from: 48, to: 48.6) == "Improving")
+        #expect(RacePredictor.trend(from: 48, to: 47.4) == "Declining")
     }
 }
 
@@ -150,6 +296,7 @@ private struct BeforeWakeUpSource: HealthDataSource {
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] { try await base.heartRate(in: interval) }
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { try await base.sleepPeriods(in: interval) }
     func age() async throws -> Int? { try await base.age() }
+    func biologicalSex() async throws -> BiologicalSex? { try await base.biologicalSex() }
     func highestHeartRate(days: Int) async throws -> Double? { try await base.highestHeartRate(days: days) }
 }
 
@@ -165,10 +312,24 @@ struct AfterMidnightTests {
         }
     }
 
+    @Test func workoutsCalendarKeepsEverySportOfADay() async throws {
+        let snapshot = try await builder.snapshot(for: .last30Days)
+        guard case .days(let days) = snapshot.detail else { Issue.record("\(snapshot.detail)"); return }
+        let twoSports = try #require(days.first { $0.sports.count == 2 }, "Sample strength days add an evening walk")
+        #expect(twoSports.sports.map(\.name) == ["Strength", "Walk"], "Longest first")
+        #expect(twoSports.minutes == 80)
+    }
+
     @Test func healthStatusShowsYesterdaysVitals() async throws {
         let snapshot = try await builder.snapshot(for: .healthStatus)
         #expect(snapshot.period == "Yesterday")
         #expect(snapshot.value != nil)
+        guard case .vitals(let vitals) = snapshot.detail else { Issue.record("\(snapshot.detail)"); return }
+        for vital in vitals {
+            let measured = vital.state == .inRange || vital.state == .outOfRange
+            #expect((vital.rating != nil) == measured, "\(vital.name): only measured vitals are colored")
+            #expect((vital.rating == .good) == (vital.state == .inRange), "\(vital.name): green means in range")
+        }
     }
 
     @Test func todaysNightWinsOnceRecorded() async throws {
@@ -186,7 +347,7 @@ struct SleepChartTests {
 
     @Test func sleepCardsChartSevenNights() async throws {
         let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepStages)
-        guard case .sleep(let nights) = snapshot.chart else { Issue.record("Expected a sleep chart"); return }
+        guard case .sleep(let nights, _) = snapshot.chart else { Issue.record("Expected a sleep chart"); return }
         #expect(nights.count == 7)
         #expect(nights.last??.stages[.deep] != nil)
     }
@@ -523,6 +684,15 @@ struct DayRatingTests {
         #expect(DayRatings.healthStatus(outOfRange: 2) == .poor)
     }
 
+    @Test func vitalTilesRateBothDirections() {
+        let normal = 49.0...55.0  // slightly off means less than 1.5 outside
+        #expect(DayRatings.vital(52, normal: normal) == .good)
+        #expect(DayRatings.vital(48, normal: normal) == .fair)
+        #expect(DayRatings.vital(56, normal: normal) == .fair)
+        #expect(DayRatings.vital(47, normal: normal) == .poor)
+        #expect(DayRatings.vital(57, normal: normal) == .poor)
+    }
+
     @Test func daysStayUnratedWhileCalibrating() {
         let start = Calendar.current.startOfDay(for: .now)
         let series = (0..<10).map { DayValue(day: start.addingTimeInterval(Double($0) * 86_400), value: 54) }
@@ -713,7 +883,7 @@ struct GoalCardTests {
         let snapshot = try await builder.snapshot(for: .steps)
         let goalText = 1_000_000.0.formatted(.number.precision(.fractionLength(0)))
         #expect(snapshot.comparison?.hasSuffix("of \(goalText)") == true, "\(snapshot.comparison ?? "")")
-        guard case .progress(_, let goal) = snapshot.chart else {
+        guard case .progress(_, let goal, _) = snapshot.chart else {
             Issue.record("Expected a progress bar")
             return
         }

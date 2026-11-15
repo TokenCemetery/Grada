@@ -12,10 +12,11 @@ struct SnapshotBuilder {
     /// History used for personal normal ranges.
     private let baselineDays = 30
 
-    func snapshot(for kind: CardKind) async throws -> CardSnapshot {
+    /// Cards with a single variant ignore `variant`.
+    func snapshot(for kind: CardKind, variant: CardVariant = .current) async throws -> CardSnapshot {
         switch kind {
         case .healthStatus: try await healthStatus()
-        case .recovery: try await recovery()
+        case .recovery: try await recovery(variant)
         case .resources: try await resources()
         case .healthAge: try await healthAge()
         case .sleepNeed: try await sleepNeed()
@@ -24,21 +25,21 @@ struct SnapshotBuilder {
         case .trainingReadiness: trainingReadiness()
         case .loadFocus: loadFocus()
         case .heartRate: try await heartRate()
-        case .sleepDuration: try await sleep(withStages: false)
-        case .sleepStages: try await sleep(withStages: true)
-        case .restingHeartRate: try await vital(.restingHeartRate)
-        case .hrv: try await vital(.hrv)
-        case .hrvStatus: try await hrvStatus()
-        case .oxygenSaturation: try await vital(.oxygenSaturation)
-        case .respiratoryRate: try await vital(.respiratoryRate)
-        case .wristTemperature: try await wristTemperature()
-        case .steps: try await cumulative(.steps, goal: .steps)
-        case .activeEnergy: try await cumulative(.activeEnergy, goal: .activeEnergy)
-        case .exerciseMinutes: try await cumulative(.exerciseMinutes)
+        case .sleepDuration: try await sleep(withStages: false, variant)
+        case .sleepStages: try await sleep(withStages: true, .current)
+        case .restingHeartRate: try await vital(.restingHeartRate, variant)
+        case .hrv: try await vital(.hrv, variant)
+        case .hrvStatus: try await hrvStatus(variant)
+        case .oxygenSaturation: try await vital(.oxygenSaturation, .current)
+        case .respiratoryRate: try await vital(.respiratoryRate, .current)
+        case .wristTemperature: try await wristTemperature(variant)
+        case .steps: try await cumulative(.steps, goal: .steps, variant)
+        case .activeEnergy: try await cumulative(.activeEnergy, goal: .activeEnergy, variant)
+        case .exerciseMinutes: try await cumulative(.exerciseMinutes, variant)
         case .intensityMinutes: try await intensityMinutes()
-        case .distance: try await cumulative(.distance)
-        case .floors: try await cumulative(.floors, goal: .floors)
-        case .standHours: totals(try await source.standHours(days: 8), decimals: 0, unit: "h")
+        case .distance: try await cumulative(.distance, variant)
+        case .floors: try await cumulative(.floors, goal: .floors, variant)
+        case .standHours: totals(try await source.standHours(days: 8), decimals: 0, unit: "h", variant: variant)
         case .lastWorkout: try await lastWorkout()
         case .weeklyTraining: try await weeklyTraining()
         case .vo2Max: try await vo2Max()
@@ -69,17 +70,19 @@ struct SnapshotBuilder {
         var statuses: [VitalStatus] = []
         for (metric, name, series) in allSeries {
             let state: VitalStatus.State
+            var rating: DayRating?
             if let value = series[nightIndex].value {
                 let history = series[..<nightIndex].compactMap(\.value)
                 if let range = Baseline.normalRange(history: history, minimumHalfWidth: metric.minimumHalfWidth) {
                     state = range.contains(value) ? .inRange : .outOfRange
+                    rating = DayRatings.vital(value, normal: range)
                 } else {
                     state = .calibrating
                 }
             } else {
                 state = .noData
             }
-            statuses.append(VitalStatus(name: name, state: state))
+            statuses.append(VitalStatus(name: name, state: state, rating: rating))
         }
 
         let measured = statuses.filter { $0.state != .noData }
@@ -105,7 +108,8 @@ struct SnapshotBuilder {
     }
 
     /// Discrete vitals: latest value from today or yesterday, compared with the personal normal range.
-    private func vital(_ metric: QuantityMetric) async throws -> CardSnapshot {
+    /// Current marks it on the range; 7 days draws the line through the range.
+    private func vital(_ metric: QuantityMetric, _ variant: CardVariant) async throws -> CardSnapshot {
         let series = try await source.daily(metric, days: baselineDays + 1)
         guard let latestIndex = series.indices.suffix(2).last(where: { series[$0].value != nil }),
               let latest = series[latestIndex].value
@@ -116,6 +120,8 @@ struct SnapshotBuilder {
         let comparison = range.map {
             "Normal \(format($0.lowerBound, metric.decimals))–\(format($0.upperBound, metric.decimals))"
         } ?? "Calibrating"
+        // Low blood oxygen or HRV is the worry; for the others, a high reading is.
+        let higherIsBetter = metric == .oxygenSaturation || metric == .hrv
 
         return CardSnapshot(
             period: dayLabel(series[latestIndex].day),
@@ -123,12 +129,17 @@ struct SnapshotBuilder {
             unit: metric.unit,
             comparison: comparison,
             tone: range.map { $0.contains(latest) ? .neutral : .warning } ?? .neutral,
-            chart: .line(series.suffix(7).map(\.value), normalRange: range)
+            rating: range.map { DayRatings.range(latest, normal: $0, higherIsBetter: higherIsBetter) },
+            chart: variant == .week
+                ? .line(series.suffix(7).map(\.value), normalRange: range)
+                : range.map { .range(value: latest, normalRange: $0, higherIsBetter: higherIsBetter, decimals: 0) } ?? .none
         )
     }
 
     /// The 7 nights ending last night; until last night is recorded, the 7 ending yesterday.
-    private func hrvStatus() async throws -> CardSnapshot {
+    /// Current shows the 7-night average on a gauge: yellow above the baseline ("Unbalanced"), yellow then red
+    /// below it ("Low" from twice the half-width under the mean). 7 days draws the line through the baseline.
+    private func hrvStatus(_ variant: CardVariant) async throws -> CardSnapshot {
         let period = "Last \(HRVStatus.window) nights"
         let chartDays = 7
         let nights = try await source.overnight(days: HRVStatus.baselineNights + HRVStatus.window + chartDays - 1).map(\.hrv)
@@ -141,68 +152,87 @@ struct SnapshotBuilder {
                                 comparison: "Needs \(HRVStatus.minimumBaselineNights + HRVStatus.window) nights of data")
         }
         let baseline = "\(format(shown.baseline.lowerBound, 0))–\(format(shown.baseline.upperBound, 0))"
+        let halfWidth = (shown.baseline.upperBound - shown.baseline.lowerBound) / 2
         return CardSnapshot(
             period: period,
             value: format(shown.average, 0),
             unit: QuantityMetric.hrv.unit,
             comparison: "\(shown.state.word) · baseline \(baseline)",
             tone: shown.state.tone,
-            chart: .line((end - chartDays + 1...end).map { HRVStatus.status(nights: nights, endingAt: $0)?.average },
-                         normalRange: shown.baseline)
+            rating: shown.state.rating,
+            chart: variant == .week
+                ? .line((end - chartDays + 1...end).map { HRVStatus.status(nights: nights, endingAt: $0)?.average },
+                        normalRange: shown.baseline)
+                : .range(value: shown.average, normalRange: shown.baseline, below: halfWidth, above: .infinity)
         )
     }
 
-    /// Shown as the change from the personal baseline, like the Health app does.
-    private func wristTemperature() async throws -> CardSnapshot {
+    /// Last night's wrist temperature against the personal normal range, colored by how far it rose.
+    /// Current shows it on a gauge; 7 days draws the last 7 nights through the range.
+    private func wristTemperature(_ variant: CardVariant) async throws -> CardSnapshot {
         let series = try await source.daily(.wristTemperature, days: baselineDays + 1)
         guard let latestIndex = series.indices.suffix(2).last(where: { series[$0].value != nil }),
               let latest = series[latestIndex].value
         else { return .noData(period: "Last night") }
 
-        let toDisplay: (Double) -> Double = { usesMetric ? $0 : $0 * 1.8 }
+        let toDisplay: (Double) -> Double = { usesMetric ? $0 : $0 * 1.8 + 32 }
         let unit = usesMetric ? "°C" : "°F"
         let history = series[..<latestIndex].compactMap(\.value)
         let period = latestIndex == series.count - 1 ? "Last night" : dayLabel(series[latestIndex].day)
 
+        let week = series.suffix(7).map { $0.value.map(toDisplay) }
         guard history.count >= Baseline.minimumDays, let mean = Baseline.average(history) else {
-            let absolute = usesMetric ? latest : latest * 1.8 + 32
-            return CardSnapshot(period: period, value: format(absolute, 1), unit: unit, comparison: "Calibrating",
-                                chart: .line(series.suffix(7).map(\.value), normalRange: nil))
+            return CardSnapshot(period: period, value: format(toDisplay(latest), 1), unit: unit, comparison: "Calibrating",
+                                chart: variant == .week ? .line(week, normalRange: nil) : .none)
         }
-        let deviation = toDisplay(latest - mean)
         let range = Baseline.normalRange(history: history, minimumHalfWidth: QuantityMetric.wristTemperature.minimumHalfWidth)
+        let shownRange = range.map { toDisplay($0.lowerBound)...toDisplay($0.upperBound) }
+        let deviation = (latest - mean) * (usesMetric ? 1 : 1.8)
+        let chart: CardSnapshot.Chart = if variant == .week {
+            .line(week, normalRange: shownRange)
+        } else {
+            // A rise can mean illness or a cycle phase; a cooler night is no concern.
+            shownRange.map { .range(value: toDisplay(latest), normalRange: $0, higherIsBetter: false, decimals: 1) } ?? .none
+        }
         return CardSnapshot(
             period: period,
-            value: deviation.formatted(.number.precision(.fractionLength(1)).sign(strategy: .always(includingZero: false))),
+            value: format(toDisplay(latest), 1),
             unit: unit,
-            comparison: "vs your baseline",
-            tone: range.map { $0.contains(latest) ? .neutral : .warning } ?? .neutral,
-            chart: .line(series.suffix(7).map { $0.value.map { toDisplay($0 - mean) } }, normalRange: nil)
+            comparison: "\(format(deviation, 1, signed: true))° vs baseline",
+            rating: range.map { DayRatings.range(latest, normal: $0, higherIsBetter: false) },
+            chart: chart
         )
     }
 
     private func vo2Max() async throws -> CardSnapshot {
         let readings = try await source.daily(.vo2Max, days: 90).filter { $0.value != nil }
         guard let latest = readings.last, let value = latest.value else { return .noData(period: "Latest") }
-        var comparison = "First reading"
-        if readings.count > 1, let previous = readings[readings.count - 2].value {
-            let change = value - previous
-            comparison = abs(change) < 0.05 ? "Same as before" : "\(format(change, 1, signed: true)) since last"
+        guard let age = try await source.age(), let sex = try await source.biologicalSex() else {
+            let points = readings.suffix(7).map(\.value)
+            return CardSnapshot(
+                period: dayLabel(latest.day),
+                value: format(value, 1),
+                unit: QuantityMetric.vo2Max.unit,
+                comparison: "Add your age and sex in Apple Health",
+                chart: .line(Array(repeating: nil, count: 7 - points.count) + points, normalRange: nil)
+            )
         }
-        let points = readings.suffix(7).map(\.value)
+        let bounds = VO2MaxZones.bounds(age: age, sex: sex)
+        let zone = VO2MaxZones.zone(value, bounds: bounds)
         return CardSnapshot(
             period: dayLabel(latest.day),
             value: format(value, 1),
             unit: QuantityMetric.vo2Max.unit,
-            comparison: comparison,
-            chart: .line(Array(repeating: nil, count: 7 - points.count) + points, normalRange: nil)
+            comparison: zone.word,
+            rating: zone.rating,
+            chart: .zones(value: value, bounds: bounds)
         )
     }
 
     // MARK: - Scores
 
     /// This morning's recovery. Until last night's vitals arrive, yesterday's, like Health status.
-    private func recovery() async throws -> CardSnapshot {
+    private func recovery(_ variant: CardVariant) async throws -> CardSnapshot {
         let days = try await recoveryDays(7)
         let last = days.count - 1
         let hasToday = days[last].hasData
@@ -219,7 +249,11 @@ struct SnapshotBuilder {
             unit: "%",
             comparison: "\(status.word) · \(shown.reason)",
             tone: status.tone,
-            chart: .bars(days.map { $0.result.map { Double($0.score) } ?? 0 })
+            rating: Recovery.rating(shown.score),
+            chart: variant == .week
+                ? .bars(days.map { $0.result.map { Double($0.score) } ?? 0 }, target: 100,
+                        ratings: days.map { $0.result.map { Recovery.rating($0.score) } })
+                : .progress(value: Double(shown.score), goal: 100)
         )
     }
 
@@ -287,11 +321,13 @@ struct SnapshotBuilder {
             unit: "%",
             comparison: comparison,
             tone: Recovery.status(level).tone,
+            rating: Recovery.rating(level),
             chart: .intraday(todayLevels.map { (hour: $0.date.timeIntervalSince(today) / 3600, value: $0.value) }, domain: 0...100)
         )
     }
 
-    /// Health age from the last 30 days, and pace of aging against the last 6 months.
+    /// Health age from the last 30 days, against the user's age, with the three inputs that move it most.
+    /// It changes too slowly for a 7-day chart to say anything.
     private func healthAge() async throws -> CardSnapshot {
         let period = "Last 30 days"
         guard let age = try await source.age() else {
@@ -302,15 +338,15 @@ struct SnapshotBuilder {
             return CardSnapshot(period: period, value: "Calibrating",
                                 comparison: "Needs \(HealthAge.minimumInputs) of: steps, sleep, resting HR, VO₂ max, exercise")
         }
-        let baseline = HealthAge.age(try await healthAgeInput(age: age, days: 180)) ?? recent
-        let pace = HealthAge.pace(recent: recent, baseline: baseline)
-        let contributors = HealthAge.impacts(recentInput).sorted { abs($0.years) > abs($1.years) }.prefix(4)
         return CardSnapshot(
             period: period,
             value: format(recent, 1),
             unit: "yrs",
-            comparison: "\(format(recent - Double(age), 1, signed: true)) yrs vs your age · pace \(format(pace, 1))×",
-            detail: .stats(contributors.map { (value: format($0.years, 1, signed: true), label: $0.name) })
+            comparison: "\(format(recent - Double(age), 1, signed: true)) yrs vs your age",
+            detail: .rows(HealthAge.impacts(recentInput).sorted { abs($0.years) > abs($1.years) }.prefix(3).map {
+                (label: $0.name, value: "\(format($0.years, 1, signed: true)) yrs",
+                 rating: $0.years < 0 ? .good : $0.years > 0 ? .poor : nil)
+            })
         )
     }
 
@@ -355,30 +391,44 @@ struct SnapshotBuilder {
     }
 
     /// Today's heart rate from midnight: range of the 5-minute averages, and their mean.
+    /// Workouts make the range itself unratable, so the color comes from today's resting heart rate
+    /// against its personal normal range: green at or below it, yellow slightly above, red well above.
     private func heartRate() async throws -> CardSnapshot {
         let today = calendar.startOfDay(for: now)
         let values = try await source.heartRate(in: DateInterval(start: today, end: max(now, today)))
         guard let low = values.map(\.value).min(), let high = values.map(\.value).max(),
               let average = Baseline.average(values.map(\.value))
         else { return .noData(period: todayLabel) }
+
+        let resting = try await source.daily(.restingHeartRate, days: baselineDays + 1)
+        var comparison = "Avg \(format(average, 0)) bpm"
+        var rating: DayRating?
+        if let todayResting = resting.last?.value {
+            comparison = "Avg \(format(average, 0)) · Resting \(format(todayResting, 0))"
+            let history = resting.dropLast().compactMap(\.value)
+            if let normal = Baseline.normalRange(history: history, minimumHalfWidth: QuantityMetric.restingHeartRate.minimumHalfWidth) {
+                rating = DayRatings.range(todayResting, normal: normal, higherIsBetter: false)
+            }
+        }
         return CardSnapshot(
             period: todayLabel,
             value: "\(format(low, 0))–\(format(high, 0))",
             unit: "bpm",
-            comparison: "Avg \(format(average, 0)) bpm",
+            comparison: comparison,
+            rating: rating,
             chart: .intraday(values.map { (hour: $0.date.timeIntervalSince(today) / 3600, value: $0.value) }, domain: nil)
         )
     }
 
     // MARK: - Activity
 
-    private func cumulative(_ metric: QuantityMetric, goal: GoalMetric? = nil) async throws -> CardSnapshot {
+    private func cumulative(_ metric: QuantityMetric, goal: GoalMetric? = nil, _ variant: CardVariant) async throws -> CardSnapshot {
         var series = try await source.daily(metric, days: 8)
         if metric == .distance, !usesMetric {
             series = series.map { DayValue(day: $0.day, value: $0.value.map { $0 * 0.621_371 }) }
         }
         return totals(series, decimals: metric.decimals, unit: metric == .distance && !usesMetric ? "mi" : metric.unit,
-                      goal: goal.flatMap { goals.value($0, on: calendar.startOfDay(for: now)) })
+                      goal: goal.flatMap { goals.value($0, on: calendar.startOfDay(for: now)) }, variant: variant)
     }
 
     /// The last 7 days' total against the weekly goal, or the WHO target without one.
@@ -419,35 +469,39 @@ struct SnapshotBuilder {
         }
     }
 
-    /// Today's total against the goal with a progress bar, or without a goal, compared with the 7 days before it.
+    /// Today's total against the goal, or without a goal, compared with the 7 days before it.
+    /// Current shows a progress bar toward the goal or that average; 7 days shows bars filling toward the goal.
     // TODO(#39, later): show the change as an arrow and amount, e.g. "▲ 1,200 vs 7-day avg", like Resources does.
-    private func totals(_ series: [DayValue], decimals: Int, unit: String, goal: Double? = nil) -> CardSnapshot {
+    private func totals(_ series: [DayValue], decimals: Int, unit: String, goal: Double? = nil,
+                        variant: CardVariant) -> CardSnapshot {
         guard series.contains(where: { $0.value != nil }) else { return .noData(period: todayLabel) }
         let today = series.last?.value ?? 0
-        if let goal {
-            return CardSnapshot(
-                period: todayLabel,
-                value: format(today, decimals),
-                unit: unit,
-                comparison: Self.goalComparison(today, goal: goal, decimals: decimals),
-                tone: today >= goal ? .good : .neutral,
-                chart: .progress(value: today, goal: goal)
-            )
-        }
         let average = Baseline.average(series.dropLast().compactMap(\.value))
-        return CardSnapshot(
-            period: todayLabel,
-            value: format(today, decimals),
-            unit: unit,
-            comparison: average.map { "7-day avg \(format($0, decimals))" },
-            chart: .bars(series.suffix(7).map { $0.value ?? 0 })
-        )
+        var snapshot = CardSnapshot(period: todayLabel, value: format(today, decimals), unit: unit)
+        if let goal {
+            snapshot.comparison = Self.goalComparison(today, goal: goal, decimals: decimals)
+            snapshot.tone = today >= goal ? .good : .neutral
+        } else {
+            snapshot.comparison = average.map { "7-day avg \(format($0, decimals))" }
+        }
+        switch variant {
+        case .current:
+            if let goal {
+                snapshot.chart = .progress(value: today, goal: goal)
+            } else if let average {
+                snapshot.chart = .progress(value: today, goal: average, isAverage: true)
+            }
+        case .week:
+            snapshot.chart = .bars(series.suffix(7).map { $0.value ?? 0 }, target: goal)
+        }
+        return snapshot
     }
 
     // MARK: - Sleep
 
     /// The night that ended today; until there is one (e.g. just after midnight), yesterday's.
-    private func sleep(withStages: Bool) async throws -> CardSnapshot {
+    /// Sleep stages always shows the 7 nights; Sleep shows them only as its 7-day variant, filling toward the goal.
+    private func sleep(withStages: Bool, _ variant: CardVariant) async throws -> CardSnapshot {
         let nights = try await source.sleepNights(days: 8)
         let byDay = Dictionary(nights.map { ($0.wakeDay, $0) }, uniquingKeysWith: { first, _ in first })
         let days = lastDays(7)
@@ -467,7 +521,9 @@ struct SnapshotBuilder {
             period: shown.period,
             value: Self.hoursMinutes(shown.night.asleep),
             comparison: "\(Self.signedMinutes(shown.night.asleep - goal)) of \(Self.hoursMinutes(goal)) goal",
-            chart: .sleep(days.map { byDay[$0] }),
+            chart: withStages ? .sleep(days.map { byDay[$0] })
+                : variant == .week ? .sleep(days.map { byDay[$0] }, target: goal / 3600)
+                : .progress(value: shown.night.asleep, goal: goal),
             detail: withStages ? .sleepStages(shown.night.stages) : .none
         )
     }
@@ -533,17 +589,19 @@ struct SnapshotBuilder {
 
     // MARK: - Training
 
-    /// Race times from the latest VO₂ max.
+    /// Race times from the latest VO₂ max, and their trend against the reading about 4 weeks before it.
     private func racePredictor() async throws -> CardSnapshot {
-        guard let latest = try await source.daily(.vo2Max, days: 90).last(where: { $0.value != nil }),
-              let vo2Max = latest.value
-        else { return .noData(period: "Latest") }
-        let times = RacePredictor.distances.map { (name: $0.name, time: RacePredictor.time(meters: $0.meters, vo2Max: vo2Max)) }
+        let readings = try await source.daily(.vo2Max, days: 90).filter { $0.value != nil }
+        guard let latest = readings.last, let vo2Max = latest.value else { return .noData(period: "Latest") }
+        let monthBefore = calendar.date(byAdding: .day, value: -28, to: latest.day)!
+        let earlier = readings.last(where: { $0.day <= monthBefore }) ?? (readings.count > 1 ? readings.first : nil)
         return CardSnapshot(
             period: dayLabel(latest.day),
-            value: Self.raceTime(times[0].time),
-            comparison: "\(times[0].name) · from VO₂ max \(format(vo2Max, 1))",
-            detail: .stats(times.dropFirst().map { (value: Self.raceTime($0.time), label: $0.name) })
+            value: earlier?.value.map { RacePredictor.trend(from: $0, to: vo2Max) } ?? "First estimate",
+            comparison: "From VO₂ max \(format(vo2Max, 1))",
+            detail: .stats(RacePredictor.distances.map {
+                (value: Self.raceTime(RacePredictor.time(meters: $0.meters, vo2Max: vo2Max)), label: $0.name)
+            })
         )
     }
 
@@ -562,22 +620,44 @@ struct SnapshotBuilder {
         let workouts = recent.count
         guard workouts > 0 else { return .noData(period: "Last 7 days") }
         let minutes = workoutMinutesPerDay(recent, days: 7)
+        let goal = goals.value(.workouts, on: calendar.startOfDay(for: now))
+        let count = workouts == 1 ? "1 workout" : "\(workouts) workouts"
         return CardSnapshot(
             period: "Last 7 days",
             value: Self.hoursMinutes(minutes.reduce(0, +) * 60),
-            comparison: workouts == 1 ? "1 workout" : "\(workouts) workouts",
+            comparison: goal.map { "\(count) of \(format($0, 0))" } ?? count,
+            rating: goal.map { DayRatings.goal(Double(workouts), goal: $0) },
             chart: .bars(minutes)
         )
     }
 
     private func last30Days() async throws -> CardSnapshot {
         let workouts = try await source.workouts(days: 30)
+        // The count sits in the period line, so the calendar gets the card's height; the value isn't drawn.
         return CardSnapshot(
-            period: "Workouts",
+            period: workouts.isEmpty ? "No workouts" : workouts.count == 1 ? "1 workout" : "\(workouts.count) workouts",
             value: "\(workouts.count)",
             unit: workouts.count == 1 ? "workout" : "workouts",
-            detail: .days(workoutMinutesPerDay(workouts, days: 30))
+            detail: .days(workoutDays(workouts, days: 30))
         )
+    }
+
+    /// Each day's total minutes and its longest sport, oldest first.
+    private func workoutDays(_ workouts: [WorkoutSummary], days: Int) -> [WorkoutDay] {
+        let dayStarts = lastDays(days)
+        var result = Array(repeating: WorkoutDay(), count: days)
+        for workout in workouts {
+            guard let index = dayStarts.firstIndex(of: calendar.startOfDay(for: workout.start)) else { continue }
+            if let sport = result[index].sports.firstIndex(where: { $0.name == workout.name }) {
+                result[index].sports[sport].minutes += workout.duration / 60
+            } else {
+                result[index].sports.append(.init(name: workout.name, symbol: workout.symbol, minutes: workout.duration / 60))
+            }
+        }
+        for index in result.indices {
+            result[index].sports.sort { $0.minutes > $1.minutes }
+        }
+        return result
     }
 
     private func workoutMinutesPerDay(_ workouts: [WorkoutSummary], days: Int) -> [Double] {

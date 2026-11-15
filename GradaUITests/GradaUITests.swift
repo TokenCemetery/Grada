@@ -18,12 +18,12 @@ final class GradaUITests: XCTestCase {
             app.staticTexts["Balanced"].tap()
         }
 
-        XCTAssertTrue(app.staticTexts["Health status"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Health Status"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["All in range"].waitForExistence(timeout: 5))
         attachScreenshot("Home top")
 
         app.swipeUp()
-        XCTAssertTrue(app.staticTexts["Last 30 days"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Workouts Calendar"].waitForExistence(timeout: 5))
         attachScreenshot("Home bottom")
 
         app.navigationBars.buttons["Edit"].tap()

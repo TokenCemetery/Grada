@@ -6,21 +6,37 @@ struct CardSnapshot {
 
     enum Chart {
         case none
-        /// Seven values, oldest first; the last one is today.
-        case bars([Double?])
+        /// Seven values, oldest first; the last one is today. With a target, a full bar means the target was reached.
+        /// With ratings, each day's bar takes its rating's color.
+        case bars([Double?], target: Double? = nil, ratings: [DayRating?]? = nil)
         /// Seven nights, oldest first, each bar split by sleep stage; nil where there's no night.
-        case sleep([SleepNight?])
+        /// With a target in hours, a full bar means the target was reached.
+        case sleep([SleepNight?], target: Double? = nil)
         case line([Double?], normalRange: ClosedRange<Double>?)
-        /// A horizontal 0–100% goal bar, like Suunto's Steps card.
-        case progress(value: Double, goal: Double)
+        /// A horizontal 0–100% goal bar, like Suunto's Steps card. Cards without a goal measure against
+        /// their 7-day average instead.
+        case progress(value: Double, goal: Double, isAverage: Bool = false)
+        /// Today's value as a marker on a track: green over the normal range, then yellow and red away from it.
+        /// `below` and `above` are how far past each bound stays yellow before red; nil keeps that side green,
+        /// infinity keeps it yellow. Edge labels show `decimals` digits; 0 snaps the scale to whole numbers.
+        case range(value: Double, normalRange: ClosedRange<Double>, below: Double?, above: Double?, decimals: Int = 0)
+        /// A value on a track split into VO₂ max fitness zones; `bounds` are the lower bounds of zones 2–5.
+        case zones(value: Double, bounds: [Double])
         /// Today from 0:00: hours since midnight and value. A nil domain fits the values.
         case intraday([(hour: Double, value: Double)], domain: ClosedRange<Double>?)
+
+        /// A one-sided range colored like `DayRatings.range`: only the unhealthy side turns yellow, then red.
+        static func range(value: Double, normalRange: ClosedRange<Double>, higherIsBetter: Bool, decimals: Int) -> Chart {
+            let slight = DayRatings.slightMiss(normalRange)
+            return .range(value: value, normalRange: normalRange,
+                          below: higherIsBetter ? slight : nil, above: higherIsBetter ? nil : slight, decimals: decimals)
+        }
 
         /// Bar charts sit beside the value on wide cards.
         var isBars: Bool {
             switch self {
             case .bars, .sleep: true
-            case .none, .line, .intraday, .progress: false
+            case .none, .line, .intraday, .progress, .range, .zones: false
             }
         }
     }
@@ -29,11 +45,13 @@ struct CardSnapshot {
         case none
         case sleepStages([SleepStage: TimeInterval])
         case workout(WorkoutSummary)
-        /// Workout minutes per day for the last 30 days, oldest first.
-        case days([Double])
+        /// Workouts per day for the last 30 days, oldest first.
+        case days([WorkoutDay])
         case vitals([VitalStatus])
-        /// A row of small labelled values, e.g. race times or health age contributors.
+        /// A row of small labelled values, e.g. race times.
         case stats([(value: String, label: String)])
+        /// A short list of labelled values, each colored by its rating, e.g. health age contributors.
+        case rows([(label: String, value: String, rating: DayRating?)])
     }
 
     var period: String
@@ -42,6 +60,8 @@ struct CardSnapshot {
     var unit: String = ""
     var comparison: String?
     var tone: Tone = .neutral
+    /// Colors the value red, yellow or green. Nil keeps it neutral.
+    var rating: DayRating?
     var chart: Chart = .none
     var detail: Detail = .none
 
@@ -50,9 +70,24 @@ struct CardSnapshot {
     }
 }
 
+/// One day's workouts: minutes per sport, longest first.
+struct WorkoutDay: Equatable {
+    struct Sport: Equatable {
+        let name: String
+        let symbol: String
+        var minutes: Double
+    }
+
+    var sports: [Sport] = []
+
+    var minutes: Double { sports.reduce(0) { $0 + $1.minutes } }
+}
+
 struct VitalStatus: Equatable {
     enum State { case inRange, outOfRange, calibrating, noData }
 
     let name: String
     let state: State
+    /// Green, yellow or red for a measured vital; nil while calibrating or without data.
+    var rating: DayRating?
 }

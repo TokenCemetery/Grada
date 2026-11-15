@@ -5,6 +5,7 @@ import SwiftUI
 struct MiniChart: View {
     let chart: CardSnapshot.Chart
     let color: Color
+    @AppStorage("colorBlindPalette") private var colorBlind = false
 
     static let plotHeight: CGFloat = 34
 
@@ -12,20 +13,26 @@ struct MiniChart: View {
         switch chart {
         case .none:
             EmptyView()
-        case .bars(let values):
-            TrackBars(days: values.map { [($0 ?? 0, color)] })
-        case .sleep(let nights):
+        case .bars(let values, let target, let ratings):
+            TrackBars(days: values.indices.map { index in
+                [(values[index] ?? 0, ratings?[index]?.fill(colorBlind: colorBlind) ?? color)]
+            }, target: target)
+        case .sleep(let nights, let target):
             TrackBars(days: nights.map { night in
                 SleepStage.chartOrder.map { stage in ((night?.hours(in: stage) ?? 0), stage.color(base: color)) }
-            })
+            }, target: target)
         case .line(let values, let normalRange):
             VStack(spacing: 2) {
                 AreaLine(values: values, normalRange: normalRange, color: color)
                     .frame(height: Self.plotHeight)
                 WeekdayLabels()
             }
-        case .progress(let value, let goal):
-            GoalBar(share: goal > 0 ? value / goal : 0, color: color)
+        case .progress(let value, let goal, let isAverage):
+            GoalBar(share: goal > 0 ? value / goal : 0, isAverage: isAverage, color: color)
+        case .range(let value, let normalRange, let below, let above, let decimals):
+            RangeBar(value: value, normalRange: normalRange, below: below, above: above, decimals: decimals, colorBlind: colorBlind)
+        case .zones(let value, let bounds):
+            ZoneBar(value: value, bounds: bounds, colorBlind: colorBlind)
         case .intraday(let points, let domain):
             VStack(spacing: 2) {
                 DayLine(points: points, domain: domain, color: color)
@@ -56,9 +63,17 @@ private struct DayLine: View {
             ForEach(Array(points.enumerated()), id: \.offset) { _, point in
                 AreaMark(x: .value("Hour", point.hour), yStart: .value("Base", yDomain.lowerBound), yEnd: .value("Value", point.value))
                     .foregroundStyle(fill)
-                LineMark(x: .value("Hour", point.hour), y: .value("Value", point.value))
+                LineMark(x: .value("Hour", point.hour), y: .value("Value", point.value), series: .value("Part", "Today"))
                     .foregroundStyle(color)
                     .lineStyle(StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            }
+            // The rest of the day as a dotted line from the latest value, like Suunto.
+            if let last = points.last, last.hour < 24 {
+                ForEach([last.hour, 24], id: \.self) { hour in
+                    LineMark(x: .value("Hour", hour), y: .value("Value", last.value), series: .value("Part", "Rest"))
+                        .foregroundStyle(Color.secondary.opacity(0.6))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 3]))
+                }
             }
         }
         .chartXScale(domain: 0...24)
@@ -70,9 +85,11 @@ private struct DayLine: View {
     }
 }
 
-/// Progress toward a goal on a full-width track, with 0% and 100% marks below.
+/// Progress toward a goal on a full-width track, with ticks every 10% and 0% and 100% marks below.
 private struct GoalBar: View {
     let share: Double
+    /// Measured against the 7-day average rather than a goal.
+    let isAverage: Bool
     let color: Color
 
     var body: some View {
@@ -84,18 +101,203 @@ private struct GoalBar: View {
                     Capsule().fill(color).frame(width: proxy.size.width * min(max(share, 0), 1))
                 }
             }
-            .frame(height: 8)
+            .frame(height: 12)
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(0...10, id: \.self) { tick in
+                    Rectangle().frame(width: 1, height: tick % 5 == 0 ? 5 : 3)
+                    if tick < 10 { Spacer(minLength: 0) }
+                }
+            }
+            .foregroundStyle(.tertiary)
+            .padding(.top, 6)
             HStack {
                 Text("0%")
                 Spacer()
-                Text("100%")
+                Text(isAverage ? "7-day avg" : "100%")
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
         .frame(height: MiniChart.plotHeight + 16)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(Int((share * 100).rounded()))% of goal")
+        .accessibilityLabel("\(Int((share * 100).rounded()))% of \(isAverage ? "7-day average" : "goal")")
+    }
+}
+
+/// A value as a marker on a track split into fitness zones: Poor red, Fair yellow, Good to Superior
+/// in deepening greens. The zone edges are labelled underneath, like Suunto's VO₂max card.
+private struct ZoneBar: View {
+    let value: Double
+    /// Lower bounds of zones 2–5.
+    let bounds: [Double]
+    let colorBlind: Bool
+
+    var body: some View {
+        let domain = Self.domain(value, bounds)
+        let edges = [domain.lowerBound] + bounds + [domain.upperBound]
+        let good = DayRating.good.fill(colorBlind: colorBlind)
+        let colors = [DayRating.poor.fill(colorBlind: colorBlind), DayRating.fair.fill(colorBlind: colorBlind),
+                      good.opacity(0.55), good.opacity(0.78), good]
+        VStack(spacing: 2) {
+            Spacer(minLength: 0)
+            GeometryReader { proxy in
+                let width = proxy.size.width
+                let x = { (v: Double) in width * (v - domain.lowerBound) / (domain.upperBound - domain.lowerBound) }
+                ZStack(alignment: .leading) {
+                    HStack(spacing: 2) {
+                        ForEach(colors.indices, id: \.self) { index in
+                            colors[index].frame(width: max(x(edges[index + 1]) - x(edges[index]) - 2, 0), height: 8)
+                        }
+                    }
+                    .clipShape(Capsule())
+                    Capsule().fill(Color.primary)
+                        .frame(width: 4, height: 18)
+                        .offset(x: min(max(x(value) - 2, 0), width - 4))
+                }
+                .frame(maxHeight: .infinity)
+            }
+            .frame(height: 18)
+            GeometryReader { proxy in
+                let width = proxy.size.width
+                ForEach(bounds, id: \.self) { bound in
+                    Text(bound.formatted(.number.precision(.fractionLength(0))))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize()
+                        .position(x: width * (bound - domain.lowerBound) / (domain.upperBound - domain.lowerBound), y: 6)
+                }
+            }
+            .frame(height: 12)
+        }
+        .frame(height: MiniChart.plotHeight + 16)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(VO2MaxZones.zone(value, bounds: bounds).word)
+    }
+
+    /// Poor and Superior get a third of the inner zones' span each, widened to fit a value beyond them.
+    private static func domain(_ value: Double, _ bounds: [Double]) -> ClosedRange<Double> {
+        let outer = ((bounds.last ?? 1) - (bounds.first ?? 0)) / 3
+        return min(value - 1, (bounds.first ?? 0) - outer)...max(value + 1, (bounds.last ?? 1) + outer)
+    }
+}
+
+/// Today's value as a marker on a gauge like Suunto's VO₂max card: six equal-width sections with five
+/// labelled edges — where red starts, the normal range's bounds, its middle, and the mirror point on the
+/// other side. Green covers the normal range and any healthy side; the unhealthy side turns yellow, then red.
+/// Equal sections keep narrow yellow bands visible and the labels apart; values beyond the ends sit at the ends.
+private struct RangeBar: View {
+    let value: Double
+    let normalRange: ClosedRange<Double>
+    /// How far past each bound stays yellow; nil keeps that side green, infinity keeps it yellow.
+    let below: Double?
+    let above: Double?
+    let decimals: Int
+    let colorBlind: Bool
+
+    private static let sections = 6
+
+    var body: some View {
+        let edges = edges()
+        let ratings = sectionRatings()
+        VStack(spacing: 2) {
+            Spacer(minLength: 0)
+            GeometryReader { proxy in
+                let width = proxy.size.width
+                let section = width / Double(Self.sections)
+                let runs = Self.runs(ratings.count) { ratings[$0] == ratings[$1] }
+                ZStack(alignment: .leading) {
+                    HStack(spacing: 2) {
+                        ForEach(runs.indices, id: \.self) { index in
+                            ratings[runs[index].lowerBound].fill(colorBlind: colorBlind)
+                                .frame(width: max(section * Double(runs[index].count) - 2, 0), height: 12)
+                        }
+                    }
+                    .clipShape(Capsule())
+                    Capsule().fill(Color.primary)
+                        .frame(width: 5, height: 24)
+                        .overlay(Capsule().stroke(Color(.secondarySystemGroupedBackground), lineWidth: 1.5))
+                        .offset(x: min(max(width * position(value, edges) - 2.5, 0), width - 5))
+                }
+                .frame(maxHeight: .infinity)
+            }
+            .frame(height: 24)
+            GeometryReader { proxy in
+                let section = proxy.size.width / Double(Self.sections)
+                let labels = labels(edges)
+                ForEach(1..<Self.sections, id: \.self) { index in
+                    Text(labels[index - 1])
+                        .font(.caption2.monospacedDigit())
+                        // Five labels share a square card; tighter digits keep one-decimal labels apart.
+                        .tracking(-0.4)
+                        .foregroundStyle(.secondary)
+                        .fixedSize()
+                        .position(x: section * Double(index), y: 6)
+                }
+            }
+            .frame(height: 12)
+        }
+        .frame(height: MiniChart.plotHeight + 16)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(normalRange.contains(value) ? "In your normal range"
+            : value > normalRange.upperBound ? "Above your normal range" : "Below your normal range")
+    }
+
+    /// Seven section edges, left to right. A side without a finite yellow band borrows the other side's
+    /// width, so the scale stays even. Whole-number gauges round the normal range's bounds, as the card's
+    /// "Normal" line does, keep them at least 2 apart, and use whole steps of at least 1 outside them, so
+    /// labels never repeat; zones move by half a unit at most.
+    private func edges() -> [Double] {
+        let finite = { (miss: Double?) in miss.flatMap { $0.isFinite ? $0 : nil } }
+        let fallback = DayRatings.slightMiss(normalRange)
+        var low = finite(below) ?? finite(above) ?? fallback
+        var high = finite(above) ?? finite(below) ?? fallback
+        var (lower, upper) = (normalRange.lowerBound, normalRange.upperBound)
+        if decimals == 0 {
+            let step = { (width: Double) in max(width.rounded(), 1) }
+            (lower, upper, low, high) = (lower.rounded(), max(upper.rounded(), lower.rounded() + 2), step(low), step(high))
+        }
+        return [lower - 2 * low, lower - low, lower, (lower + upper) / 2, upper, upper + high, upper + 2 * high]
+    }
+
+    /// The five inner edges at the card's precision, without trailing zeros. Close edges that would round
+    /// to the same label get one more decimal.
+    private func labels(_ edges: [Double]) -> [String] {
+        let inner = edges[1..<Self.sections]
+        let format = { (digits: Int) in inner.map { $0.formatted(.number.precision(.fractionLength(0...digits))) } }
+        let labels = format(decimals)
+        return Set(labels).count == labels.count ? labels : format(decimals + 1)
+    }
+
+    /// One rating per section, left to right.
+    private func sectionRatings() -> [DayRating] {
+        let side = { (miss: Double?) -> [DayRating] in
+            guard let miss else { return [.good, .good] }
+            return miss.isFinite ? [.poor, .fair] : [.fair, .fair]
+        }
+        return side(below) + [.good, .good] + side(above).reversed()
+    }
+
+    /// Where `value` sits on the track, 0 to 1, interpolating within its section.
+    private func position(_ value: Double, _ edges: [Double]) -> Double {
+        guard value > edges[0] else { return 0 }
+        for index in 1..<edges.count where value <= edges[index] {
+            let share = (value - edges[index - 1]) / max(edges[index] - edges[index - 1], .leastNonzeroMagnitude)
+            return (Double(index - 1) + share) / Double(Self.sections)
+        }
+        return 1
+    }
+
+    /// Consecutive indices that `same` groups together, so neighbouring sections of one rating draw as one.
+    private static func runs(_ count: Int, same: (Int, Int) -> Bool) -> [Range<Int>] {
+        var runs: [Range<Int>] = []
+        for index in 0..<count {
+            if let last = runs.last, same(last.lowerBound, index) {
+                runs[runs.count - 1] = last.lowerBound..<index + 1
+            } else {
+                runs.append(index..<index + 1)
+            }
+        }
+        return runs
     }
 }
 
@@ -103,11 +305,13 @@ private struct GoalBar: View {
 /// Each day can stack several segments, listed bottom to top.
 private struct TrackBars: View {
     let days: [[(value: Double, color: Color)]]
+    /// A full bar means the target was reached; days above it are cut off at the top of the track.
+    var target: Double?
 
     var body: some View {
         let totals = days.map { $0.reduce(0) { $0 + max($1.value, 0) } }
         // Headroom above the best day keeps the track visible when days are similar, e.g. sleep.
-        let highest = max((totals.max() ?? 0) * 1.2, .leastNonzeroMagnitude)
+        let highest = max(target ?? (totals.max() ?? 0) * 1.2, .leastNonzeroMagnitude)
         let labels = WeekdayLabels.symbols(count: days.count)
         HStack(alignment: .bottom, spacing: 0) {
             ForEach(Array(days.enumerated()), id: \.offset) { index, segments in
@@ -122,6 +326,7 @@ private struct TrackBars: View {
                                         .frame(height: proxy.size.height * max(segment.value, 0) / highest)
                                 }
                             }
+                            .frame(height: proxy.size.height, alignment: .bottom)
                             .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
                         }
                         .frame(width: min(proxy.size.width * 0.55, 14))

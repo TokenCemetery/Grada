@@ -23,6 +23,17 @@ nonisolated enum DayRating: CaseIterable {
         }
     }
 
+    /// A card value in this rating's color. Yellow text is unreadable on a light card, so fair is orange.
+    func text(colorBlind: Bool) -> Color {
+        switch (self, colorBlind) {
+        case (.good, false): .green
+        case (.fair, _): .orange
+        case (.poor, false): .red
+        case (.good, true): .blue
+        case (.poor, true): .primary
+        }
+    }
+
     /// Text and the workout dot drawn on top of `fill`.
     func foreground(colorBlind: Bool) -> Color {
         switch (self, colorBlind) {
@@ -41,7 +52,7 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .healthStatus: "Health status"
+        case .healthStatus: "Health Status"
         case .sleep: "Sleep"
         case .steps: "Steps"
         case .hrv: "HRV"
@@ -68,8 +79,20 @@ nonisolated enum DayRatings {
     static func range(_ value: Double, normal: ClosedRange<Double>, higherIsBetter: Bool) -> DayRating {
         let miss = higherIsBetter ? normal.lowerBound - value : value - normal.upperBound
         if miss <= 0 { return .good }
-        let halfWidth = (normal.upperBound - normal.lowerBound) / 2
-        return miss < halfWidth / 2 ? .fair : .poor
+        return miss < slightMiss(normal) ? .fair : .poor
+    }
+
+    /// Health status vitals, where either direction counts: green inside the normal range, yellow when
+    /// slightly outside it, red when well outside.
+    static func vital(_ value: Double, normal: ClosedRange<Double>) -> DayRating {
+        let miss = max(normal.lowerBound - value, value - normal.upperBound)
+        if miss <= 0 { return .good }
+        return miss < slightMiss(normal) ? .fair : .poor
+    }
+
+    /// How far past the normal range still counts as "slightly" off: half the range's half-width.
+    static func slightMiss(_ normal: ClosedRange<Double>) -> Double {
+        (normal.upperBound - normal.lowerBound) / 4
     }
 
     /// Green with every measured vital in range, yellow with one out, red with two or more.

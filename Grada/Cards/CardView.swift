@@ -4,6 +4,7 @@ import SwiftUI
 struct CardView: View {
     let kind: CardKind
     let snapshot: CardSnapshot?
+    @AppStorage("colorBlindPalette") private var colorBlind = false
 
     static let squareHeight: CGFloat = 176
 
@@ -28,6 +29,22 @@ struct CardView: View {
                 }
                 CardDetailView(detail: snapshot.detail, color: color)
                     .padding(.top, 8)
+            } else if case .workout(let workout)? = snapshot?.detail, let snapshot {
+                // The sport leads the title row, like Suunto's Latest activity; the stats run underneath.
+                HStack(alignment: .top, spacing: 10) {
+                    WorkoutSport(workout: workout)
+                    // The sport name takes the title's place; the icon and stats already say it's a workout.
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(workout.name).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                        Text(snapshot.period).font(.caption).foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(kind.title): \(workout.name), \(snapshot.period)")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: kind.symbol).foregroundStyle(color)
+                }
+                CardDetailView(detail: snapshot.detail, color: color)
+                    .padding(.top, 10)
             } else {
                 header
                 periodAndContent(snapshot)
@@ -40,7 +57,7 @@ struct CardView: View {
 
     private var header: some View {
         HStack {
-            Text(kind.title).font(.subheadline.weight(.semibold))
+            Text(kind.title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
             Spacer(minLength: 4)
             Image(systemName: kind.symbol).foregroundStyle(color)
         }
@@ -68,9 +85,13 @@ struct CardView: View {
         case .square:
             valueBlock(snapshot)
             Spacer(minLength: 8)
-            MiniChart(chart: snapshot.chart, color: color)
+            MiniChart(chart: snapshot.chart, color: chartColor(snapshot))
+            CardDetailView(detail: snapshot.detail, color: color)
         case .wide:
-            if snapshot.chart.isBars {
+            if case .days = snapshot.detail {
+                // The workout count is already the period line; the calendar takes the space.
+                EmptyView()
+            } else if snapshot.chart.isBars {
                 HStack(alignment: .bottom, spacing: 16) {
                     valueBlock(snapshot)
                     MiniChart(chart: snapshot.chart, color: color).frame(width: 150)
@@ -98,12 +119,12 @@ struct CardView: View {
         if kind == .healthStatus || !(snapshot.value ?? "").contains(where: \.isNumber) {
             Text(snapshot.value ?? "")
                 .font(.title2.weight(.bold))
-                .foregroundStyle(valueColor(snapshot.tone))
+                .foregroundStyle(valueColor(snapshot))
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
         } else {
             ValueText(value: snapshot.value ?? "", unit: snapshot.unit, numberFont: numberFont)
-                .foregroundStyle(valueColor(snapshot.tone))
+                .foregroundStyle(valueColor(snapshot))
         }
     }
 
@@ -113,14 +134,21 @@ struct CardView: View {
             .foregroundStyle(tone == .warning && !kind.isScore ? Color.orange : .secondary)
     }
 
-    /// Only scored cards color their value; plain metrics stay neutral.
-    private func valueColor(_ tone: CardSnapshot.Tone) -> Color {
+    /// A rating colors the value red, yellow or green; otherwise only scored cards color it by tone.
+    private func valueColor(_ snapshot: CardSnapshot) -> Color {
+        if let rating = snapshot.rating { return rating.text(colorBlind: colorBlind) }
         guard kind.isScore else { return .primary }
-        switch tone {
+        switch snapshot.tone {
         case .good: return .green
         case .warning: return .orange
         case .neutral: return .primary
         }
+    }
+
+    /// A rated day line takes the rating's color, so the line reads like the value above it.
+    private func chartColor(_ snapshot: CardSnapshot) -> Color {
+        if case .intraday = snapshot.chart, let rating = snapshot.rating { return rating.text(colorBlind: colorBlind) }
+        return color
     }
 
     private var noData: some View {
@@ -170,10 +198,11 @@ private struct ValueText: View {
     }
 }
 
-/// Extra content for wide cards.
+/// Extra content below the value or chart.
 private struct CardDetailView: View {
     let detail: CardSnapshot.Detail
     let color: Color
+    @AppStorage("colorBlindPalette") private var colorBlind = false
 
     var body: some View {
         switch detail {
@@ -187,60 +216,64 @@ private struct CardDetailView: View {
             SleepStagesBar(stages: stages, color: color)
         case .workout(let workout):
             WorkoutDetail(workout: workout, color: color)
-        case .days(let minutes):
-            DaysGrid(minutes: minutes, color: color)
+        case .days(let days):
+            DaysGrid(days: days)
+        case .rows(let rows):
+            VStack(spacing: 2) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    HStack {
+                        Text(row.label).foregroundStyle(.secondary)
+                        Spacer(minLength: 4)
+                        Text(row.value).fontWeight(.semibold).monospacedDigit()
+                            .foregroundStyle(row.rating?.text(colorBlind: colorBlind) ?? .primary)
+                    }
+                    .font(.caption)
+                    .lineLimit(1)
+                }
+            }
         case .stats(let stats):
-            HStack(alignment: .top, spacing: 16) {
+            // Equal columns, so a long label shrinks inside its share instead of crowding its neighbours.
+            HStack(alignment: .top, spacing: 8) {
                 ForEach(Array(stats.enumerated()), id: \.offset) { _, stat in
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(stat.value).font(.headline).monospacedDigit()
-                        Text(stat.label).font(.caption2).foregroundStyle(.secondary)
+                        Text(stat.value).font(.headline).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
+                        Text(stat.label).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                Spacer(minLength: 0)
             }
         }
     }
 }
 
+/// A vital's tile, filled green, yellow or red by its rating, like the calendar's days. Vitals still
+/// calibrating or without data stay grey.
 private struct VitalChip: View {
     let vital: VitalStatus
+    @AppStorage("colorBlindPalette") private var colorBlind = false
 
     var body: some View {
-        VStack(spacing: 2) {
-            Image(systemName: symbol).font(.caption2).foregroundStyle(tint)
-            Text(vital.name).font(.caption2).foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
-        .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(vital.name): \(stateLabel)")
-    }
-
-    private var symbol: String {
-        switch vital.state {
-        case .inRange: "checkmark.circle"
-        case .outOfRange: "exclamationmark.circle"
-        case .calibrating: "hourglass"
-        case .noData: "minus.circle"
-        }
-    }
-
-    private var tint: Color {
-        switch vital.state {
-        case .inRange: .green
-        case .outOfRange: .orange
-        case .calibrating, .noData: .secondary
-        }
+        Text(vital.name)
+            .font(.caption.weight(vital.rating == nil ? .regular : .semibold))
+            .foregroundStyle(vital.rating?.foreground(colorBlind: colorBlind) ?? .secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(vital.rating?.fill(colorBlind: colorBlind) ?? Color(.tertiarySystemGroupedBackground),
+                        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(vital.name): \(stateLabel)")
     }
 
     private var stateLabel: String {
-        switch vital.state {
-        case .inRange: "in range"
-        case .outOfRange: "out of range"
-        case .calibrating: "calibrating"
-        case .noData: "no data"
+        switch (vital.state, vital.rating) {
+        case (.calibrating, _): "calibrating"
+        case (.noData, _): "no data"
+        case (_, .fair): "slightly out of range"
+        case (_, .poor): "well out of range"
+        case (.outOfRange, _): "out of range"
+        default: "in range"
         }
     }
 }
@@ -282,47 +315,56 @@ private struct SleepStagesBar: View {
     }
 }
 
+/// The workout's sport icon in its color, like Suunto's Latest activity; it leads the card's title row.
+private struct WorkoutSport: View {
+    let workout: WorkoutSummary
+
+    var body: some View {
+        let sportColor = WorkoutColors.color(symbol: workout.symbol)
+        Image(systemName: workout.symbol)
+            .font(.body)
+            .foregroundStyle(sportColor)
+            .frame(width: 36, height: 36)
+            .background(sportColor.opacity(0.15), in: Circle())
+            .accessibilityHidden(true)
+    }
+}
+
+/// Labelled stats in equal columns, like Suunto's Latest activity. A stat Apple Health doesn't have
+/// shows a dash, so the columns don't shift between workouts.
 private struct WorkoutDetail: View {
     let workout: WorkoutSummary
     let color: Color
 
     var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: workout.symbol)
-                .font(.title3)
-                .foregroundStyle(color)
-                .frame(width: 36, height: 36)
-                .background(color.opacity(0.15), in: Circle())
-            if let energy = workout.energyKcal {
-                stat(energy.formatted(.number.precision(.fractionLength(0))), "kcal")
-            }
-            if let heartRate = workout.averageHeartRate {
-                stat(heartRate.formatted(.number.precision(.fractionLength(0))), "avg bpm")
-            }
-            Spacer()
+        let whole = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0))
+        HStack(alignment: .top, spacing: 8) {
+            stat("Duration", SnapshotBuilder.hoursMinutes(workout.duration))
+            stat("Calories", workout.energyKcal.map { "\($0.formatted(whole)) kcal" })
+            stat("Avg Heart Rate", workout.averageHeartRate.map { "\($0.formatted(whole)) bpm" })
         }
     }
 
-    private func stat(_ value: String, _ label: String) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(value).font(.headline)
-            Text(label).font(.caption2).foregroundStyle(.secondary)
+    private func stat(_ label: String, _ value: String?) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label).font(.caption).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+            Text(value ?? "–").font(.headline).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-/// The last 30 days as a calendar: weekday columns, one dot per day, bigger dots for longer
-/// workouts, today ringed.
+/// The last 30 days as a calendar: weekday columns, one dot per day split into a slice per sport by
+/// minutes, bigger dots for longer days, today ringed. A legend names the sports, most days first.
 private struct DaysGrid: View {
-    let minutes: [Double]
-    let color: Color
+    let days: [WorkoutDay]
 
     var body: some View {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: .now)
-        let first = calendar.date(byAdding: .day, value: -(minutes.count - 1), to: today)!
+        let first = calendar.date(byAdding: .day, value: -(days.count - 1), to: today)!
         let leadingBlanks = (calendar.component(.weekday, from: first) - calendar.firstWeekday + 7) % 7
-        let cells: [Double?] = Array(repeating: nil, count: leadingBlanks) + minutes.map { $0 }
+        let cells: [WorkoutDay?] = Array(repeating: nil, count: leadingBlanks) + days.map { $0 }
         let letters = calendar.veryShortStandaloneWeekdaySymbols
         let header = (0..<7).map { letters[(calendar.firstWeekday - 1 + $0) % 7] }
         let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
@@ -334,28 +376,95 @@ private struct DaysGrid: View {
                     Text(letter).font(.caption2).foregroundStyle(.secondary)
                 }
             }
-            LazyVGrid(columns: columns, spacing: 4) {
-                ForEach(Array(cells.enumerated()), id: \.offset) { index, value in
+            LazyVGrid(columns: columns, spacing: 6) {
+                ForEach(Array(cells.enumerated()), id: \.offset) { index, day in
                     ZStack {
-                        if let value {
-                            Circle()
-                                .fill(value > 0 ? color : Color(.tertiarySystemFill))
-                                .frame(width: diameter(value), height: diameter(value))
+                        if let day {
+                            SportPie(day: day, diameter: diameter(day.minutes))
                         }
                         if index == cells.count - 1 {
-                            Circle().strokeBorder(Color.primary.opacity(0.6), lineWidth: 1.5).frame(width: 24, height: 24)
+                            Circle().strokeBorder(Color.primary.opacity(0.6), lineWidth: 1.5).frame(width: 30, height: 30)
                         }
                     }
-                    .frame(height: 24)
+                    .frame(height: 30)
                 }
             }
+            HStack(spacing: 12) {
+                ForEach(Self.sports(days), id: \.name) { sport in
+                    HStack(spacing: 4) {
+                        Circle().fill(WorkoutColors.color(symbol: sport.symbol)).frame(width: 8, height: 8)
+                        Text(sport.name).font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.top, 2)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(minutes.filter { $0 > 0 }.count) active days in the last 30 days")
+        .accessibilityLabel("\(days.filter { $0.minutes > 0 }.count) active days in the last 30 days")
+    }
+
+    /// Up to four sports by the days they appear on, most first.
+    private static func sports(_ days: [WorkoutDay]) -> [(name: String, symbol: String?)] {
+        var counts: [String: (symbol: String?, days: Int)] = [:]
+        for day in days {
+            for sport in day.sports {
+                counts[sport.name, default: (sport.symbol, 0)].days += 1
+            }
+        }
+        return counts.sorted { $0.value.days > $1.value.days || ($0.value.days == $1.value.days && $0.key < $1.key) }
+            .prefix(4)
+            .map { (name: $0.key, symbol: $0.value.symbol) }
     }
 
     private func diameter(_ minutes: Double) -> CGFloat {
-        minutes <= 0 ? 6 : min(10 + CGFloat(minutes) / 8, 20)
+        minutes <= 0 ? 6 : min(12 + CGFloat(minutes) / 6, 26)
+    }
+}
+
+/// A day's dot: one slice per sport, sized by its minutes, longest first from 12 o'clock. A rest day is a
+/// small grey dot.
+private struct SportPie: View {
+    let day: WorkoutDay
+    let diameter: CGFloat
+
+    var body: some View {
+        let total = max(day.minutes, .leastNonzeroMagnitude)
+        let starts = day.sports.indices.map { index in day.sports[..<index].reduce(0) { $0 + $1.minutes } / total }
+        ZStack {
+            if day.sports.isEmpty {
+                Circle().fill(Color(.tertiarySystemFill))
+            }
+            ForEach(day.sports.indices, id: \.self) { index in
+                // A stroke half the diameter wide, on a circle half the size, fills the pie slice.
+                Circle()
+                    .trim(from: starts[index], to: starts[index] + day.sports[index].minutes / total)
+                    .stroke(WorkoutColors.color(symbol: day.sports[index].symbol), lineWidth: diameter / 2)
+                    .frame(width: diameter / 2, height: diameter / 2)
+                    .rotationEffect(.degrees(-90))
+            }
+        }
+        .frame(width: diameter, height: diameter)
+    }
+}
+
+/// One color per sport, keyed by the workout symbol Apple Health workouts are stored with.
+enum WorkoutColors {
+    static func color(symbol: String?) -> Color {
+        switch symbol {
+        case "figure.run": .orange
+        case "figure.walk": .yellow
+        case "figure.hiking": .brown
+        case "figure.outdoor.cycle": .purple
+        case "figure.pool.swim": .blue
+        case "figure.strengthtraining.traditional": .red
+        case "figure.highintensity.intervaltraining": .pink
+        case "figure.yoga": .mint
+        case "figure.rower": .cyan
+        case "figure.elliptical": .indigo
+        case "figure.skiing.downhill": .teal
+        default: .gray
+        }
     }
 }
 
@@ -367,7 +476,7 @@ private struct DaysGrid: View {
                 PreviewCard(kind: kind, builder: builder)
             }
             HStack(spacing: 12) {
-                PreviewCard(kind: .restingHeartRate, builder: builder)
+                PreviewCard(kind: .hrvStatus, builder: builder)
                 PreviewCard(kind: .steps, builder: builder)
             }
         }
