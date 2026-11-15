@@ -144,7 +144,7 @@ extension CardKind {
         case .lastWorkout, .weeklyTraining:
             "Time spent in recorded workouts. Steady weekly volume builds fitness; sudden jumps raise the risk of injury."
         case .vo2Max:
-            "The most oxygen your body can use during hard exercise, a key measure of cardio fitness. It changes slowly over weeks of training."
+            "The most oxygen your body can use during hard exercise, a key measure of cardio fitness. It changes slowly over weeks of training. The zones compare it with lab-measured VO₂ max of adults your age and sex in the US FRIEND registry: Poor below the bottom quarter, Fair up to the middle, Good from the middle, Excellent from the top quarter and Superior from the top tenth."
         case .racePredictor:
             "Race times your current VO₂ max points to, assuming you've trained for the distance."
         case .trainingReadiness, .loadFocus:

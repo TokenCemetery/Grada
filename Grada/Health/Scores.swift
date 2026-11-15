@@ -466,12 +466,8 @@ nonisolated enum HealthAge {
     /// treadmill tests (Kaminsky et al. 2015, Mayo Clin Proc 90:1515, Table 3). Under 20 uses the 20s,
     /// 80 and over the 70s.
     static func expectedVO2Max(age: Int, sex: BiologicalSex) -> Double {
-        let row = min(max(age / 10 - 2, 0), 5)
-        return sex == .male ? medianMen[row] : medianWomen[row]
+        VO2MaxZones.bounds(age: age, sex: sex)[1]
     }
-
-    private static let medianMen = [48.0, 42.4, 37.8, 32.6, 28.2, 24.4]
-    private static let medianWomen = [37.6, 30.2, 26.7, 23.4, 20.0, 18.3]
 
     /// Median resting pulse for the age and sex in NHANES 1999–2008 (Ostchega et al. 2011, NHSR 41, Table 1):
     /// ages 20–39, 40–59, 60–79 and 80+. That pulse was taken seated after 4 minutes' rest; Apple's resting heart
@@ -519,10 +515,9 @@ nonisolated enum HealthAge {
     }
 }
 
-/// Race times from VO₂ max with Jack Daniels' running formula, as Garmin's race predictor does
-/// from its own VO₂ max. Assumes training for the distance; real results vary with it.
-/// VO₂ max fitness zones by age and sex, from the Cooper Institute norms (the 6-category table reproduced
-/// by most fitness references; Very poor is merged into Poor here).
+/// VO₂ max fitness zones by age and sex, from the FRIEND registry's measured treadmill VO₂ max (Kaminsky et al.
+/// 2015, Mayo Clin Proc 90:1515, Table 3): Poor below the 25th percentile, Fair from it, Good from the 50th,
+/// Excellent from the 75th and Superior from the 90th.
 nonisolated enum VO2MaxZones {
     enum Zone: Int, CaseIterable {
         case poor, fair, good, excellent, superior
@@ -546,16 +541,10 @@ nonisolated enum VO2MaxZones {
         }
     }
 
-    /// Lower bounds of Fair, Good, Excellent and Superior in ml/kg·min. Under 20 uses the 13–19 row.
+    /// Lower bounds of Fair, Good, Excellent and Superior in ml/kg·min: the 25th, 50th, 75th and 90th percentiles.
+    /// FRIEND covers ages 20–79, so younger adults use the 20s and older ones the 70s.
     static func bounds(age: Int, sex: BiologicalSex) -> [Double] {
-        let row = switch age {
-        case ..<20: 0
-        case 20..<30: 1
-        case 30..<40: 2
-        case 40..<50: 3
-        case 50..<60: 4
-        default: 5
-        }
+        let row = min(max(age / 10 - 2, 0), 5)
         return sex == .male ? men[row] : women[row]
     }
 
@@ -564,15 +553,17 @@ nonisolated enum VO2MaxZones {
     }
 
     private static let men: [[Double]] = [
-        [38.4, 45.2, 51.0, 56.0], [36.5, 42.5, 46.5, 52.5], [35.5, 41.0, 45.0, 49.5],
-        [33.6, 39.0, 43.8, 48.1], [31.0, 35.8, 41.0, 45.4], [26.1, 32.3, 36.5, 44.3],
+        [40.1, 48.0, 55.2, 61.8], [35.9, 42.4, 49.2, 56.5], [31.9, 37.8, 45.0, 52.1],
+        [27.1, 32.6, 39.7, 45.6], [23.7, 28.2, 34.5, 40.3], [20.4, 24.4, 30.4, 36.6],
     ]
     private static let women: [[Double]] = [
-        [31.0, 35.0, 39.0, 42.0], [29.0, 33.0, 37.0, 41.1], [27.0, 31.5, 35.7, 40.1],
-        [24.5, 29.0, 32.9, 37.0], [22.8, 27.0, 31.5, 35.8], [20.2, 24.5, 30.3, 31.5],
+        [30.5, 37.6, 44.7, 51.3], [25.3, 30.2, 36.1, 41.4], [22.1, 26.7, 32.4, 38.4],
+        [19.9, 23.4, 27.6, 32.0], [17.2, 20.0, 23.8, 27.0], [15.6, 18.3, 20.8, 23.1],
     ]
 }
 
+/// Race times from VO₂ max with Jack Daniels' running formula, as Garmin's race predictor does
+/// from its own VO₂ max. Assumes training for the distance; real results vary with it.
 nonisolated enum RacePredictor {
     static let distances: [(name: String, meters: Double)] = [
         ("5K", 5_000), ("10K", 10_000), ("Half", 21_097.5), ("Marathon", 42_195),

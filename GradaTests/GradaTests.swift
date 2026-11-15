@@ -146,14 +146,14 @@ struct RatingTests {
         #expect(DayRatings.range(36.4, normal: normal, higherIsBetter: false) == .poor)
     }
 
-    @Test func vo2MaxZonesFollowTheCooperTable() {
+    @Test func vo2MaxZonesFollowFRIENDPercentiles() {
         let men = VO2MaxZones.bounds(age: 25, sex: .male)
-        #expect(men == [36.5, 42.5, 46.5, 52.5])
-        #expect(VO2MaxZones.zone(36.4, bounds: men) == .poor)
-        #expect(VO2MaxZones.zone(42.5, bounds: men) == .good)
-        #expect(VO2MaxZones.zone(60, bounds: men) == .superior)
-        #expect(VO2MaxZones.bounds(age: 25, sex: .female) == [29.0, 33.0, 37.0, 41.1])
-        #expect(VO2MaxZones.bounds(age: 70, sex: .male) == VO2MaxZones.bounds(age: 60, sex: .male))
+        #expect(men == [40.1, 48.0, 55.2, 61.8])
+        #expect(VO2MaxZones.zone(40.0, bounds: men) == .poor)
+        #expect(VO2MaxZones.zone(48.0, bounds: men) == .good)
+        #expect(VO2MaxZones.zone(65, bounds: men) == .superior)
+        #expect(VO2MaxZones.bounds(age: 18, sex: .female) == VO2MaxZones.bounds(age: 25, sex: .female))
+        #expect(VO2MaxZones.bounds(age: 85, sex: .male) == VO2MaxZones.bounds(age: 75, sex: .male))
     }
 
     @Test func raceTrendIgnoresSmallChanges() {
@@ -1237,15 +1237,20 @@ struct PublishedReferenceTests {
         #expect(abs(HealthAge.exerciseRisk(400) - 0.63 / 0.69) < 1e-9)
     }
 
-    /// Cooper Institute norms for men, lower bounds of Fair, Good, Excellent and Superior, ages 13–19 to 60+.
-    /// The women's rows aren't covered: no source confirming them has been found yet (#74).
-    @Test func vo2MaxZonesMatchTheCooperTableForMen() {
-        let rows: [(age: Int, bounds: [Double])] = [
-            (16, [38.4, 45.2, 51.0, 56.0]), (25, [36.5, 42.5, 46.5, 52.5]), (35, [35.5, 41.0, 45.0, 49.5]),
-            (45, [33.6, 39.0, 43.8, 48.1]), (55, [31.0, 35.8, 41.0, 45.4]), (65, [26.1, 32.3, 36.5, 44.3]),
+    /// FRIEND registry (Kaminsky et al. 2015, Table 3): the 25th, 50th, 75th and 90th percentiles of measured
+    /// treadmill VO₂ max start Fair, Good, Excellent and Superior, for each decade from 20–29 to 70–79.
+    @Test func vo2MaxZonesMatchFRIENDTable3() {
+        let men: [[Double]] = [
+            [40.1, 48.0, 55.2, 61.8], [35.9, 42.4, 49.2, 56.5], [31.9, 37.8, 45.0, 52.1],
+            [27.1, 32.6, 39.7, 45.6], [23.7, 28.2, 34.5, 40.3], [20.4, 24.4, 30.4, 36.6],
         ]
-        for row in rows {
-            #expect(VO2MaxZones.bounds(age: row.age, sex: .male) == row.bounds, "Men at \(row.age)")
+        let women: [[Double]] = [
+            [30.5, 37.6, 44.7, 51.3], [25.3, 30.2, 36.1, 41.4], [22.1, 26.7, 32.4, 38.4],
+            [19.9, 23.4, 27.6, 32.0], [17.2, 20.0, 23.8, 27.0], [15.6, 18.3, 20.8, 23.1],
+        ]
+        for (index, age) in [25, 35, 45, 55, 65, 75].enumerated() {
+            #expect(VO2MaxZones.bounds(age: age, sex: .male) == men[index], "Men at \(age)")
+            #expect(VO2MaxZones.bounds(age: age, sex: .female) == women[index], "Women at \(age)")
         }
     }
 
