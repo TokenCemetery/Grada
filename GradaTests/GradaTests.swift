@@ -923,6 +923,18 @@ struct TrendBuilderTests {
             #expect(!kind.explanation.isEmpty)
         }
     }
+
+    /// Cards built from other inputs, plus those that grade a reading against a reference, must say what
+    /// they rest on: published sources, or a note on what Grada estimated itself.
+    @Test func everyCalculatedCardCitesSourcesOrSaysItEstimates() {
+        let graded: [CardKind] = [.sleepNeed, .sleepConsistency, .vo2Max, .racePredictor]
+        for kind in CardKind.allCases where !kind.basedOn.isEmpty || graded.contains(kind) {
+            #expect(!kind.sources.isEmpty || kind.estimateNote != nil, "\(kind)")
+        }
+        for source in CardKind.allCases.flatMap(\.sources) {
+            if let url = source.url { #expect(url.scheme == "https", "\(source.citation)") }
+        }
+    }
 }
 
 struct GoalTests {
