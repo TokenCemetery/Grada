@@ -661,12 +661,19 @@ struct SleepConsistencyTests {
 @MainActor
 struct HealthAgeTests {
     @Test func fitHabitsLowerHealthAge() throws {
-        let fit = HealthAge.Input(age: 40, sex: .male, sleepHours: 7.5, sleepConsistency: 85, dailySteps: 11_000, restingHeartRate: 50,
-                                  vo2Max: 50, moderateMinutesPerWeek: 250, vigorousMinutesPerWeek: 90, strengthMinutesPerWeek: 90)
-        let unfit = HealthAge.Input(age: 40, sex: .male, sleepHours: 5.5, sleepConsistency: 50, dailySteps: 3_000, restingHeartRate: 75,
-                                    vo2Max: 30, moderateMinutesPerWeek: 20, vigorousMinutesPerWeek: 0, strengthMinutesPerWeek: 0)
+        let fit = HealthAge.Input(age: 40, sex: .male, sleepHours: 7.5, dailySteps: 11_000, restingHeartRate: 50,
+                                  vo2Max: 50, exerciseMinutesPerWeek: 250)
+        let unfit = HealthAge.Input(age: 40, sex: .male, sleepHours: 5.5, dailySteps: 3_000, restingHeartRate: 75,
+                                    vo2Max: 30, exerciseMinutesPerWeek: 20)
         #expect(try #require(HealthAge.age(fit)) < 35)
         #expect(try #require(HealthAge.age(unfit)) > 50)
+    }
+
+    /// A typical adult who meets the guidelines is their own age.
+    @Test func typicalAdultIsTheirOwnAge() throws {
+        let typical = HealthAge.Input(age: 45, sex: .female, sleepHours: 7.5, dailySteps: 7_803, restingHeartRate: 71,
+                                      vo2Max: 26.7, exerciseMinutesPerWeek: 200)
+        #expect(abs(try #require(HealthAge.age(typical)) - 45) < 0.001)
     }
 
     /// FRIEND registry medians: a 45-year-old woman at 26.7 is average, while a man at 26.7 is 11.1 below his.
@@ -683,12 +690,6 @@ struct HealthAgeTests {
 
     @Test func needsThreeInputs() {
         #expect(HealthAge.age(HealthAge.Input(age: 40, dailySteps: 8_000, restingHeartRate: 60)) == nil)
-    }
-
-    @Test func paceComparesRecentWithBaseline() {
-        #expect(HealthAge.pace(recent: 38, baseline: 38) == 1)
-        #expect(HealthAge.pace(recent: 37, baseline: 38) == 0.5)
-        #expect(HealthAge.pace(recent: 30, baseline: 38) == -1)
     }
 }
 
@@ -1183,6 +1184,57 @@ struct PublishedReferenceTests {
             #expect(HealthAge.expectedVO2Max(age: age, sex: .male) == men[index], "Men at \(age)")
             #expect(HealthAge.expectedVO2Max(age: age, sex: .female) == women[index], "Women at \(age)")
         }
+    }
+
+    /// Gompertz: adult mortality doubles about every 8 years (Finch et al. 1990), so a risk ratio of 2 is 8 years.
+    @Test func riskRatiosTurnIntoYearsByTheMortalityDoublingTime() {
+        #expect(HealthAge.years(riskRatio: 2) == 8)
+        #expect(HealthAge.years(riskRatio: 1) == 0)
+        #expect(HealthAge.years(riskRatio: 0.5) == -8)
+    }
+
+    /// Kodama et al. 2009: RR 0.87 per MET (3.5 ml/kg·min). Zhang et al. 2016: RR 1.09 per 10 bpm. Both against
+    /// the norm for age and sex (FRIEND median VO₂ max, NHANES median resting pulse).
+    @Test func healthAgeFitnessFollowsKodamaAndZhang() throws {
+        func years(_ input: HealthAge.Input, _ name: String) -> Double? {
+            HealthAge.impacts(input).first { $0.name == name }?.years
+        }
+        let fitter = try #require(years(HealthAge.Input(age: 35, sex: .male, vo2Max: 42.4 + 3.5), "VO₂ Max"))
+        #expect(abs(fitter - 8 * log2(0.87)) < 1e-9)
+        #expect(HealthAge.expectedRestingHeartRate(age: 35, sex: .male) == 69)
+        #expect(HealthAge.expectedRestingHeartRate(age: 65, sex: .female) == 70)
+        let faster = try #require(years(HealthAge.Input(age: 35, sex: .male, restingHeartRate: 79), "Resting HR"))
+        #expect(abs(faster - 8 * log2(1.09)) < 1e-9)
+    }
+
+    /// Paluch et al. 2022: quartile medians 3553, 5801, 7842 and 10 901 steps, HRs 1, 0.60, 0.55 and 0.47.
+    @Test func stepsRiskFollowsPaluchQuartiles() {
+        #expect(HealthAge.stepsRisk(3_553) == 1)
+        #expect(abs(HealthAge.stepsRisk(5_801) - 0.60) < 1e-9)
+        #expect(abs(HealthAge.stepsRisk(7_842) - 0.55) < 1e-9)
+        #expect(abs(HealthAge.stepsRisk(10_901) - 0.47) < 1e-9)
+        #expect(HealthAge.stepsRisk(1_000) == 1, "Flat below the lowest median")
+        #expect(HealthAge.stepsRisk(20_000) == 0.47, "Flat above the highest median")
+        let between = HealthAge.stepsRisk((5_801 + 7_842) / 2)
+        #expect(between < 0.60 && between > 0.55)
+    }
+
+    /// Cappuccio et al. 2010: short sleep RR 1.12, long sleep RR 1.30, against 7–8 hours.
+    @Test func sleepRiskFollowsCappuccio() {
+        #expect(HealthAge.sleepRisk(6.5) == 1.12)
+        #expect(HealthAge.sleepRisk(7) == 1)
+        #expect(HealthAge.sleepRisk(8) == 1)
+        #expect(HealthAge.sleepRisk(9) == 1.30)
+    }
+
+    /// Arem et al. 2015, against the 150-minute guideline (HR 0.69 vs none): none is 1/0.69, below it 0.80/0.69,
+    /// 2–3× the guideline 0.63/0.69.
+    @Test func exerciseRiskFollowsArem() {
+        #expect(abs(HealthAge.exerciseRisk(0) - 1 / 0.69) < 1e-9)
+        #expect(abs(HealthAge.exerciseRisk(100) - 0.80 / 0.69) < 1e-9)
+        #expect(HealthAge.exerciseRisk(150) == 1)
+        #expect(HealthAge.exerciseRisk(299) == 1)
+        #expect(abs(HealthAge.exerciseRisk(400) - 0.63 / 0.69) < 1e-9)
     }
 
     /// Cooper Institute norms for men, lower bounds of Fair, Good, Excellent and Superior, ages 13–19 to 60+.

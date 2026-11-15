@@ -76,7 +76,6 @@ extension CardKind {
         case .heartRate: [.resources, .dayIntensity]
         case .vo2Max: [.racePredictor, .healthAge]
         case .sleepDuration, .sleepStages: [.recovery, .sleepNeed, .resources, .healthAge]
-        case .sleepConsistency: [.healthAge]
         default: []
         }
     }
@@ -87,7 +86,7 @@ extension CardKind {
         case .healthStatus: [.hrv, .restingHeartRate, .respiratoryRate, .oxygenSaturation, .wristTemperature]
         case .recovery: [.hrv, .restingHeartRate, .sleepDuration, .respiratoryRate]
         case .resources: [.heartRate, .restingHeartRate, .sleepStages]
-        case .healthAge: [.steps, .sleepDuration, .sleepConsistency, .restingHeartRate, .vo2Max, .exerciseMinutes]
+        case .healthAge: [.steps, .sleepDuration, .restingHeartRate, .vo2Max, .exerciseMinutes]
         case .intensityMinutes: [.heartRate, .restingHeartRate, .exerciseMinutes]
         case .dayIntensity: [.heartRate, .restingHeartRate]
         case .hrvStatus: [.hrv]
@@ -105,7 +104,7 @@ extension CardKind {
         case .resources:
             "An estimate of your energy through the day. Sleep and calm rest recharge it; activity and stress, seen as a raised heart rate, drain it. No published method exists for this without beat-to-beat HRV, which iPhone doesn't record through the day, so the charge and drain rates and the colour bands (borrowed from WHOOP) are Grada's own guesses. For measured effort, see Day Intensity."
         case .healthAge:
-            "The age your habits and fitness point to, from steps, sleep, resting heart rate, VO₂ max and exercise over the last 30 days. VO₂ max is compared with the median for your age and sex, so it counts only when Apple Health has your sex. Pace shows whether it's moving faster or slower than time."
+            "The age your fitness and habits over the last 30 days point to. Each input is compared with a typical adult of your age and sex, or with the guideline, and its link with lifespan from large studies is turned into years: the risk of dying doubles about every 8 years of age. Inputs: VO₂ max and resting heart rate (need your sex in Apple Health), steps, sleep (7–8 hours is the reference) and exercise (150 minutes a week is the reference). Fit people also tend to walk and exercise more, so the inputs overlap and the total is an estimate."
         case .sleepDuration, .sleepStages:
             "Time asleep in the night that ended this morning. Deep sleep restores the body, REM supports memory and mood. Most adults need 7–9 hours."
         case .sleepNeed:

@@ -353,25 +353,15 @@ struct SnapshotBuilder {
     }
 
     private func healthAgeInput(age: Int, days: Int) async throws -> HealthAge.Input {
-        let weeks = Double(days) / 7
         let exercise = try await source.daily(.exerciseMinutes, days: days).compactMap(\.value)
-        let workouts = try await source.workouts(days: days)
-        let maxHeartRate = Resources.maxHeartRate(age: age, highestRecorded: nil) ?? 220
-        let hasTraining = !workouts.isEmpty || !exercise.isEmpty
-        let consistency = try await sleepRegularity(days).compactMap(\.index)
         return HealthAge.Input(
             age: age,
             sex: try await source.biologicalSex(),
             sleepHours: Baseline.average(try await source.sleepNights(days: days).map(\.asleep).filter { $0 > 0 }).map { $0 / 3600 },
-            sleepConsistency: Baseline.average(consistency),
             dailySteps: Baseline.average(try await source.daily(.steps, days: days).compactMap(\.value)),
             restingHeartRate: Baseline.average(try await source.daily(.restingHeartRate, days: days).compactMap(\.value)),
             vo2Max: try await source.daily(.vo2Max, days: days).compactMap(\.value).last,
-            moderateMinutesPerWeek: exercise.isEmpty ? nil : exercise.reduce(0, +) / weeks,
-            vigorousMinutesPerWeek: hasTraining ? workouts.filter { ($0.averageHeartRate ?? 0) >= 0.8 * maxHeartRate }
-                .reduce(0) { $0 + $1.duration / 60 } / weeks : nil,
-            strengthMinutesPerWeek: hasTraining ? workouts.filter { $0.name == "Strength" }
-                .reduce(0) { $0 + $1.duration / 60 } / weeks : nil
+            exerciseMinutesPerWeek: exercise.isEmpty ? nil : exercise.reduce(0, +) / (Double(days) / 7)
         )
     }
 
