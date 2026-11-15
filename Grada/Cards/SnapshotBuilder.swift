@@ -18,7 +18,6 @@ struct SnapshotBuilder {
         case .healthStatus: try await healthStatus()
         case .recovery: try await recovery(variant)
         case .resources: try await resources()
-        case .stress: try await stress()
         case .healthAge: try await healthAge()
         case .sleepNeed: try await sleepNeed()
         case .sleepConsistency: try await sleepConsistency()
@@ -357,7 +356,6 @@ struct SnapshotBuilder {
         let history = TrainingReadiness.historyDays
         let sleepScores = try await sleepScoreDays(count)
         let strain = try await strainDays(count)
-        let stress = try await stressDays(count + history - 1)
         let recovery = try await recoveryDays(count)
         let overnight = try await source.overnight(days: HRVStatus.baselineNights + HRVStatus.window + count - 1)
         let hrv = overnight.map(\.hrv)
@@ -381,54 +379,13 @@ struct SnapshotBuilder {
             }
             input.hrvStatus = HRVStatus.status(nights: hrv, endingAt: night)?.state
             input.loadRatio = strain?[index].ratio?.value
-            // The 3 nights and days ending on this one; the history arrays start `history - 1` days earlier.
+            // The 3 nights ending on this one; the history arrays start `history - 1` days earlier.
             let window = index...(index + history - 1)
             let slept = window.compactMap { asleep[needs[$0].day].flatMap { $0 > 0 ? $0 : nil } }
             input.recentSleep = slept.count == history ? Baseline.average(slept) : nil
             input.recentNeed = Baseline.average(window.compactMap { needs[$0].value }) ?? SleepNeed.baseline
-            input.recentStress = stress.flatMap { stress in Baseline.average(window.flatMap { stress[$0].levels.map(\.value) }) }
             return (days[index], TrainingReadiness.status(input))
         }
-    }
-
-    /// Today's average stress while awake and outside workouts, with its timeline from midnight.
-    private func stress() async throws -> CardSnapshot {
-        guard let days = try await stressDays(1) else {
-            return CardSnapshot(period: todayLabel, value: "Calibrating", comparison: "Needs resting and max heart rate")
-        }
-        guard let today = days.last, let average = Baseline.average(today.levels.map(\.value)) else {
-            return .noData(period: todayLabel)
-        }
-        let band = Stress.band(average)
-        let high = Double(today.levels.filter { Stress.band($0.value) == .high }.count) * Resources.step
-        let midnight = calendar.startOfDay(for: now)
-        return CardSnapshot(
-            period: todayLabel,
-            value: format(average, 0),
-            comparison: "\(band.title) · \(Self.hoursMinutes(high)) high",
-            tone: Self.tone(band.rating),
-            rating: band.rating,
-            chart: .intraday(today.levels.map { (hour: $0.date.timeIntervalSince(midnight) / 3600, value: $0.value) },
-                             domain: 0...100)
-        )
-    }
-
-    /// Each of the last `count` days' stress levels, oldest first; empty on days without heart rate.
-    /// Nil until resting and max heart rate are known.
-    func stressDays(_ count: Int) async throws -> [(day: Date, levels: [TimedValue])]? {
-        let days = lastDays(count)
-        let restingHeartRate = Baseline.average(try await source.daily(.restingHeartRate, days: 8).compactMap(\.value))
-        let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
-                                                  highestRecorded: try await source.highestHeartRate(days: 365))
-        guard let restingHeartRate, let maxHeartRate, maxHeartRate > restingHeartRate + 20 else { return nil }
-
-        let interval = DateInterval(start: days[0], end: max(now, days[0]))
-        let sleep = try await source.sleepPeriods(in: interval)
-        let workouts = try await source.workouts(days: count).map { DateInterval(start: $0.start, duration: $0.duration) }
-        let levels = Stress.timeline(heartRate: try await source.heartRate(in: interval), sleep: sleep, workouts: workouts,
-                                     restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate)
-        let byDay = Dictionary(grouping: levels) { calendar.startOfDay(for: $0.date) }
-        return days.map { ($0, byDay[$0] ?? []) }
     }
 
     /// Health age from the last 30 days, against the user's age, with the three inputs that move it most.

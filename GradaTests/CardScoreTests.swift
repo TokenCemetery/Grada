@@ -167,64 +167,21 @@ struct RecoveryTimeTests {
     }
 }
 
-struct StressTests {
-    private let start = Date(timeIntervalSince1970: 1_700_000_000)
-
-    /// Resting 50, max 190: reserve 140, so 100 is 40% of it, 106 bpm.
-    @Test func levelRunsFromRestingToTheModerateFloor() {
-        #expect(Stress.level(50, restingHeartRate: 50, maxHeartRate: 190) == 0)
-        #expect(Stress.level(45, restingHeartRate: 50, maxHeartRate: 190) == 0)
-        #expect(Stress.level(78, restingHeartRate: 50, maxHeartRate: 190) == 50)
-        #expect(Stress.level(150, restingHeartRate: 50, maxHeartRate: 190) == 100)
-    }
-
-    @Test func bandsAreGarminsQuarters() {
-        #expect(Stress.band(25) == .rest)
-        #expect(Stress.band(26) == .low)
-        #expect(Stress.band(51) == .medium)
-        #expect(Stress.band(76) == .high)
-        #expect(Stress.band(76).rating == .poor)
-    }
-
-    /// Resources keeps draining from 15% of heart rate reserve.
-    @Test func resourcesDrainsAtTheSameShare() {
-        #expect(Stress.drainLevel == 37.5)
-    }
-
-    @Test func timelineSkipsSleepAndWorkouts() {
-        let readings = [50.0, 78, 150, 64].enumerated().map { TimedValue(date: start + Double($0.offset) * 300, value: $0.element) }
-        let sleep = [SleepPeriod(start: start, end: start + 300, stage: .core)]
-        let workout = DateInterval(start: start + 600, duration: 300)
-        let levels = Stress.timeline(heartRate: readings, sleep: sleep, workouts: [workout], restingHeartRate: 50, maxHeartRate: 190)
-        #expect(levels.map(\.value) == [50, 25])
-    }
-
-    @MainActor
-    @Test func cardShowsTodaysAverageAndTimeline() async throws {
-        #expect(CardKind.gallery.contains(.stress))
-        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .stress)
-        #expect(snapshot.value != nil)
-        #expect(snapshot.comparison?.hasSuffix("high") == true, "\(snapshot.comparison ?? "")")
-        guard case .intraday(_, let domain) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
-        #expect(domain == 0...100)
-    }
-}
-
 struct TrainingReadinessTests {
     private func input(sleep: DayRating? = .good, recovering: Bool? = false, hrv: HRVStatus.State? = .balanced,
-                       ratio: Double? = 1.0, recentSleep: TimeInterval? = 7.5 * 3600, stress: Double? = 30) -> TrainingReadiness.Input {
+                       ratio: Double? = 1.0, recentSleep: TimeInterval? = 7.5 * 3600) -> TrainingReadiness.Input {
         TrainingReadiness.Input(sleepScore: sleep, recovering: recovering, hrvStatus: hrv, loadRatio: ratio,
-                                recentSleep: recentSleep, recentStress: stress)
+                                recentSleep: recentSleep)
     }
 
     @Test func nothingOffIsHigh() throws {
         let result = try #require(TrainingReadiness.status(input()))
-        #expect(result == TrainingReadiness.Result(rating: .good, measured: 6, inRange: 6, reason: "Ready for hard training"))
+        #expect(result == TrainingReadiness.Result(rating: .good, measured: 5, inRange: 5, reason: "Ready for hard training"))
         #expect(result.word == "High")
     }
 
     /// Each input uses its own card's threshold: red sleep, still recovering, HRV not balanced, ratio above 1.3,
-    /// 3 nights under the need, and medium stress or more.
+    /// and 3 nights under the need.
     @Test func eachInputFlagsAtItsCardsThreshold() throws {
         #expect(try #require(TrainingReadiness.status(input(sleep: .fair))).rating == .good)
         #expect(try #require(TrainingReadiness.status(input(sleep: .poor))).reason == "Poor sleep")
@@ -233,8 +190,6 @@ struct TrainingReadinessTests {
         #expect(try #require(TrainingReadiness.status(input(ratio: 1.3))).rating == .good)
         #expect(try #require(TrainingReadiness.status(input(ratio: 1.31))).reason == "Load rising fast")
         #expect(try #require(TrainingReadiness.status(input(recentSleep: 6.9 * 3600))).reason == "Short sleep 3 nights")
-        #expect(try #require(TrainingReadiness.status(input(stress: 50))).rating == .good)
-        #expect(try #require(TrainingReadiness.status(input(stress: 51))).reason == "Stress high 3 days")
     }
 
     @Test func twoOffIsLow() throws {

@@ -116,6 +116,8 @@ nonisolated enum Resources {
     /// `restMargin` bpm of resting: close enough that ordinary sitting doesn't count.
     private static let restCharge = 0.15
     private static let restMargin = 3.0
+    /// Above this share of heart rate reserve, while not in a workout, counts as stress or activity.
+    private static let stressThreshold = 0.15
     /// Heart rate is carried forward over gaps up to this long (watches sample every few minutes).
     private static let heartRateCarry: TimeInterval = 15 * 60
 
@@ -156,8 +158,7 @@ nonisolated enum Resources {
                 // Without heart rate, assume moderate effort.
                 let intensity = hr.map { min(max(($0 - restingHeartRate) / reserve, 0), 1) } ?? 0.5
                 change = -(calmDrain + 3 * pow(intensity, 1.5))
-            } else if let hr, Stress.level(hr, restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate) > Stress.drainLevel {
-                // Stress or activity, as the Stress card detects it.
+            } else if let hr, (hr - restingHeartRate) / reserve > stressThreshold {
                 change = -1.5 * min((hr - restingHeartRate) / reserve, 1)
             } else if let hr, hr <= restingHeartRate + restMargin {
                 change = restCharge
@@ -184,63 +185,6 @@ nonisolated enum Resources {
     static func maxHeartRate(age: Int?, highestRecorded: Double?) -> Double? {
         if let age { return 208 - 0.7 * Double(age) }
         return highestRecorded
-    }
-}
-
-/// All-day stress, 0–100, from heart rate above resting while awake and outside workouts. Garmin and others measure
-/// stress from beat-to-beat HRV (Firstbeat), which iOS doesn't record through the day, so this reads heart rate
-/// alone. The scale is Grada's own: 0 at resting heart rate and 100 at ACSM's moderate-intensity floor, 40% of heart
-/// rate reserve (Garber et al. 2011), where the heart works as hard as in exercise. Walking or any movement raises
-/// it too, since heart rate can't tell effort from stress. The four bands are Garmin's quarters, for familiarity.
-nonisolated enum Stress {
-    enum Band: Int, CaseIterable {
-        case rest, low, medium, high
-
-        var title: String {
-            switch self {
-            case .rest: "Rest"
-            case .low: "Low"
-            case .medium: "Medium"
-            case .high: "High"
-            }
-        }
-
-        var rating: DayRating {
-            switch self {
-            case .rest, .low: .good
-            case .medium: .fair
-            case .high: .poor
-            }
-        }
-    }
-
-    static let fullScaleReserve = 0.4
-    /// Lower bounds of low, medium and high: Garmin's 26, 51 and 76.
-    static let bandLowerBounds = [26.0, 51.0, 76.0]
-    /// Resources drains above this level: 15% of heart rate reserve, 15/40 of the scale.
-    static let drainLevel = 37.5
-
-    static func level(_ heartRate: Double, restingHeartRate: Double, maxHeartRate: Double) -> Double {
-        let share = (heartRate - restingHeartRate) / max(maxHeartRate - restingHeartRate, 1)
-        return min(max(share / fullScaleReserve * 100, 0), 100)
-    }
-
-    static func band(_ level: Double) -> Band {
-        Band(rawValue: bandLowerBounds.filter { level.rounded() >= $0 }.count)!
-    }
-
-    /// The level of each 5-minute heart rate reading taken awake and outside workouts, oldest first.
-    static func timeline(heartRate: [TimedValue], sleep: [SleepPeriod], workouts: [DateInterval],
-                         restingHeartRate: Double, maxHeartRate: Double) -> [TimedValue] {
-        heartRate.compactMap { reading in
-            let end = reading.date + Resources.step
-            let middle = reading.date + Resources.step / 2
-            let asleep = sleep.contains { $0.stage != .awake && $0.start <= middle && middle < $0.end }
-            let inWorkout = workouts.contains { $0.start < end && reading.date < $0.end }
-            guard !asleep, !inWorkout else { return nil }
-            return TimedValue(date: reading.date, value: level(reading.value, restingHeartRate: restingHeartRate,
-                                                                maxHeartRate: maxHeartRate))
-        }
     }
 }
 
@@ -918,7 +862,8 @@ nonisolated enum RecoveryTime {
 
 /// Readiness for hard training, from Garmin's inputs, each judged by the published threshold its own card uses:
 /// last night's Sleep Score, Recovery Time, HRV Status, the acute:chronic load ratio (above Gabbett's 0.8–1.3 sweet
-/// spot), the last 3 nights against Sleep Need, and the last 3 days' stress. Garmin's weighting isn't published and
+/// spot) and the last 3 nights against Sleep Need. Garmin also uses stress, which needs all-day HRV that iOS doesn't
+/// record, so it's left out. Garmin's weighting isn't published and
 /// no study has validated one, so like Recovery the rating counts the inputs that are off.
 nonisolated enum TrainingReadiness {
     struct Input {
@@ -930,8 +875,6 @@ nonisolated enum TrainingReadiness {
         /// Average sleep of the last 3 nights and their average need.
         var recentSleep: TimeInterval?
         var recentNeed: TimeInterval = SleepNeed.baseline
-        /// Average stress of the last 3 days.
-        var recentStress: Double?
     }
 
     struct Result: Equatable {
@@ -960,7 +903,6 @@ nonisolated enum TrainingReadiness {
         if let state = input.hrvStatus { checks.append((state != .balanced, "HRV \(state.word.lowercased())")) }
         if let ratio = input.loadRatio { checks.append((ratio > Strain.sweetSpot.upperBound, "Load rising fast")) }
         if let sleep = input.recentSleep { checks.append((sleep < input.recentNeed, "Short sleep \(historyDays) nights")) }
-        if let stress = input.recentStress { checks.append((Stress.band(stress) >= .medium, "Stress high \(historyDays) days")) }
         guard checks.count >= minimumInputs else { return nil }
 
         let off = checks.filter(\.isOff)
@@ -972,10 +914,6 @@ nonisolated enum TrainingReadiness {
         return Result(rating: DayRatings.healthStatus(outOfRange: off.count), measured: checks.count,
                       inRange: checks.count - off.count, reason: reason)
     }
-}
-
-nonisolated extension Stress.Band: Comparable {
-    static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
 }
 
 /// Time and heart rate for each kilometer of a workout.

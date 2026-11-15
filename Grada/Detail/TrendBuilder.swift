@@ -124,10 +124,6 @@ struct TrendBuilder {
             return try await healthStatus(period)
         case .strain:
             return try await strain(period)
-        case .stress:
-            guard let days = try await cardBuilder.stressDays(period.days) else { return nil }
-            return make(days.map { DayValue(day: $0.day, value: Baseline.average($0.levels.map(\.value))) }, period,
-                        style: .bars, unit: "", format: .number(decimals: 0), title: "Average stress")
         case .recovery:
             let inRange = try await cardBuilder.recoveryDays(days)
                 .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
