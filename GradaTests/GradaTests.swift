@@ -676,3 +676,56 @@ struct GoalCardTests {
         #expect(snapshot.comparison?.hasSuffix("goal") == true, "\(snapshot.comparison ?? "")")
     }
 }
+
+@MainActor
+struct JournalTests {
+    private let context: ModelContext
+    private let store: JournalStore
+    private let today = Calendar.current.startOfDay(for: .now)
+
+    init() throws {
+        let container = try ModelContainer(for: JournalEntry.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        context = ModelContext(container)
+        store = JournalStore(context: context)
+    }
+
+    @Test func togglingMarksAndUnmarksATag() {
+        store.toggle(.stress, on: today)
+        #expect(store.entries(on: today)[.stress] != nil)
+        store.toggle(.stress, on: today)
+        #expect(store.entries(on: today).isEmpty)
+    }
+
+    @Test func amountTagsStartAtTheirInitialAmountAndCanChange() {
+        store.toggle(.alcohol, on: today)
+        #expect(store.entries(on: today)[.alcohol]?.amount == 1)
+        store.setAmount(3, for: .alcohol, on: today)
+        #expect(store.entries(on: today)[.alcohol]?.amount == 3)
+        #expect(JournalTag.alcohol.label(amount: 3) == "Alcohol · 3 drinks")
+        #expect(JournalTag.stress.label(amount: nil) == "Stress")
+    }
+
+    @Test func tagsBelongToTheirOwnDay() {
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
+        store.toggle(.caffeine, on: yesterday)
+        #expect(store.entries(on: today).isEmpty)
+        #expect(store.entries(on: yesterday)[.caffeine] != nil)
+    }
+
+    @Test func duplicateEntriesFromSyncAreMerged() throws {
+        context.insert(JournalEntry(day: today, tag: .sauna, amount: nil))
+        context.insert(JournalEntry(day: today, tag: .sauna, amount: nil))
+        try context.save()
+        #expect(store.entries(on: today).count == 1)
+        try context.save()
+        #expect(try context.fetchCount(FetchDescriptor<JournalEntry>()) == 1)
+    }
+
+    @Test func hiddenTagsRoundTrip() throws {
+        var hidden = HiddenTags()
+        hidden.set(.nap, hidden: true)
+        hidden.set(.sauna, hidden: true)
+        let restored = try #require(HiddenTags(rawValue: hidden.rawValue))
+        #expect(restored.contains(.nap) && restored.contains(.sauna) && !restored.contains(.alcohol))
+    }
+}

@@ -279,6 +279,7 @@ private struct DaySheet: View {
     @Environment(CalendarModel.self) private var model
     @Query(sort: \HomeCard.position) private var cards: [HomeCard]
     @Query private var goalChanges: [GoalChange]
+    @Query private var journalEntries: [JournalEntry]
     let day: Date
     @State private var snapshots: [CardKind: CardSnapshot] = [:]
     @State private var loadedDay: Date?
@@ -297,6 +298,8 @@ private struct DaySheet: View {
                 Text(day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
                     .font(.title3.weight(.semibold))
                     .padding(.top, 20)
+                let dayKey = DayKey.make(day, calendar: .current)
+                DayTagsView(entries: journalEntries.filter { $0.dayKey == dayKey })
                 card(.healthStatus)
                 ForEach(HomeLayout.rows(for: kinds), id: \.self) { row in
                     HStack(alignment: .top, spacing: 12) {
@@ -328,5 +331,5 @@ private struct DaySheet: View {
     CalendarView()
         .environment(CalendarModel(source: SampleDataSource()))
         .environment(\.healthSource, SampleDataSource())
-        .modelContainer(for: [HomeCard.self, GoalChange.self], inMemory: true)
+        .modelContainer(for: [HomeCard.self, GoalChange.self, JournalEntry.self], inMemory: true)
 }

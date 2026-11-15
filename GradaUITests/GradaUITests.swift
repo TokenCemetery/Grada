@@ -30,6 +30,20 @@ final class GradaUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Customize"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Pinned"].exists)
         attachScreenshot("Customize")
+        app.navigationBars.buttons["Done"].tap()
+
+        app.tabBars.buttons["Journal"].tap()
+        XCTAssertTrue(app.navigationBars["Journal"].waitForExistence(timeout: 5))
+        let alcohol = app.buttons["Alcohol"]
+        XCTAssertTrue(alcohol.waitForExistence(timeout: 5))
+        // Marking shows the amount stepper; tapping again unmarks, leaving the simulator's journal as it was.
+        let wasMarked = alcohol.isSelected
+        alcohol.tap()
+        if !wasMarked {
+            XCTAssertTrue(app.staticTexts["1 drink"].waitForExistence(timeout: 5))
+            attachScreenshot("Journal")
+            alcohol.tap()
+        }
     }
 
     @MainActor
