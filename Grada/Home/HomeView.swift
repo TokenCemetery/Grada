@@ -42,6 +42,7 @@ struct HomeView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Today")
             .navigationDestination(for: MetricRoute.self) { MetricDetailView(route: $0) }
+            .navigationDestination(for: WorkoutRoute.self) { WorkoutDetailView(workout: $0.workout) }
             .toolbar {
                 Button("Edit") { isCustomizing = true }
             }

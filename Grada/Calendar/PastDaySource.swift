@@ -52,6 +52,10 @@ struct PastDaySource: HealthDataSource {
     func workouts(days: Int) async throws -> [WorkoutSummary] {
         try await base.workouts(days: days + daysAgo).filter { $0.start < dayEnd }
     }
+
+    func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {
+        try await base.workoutDetail(workout)
+    }
 }
 
 extension PastDaySource {

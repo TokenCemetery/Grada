@@ -515,3 +515,94 @@ nonisolated enum RacePredictor {
         return high * 60
     }
 }
+
+/// Five heart rate zones as a share of max heart rate, as Garmin and Whoop use them.
+nonisolated enum HeartRateZones {
+    /// Lower bounds of zones 1–5.
+    static let lowerBounds = [0.5, 0.6, 0.7, 0.8, 0.9]
+    /// A reading counts until the next one, but not across a gap longer than this (watch off the wrist).
+    static let maxGap: TimeInterval = 5 * 60
+
+    /// Zone 1–5, or nil below zone 1.
+    static func zone(_ heartRate: Double, maxHeartRate: Double) -> Int? {
+        let share = heartRate / maxHeartRate
+        return lowerBounds.lastIndex { share >= $0 }.map { $0 + 1 }
+    }
+
+    /// Seconds in zones 1–5. `heartRate` is oldest first; the last reading lasts until `end`.
+    static func time(_ heartRate: [TimedValue], end: Date, maxHeartRate: Double) -> [TimeInterval] {
+        var seconds = Array(repeating: 0.0, count: lowerBounds.count)
+        for (index, reading) in heartRate.enumerated() {
+            let next = index + 1 < heartRate.count ? heartRate[index + 1].date : end
+            guard let zone = zone(reading.value, maxHeartRate: maxHeartRate) else { continue }
+            seconds[zone - 1] += min(max(next.timeIntervalSince(reading.date), 0), maxGap)
+        }
+        return seconds
+    }
+}
+
+/// How much a workout improves aerobic fitness, 0–5, on Garmin's Training Effect scale. Garmin's model
+/// (Firstbeat EPOC) isn't public, so this uses zone-weighted minutes (Edwards TRIMP) with a curve that
+/// gives a steady 45-minute zone 3 run about 3 and a hard hour in zone 4 about 4.
+nonisolated enum TrainingEffect {
+    /// TRIMP at which the effect reaches 63% of the scale.
+    private static let scale = 150.0
+
+    static func aerobic(timeInZones: [TimeInterval]) -> Double {
+        let load = timeInZones.enumerated().reduce(0) { $0 + Double($1.offset + 1) * $1.element / 60 }
+        let effect = 5 * (1 - exp(-load / scale))
+        return (effect * 10).rounded() / 10
+    }
+
+    static func label(_ effect: Double) -> String {
+        switch effect {
+        case ..<1: "No benefit"
+        case ..<2: "Minor benefit"
+        case ..<3: "Maintaining"
+        case ..<4: "Improving"
+        case ..<5: "Highly improving"
+        default: "Overreaching"
+        }
+    }
+}
+
+/// Time and heart rate for each kilometer of a workout.
+nonisolated enum Splits {
+    struct Split: Equatable {
+        /// Meters in this split: the full length, or less for the last one.
+        let meters: Double
+        let duration: TimeInterval
+        let averageHeartRate: Double?
+    }
+
+    /// A last stretch shorter than this share of a split is dropped.
+    private static let minimumLastShare = 0.1
+
+    /// `track` is the distance covered so far, oldest first. Each split ends where the track crosses the
+    /// next whole length, interpolated between readings.
+    static func make(track: [TimedValue], heartRate: [TimedValue], start: Date, length: Double = 1000) -> [Split] {
+        var splits: [Split] = []
+        var previous = TimedValue(date: start, value: 0)
+        var splitStart = start
+        var mark = length
+        func split(meters: Double, until end: Date) {
+            let readings = heartRate.filter { $0.date >= splitStart && $0.date < end }.map(\.value)
+            splits.append(Split(meters: meters, duration: end.timeIntervalSince(splitStart),
+                                averageHeartRate: readings.isEmpty ? nil : readings.reduce(0, +) / Double(readings.count)))
+            splitStart = end
+        }
+        for point in track where point.value > previous.value {
+            while point.value >= mark {
+                let share = (mark - previous.value) / (point.value - previous.value)
+                split(meters: length, until: previous.date.addingTimeInterval(share * point.date.timeIntervalSince(previous.date)))
+                mark += length
+            }
+            previous = point
+        }
+        let rest = previous.value - (mark - length)
+        if rest >= length * minimumLastShare {
+            split(meters: rest, until: previous.date)
+        }
+        return splits
+    }
+}

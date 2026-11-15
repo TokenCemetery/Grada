@@ -1014,3 +1014,57 @@ struct JournalTests {
         #expect(restored.contains(.nap) && restored.contains(.sauna) && !restored.contains(.alcohol))
     }
 }
+
+struct WorkoutDetailTests {
+    private let start = Date(timeIntervalSince1970: 1_800_000_000)
+
+    private func minutes(_ values: [Double]) -> [TimedValue] {
+        values.enumerated().map { TimedValue(date: start.addingTimeInterval(Double($0.offset) * 60), value: $0.element) }
+    }
+
+    @Test func zonesFollowShareOfMaxHeartRate() {
+        #expect(HeartRateZones.zone(90, maxHeartRate: 200) == nil)
+        #expect(HeartRateZones.zone(100, maxHeartRate: 200) == 1)
+        #expect(HeartRateZones.zone(150, maxHeartRate: 200) == 3)
+        #expect(HeartRateZones.zone(199, maxHeartRate: 200) == 5)
+    }
+
+    @Test func timeInZonesCountsUntilTheNextReadingAndCapsGaps() {
+        // 1 minute in zone 3, then a reading in zone 5 followed by a 20-minute gap to the end.
+        let readings = minutes([150, 185])
+        let seconds = HeartRateZones.time(readings, end: start.addingTimeInterval(21 * 60), maxHeartRate: 200)
+        #expect(seconds == [0, 0, 60, 0, HeartRateZones.maxGap])
+    }
+
+    @Test func trainingEffectGrowsWithLoadAndCapsAtFive() {
+        #expect(TrainingEffect.aerobic(timeInZones: [0, 0, 0, 0, 0]) == 0)
+        let steadyRun = TrainingEffect.aerobic(timeInZones: [0, 0, 45 * 60, 0, 0])
+        #expect((2.8...3.2).contains(steadyRun))
+        #expect(TrainingEffect.label(steadyRun) == "Maintaining" || TrainingEffect.label(steadyRun) == "Improving")
+        #expect(TrainingEffect.aerobic(timeInZones: [0, 0, 0, 0, 300 * 60]) == 5)
+        #expect(TrainingEffect.label(5) == "Overreaching")
+    }
+
+    @Test func splitsInterpolateEachKilometer() {
+        // 250 m a minute for 9 minutes: two full kilometers in 4 minutes each, then 250 m.
+        let track = (1...9).map { TimedValue(date: start.addingTimeInterval(Double($0) * 60), value: Double($0) * 250) }
+        let splits = Splits.make(track: track, heartRate: minutes(Array(repeating: 140, count: 10)), start: start)
+        #expect(splits.map(\.meters) == [1000, 1000, 250])
+        #expect(splits.map(\.duration) == [240, 240, 60])
+        #expect(splits.first?.averageHeartRate == 140)
+    }
+
+    @Test func shortLastStretchIsDropped() {
+        let track = [TimedValue(date: start.addingTimeInterval(300), value: 1050)]
+        #expect(Splits.make(track: track, heartRate: [], start: start).map(\.meters) == [1000])
+    }
+
+    @Test func sampleRunHasEverySection() async throws {
+        let run = try #require(try await SampleDataSource().workouts(days: 7).first { $0.name == "Run" })
+        let detail = try await SampleDataSource().workoutDetail(run)
+        #expect(detail.heartRate.count > 30)
+        #expect((detail.distance ?? 0) > 5000)
+        #expect(detail.route.count > 1)
+        #expect(Splits.make(track: detail.distanceTrack, heartRate: detail.heartRate, start: run.start).count > 4)
+    }
+}

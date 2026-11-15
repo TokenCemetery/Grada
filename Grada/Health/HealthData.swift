@@ -42,7 +42,7 @@ nonisolated struct SleepNight: Equatable {
     }
 }
 
-nonisolated struct WorkoutSummary: Equatable {
+nonisolated struct WorkoutSummary: Hashable {
     /// The Apple Health sample UUID, stable across devices.
     let id: String
     let start: Date
@@ -51,6 +51,26 @@ nonisolated struct WorkoutSummary: Equatable {
     let symbol: String
     let energyKcal: Double?
     let averageHeartRate: Double?
+}
+
+/// What a workout's own screen needs beyond its summary, read live from Apple Health on this device.
+nonisolated struct WorkoutDetail: Equatable {
+    /// Heart rate readings during the workout, oldest first.
+    var heartRate: [TimedValue] = []
+    var maxHeartRate: Double?
+    /// Total distance in meters, as Apple Health sums it.
+    var distance: Double?
+    /// Distance covered so far, in meters, at the end of each distance sample, oldest first.
+    var distanceTrack: [TimedValue] = []
+    /// Meters climbed.
+    var elevationGain: Double?
+    /// The GPS route, if the workout recorded one.
+    var route: [RoutePoint] = []
+}
+
+nonisolated struct RoutePoint: Equatable {
+    let latitude: Double
+    let longitude: Double
 }
 
 /// A value at a point in time, e.g. the average heart rate of a 5-minute interval starting at `date`.
@@ -136,9 +156,17 @@ protocol HealthDataSource {
     func earliestDay() async throws -> Date?
     /// Hourly totals of a cumulative metric on `day`, oldest first; hours without data are left out.
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue]
+    /// Heart rate, distance and route of one workout.
+    func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail
 }
 
 extension HealthDataSource {
     func earliestDay() async throws -> Date? { nil }
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] { [] }
+
+    /// Without workout samples, the 5-minute heart rate during the workout.
+    func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {
+        let heartRate = try await heartRate(in: DateInterval(start: workout.start, duration: workout.duration))
+        return WorkoutDetail(heartRate: heartRate, maxHeartRate: heartRate.map(\.value).max())
+    }
 }

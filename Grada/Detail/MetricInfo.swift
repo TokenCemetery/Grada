@@ -154,7 +154,8 @@ extension CardKind {
     }
 }
 
-/// A card that opens its detail screen when tapped; Workouts Calendar opens the calendar instead.
+/// A card that opens its detail screen when tapped. Workouts Calendar opens the calendar instead, and a
+/// workout card opens that workout.
 struct CardLink: View {
     let kind: CardKind
     let snapshot: CardSnapshot?
@@ -165,6 +166,9 @@ struct CardLink: View {
     var body: some View {
         if kind.opensCalendar {
             Button { openCalendar(kind.calendarMetric) } label: { CardView(kind: kind, snapshot: snapshot) }
+                .buttonStyle(.plain)
+        } else if case .workout(let workout) = snapshot?.detail {
+            NavigationLink(value: WorkoutRoute(workout: workout)) { CardView(kind: kind, snapshot: snapshot) }
                 .buttonStyle(.plain)
         } else {
             NavigationLink(value: MetricRoute(kind: kind, day: day)) { CardView(kind: kind, snapshot: snapshot) }

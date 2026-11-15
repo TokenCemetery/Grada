@@ -132,6 +132,10 @@ struct StoredHealthData: HealthDataSource {
         try await reader?.sleepPeriods(in: interval) ?? []
     }
 
+    func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {
+        try await reader?.workoutDetail(workout) ?? WorkoutDetail()
+    }
+
     func age() async throws -> Int? {
         reader?.age()
     }

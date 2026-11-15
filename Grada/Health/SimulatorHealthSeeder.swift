@@ -1,4 +1,5 @@
 #if DEBUG && targetEnvironment(simulator)
+import CoreLocation
 import Foundation
 import HealthKit
 
@@ -14,10 +15,10 @@ final class SimulatorHealthSeeder {
     private static let quantityTypes: [HKQuantityTypeIdentifier] = [
         .stepCount, .activeEnergyBurned, .distanceWalkingRunning, .flightsClimbed,
         .restingHeartRate, .heartRateVariabilitySDNN, .oxygenSaturation, .respiratoryRate,
-        .vo2Max, .heartRate,
+        .vo2Max, .heartRate, .distanceCycling, .distanceSwimming,
     ]
     private static var writeTypes: Set<HKSampleType> {
-        Set(quantityTypes.map { HKQuantityType($0) } + [HKCategoryType(.sleepAnalysis), HKObjectType.workoutType()])
+        Set(quantityTypes.map { HKQuantityType($0) } + [HKCategoryType(.sleepAnalysis), HKObjectType.workoutType(), HKSeriesType.workoutRoute()])
     }
 
     /// Adds `days` days of data ending today. `progress` gets 0...1.
@@ -115,27 +116,41 @@ final class SimulatorHealthSeeder {
     }
 
     /// One session of a sample day: sport, length and start hour, with the heart rate and energy rate it
-    /// typically has.
+    /// typically has. Distance sports also get a speed, a climb and a GPS route.
     private struct Session {
         let activity: HKWorkoutActivityType
         let minutes: Double
         let hour: Int
         let heartRate: Double
         let kcalPerMinute: Double
+        var metersPerSecond: Double?
+        var climb: Double?
+
+        var distanceType: HKQuantityTypeIdentifier? {
+            switch activity {
+            case .cycling: .distanceCycling
+            case .swimming: .distanceSwimming
+            case .running, .walking: .distanceWalkingRunning
+            default: nil
+            }
+        }
+
+        /// Swims happen in a pool, so they have no route.
+        var hasRoute: Bool { activity != .swimming && metersPerSecond != nil }
     }
 
     /// A week of workouts, counted back from today: rest days, single-workout days, and days with two or
     /// three sports, so the calendar's sport pies and the day sheet's workout list have something to show.
     private static let week: [[Session]] = [
-        [Session(activity: .running, minutes: 45, hour: 7, heartRate: 145, kcalPerMinute: 11),
+        [Session(activity: .running, minutes: 45, hour: 7, heartRate: 145, kcalPerMinute: 11, metersPerSecond: 2.9, climb: 45),
          Session(activity: .walking, minutes: 30, hour: 18, heartRate: 100, kcalPerMinute: 4)],
         [],
         [Session(activity: .traditionalStrengthTraining, minutes: 50, hour: 7, heartRate: 120, kcalPerMinute: 7),
          Session(activity: .walking, minutes: 30, hour: 18, heartRate: 100, kcalPerMinute: 4)],
         [Session(activity: .yoga, minutes: 40, hour: 19, heartRate: 90, kcalPerMinute: 3)],
-        [Session(activity: .cycling, minutes: 75, hour: 7, heartRate: 135, kcalPerMinute: 9)],
-        [Session(activity: .running, minutes: 32, hour: 7, heartRate: 150, kcalPerMinute: 11),
-         Session(activity: .swimming, minutes: 40, hour: 12, heartRate: 130, kcalPerMinute: 9),
+        [Session(activity: .cycling, minutes: 75, hour: 7, heartRate: 135, kcalPerMinute: 9, metersPerSecond: 7.5, climb: 160)],
+        [Session(activity: .running, minutes: 32, hour: 7, heartRate: 150, kcalPerMinute: 11, metersPerSecond: 3.1, climb: 20),
+         Session(activity: .swimming, minutes: 40, hour: 12, heartRate: 130, kcalPerMinute: 9, metersPerSecond: 0.8),
          Session(activity: .yoga, minutes: 20, hour: 20, heartRate: 85, kcalPerMinute: 3)],
         [],
     ]
@@ -162,20 +177,52 @@ final class SimulatorHealthSeeder {
             quantity: HKQuantity(unit: .kilocalorie(), doubleValue: session.minutes * session.kcalPerMinute),
             start: start, end: end
         )]
+        // A minute at a time: heart rate rising through a warm-up with a surge every 10 minutes, and
+        // distance at a slightly varying pace, so zones and splits have something to show.
         var time = start
+        var minute = 0
         while time < end {
-            let next = min(time.addingTimeInterval(300), end)
+            let next = min(time.addingTimeInterval(60), end)
+            let warmUp = min(Double(minute) / 8, 1)
+            let surge = minute % 10 >= 7 ? 12.0 : 0
             samples.append(HKQuantitySample(
                 type: HKQuantityType(.heartRate),
                 quantity: HKQuantity(unit: .count().unitDivided(by: .minute()),
-                                     doubleValue: session.heartRate + 8 * random.nextSigned()),
+                                     doubleValue: 90 + (session.heartRate - 90 + surge) * warmUp + 4 * random.nextSigned()),
                 start: time, end: next
             ))
+            if let distanceType = session.distanceType, let speed = session.metersPerSecond {
+                samples.append(HKQuantitySample(
+                    type: HKQuantityType(distanceType),
+                    quantity: HKQuantity(unit: .meter(), doubleValue: speed * next.timeIntervalSince(time) * (1 + 0.1 * random.nextSigned())),
+                    start: time, end: next
+                ))
+            }
             time = next
+            minute += 1
         }
         try await builder.addSamples(samples)
+        if let climb = session.climb {
+            try await builder.addMetadata([HKMetadataKeyElevationAscended: HKQuantity(unit: .meter(), doubleValue: climb)])
+        }
         try await builder.endCollection(at: end)
-        _ = try await builder.finishWorkout()
+        guard let workout = try await builder.finishWorkout(), session.hasRoute, let speed = session.metersPerSecond else { return }
+
+        // A loop around a park, as long as the workout's distance; a degree of longitude is shorter here.
+        let routeBuilder = HKWorkoutRouteBuilder(healthStore: store, device: .local())
+        let radius = speed * session.minutes * 60 / (2 * .pi) / 111_000
+        let points = Int(session.minutes)
+        let locations = (0...points).map { step in
+            let angle = Double(step) / Double(points) * 2 * .pi
+            return CLLocation(
+                coordinate: CLLocationCoordinate2D(latitude: 51.5073 + radius * sin(angle) * (1 + 0.08 * sin(angle * 4)),
+                                                   longitude: -0.1657 + radius * 1.6 * cos(angle)),
+                altitude: 30, horizontalAccuracy: 5, verticalAccuracy: 5,
+                timestamp: start.addingTimeInterval(Double(step) * 60)
+            )
+        }
+        try await routeBuilder.insertRouteData(locations)
+        _ = try await routeBuilder.finishRoute(with: workout, metadata: nil)
     }
 }
 #endif
