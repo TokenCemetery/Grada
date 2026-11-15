@@ -60,7 +60,10 @@ struct SleepScoreTests {
     @MainActor
     @Test func cardShowsLastNightWithAWeekOfBars() async throws {
         #expect(CardKind.gallery.contains(.sleepScore))
-        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepScore)
+        // As of yesterday noon, so last night is complete whatever the time now (sample nights end at 07:00).
+        var builder = SnapshotBuilder(source: SampleDataSource())
+        builder.now = Calendar.current.date(byAdding: .hour, value: -12, to: Calendar.current.startOfDay(for: .now))!
+        let snapshot = try await builder.snapshot(for: .sleepScore)
         // Sample nights wake for 5 minutes every 90, 25 minutes in all: over the 20-minute WASO cut-off.
         #expect(snapshot.value == "80")
         #expect(snapshot.comparison == "Long time awake")
