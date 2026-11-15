@@ -207,9 +207,12 @@ struct IntensityMinutesTests {
         #expect(IntensityMinutes.total(heartRate: values([150]), restingHeartRate: 180, maxHeartRate: 180) == 0)
     }
 
-    @Test func cardShowsThisWeekAgainstTheTarget() async throws {
-        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .intensityMinutes)
-        #expect(snapshot.period == "This week")
+    @Test func cardShowsTheLast7DaysAgainstTheTarget() async throws {
+        let builder = SnapshotBuilder(source: SampleDataSource())
+        let snapshot = try await builder.snapshot(for: .intensityMinutes)
+        #expect(snapshot.period == "Last 7 days")
+        let total = try await builder.intensityDays(7).compactMap(\.value).reduce(0, +)
+        #expect(snapshot.value == total.formatted(.number.precision(.fractionLength(0))))
         let comparison = try #require(snapshot.comparison)
         #expect(comparison.hasSuffix("of 150") || comparison == "Goal reached", "\(comparison)")
     }

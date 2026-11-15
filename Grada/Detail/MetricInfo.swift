@@ -135,7 +135,7 @@ extension CardKind {
         case .exerciseMinutes:
             "Minutes of brisk activity or more. Health guidelines recommend at least 150 minutes a week."
         case .intensityMinutes:
-            "Minutes this week with your heart rate at 40–59% of its reserve (moderate) or above (vigorous, counted double). The WHO recommends at least 150 a week. Days without heart rate use exercise minutes instead."
+            "Minutes over the last 7 days with your heart rate at 40–59% of its reserve (moderate) or above (vigorous, counted double). The WHO recommends at least 150 a week. Days without heart rate use exercise minutes instead."
         case .distance:
             "Distance covered walking and running."
         case .floors:

@@ -381,17 +381,14 @@ struct SnapshotBuilder {
                       goal: goal.flatMap { goals.value($0, on: calendar.startOfDay(for: now)) })
     }
 
-    /// This week's total so far against the goal, or the WHO target without one.
+    /// The last 7 days' total against the weekly goal, or the WHO target without one.
     private func intensityMinutes() async throws -> CardSnapshot {
-        let period = isToday ? "This week" : "That week"
-        let today = calendar.startOfDay(for: now)
-        let weekStart = calendar.dateInterval(of: .weekOfYear, for: today)!.start
-        let daysThisWeek = calendar.dateComponents([.day], from: weekStart, to: today).day! + 1
-        let days = try await intensityDays(max(daysThisWeek, 7))
+        let period = "Last 7 days"
+        let days = try await intensityDays(7)
         guard days.contains(where: { $0.value != nil }) else { return .noData(period: period) }
 
-        let total = days.suffix(daysThisWeek).compactMap(\.value).reduce(0, +)
-        let target = goals.value(.intensityMinutes, on: today) ?? IntensityMinutes.weeklyTarget
+        let total = days.compactMap(\.value).reduce(0, +)
+        let target = goals.value(.intensityMinutes, on: calendar.startOfDay(for: now)) ?? IntensityMinutes.weeklyTarget
         return CardSnapshot(
             period: period,
             value: format(total, 0),
