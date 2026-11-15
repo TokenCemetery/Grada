@@ -51,6 +51,13 @@ struct SnapshotBuilderTests {
             #expect(snapshot.value != nil, "\(kind) has no value")
         }
     }
+
+    @Test func hrvStatusShowsAStatusWithEnoughHistory() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .hrvStatus)
+        #expect(snapshot.value != "Calibrating")
+        let comparison = try #require(snapshot.comparison)
+        #expect(["Balanced", "Unbalanced", "Low"].contains { comparison.hasPrefix($0) }, "\(comparison)")
+    }
 }
 
 @MainActor
@@ -205,6 +212,45 @@ struct IntensityMinutesTests {
         #expect(snapshot.period == "This week")
         let comparison = try #require(snapshot.comparison)
         #expect(comparison.hasSuffix("of 150") || comparison == "Goal reached", "\(comparison)")
+    }
+}
+
+struct HRVStatusTests {
+    /// 20 nights around 60 ms: SD ≈ 2, so the 6% minimum applies and the baseline is 56.4–63.6.
+    private let history: [Double?] = (0..<20).map { $0.isMultiple(of: 2) ? 58 : 62 }
+
+    private func status(window: [Double?], history: [Double?]? = nil) -> HRVStatus.Result? {
+        let nights = (history ?? self.history) + window
+        return HRVStatus.status(nights: nights, endingAt: nights.count - 1)
+    }
+
+    @Test func calibratingWithoutTwoWeeksOfBaseline() {
+        #expect(status(window: Array(repeating: 60, count: 7), history: Array(repeating: 60, count: 13)) == nil)
+    }
+
+    @Test func calibratingWithFewerThanThreeNightsInTheWindow() {
+        #expect(status(window: [60, nil, nil, nil, nil, nil, 60]) == nil)
+    }
+
+    @Test func averageInsideBaselineIsBalanced() throws {
+        let result = try #require(status(window: Array(repeating: 61, count: 7)))
+        #expect(result.state == .balanced)
+        #expect(abs(result.baseline.lowerBound - 56.4) < 0.01)
+        #expect(abs(result.baseline.upperBound - 63.6) < 0.01)
+    }
+
+    @Test func averageAboveOrSlightlyBelowIsUnbalanced() throws {
+        #expect(try #require(status(window: Array(repeating: 66, count: 7))).state == .unbalanced)
+        #expect(try #require(status(window: Array(repeating: 54, count: 7))).state == .unbalanced)
+    }
+
+    @Test func averageWellBelowIsLow() throws {
+        #expect(try #require(status(window: Array(repeating: 50, count: 7))).state == .low)
+    }
+
+    @Test func missingNightsAreSkipped() throws {
+        let result = try #require(status(window: [nil, 61, nil, 61, nil, 61, 61]))
+        #expect(result.average == 61)
     }
 }
 

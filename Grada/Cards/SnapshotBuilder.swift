@@ -28,6 +28,7 @@ struct SnapshotBuilder {
         case .sleepStages: try await sleep(withStages: true)
         case .restingHeartRate: try await vital(.restingHeartRate)
         case .hrv: try await vital(.hrv)
+        case .hrvStatus: try await hrvStatus()
         case .oxygenSaturation: try await vital(.oxygenSaturation)
         case .respiratoryRate: try await vital(.respiratoryRate)
         case .wristTemperature: try await wristTemperature()
@@ -123,6 +124,31 @@ struct SnapshotBuilder {
             comparison: comparison,
             tone: range.map { $0.contains(latest) ? .neutral : .warning } ?? .neutral,
             chart: .line(series.suffix(7).map(\.value), normalRange: range)
+        )
+    }
+
+    /// The 7 nights ending last night; until last night is recorded, the 7 ending yesterday.
+    private func hrvStatus() async throws -> CardSnapshot {
+        let period = "Last \(HRVStatus.window) nights"
+        let chartDays = 7
+        let nights = try await source.overnight(days: HRVStatus.baselineNights + HRVStatus.window + chartDays - 1).map(\.hrv)
+        guard nights.suffix(HRVStatus.window + 1).contains(where: { $0 != nil }) else { return .noData(period: period) }
+
+        let last = nights.count - 1
+        let end = nights[last] == nil ? last - 1 : last
+        guard let shown = HRVStatus.status(nights: nights, endingAt: end) else {
+            return CardSnapshot(period: period, value: "Calibrating",
+                                comparison: "Needs \(HRVStatus.minimumBaselineNights + HRVStatus.window) nights of data")
+        }
+        let baseline = "\(format(shown.baseline.lowerBound, 0))–\(format(shown.baseline.upperBound, 0))"
+        return CardSnapshot(
+            period: period,
+            value: format(shown.average, 0),
+            unit: QuantityMetric.hrv.unit,
+            comparison: "\(shown.state.word) · baseline \(baseline)",
+            tone: shown.state.tone,
+            chart: .line((end - chartDays + 1...end).map { HRVStatus.status(nights: nights, endingAt: $0)?.average },
+                         normalRange: shown.baseline)
         )
     }
 

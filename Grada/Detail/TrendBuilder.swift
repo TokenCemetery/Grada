@@ -93,6 +93,8 @@ struct TrendBuilder {
         case .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .heartRate:
             return try await vital(kind.quantityMetric!, period,
                                    title: kind == .heartRate ? "Resting heart rate" : nil)
+        case .hrvStatus:
+            return try await hrvStatus(period)
         case .vo2Max, .racePredictor:
             let series = try await source.daily(.vo2Max, days: days)
             return make(series, period, style: .line, unit: QuantityMetric.vo2Max.unit, format: .number(decimals: 1),
@@ -195,6 +197,20 @@ struct TrendBuilder {
             return DayValue(day: overnight[end].wakeDay, value: score.map { Double($0.score) })
         }
         return make(scores, period, style: .line, unit: "%", format: .number(decimals: 0))
+    }
+
+    /// The 7-night average for each day, with the shown day's baseline as the normal range.
+    private func hrvStatus(_ period: TrendPeriod) async throws -> Trend {
+        let lead = HRVStatus.baselineNights + HRVStatus.window - 1
+        let overnight = try await source.overnight(days: period.days + lead)
+        let nights = overnight.map(\.hrv)
+        let averages = (lead..<nights.count).map { end in
+            DayValue(day: overnight[end].wakeDay, value: HRVStatus.status(nights: nights, endingAt: end)?.average)
+        }
+        var trend = make(averages, period, style: .line, unit: QuantityMetric.hrv.unit, format: .number(decimals: 0),
+                         title: "7-night average HRV")
+        trend.normalRange = HRVStatus.status(nights: nights, endingAt: nights.count - 1)?.baseline
+        return trend
     }
 
     /// Vitals in range each night, out of those measured with a finished baseline.
