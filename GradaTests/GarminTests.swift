@@ -3,6 +3,47 @@ import HealthKit
 import Testing
 @testable import Grada
 
+/// Sample data as a Garmin user's looks: nightly HRV only, since Garmin writes no HRV to Apple Health.
+private struct OvernightHRVOnlySource: HealthDataSource {
+    let base = SampleDataSource()
+
+    func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
+        try await base.daily(metric, days: days).map { metric == .hrv ? DayValue(day: $0.day, value: nil) : $0 }
+    }
+    func standHours(days: Int) async throws -> [DayValue] { try await base.standHours(days: days) }
+    func overnight(days: Int) async throws -> [OvernightVitals] { try await base.overnight(days: days) }
+    func sleepNights(days: Int) async throws -> [SleepNight] { try await base.sleepNights(days: days) }
+    func workouts(days: Int) async throws -> [WorkoutSummary] { try await base.workouts(days: days) }
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] { try await base.heartRate(in: interval) }
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { try await base.sleepPeriods(in: interval) }
+    func age() async throws -> Int? { try await base.age() }
+    func biologicalSex() async throws -> BiologicalSex? { try await base.biologicalSex() }
+    func highestHeartRate(days: Int) async throws -> Double? { try await base.highestHeartRate(days: days) }
+}
+
+@MainActor
+struct OvernightHRVTests {
+    @Test func healthStatusRatesNightlyHRVWithoutDailyHRV() async throws {
+        let snapshot = try await SnapshotBuilder(source: OvernightHRVOnlySource()).snapshot(for: .healthStatus)
+        guard case .vitals(let vitals) = snapshot.detail else { Issue.record("\(snapshot.detail)"); return }
+        let hrv = try #require(vitals.first { $0.name == "HRV" })
+        #expect(hrv.state == .inRange || hrv.state == .outOfRange)
+    }
+
+    @Test func vitalSeriesReadsHRVFromTheNight() async throws {
+        let source = OvernightHRVOnlySource()
+        let series = try await SnapshotBuilder.vitalSeries(.hrv, days: 7, source: source)
+        #expect(series == (try await source.overnight(days: 7)).map { DayValue(day: $0.wakeDay, value: $0.hrv) })
+        #expect(series.contains { $0.value != nil })
+        #expect(try await SnapshotBuilder.vitalSeries(.restingHeartRate, days: 7, source: source)
+                == (try await source.daily(.restingHeartRate, days: 7)))
+    }
+
+    @Test func healthStatusDataComesFromOvernightHRV() {
+        #expect(CardKind.healthStatus.dataKinds.first == .overnightHRV, "Listed first, as for Recovery")
+    }
+}
+
 /// Fixtures follow the shape of real Garmin Personal API responses (#92) with made-up values.
 @MainActor
 struct GarminTests {

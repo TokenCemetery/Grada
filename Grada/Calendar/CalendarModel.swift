@@ -111,7 +111,7 @@ final class CalendarModel {
             // Vitals need the baseline window before the first shown day.
             var series: [QuantityMetric: [DayValue]] = [:]
             for (vital, _) in SnapshotBuilder.vitals {
-                series[vital] = try await source.daily(vital, days: days + baselineDays)
+                series[vital] = try await SnapshotBuilder.vitalSeries(vital, days: days + baselineDays, source: source)
             }
             return DayRatings.rateHealthStatus(series, baselineDays: baselineDays)
         case .recovery:

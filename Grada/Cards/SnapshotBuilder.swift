@@ -59,12 +59,19 @@ struct SnapshotBuilder {
         (.oxygenSaturation, "SpO₂"), (.wristTemperature, "Temp"),
     ]
 
+    /// One value per day for a vital, oldest first. HRV is the night's, as Recovery and HRV status use: one series
+    /// per night, from readings taken asleep, and the only HRV that Garmin and FIT files provide.
+    static func vitalSeries(_ metric: QuantityMetric, days: Int, source: HealthDataSource) async throws -> [DayValue] {
+        guard metric == .hrv else { return try await source.daily(metric, days: days) }
+        return try await source.overnight(days: days).map { DayValue(day: $0.wakeDay, value: $0.hrv) }
+    }
+
     /// Vitals from the night that ended today. Until it has (e.g. just after midnight),
     /// the previous night is shown instead, labelled "Yesterday".
     private func healthStatus() async throws -> CardSnapshot {
         var allSeries: [(QuantityMetric, String, [DayValue])] = []
         for (metric, name) in Self.vitals {
-            allSeries.append((metric, name, try await source.daily(metric, days: baselineDays + 1)))
+            allSeries.append((metric, name, try await Self.vitalSeries(metric, days: baselineDays + 1, source: source)))
         }
         let todayIndex = baselineDays
         let hasToday = allSeries.contains { $0.2.last?.value != nil }
