@@ -10,6 +10,7 @@ final class HealthKitReader: HealthSource {
 
     nonisolated static let sourceID = "appleHealth"
     var id: String { Self.sourceID }
+    var name: String { "Apple Health" }
 
     static var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
     var isAvailable: Bool { Self.isAvailable }

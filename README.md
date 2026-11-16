@@ -13,11 +13,13 @@ Grada reads Apple Health. Garmin, Suunto and other devices show up through their
 
 For data a device's Apple Health sync leaves out, such as Garmin's overnight HRV, **Settings › Import › FIT Files** imports FIT files, or a folder of them such as an unzipped Garmin data export. Grada reads workouts, sleep stages, overnight HRV and resting heart rate from them, on the device, without network access. Data in Apple Health comes first; imported files fill the days it has nothing for. Importing the same files again changes nothing, and files Grada can't read are named.
 
+**Settings › Import › Garmin Connect** reads Garmin data directly with a Personal API key the user creates on Garmin Connect: daily summaries (steps, distance, active calories, intensity minutes, resting heart rate, blood oxygen, respiration), sleep stages, overnight HRV and workouts, the whole history on connecting and new days at most every 15 minutes after that. The key stays in the iPhone's Keychain and goes only to Garmin; there is no server in between. As with files, Apple Health data comes first and Garmin fills what it lacks. When Garmin stops accepting the key, the screen asks for a new one and imported data stays.
+
 Settings › Data Source lists each kind of data Grada reads and the apps and devices it came from, with the last day each sent data. Each metric's detail screen names the same under "Data from". When several apps record the same readings, Grada uses the app with the most days in the last month, and one app per night for sleep.
 
 ## Privacy
 
-All calculations run on the device. Grada has no accounts, analytics or advertising, and it sends your data to no one. App data such as your home layout, goals and journal stays on your devices; syncing it through your private iCloud is ready but switched off until [#20](https://github.com/TokenCemetery/Grada/issues/20). See the [privacy policy](PRIVACY.md).
+All calculations run on the device. Grada has no accounts, analytics or advertising, and it sends your data to no one. Its only network calls are to Garmin, if you connect Garmin. App data such as your home layout, goals and journal stays on your devices; syncing it through your private iCloud is ready but switched off until [#20](https://github.com/TokenCemetery/Grada/issues/20). See the [privacy policy](PRIVACY.md).
 
 ## Scientific basis
 

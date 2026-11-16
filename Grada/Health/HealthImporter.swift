@@ -22,6 +22,8 @@ struct HealthBatch {
 final class HealthImporter {
     /// 0...1 while the first-launch history import runs, nil otherwise.
     private(set) var historyProgress: Double?
+    /// The `HealthSource.name` whose history is importing now, while `historyProgress` is set.
+    private(set) var historySource: String?
     /// Changes whenever new data is saved, so screens know to reload.
     private(set) var revision = 0
 
@@ -34,6 +36,8 @@ final class HealthImporter {
     @ObservationIgnored private var recentImport: Task<Void, Never>?
     @ObservationIgnored private var recentImportPending = false
     @ObservationIgnored private var didStartBackgroundUpdates = false
+    /// When each source's recent days were last imported, for `HealthSource.refreshInterval`.
+    @ObservationIgnored private var lastRecentImport: [String: Date] = [:]
     private let logger = Logger(subsystem: "Grada", category: "HealthImporter")
 
     /// Oldest day imported so far, per source; lets an interrupted history import resume.
@@ -70,9 +74,13 @@ final class HealthImporter {
         guard !pending.isEmpty, historyProgress == nil else { return }
         await authorize()
         historyProgress = 0
-        defer { historyProgress = nil }
+        defer {
+            historyProgress = nil
+            historySource = nil
+        }
 
         for (index, source) in pending.enumerated() {
+            historySource = source.name
             await importHistory(of: source) { progress in
                 self.historyProgress = (Double(index) + progress) / Double(pending.count)
             }
@@ -150,12 +158,29 @@ final class HealthImporter {
         let start = calendar.date(byAdding: .day, value: -(Self.recentDays - 1), to: today)!
         let end = calendar.date(byAdding: .day, value: 1, to: today)!
         for source in availableSources {
+            if let last = lastRecentImport[source.id], Date.now.timeIntervalSince(last) < source.refreshInterval { continue }
             do {
                 try await importDays(DateInterval(start: start, end: end), from: source)
+                lastRecentImport[source.id] = .now
             } catch {
                 logger.error("Recent import from \(source.id) failed: \(error.localizedDescription)")
             }
         }
+    }
+
+    /// Imports a source the user just connected: its whole history, then the latest days.
+    func sourceConnected(_ source: any HealthSource) async {
+        lastRecentImport[source.id] = nil
+        await importHistoryIfNeeded()
+        await importRecent()
+    }
+
+    /// Forgets how far a disconnected source's history import got, so connecting again imports it all.
+    /// Its stored data stays.
+    func sourceDisconnected(_ source: any HealthSource) {
+        defaults.removeObject(forKey: Self.importedFromKey(source))
+        defaults.removeObject(forKey: Self.historyDoneKey(source))
+        lastRecentImport[source.id] = nil
     }
 
 #if DEBUG && targetEnvironment(simulator)

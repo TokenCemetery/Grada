@@ -23,8 +23,8 @@ struct HomeView: View {
                     Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    if let progress = model.importer?.historyProgress {
-                        ImportProgressView(progress: progress)
+                    if let importer = model.importer, let progress = importer.historyProgress {
+                        ImportProgressView(progress: progress, source: importer.historySource ?? "Apple Health")
                     }
                     card(healthStatus)
                     HomeGrid(items: cardIDs) { card($0) }
@@ -183,10 +183,12 @@ private struct ColumnsLayout: Layout {
 
 private struct ImportProgressView: View {
     let progress: Double
+    /// The source importing now; the bar covers every source that has history to import.
+    let source: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Importing your Apple Health history")
+            Text("Importing your \(source) history")
                 .font(.subheadline.weight(.semibold))
             ProgressView(value: progress)
             Text("Recent days are ready. Older data keeps loading while you use the app.")
