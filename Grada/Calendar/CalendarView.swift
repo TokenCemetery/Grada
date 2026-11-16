@@ -33,6 +33,7 @@ struct CalendarView: View {
                             MonthView(month: month, metric: metric, today: today, selected: selectedDay, colorBlind: colorBlind) { day in
                                 selectedDay = day
                             }
+                            .task { await model.reveal(month, metric: metric, goals: GoalHistory(goalChanges)) }
                         }
                     }
                     .padding()
@@ -190,7 +191,6 @@ private struct MonthView: View {
     let onSelect: (Date) -> Void
 
     private var calendar: Calendar { .current }
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
 
     private var days: [Date] {
         let range = calendar.range(of: .day, in: .month, for: month)!
@@ -202,6 +202,13 @@ private struct MonthView: View {
         (calendar.component(.weekday, from: month) - calendar.firstWeekday + 7) % 7
     }
 
+    /// The month's days in rows of 7, nil for the empty cells before the 1st and after the last day.
+    private var weeks: [[Date?]] {
+        var cells: [Date?] = Array(repeating: nil, count: leadingBlanks) + days
+        cells += Array(repeating: nil, count: (7 - cells.count % 7) % 7)
+        return stride(from: 0, to: cells.count, by: 7).map { Array(cells[$0..<$0 + 7]) }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -210,30 +217,43 @@ private struct MonthView: View {
                 Spacer()
                 if metric.isRated { counts } else { trainingTotals }
             }
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(0..<leadingBlanks, id: \.self) { _ in Color.clear.frame(height: 1) }
-                ForEach(days, id: \.self) { day in
-                    Group {
-                        if metric.isRated {
-                            DayCell(day: day,
-                                    rating: model.ratings[day],
-                                    hasWorkout: model.workoutDays[day] != nil,
-                                    isToday: day == today,
-                                    isFuture: day > today,
-                                    isSelected: day == selected,
-                                    colorBlind: colorBlind)
-                        } else {
-                            TrainingDayCell(day: day,
-                                            workouts: model.workoutDays[day],
-                                            isToday: day == today,
-                                            isFuture: day > today,
-                                            isSelected: day == selected)
+            // Plain rows, not a LazyVGrid: a lazy grid inside the calendar's LazyVStack left the
+            // calendar blank on first open until something changed its layout.
+            VStack(spacing: 8) {
+                ForEach(weeks.indices, id: \.self) { week in
+                    HStack(spacing: 0) {
+                        ForEach(0..<7, id: \.self) { column in
+                            Group {
+                                if let day = weeks[week][column] { cell(day) } else { Color.clear.frame(height: 1) }
+                            }
+                            .frame(maxWidth: .infinity)
                         }
                     }
-                    .onTapGesture { if day <= today { onSelect(day) } }
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func cell(_ day: Date) -> some View {
+        Group {
+            if metric.isRated {
+                DayCell(day: day,
+                        rating: model.ratings[day],
+                        hasWorkout: model.workoutDays[day] != nil,
+                        isToday: day == today,
+                        isFuture: day > today,
+                        isSelected: day == selected,
+                        colorBlind: colorBlind)
+            } else {
+                TrainingDayCell(day: day,
+                                workouts: model.workoutDays[day],
+                                isToday: day == today,
+                                isFuture: day > today,
+                                isSelected: day == selected)
+            }
+        }
+        .onTapGesture { if day <= today { onSelect(day) } }
     }
 
     /// The month's workouts and their total time.

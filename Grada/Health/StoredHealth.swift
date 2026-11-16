@@ -139,6 +139,17 @@ struct StoredHealthData: HealthDataSource {
     /// In order of preference. Stored data from sources not listed here comes after them.
     var sources: [any HealthSource] = []
     var calendar: Calendar = .current
+    /// Rows from `loadedSince` on, set by `withDaysLoaded(_:)`; nil to fetch on each read. Fetching costs
+    /// about the same per row whatever is read, so a calendar of years of days fetched once per metric was slow.
+    var loadedRows: [String: [DaySummary]]?
+    var loadedSince: Date = .distantFuture
+
+    func withDaysLoaded(_ days: Int) throws -> HealthDataSource {
+        var copy = self
+        copy.loadedSince = lastDays(days).first!
+        copy.loadedRows = try rows(since: copy.loadedSince)
+        return copy
+    }
 
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
         for source in sources {
@@ -270,7 +281,10 @@ struct StoredHealthData: HealthDataSource {
 
     /// Rows by day key, each day's sorted by source preference. If iCloud delivered a source's day twice, the first wins.
     private func rows(days: Int) throws -> [String: [DaySummary]] {
-        try rows(since: lastDays(days).first!)
+        let start = lastDays(days).first!
+        // Extra days in `loadedRows` are harmless: callers look rows up by day.
+        if let loadedRows, start >= loadedSince { return loadedRows }
+        return try rows(since: start)
     }
 
     private func rows(since start: Date) throws -> [String: [DaySummary]] {

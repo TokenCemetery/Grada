@@ -217,12 +217,15 @@ protocol HealthDataSource {
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail
     /// The apps and devices whose data Grada used, per kind of data, most recently used first.
     func origins() async throws -> [DataKind: [DataOrigin]]
+    /// A copy that reads the last `days` days once, for callers that ask for long ranges many times in a row.
+    func withDaysLoaded(_ days: Int) throws -> HealthDataSource
 }
 
 extension HealthDataSource {
     func earliestDay() async throws -> Date? { nil }
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] { [] }
     func origins() async throws -> [DataKind: [DataOrigin]] { [:] }
+    func withDaysLoaded(_ days: Int) throws -> HealthDataSource { self }
 
     /// Without workout samples, the 5-minute heart rate during the workout.
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {

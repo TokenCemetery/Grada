@@ -13,6 +13,8 @@ final class CalendarModel {
     private var workoutsByDay: [Date: [WorkoutSummary]] = [:]
     /// Start of the first month shown; nil until loaded.
     private(set) var firstMonth: Date?
+    /// Start of the oldest month with data loaded. Older months show no data until they scroll into view.
+    private var firstLoadedMonth: Date?
     let importer: HealthImporter?
 
     private let source: HealthDataSource
@@ -22,6 +24,10 @@ final class CalendarModel {
     private let baselineDays = 30
     /// Used when the source can't say where its data starts.
     private let fallbackDays = 365
+    /// Months loaded back from the current one, so years of history don't load before the calendar shows.
+    private var loadedMonths = 6
+    /// Months added each time the oldest loaded month scrolls into view.
+    private let monthsPerStep = 6
 
     init(source: HealthDataSource, importer: HealthImporter? = nil, calendar: Calendar = .current) {
         self.source = source
@@ -34,18 +40,36 @@ final class CalendarModel {
             let today = calendar.startOfDay(for: .now)
             let earliest = try await source.earliestDay().map { calendar.startOfDay(for: $0) }
                 ?? calendar.date(byAdding: .day, value: -fallbackDays + 1, to: today)!
-            let days = (calendar.dateComponents([.day], from: earliest, to: today).day ?? 0) + 1
+            let months = loadedMonths
+            let currentMonth = calendar.dateInterval(of: .month, for: today)!.start
+            let loadedMonth = calendar.date(byAdding: .month, value: -(months - 1), to: currentMonth)!
+            let start = max(earliest, loadedMonth)
+            let days = (calendar.dateComponents([.day], from: start, to: today).day ?? 0) + 1
 
-            let newRatings = try await ratings(metric, days: days, goals: goals)
+            // Rating reads the same days once per metric, plus the baseline before them; Training only reads workouts.
+            let source = metric.isRated ? try source.withDaysLoaded(days + baselineDays) : source
+            let newRatings = try await ratings(metric, days: days, goals: goals, source: source)
             let workouts = try await source.workouts(days: days)
+            // A longer load started meanwhile; let it fill in instead.
+            guard months == loadedMonths else { return }
             ratings = newRatings
             workoutDays = WorkoutDay.byDay(workouts, calendar: calendar)
             workoutsByDay = Dictionary(grouping: workouts) { calendar.startOfDay(for: $0.start) }
             firstMonth = calendar.dateInterval(of: .month, for: earliest)?.start
+            firstLoadedMonth = calendar.dateInterval(of: .month, for: start)?.start
         } catch {
             // Keep the last good month grid; the next load retries.
             logger.error("Loading calendar failed: \(error.localizedDescription)")
         }
+    }
+
+    /// Loads more history once `month`, the oldest loaded month or older, scrolls into view.
+    func reveal(_ month: Date, metric: CalendarMetric, goals: GoalHistory) async {
+        guard let firstMonth, let firstLoadedMonth, month <= firstLoadedMonth, firstLoadedMonth > firstMonth else { return }
+        let currentMonth = calendar.dateInterval(of: .month, for: .now)!.start
+        let back = calendar.dateComponents([.month], from: month, to: currentMonth).month ?? 0
+        loadedMonths = max(loadedMonths, back + 1) + monthsPerStep
+        await load(metric, goals: goals)
     }
 
     /// Cards for `day` as they looked at the end of that day, with their charts ending on that day.
@@ -80,7 +104,8 @@ final class CalendarModel {
             .map(builder.workoutSnapshot)
     }
 
-    private func ratings(_ metric: CalendarMetric, days: Int, goals: GoalHistory) async throws -> [Date: DayRating] {
+    private func ratings(_ metric: CalendarMetric, days: Int, goals: GoalHistory,
+                         source: HealthDataSource) async throws -> [Date: DayRating] {
         switch metric {
         case .health:
             // Vitals need the baseline window before the first shown day.
