@@ -206,7 +206,7 @@ private struct ImportFilesView: View {
                 ForEach(Self.guides, id: \.service) { guide in
                     DisclosureGroup(guide.service) {
                         ForEach(Array(guide.steps.enumerated()), id: \.offset) { index, step in
-                            Label { Text(step) } icon: { Text("\(index + 1).").monospacedDigit() }
+                            Label { Text(LocalizedStringKey(step)) } icon: { Text("\(index + 1).").monospacedDigit() }
                         }
                     }
                 }
@@ -227,20 +227,21 @@ private struct ImportFilesView: View {
     }
 
     /// The services from #85 that export FIT files. Steps from their support pages; Garmin's from third-party guides.
+    /// Steps are Markdown, so links open the export pages.
     private static let guides: [(service: String, steps: [String])] = [
         ("Garmin", [
-            "On connect.garmin.com, open an activity, click the gear icon and choose Export Original. Garmin Connect on iPhone can't export files.",
-            "For your whole history, request an export on garmin.com in Account › Data Management › Export Your Data. Garmin emails a link, which can take several days.",
+            "On [Garmin Connect](https://connect.garmin.com/app/activities), open an activity, click the gear icon and choose Export Original. Garmin Connect on iPhone can't export files.",
+            "For your whole history, request an export in [Account › Data Management › Export Your Data](https://www.garmin.com/account/datamanagement/exportdata/). Garmin emails a link, which can take several days.",
             "Unzip the download in the Files app. In a full export, the FIT files are in zip files inside DI_CONNECT › DI-Connect-Uploaded-Files; unzip those too.",
             "Choose the .fit files, or the unzipped folder.",
         ]),
         ("COROS", [
             "For one activity: in the COROS app, open it under Activities, tap ⋯, choose Export Data, then .FIT, and save it to Files.",
-            "For your whole history: on t.coros.com, open Activity List, choose Export Data and pick .FIT. COROS emails the files.",
+            "For your whole history: open [Activity List on COROS Training Hub](https://t.coros.com/admin/views/activities), choose Export Data and pick .FIT. COROS emails the files.",
             "Unzip them in the Files app if they arrive zipped, then choose them here.",
         ]),
         ("Polar", [
-            "On flow.polar.com, open Diary and click a training session.",
+            "Open your [Polar Flow diary](https://flow.polar.com/diary) and click a training session.",
             "Open the Export menu and choose FIT file. Sessions export one at a time.",
             "Save the file to Files, then choose it here.",
         ]),
