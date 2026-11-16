@@ -144,7 +144,8 @@ struct HomeGrid<Item: HomeLayoutItem & Identifiable, Card: View>: View {
     }
 }
 
-private struct ColumnSpan: LayoutValueKey {
+// Layout reads the key outside the main actor, so it must not inherit the target's MainActor default.
+nonisolated private struct ColumnSpan: LayoutValueKey {
     static let defaultValue = 1
 }
 
