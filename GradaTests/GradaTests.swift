@@ -426,6 +426,7 @@ struct HealthImporterTests {
 private final class FakeSource: HealthSource {
     let id: String
     init(id: String) { self.id = id }
+    var name: String { id }
     var isAvailable: Bool { true }
     func requestAuthorization() async throws {}
     func earliestSampleDate() async throws -> Date? { nil }

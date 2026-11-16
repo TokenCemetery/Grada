@@ -108,7 +108,7 @@ extension CardKind {
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: [.sleep]
         case .standHours: [.standHours]
         case .lastWorkout, .weeklyTraining: [.workouts]
-        case .recovery, .hrvStatus: [.overnightHRV]
+        case .recovery, .hrvStatus, .healthStatus: [.overnightHRV]
         default: quantityMetric.map { [DataKind($0)] } ?? []
         }
         for kind in basedOn.flatMap(\.dataKinds) where !kinds.contains(kind) { kinds.append(kind) }

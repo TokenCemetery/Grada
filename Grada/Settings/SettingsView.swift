@@ -120,7 +120,7 @@ private struct DataSourceView: View {
                     if let url = URL(string: "x-apple-health://") { openURL(url) }
                 }
             } footer: {
-                Text("Grada reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps, or import their FIT files in Settings › Import. Manage what Grada can read in Health › Sharing › Apps.")
+                Text("Grada reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps, import their FIT files, or connect Garmin directly, all in Settings › Import. Manage what Grada can read in Health › Sharing › Apps.")
             }
             if let origins {
                 ForEach(DataKind.allCases) { kind in
@@ -149,6 +149,7 @@ private struct ImportView: View {
     var body: some View {
         Form {
             NavigationLink { ImportFilesView() } label: { SettingsRow("FIT Files", icon: "applewatch", color: .blue) }
+            NavigationLink { GarminConnectView() } label: { SettingsRow("Garmin Connect", icon: "arrow.triangle.2.circlepath", color: .teal) }
         }
         .navigationTitle("Import")
     }

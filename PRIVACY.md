@@ -6,9 +6,9 @@ Grada is an iPhone app that summarizes your health data from Apple Health. This 
 
 ## Summary
 
-- Grada reads health data from Apple Health only with your permission, and from FIT files only when you choose them.
+- Grada reads health data from Apple Health only with your permission, from FIT files only when you choose them, and from Garmin Connect only if you connect it with your own key.
 - Your data stays on your devices and in your own private iCloud account. The developer never receives it.
-- Grada has no accounts, no analytics, no advertising and no third-party code, and it does not send your data over the network to anyone.
+- Grada has no accounts, no analytics, no advertising and no third-party code, and it does not send your health data over the network to anyone. Its only network calls are to Garmin, if you connect Garmin.
 - Grada never writes to, changes or deletes your Apple Health data.
 
 ## Data Grada reads
@@ -24,11 +24,17 @@ When you grant access, Grada reads these types from Apple Health:
 
 You choose which types to share in the iOS permission screen. Grada works with whatever you allow and shows no data for the rest.
 
-Data from other apps and devices, such as Garmin or Oura, reaches Grada through Apple Health, under the same permissions, or from FIT files you import.
+Data from other apps and devices, such as Garmin or Oura, reaches Grada through Apple Health, under the same permissions, from FIT files you import, or directly from Garmin Connect if you connect it.
 
 ## Files you import
 
 In Settings › Import › FIT Files you can choose FIT files, the format Garmin and other watches record in, or a folder of them such as a Garmin data export. Grada reads only the files you choose, on your device, and reads workouts, sleep stages, overnight heart rate variability and resting heart rate from them. It keeps what it read with the rest of its copy, described below, labelled with the device's brand, such as "Garmin (imported)". It doesn't keep the files or send them anywhere.
+
+## Garmin Connect
+
+In Settings › Import › Garmin Connect you can paste a Personal API key you create on Garmin Connect. Grada keeps the key in this iPhone's Keychain only: it isn't synced to iCloud Keychain or restored to another device. Grada sends the key only to Garmin (`personal.connectapi.garmin.com`), directly from your iPhone, to get a short-lived access token, and uses that token to read your own Garmin data: daily summaries (steps, distance, active calories, intensity minutes, resting heart rate, blood oxygen, respiration), sleep stages and times, overnight heart rate variability, and workouts. The requests carry only the dates asked for. Grada sends Garmin none of your Apple Health data. What it reads joins the rest of its copy, described below, labelled "Garmin Connect (direct)". Garmin handles the requests under the [Garmin Privacy Policy](https://www.garmin.com/privacy/connect/).
+
+Disconnecting in the same screen deletes the key from your iPhone; data already read stays in Grada's copy until you delete the app. You can also delete the key on Garmin Connect, which stops Grada's access at once.
 
 ## How Grada uses it
 

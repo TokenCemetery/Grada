@@ -5,7 +5,11 @@ import Foundation
 protocol HealthSource: AnyObject {
     /// Stored with every value from this source, so it must never change once shipped.
     var id: String { get }
+    /// Shown to the user, e.g. while its history imports.
+    var name: String { get }
     var isAvailable: Bool { get }
+    /// Shortest time between imports of recent days, for sources that charge a network call per import.
+    var refreshInterval: TimeInterval { get }
     func requestAuthorization() async throws
     /// Date of the oldest data the source can import.
     func earliestSampleDate() async throws -> Date?
@@ -25,6 +29,8 @@ protocol HealthSource: AnyObject {
 }
 
 extension HealthSource {
+    var refreshInterval: TimeInterval { 0 }
+
     /// Sources without change notifications are refreshed when the app asks for recent data.
     func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws {}
 }

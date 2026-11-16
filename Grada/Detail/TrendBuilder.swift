@@ -241,7 +241,7 @@ struct TrendBuilder {
     private func healthStatus(_ period: TrendPeriod) async throws -> Trend {
         var series: [QuantityMetric: [DayValue]] = [:]
         for (vital, _) in SnapshotBuilder.vitals {
-            series[vital] = try await source.daily(vital, days: period.days + baselineDays)
+            series[vital] = try await SnapshotBuilder.vitalSeries(vital, days: period.days + baselineDays, source: source)
         }
         let days = series.values.first!.map(\.day)
         let counts = days.indices.dropFirst(baselineDays).map { index in
