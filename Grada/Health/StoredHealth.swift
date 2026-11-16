@@ -194,15 +194,16 @@ struct StoredHealthData: HealthDataSource {
         try merged(days: days) { $0.standHours }
     }
 
-    /// HRV and heart rate come together from one source, and bed and wake time together from one, so a
-    /// night's readings aren't mixed between devices. They're picked apart because a source can have one
-    /// pair without the other: Garmin writes sleep to Apple Health, but its HRV only comes from its files.
+    /// HRV and heart rate each come from the first source that has them, as daily values do: Garmin writes
+    /// sleep and heart rate to Apple Health, but its HRV only comes from its files. Bed and wake time come
+    /// together from one source, so a night's timing isn't mixed between devices.
     func overnight(days: Int) async throws -> [OvernightVitals] {
         let rows = try rows(days: days)
         return lastDays(days).map { day in
-            let vitals = first(in: rows, on: day) { $0.overnightHRV != nil || $0.sleepingHeartRate != nil }
             let timing = first(in: rows, on: day) { $0.bedtime != nil || $0.wakeTime != nil }
-            return OvernightVitals(wakeDay: day, hrv: vitals?.overnightHRV, heartRate: vitals?.sleepingHeartRate,
+            return OvernightVitals(wakeDay: day,
+                                   hrv: first(in: rows, on: day) { $0.overnightHRV != nil }?.overnightHRV,
+                                   heartRate: first(in: rows, on: day) { $0.sleepingHeartRate != nil }?.sleepingHeartRate,
                                    bedtime: timing?.bedtime, wakeTime: timing?.wakeTime)
         }
     }

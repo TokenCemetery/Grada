@@ -401,7 +401,7 @@ struct HealthImporterTests {
 
     @Test func importedHRVJoinsANightAppleHealthHasSleepFor() async throws {
         var fromHealth = batch(steps: [nil])
-        fromHealth.overnight = [OvernightVitals(wakeDay: today, bedtime: today - 3600, wakeTime: today + 7 * 3600)]
+        fromHealth.overnight = [OvernightVitals(wakeDay: today, heartRate: 48, bedtime: today - 3600, wakeTime: today + 7 * 3600)]
         try importer.save(fromHealth, from: health)
         var fromFile = batch(steps: [nil])
         fromFile.overnight = [OvernightVitals(wakeDay: today, hrv: 50)]
@@ -409,6 +409,7 @@ struct HealthImporterTests {
 
         let nights = try await StoredHealthData(context: context, sources: [FakeSource(id: health)]).overnight(days: 1)
         #expect(nights.map(\.hrv) == [50])
+        #expect(nights.map(\.heartRate) == [48])
         #expect(nights.map(\.bedtime) == [today - 3600])
     }
 
