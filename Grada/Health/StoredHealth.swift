@@ -1,12 +1,15 @@
 import Foundation
 import SwiftData
 
-/// One day of imported Apple Health data. Defaults on every property and no unique
-/// constraints keep it ready for CloudKit sync; `dayKey` is the identity used to merge duplicates.
+/// One day of data imported from one source. Defaults on every property and no unique constraints
+/// keep it ready for CloudKit sync; `dayKey` and `source` together are the identity used to merge duplicates.
 @Model
 final class DaySummary {
     /// "yyyy-MM-dd" in the calendar the day was imported with.
     var dayKey: String = ""
+    /// The `HealthSource.id` this row came from. The default fills in rows imported before sources existed,
+    /// which all came from Apple Health; it must stay a literal for SwiftData's migration.
+    var source: String = "appleHealth"
     var day: Date = Date.distantPast
     var updatedAt: Date = Date.distantPast
 
@@ -35,9 +38,10 @@ final class DaySummary {
     var sleepAwake: Double?
     var sleepUnspecified: Double?
 
-    init(day: Date, dayKey: String) {
+    init(day: Date, dayKey: String, source: String) {
         self.day = day
         self.dayKey = dayKey
+        self.source = source
     }
 
     func value(for metric: QuantityMetric) -> Double? {
@@ -83,10 +87,12 @@ final class DaySummary {
     }
 }
 
-/// A workout imported from Apple Health; `healthID` is the Health sample UUID.
+/// An imported workout; `healthID` is its ID in its source, e.g. the Apple Health sample UUID.
 @Model
 final class WorkoutRecord {
     var healthID: String = ""
+    /// The `HealthSource.id` this workout came from; see `DaySummary.source` for the default.
+    var source: String = "appleHealth"
     var start: Date = Date.distantPast
     var duration: TimeInterval = 0
     var name: String = ""
@@ -102,11 +108,12 @@ final class WorkoutRecord {
         symbol = workout.symbol
         energyKcal = workout.energyKcal
         averageHeartRate = workout.averageHeartRate
+        source = workout.source
     }
 
     var summary: WorkoutSummary {
         WorkoutSummary(id: healthID, start: start, duration: duration, name: name, symbol: symbol,
-                       energyKcal: energyKcal, averageHeartRate: averageHeartRate)
+                       energyKcal: energyKcal, averageHeartRate: averageHeartRate, source: source)
     }
 }
 
@@ -117,59 +124,74 @@ enum DayKey {
     }
 }
 
-/// Card data read from the imported store, so cards load instantly and work offline.
-/// Intraday data (5-minute heart rate, sleep timing) isn't stored; it's read from Apple Health through `reader`.
+/// Card data read from the imported store, so cards load instantly and work offline. Each source's
+/// rows are merged in the order of `sources`: per day and metric, the first source with a value wins.
+/// Intraday data (5-minute heart rate, sleep timing) isn't stored; it's read live from the sources.
 struct StoredHealthData: HealthDataSource {
     let context: ModelContext
-    var reader: HealthKitReader?
+    /// In order of preference. Stored data from sources not listed here comes after them.
+    var sources: [any HealthSource] = []
     var calendar: Calendar = .current
 
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
-        try await reader?.heartRate(in: interval) ?? []
+        for source in sources {
+            let values = try await source.heartRate(in: interval)
+            if !values.isEmpty { return values }
+        }
+        return []
     }
 
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] {
-        try await reader?.sleepPeriods(in: interval) ?? []
+        for source in sources {
+            let periods = try await source.sleepPeriods(in: interval)
+            if !periods.isEmpty { return periods }
+        }
+        return []
     }
 
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {
-        try await reader?.workoutDetail(workout) ?? WorkoutDetail()
+        try await sources.first { $0.id == workout.source }?.workoutDetail(workout) ?? WorkoutDetail()
     }
 
     func age() async throws -> Int? {
-        reader?.age()
+        sources.lazy.compactMap { $0.age() }.first
     }
 
     func biologicalSex() async throws -> BiologicalSex? {
-        reader?.biologicalSex()
+        sources.lazy.compactMap { $0.biologicalSex() }.first
     }
 
     func highestHeartRate(days: Int) async throws -> Double? {
-        try await reader?.highestHeartRate(days: days)
+        for source in sources {
+            if let highest = try await source.highestHeartRate(days: days) { return highest }
+        }
+        return nil
     }
 
     func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
-        let summaries = try summaries(days: days)
-        return lastDays(days).map { DayValue(day: $0, value: summaries[DayKey.make($0, calendar: calendar)]?.value(for: metric)) }
+        try merged(days: days) { $0.value(for: metric) }
     }
 
     func standHours(days: Int) async throws -> [DayValue] {
-        let summaries = try summaries(days: days)
-        return lastDays(days).map { DayValue(day: $0, value: summaries[DayKey.make($0, calendar: calendar)]?.standHours) }
+        try merged(days: days) { $0.standHours }
     }
 
+    /// Each night's vitals come together from one source, so HRV and bed time aren't from different devices.
     func overnight(days: Int) async throws -> [OvernightVitals] {
-        let summaries = try summaries(days: days)
+        let rows = try rows(days: days)
         return lastDays(days).map { day in
-            let summary = summaries[DayKey.make(day, calendar: calendar)]
+            let summary = first(in: rows, on: day) {
+                $0.overnightHRV != nil || $0.sleepingHeartRate != nil || $0.bedtime != nil || $0.wakeTime != nil
+            }
             return OvernightVitals(wakeDay: day, hrv: summary?.overnightHRV, heartRate: summary?.sleepingHeartRate,
                                    bedtime: summary?.bedtime, wakeTime: summary?.wakeTime)
         }
     }
 
+    /// Each night comes whole from one source; stages from different devices aren't mixed.
     func sleepNights(days: Int) async throws -> [SleepNight] {
-        let summaries = try summaries(days: days)
-        return lastDays(days).compactMap { summaries[DayKey.make($0, calendar: calendar)]?.sleepNight }
+        let rows = try rows(days: days)
+        return lastDays(days).compactMap { day in first(in: rows, on: day) { $0.sleepNight != nil }?.sleepNight }
     }
 
     func workouts(days: Int) async throws -> [WorkoutSummary] {
@@ -178,14 +200,22 @@ struct StoredHealthData: HealthDataSource {
             predicate: #Predicate { $0.start >= start },
             sortBy: [SortDescriptor(\.start, order: .reverse)]
         )
-        var seen = Set<String>()
-        return try context.fetch(descriptor).filter { seen.insert($0.healthID).inserted }.map(\.summary)
+        var seen = Set<[String]>()
+        let workouts = try context.fetch(descriptor).filter { seen.insert([$0.source, $0.healthID]).inserted }.map(\.summary)
+        let rank = rank(Set(workouts.map(\.source)))
+        return SourceMerge.uniqueWorkouts(workouts) { lhs, rhs in
+            rank[lhs.source]! != rank[rhs.source]! ? rank[lhs.source]! < rank[rhs.source]! : SourceMerge.mostDetail(lhs, rhs)
+        }
     }
 
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] {
         let start = calendar.startOfDay(for: day)
         let interval = DateInterval(start: start, end: calendar.date(byAdding: .day, value: 1, to: start)!)
-        return try await reader?.hourly(metric, in: interval) ?? []
+        for source in sources {
+            let values = try await source.hourly(metric, in: interval)
+            if !values.isEmpty { return values }
+        }
+        return []
     }
 
     func earliestDay() async throws -> Date? {
@@ -194,11 +224,34 @@ struct StoredHealthData: HealthDataSource {
         return try context.fetch(descriptor).first?.day
     }
 
-    /// Summaries by day key; the first wins if iCloud delivered duplicates.
-    private func summaries(days: Int) throws -> [String: DaySummary] {
+    /// For each day, the value from the first source in order that has one.
+    private func merged(days: Int, _ value: (DaySummary) -> Double?) throws -> [DayValue] {
+        let rows = try rows(days: days)
+        return lastDays(days).map { day in
+            DayValue(day: day, value: first(in: rows, on: day) { value($0) != nil }.flatMap(value))
+        }
+    }
+
+    /// The first row on `day`, in source order, that `matches`.
+    private func first(in rows: [String: [DaySummary]], on day: Date, where matches: (DaySummary) -> Bool) -> DaySummary? {
+        rows[DayKey.make(day, calendar: calendar)]?.first(where: matches)
+    }
+
+    /// Rows by day key, each day's sorted by source preference. If iCloud delivered a source's day twice, the first wins.
+    private func rows(days: Int) throws -> [String: [DaySummary]] {
         let start = lastDays(days).first!
-        let descriptor = FetchDescriptor<DaySummary>(predicate: #Predicate { $0.day >= start })
-        return Dictionary(try context.fetch(descriptor).map { ($0.dayKey, $0) }, uniquingKeysWith: { first, _ in first })
+        let fetched = try context.fetch(FetchDescriptor<DaySummary>(predicate: #Predicate { $0.day >= start }))
+        let rank = rank(Set(fetched.map(\.source)))
+        var seen = Set<[String]>()
+        return Dictionary(grouping: fetched.filter { seen.insert([$0.dayKey, $0.source]).inserted }, by: \.dayKey)
+            .mapValues { $0.sorted { rank[$0.source]! < rank[$1.source]! } }
+    }
+
+    /// Position of each source: listed sources first, then any others by name.
+    private func rank(_ stored: Set<String>) -> [String: Int] {
+        let listed = sources.map(\.id)
+        let order = listed + stored.subtracting(listed).sorted()
+        return Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
     private func lastDays(_ count: Int) -> [Date] {

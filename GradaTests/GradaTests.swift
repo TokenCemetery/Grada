@@ -255,7 +255,7 @@ struct HealthImporterTests {
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         context = ModelContext(container)
-        importer = HealthImporter(reader: HealthKitReader(), context: context)
+        importer = HealthImporter(sources: [], context: context)
     }
 
     private var today: Date { calendar.startOfDay(for: .now) }
@@ -269,37 +269,39 @@ struct HealthImporterTests {
         return batch
     }
 
-    private func workout(_ id: String) -> WorkoutSummary {
+    private func workout(_ id: String, averageHeartRate: Double? = 140) -> WorkoutSummary {
         WorkoutSummary(id: id, start: day(0).addingTimeInterval(3600), duration: 1800, name: "Run",
-                       symbol: "figure.run", energyKcal: 300, averageHeartRate: 140)
+                       symbol: "figure.run", energyKcal: 300, averageHeartRate: averageHeartRate)
     }
 
+    private let health = HealthKitReader.sourceID
+
     @Test func savesOnlyDaysWithDataAndUpdatesInPlace() throws {
-        try importer.save(batch(steps: [nil, 4000, 5000]))
+        try importer.save(batch(steps: [nil, 4000, 5000]), from: health)
         #expect(try context.fetchCount(FetchDescriptor<DaySummary>()) == 2)
 
-        try importer.save(batch(steps: [nil, 4000, 7000]))
+        try importer.save(batch(steps: [nil, 4000, 7000]), from: health)
         let summaries = try context.fetch(FetchDescriptor<DaySummary>(sortBy: [SortDescriptor(\.day)]))
         #expect(summaries.map(\.steps) == [4000, 7000])
     }
 
     @Test func removesDuplicateDays() throws {
         let key = DayKey.make(today, calendar: calendar)
-        context.insert(DaySummary(day: today, dayKey: key))
-        context.insert(DaySummary(day: today, dayKey: key))
-        try importer.save(batch(steps: [6000]))
+        context.insert(DaySummary(day: today, dayKey: key, source: health))
+        context.insert(DaySummary(day: today, dayKey: key, source: health))
+        try importer.save(batch(steps: [6000]), from: health)
         #expect(try context.fetchCount(FetchDescriptor<DaySummary>()) == 1)
     }
 
     @Test func syncsWorkoutsWithAppleHealth() throws {
-        try importer.save(batch(steps: [1000], workouts: [workout("a"), workout("b")]))
-        try importer.save(batch(steps: [1000], workouts: [workout("b")]))
+        try importer.save(batch(steps: [1000], workouts: [workout("a"), workout("b")]), from: health)
+        try importer.save(batch(steps: [1000], workouts: [workout("b")]), from: health)
         let records = try context.fetch(FetchDescriptor<WorkoutRecord>())
         #expect(records.map(\.healthID) == ["b"])
     }
 
     @Test func storedDataFeedsCards() async throws {
-        try importer.save(batch(steps: [8000, 9000]))
+        try importer.save(batch(steps: [8000, 9000]), from: health)
         let values = try await StoredHealthData(context: context).daily(.steps, days: 3)
         #expect(values.map(\.value) == [nil, 8000, 9000])
     }
@@ -307,10 +309,127 @@ struct HealthImporterTests {
     @Test func storesOvernightVitals() async throws {
         var batch = batch(steps: [8000])
         batch.overnight = [OvernightVitals(wakeDay: today, hrv: 64, heartRate: 49)]
-        try importer.save(batch)
+        try importer.save(batch, from: health)
         let overnight = try await StoredHealthData(context: context).overnight(days: 2)
         #expect(overnight.map(\.hrv) == [nil, 64])
         #expect(overnight.map(\.heartRate) == [nil, 49])
+    }
+
+    @Test func savingOneSourceLeavesOthersAlone() throws {
+        try importer.save(batch(steps: [1000], workouts: [workout("a")]), from: health)
+        try importer.save(batch(steps: [2000], workouts: [workout("x")]), from: "other")
+        try importer.save(batch(steps: [3000]), from: "other")
+        let records = try context.fetch(FetchDescriptor<WorkoutRecord>())
+        #expect(records.map(\.healthID) == ["a"])
+        #expect(records.map(\.source) == [health])
+        let summaries = try context.fetch(FetchDescriptor<DaySummary>(sortBy: [SortDescriptor(\.source)]))
+        #expect(summaries.map(\.steps) == [1000, 3000])
+    }
+
+    @Test func preferredSourceWinsAndOthersFillGaps() async throws {
+        try importer.save(batch(steps: [nil, 5000]), from: "other")
+        try importer.save(batch(steps: [4000, 6000]), from: "preferred")
+        let stored = StoredHealthData(context: context, sources: [FakeSource(id: "preferred")])
+        #expect(try await stored.daily(.steps, days: 2).map(\.value) == [4000, 6000])
+
+        let reversed = StoredHealthData(context: context, sources: [FakeSource(id: "other"), FakeSource(id: "preferred")])
+        #expect(try await reversed.daily(.steps, days: 2).map(\.value) == [4000, 5000])
+    }
+
+    @Test func sameNightFromTwoSourcesCountsOnce() async throws {
+        var first = batch(steps: [nil])
+        first.sleepNights = [SleepNight(wakeDay: today, stages: [.core: 5 * 3600, .deep: 3600], unspecified: 0)]
+        var second = batch(steps: [nil])
+        second.sleepNights = [SleepNight(wakeDay: today, stages: [:], unspecified: 8 * 3600)]
+        try importer.save(first, from: "preferred")
+        try importer.save(second, from: "other")
+        let nights = try await StoredHealthData(context: context, sources: [FakeSource(id: "preferred")]).sleepNights(days: 1)
+        #expect(nights.map(\.asleep) == [6 * 3600])
+    }
+
+    @Test func sameWorkoutFromTwoSourcesCountsOnce() async throws {
+        try importer.save(batch(steps: [nil], workouts: [workout("watch", averageHeartRate: nil)]), from: "preferred")
+        try importer.save(batch(steps: [nil], workouts: [workout("band")]), from: "other")
+        let workouts = try await StoredHealthData(context: context, sources: [FakeSource(id: "preferred")]).workouts(days: 1)
+        #expect(workouts.map(\.id) == ["watch"])
+    }
+}
+
+/// A source that only exists to set the merge order.
+private final class FakeSource: HealthSource {
+    let id: String
+    init(id: String) { self.id = id }
+    var isAvailable: Bool { true }
+    func requestAuthorization() async throws {}
+    func earliestSampleDate() async throws -> Date? { nil }
+    func batch(for days: DateInterval) async throws -> HealthBatch { HealthBatch(days: days) }
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] { [] }
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { [] }
+    func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] { [] }
+    func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail { WorkoutDetail() }
+    func highestHeartRate(days: Int) async throws -> Double? { nil }
+    func age() -> Int? { nil }
+    func biologicalSex() -> BiologicalSex? { nil }
+}
+
+struct SourceMergeTests {
+    private let calendar = Calendar.current
+    private let start = Date(timeIntervalSinceReferenceDate: 800_000_000)
+
+    private func workout(_ id: String, offset: TimeInterval = 0, duration: TimeInterval = 3600,
+                         energy: Double? = 400, heartRate: Double? = 140) -> WorkoutSummary {
+        WorkoutSummary(id: id, start: start + offset, duration: duration, name: "Run", symbol: "figure.run",
+                       energyKcal: energy, averageHeartRate: heartRate)
+    }
+
+    @Test func overlappingWorkoutsKeepTheMostDetailed() {
+        let watch = workout("watch")
+        let band = workout("band", offset: 120, heartRate: nil)
+        #expect(SourceMerge.uniqueWorkouts([band, watch]).map(\.id) == ["watch"])
+    }
+
+    @Test func workoutsThatBarelyOverlapStaySeparate() {
+        let run = workout("run")
+        let walk = workout("walk", offset: 3000, duration: 1800)
+        #expect(SourceMerge.uniqueWorkouts([run, walk]).map(\.id) == ["walk", "run"])
+    }
+
+    @Test func shortWorkoutInsideALongOneIsADuplicate() {
+        let long = workout("long", duration: 7200)
+        let short = workout("short", offset: 600, duration: 1200)
+        #expect(SourceMerge.uniqueWorkouts([long, short]).map(\.id) == ["long"])
+    }
+
+    private func days(_ count: Int, before end: Date) -> [Date] {
+        (1...count).reversed().map { calendar.date(byAdding: .day, value: -$0, to: end)! }
+    }
+
+    @Test func mainAppIsTheOneWithMostDays() {
+        let end = calendar.startOfDay(for: start)
+        let recent = days(10, before: end)
+        let values = [
+            "watch": recent.map { DayValue(day: $0, value: 50) },
+            "band": recent.suffix(3).map { DayValue(day: $0, value: 70) },
+        ]
+        #expect(SourceMerge.rankByCoverage(values, endingBefore: end, calendar: calendar) == ["watch", "band"])
+    }
+
+    @Test func otherAppsFillDaysTheMainAppMissed() {
+        let end = calendar.startOfDay(for: start)
+        let recent = days(3, before: end)
+        let values = [
+            "watch": [DayValue(day: recent[0], value: 50), DayValue(day: recent[2], value: 52)],
+            "band": recent.map { DayValue(day: $0, value: 70) },
+        ]
+        let merged = SourceMerge.firstAvailable(values, order: ["watch", "band"], days: recent)
+        #expect(merged.map(\.value) == [50, 70, 52])
+    }
+
+    @Test func coverageTiesBreakByNameForAStableOrder() {
+        let end = calendar.startOfDay(for: start)
+        let day = days(1, before: end)
+        let values = ["b": day.map { DayValue(day: $0, value: 1) }, "a": day.map { DayValue(day: $0, value: 2) }]
+        #expect(SourceMerge.rankByCoverage(values, endingBefore: end, calendar: calendar) == ["a", "b"])
     }
 }
 

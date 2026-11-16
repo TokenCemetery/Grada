@@ -70,10 +70,10 @@ struct GradaApp: App {
         }
 #endif
         let reader = HealthKitReader()
-        let importer = HealthImporter(reader: reader, context: context)
+        let importer = HealthImporter(sources: [reader], context: context)
         // Started here, not from a view: iOS may relaunch the app in the background with no UI.
         Task { await importer.startBackgroundUpdates() }
-        let source = StoredHealthData(context: context, reader: reader)
+        let source = StoredHealthData(context: context, sources: importer.sources)
         return (HomeModel(source: source, importer: importer), CalendarModel(source: source, importer: importer), source)
     }
 }

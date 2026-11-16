@@ -3,7 +3,7 @@ import Observation
 import os
 import SwiftData
 
-/// Raw Apple Health data for a range of days, ready to save.
+/// Raw data from one source for a range of days, ready to save.
 struct HealthBatch {
     /// Start of the first day ..< start of the day after the last.
     var days: DateInterval
@@ -14,7 +14,7 @@ struct HealthBatch {
     var workouts: [WorkoutSummary] = []
 }
 
-/// Copies Apple Health data into the app's store: the whole history on first launch,
+/// Copies each source's data into the app's store: the whole history on first launch,
 /// then the last few days on every refresh.
 @Observable
 final class HealthImporter {
@@ -23,7 +23,8 @@ final class HealthImporter {
     /// Changes whenever new data is saved, so screens know to reload.
     private(set) var revision = 0
 
-    @ObservationIgnored private let reader: HealthKitReader
+    /// In order of preference, which is also the order cards merge them in.
+    @ObservationIgnored let sources: [any HealthSource]
     @ObservationIgnored private let context: ModelContext
     @ObservationIgnored private let calendar = Calendar.current
     @ObservationIgnored private let defaults = UserDefaults.standard
@@ -33,82 +34,97 @@ final class HealthImporter {
     @ObservationIgnored private var didStartBackgroundUpdates = false
     private let logger = Logger(subsystem: "Grada", category: "HealthImporter")
 
-    /// Oldest day imported so far; lets an interrupted history import resume.
+    /// Oldest day imported so far, per source; lets an interrupted history import resume.
     /// Versioned: bumping it re-imports the whole history once, e.g. v2 added overnight vitals and
-    /// bed and wake times, and keeps nights that start before midnight in one piece.
-    private static let importedFromKey = "historyImportedFrom.v2"
-    private static let historyDoneKey = "historyImportDone.v2"
+    /// bed and wake times; v3 removes workouts and readings that several apps wrote to Apple Health.
+    private static func importedFromKey(_ source: any HealthSource) -> String { "historyImportedFrom.\(source.id).v3" }
+    private static func historyDoneKey(_ source: any HealthSource) -> String { "historyImportDone.\(source.id).v3" }
     /// Re-imported on every refresh: today, plus nights and late-syncing watches from the days before.
     static let recentDays = 3
 
-    init(reader: HealthKitReader, context: ModelContext) {
-        self.reader = reader
+    init(sources: [any HealthSource], context: ModelContext) {
+        self.sources = sources
         self.context = context
     }
+
+    private var availableSources: [any HealthSource] { sources.filter(\.isAvailable) }
 
     func authorize() async {
         if authorization == nil {
             authorization = Task {
-                do { try await reader.requestAuthorization() }
-                catch { logger.error("Health authorization failed: \(error.localizedDescription)") }
+                for source in availableSources {
+                    do { try await source.requestAuthorization() }
+                    catch { logger.error("Authorization for \(source.id) failed: \(error.localizedDescription)") }
+                }
             }
         }
         await authorization?.value
     }
 
-    /// Imports everything Apple Health has, a year at a time, newest first so recent cards fill in quickly.
+    /// Imports everything each source has, a year at a time, newest first so recent cards fill in quickly.
     func importHistoryIfNeeded() async {
-        guard HealthKitReader.isAvailable, !defaults.bool(forKey: Self.historyDoneKey), historyProgress == nil else { return }
+        let pending = availableSources.filter { !defaults.bool(forKey: Self.historyDoneKey($0)) }
+        guard !pending.isEmpty, historyProgress == nil else { return }
         await authorize()
         historyProgress = 0
         defer { historyProgress = nil }
 
+        for (index, source) in pending.enumerated() {
+            await importHistory(of: source) { progress in
+                self.historyProgress = (Double(index) + progress) / Double(pending.count)
+            }
+        }
+    }
+
+    private func importHistory(of source: any HealthSource, progress: (Double) -> Void) async {
         do {
             let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: .now))!
-            guard let earliestSample = try await reader.earliestSampleDate() else {
-                defaults.set(true, forKey: Self.historyDoneKey)
+            guard let earliestSample = try await source.earliestSampleDate() else {
+                defaults.set(true, forKey: Self.historyDoneKey(source))
                 return
             }
             let earliest = calendar.startOfDay(for: earliestSample)
-            var end = (defaults.object(forKey: Self.importedFromKey) as? Date) ?? tomorrow
+            var end = (defaults.object(forKey: Self.importedFromKey(source)) as? Date) ?? tomorrow
             let total = max(tomorrow.timeIntervalSince(earliest), 1)
 
             while end > earliest {
                 let start = max(earliest, calendar.date(byAdding: .year, value: -1, to: end)!)
-                try await importDays(DateInterval(start: start, end: end))
-                defaults.set(start, forKey: Self.importedFromKey)
-                historyProgress = tomorrow.timeIntervalSince(start) / total
+                try await importDays(DateInterval(start: start, end: end), from: source)
+                defaults.set(start, forKey: Self.importedFromKey(source))
+                progress(tomorrow.timeIntervalSince(start) / total)
                 end = start
             }
-            defaults.set(true, forKey: Self.historyDoneKey)
-            logger.info("History import finished from \(earliest)")
+            defaults.set(true, forKey: Self.historyDoneKey(source))
+            logger.info("History import from \(source.id) finished from \(earliest)")
         } catch {
             // Resumes from the last saved year on the next launch.
-            logger.error("History import stopped: \(error.localizedDescription)")
+            logger.error("History import from \(source.id) stopped: \(error.localizedDescription)")
         }
     }
 
-    /// Re-imports the last few days whenever Apple Health gets new data, including in the background.
+    /// Re-imports the last few days whenever a source gets new data, including in the background.
     func startBackgroundUpdates() async {
-        guard HealthKitReader.isAvailable, !didStartBackgroundUpdates else { return }
+        guard !availableSources.isEmpty, !didStartBackgroundUpdates else { return }
         didStartBackgroundUpdates = true
         await authorize()
-        do {
-            try await reader.observeChanges { [weak self] completion in
-                Task { @MainActor in
-                    await self?.importRecent()
-                    completion()
+        for source in availableSources {
+            do {
+                try await source.observeChanges { [weak self] completion in
+                    Task { @MainActor in
+                        await self?.importRecent()
+                        completion()
+                    }
                 }
+            } catch {
+                logger.error("Background updates from \(source.id) unavailable: \(error.localizedDescription)")
             }
-        } catch {
-            logger.error("Background updates unavailable: \(error.localizedDescription)")
         }
     }
 
     /// Several data types often change together (a workout brings energy, distance and heart rate),
     /// so overlapping calls share one import, plus one more pass if data changed while it ran.
     func importRecent() async {
-        guard HealthKitReader.isAvailable else { return }
+        guard !availableSources.isEmpty else { return }
         if let running = recentImport {
             recentImportPending = true
             await running.value
@@ -130,10 +146,12 @@ final class HealthImporter {
         let today = calendar.startOfDay(for: .now)
         let start = calendar.date(byAdding: .day, value: -(Self.recentDays - 1), to: today)!
         let end = calendar.date(byAdding: .day, value: 1, to: today)!
-        do {
-            try await importDays(DateInterval(start: start, end: end))
-        } catch {
-            logger.error("Recent import failed: \(error.localizedDescription)")
+        for source in availableSources {
+            do {
+                try await importDays(DateInterval(start: start, end: end), from: source)
+            } catch {
+                logger.error("Recent import from \(source.id) failed: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -147,33 +165,32 @@ final class HealthImporter {
         } catch {
             logger.error("Clearing imported data failed: \(error.localizedDescription)")
         }
-        defaults.removeObject(forKey: Self.importedFromKey)
-        defaults.removeObject(forKey: Self.historyDoneKey)
+        for source in sources {
+            defaults.removeObject(forKey: Self.importedFromKey(source))
+            defaults.removeObject(forKey: Self.historyDoneKey(source))
+        }
         revision += 1
         await importHistoryIfNeeded()
     }
 #endif
 
-    private func importDays(_ days: DateInterval) async throws {
-        var batch = HealthBatch(days: days)
-        for metric in QuantityMetric.allCases {
-            batch.daily[metric] = try await reader.daily(metric, in: days)
-        }
-        batch.standHours = try await reader.standHours(in: days)
-        batch.sleepNights = try await reader.sleepNights(in: days)
-        batch.overnight = try await reader.overnightVitals(in: days)
-        batch.workouts = try await reader.workouts(in: days)
+    private func importDays(_ days: DateInterval, from source: any HealthSource) async throws {
+        let batch = try await source.batch(for: days)
         // Everything below is synchronous, so concurrent imports can't interleave their writes.
-        try save(batch)
+        try save(batch, from: source.id)
     }
 
-    /// Upserts one batch: one summary per day, one record per workout. Removes duplicates
-    /// (e.g. from two devices importing the same history) and workouts deleted from Apple Health.
-    func save(_ batch: HealthBatch) throws {
+    /// Upserts one source's batch: one summary per day, one record per workout. Touches only that
+    /// source's rows. Removes duplicates (e.g. from two devices importing the same history) and
+    /// workouts deleted from the source.
+    func save(_ batch: HealthBatch, from source: String) throws {
         let start = batch.days.start, end = batch.days.end
 
         var summaries: [String: DaySummary] = [:]
-        for summary in try context.fetch(FetchDescriptor<DaySummary>(predicate: #Predicate { $0.day >= start && $0.day < end })) {
+        let summaryDescriptor = FetchDescriptor<DaySummary>(
+            predicate: #Predicate { $0.source == source && $0.day >= start && $0.day < end }
+        )
+        for summary in try context.fetch(summaryDescriptor) {
             if summaries[summary.dayKey] == nil { summaries[summary.dayKey] = summary } else { context.delete(summary) }
         }
 
@@ -193,7 +210,7 @@ final class HealthImporter {
             let overnight = overnightByDay[day]
             let hasData = metrics.values.contains { $0 != nil } || stand != nil || sleep != nil || overnight != nil
 
-            if let summary = summaries[key] ?? (hasData ? DaySummary(day: day, dayKey: key) : nil) {
+            if let summary = summaries[key] ?? (hasData ? DaySummary(day: day, dayKey: key, source: source) : nil) {
                 if summaries[key] == nil { context.insert(summary) }
                 for (metric, value) in metrics { summary.setValue(value, for: metric) }
                 summary.standHours = stand
@@ -209,12 +226,16 @@ final class HealthImporter {
 
         let fetched = Dictionary(batch.workouts.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         var kept = Set<String>()
-        for record in try context.fetch(FetchDescriptor<WorkoutRecord>(predicate: #Predicate { $0.start >= start && $0.start < end })) {
+        let workoutDescriptor = FetchDescriptor<WorkoutRecord>(
+            predicate: #Predicate { $0.source == source && $0.start >= start && $0.start < end }
+        )
+        for record in try context.fetch(workoutDescriptor) {
             if fetched[record.healthID] == nil || !kept.insert(record.healthID).inserted {
                 context.delete(record)
             }
         }
-        for workout in fetched.values where !kept.contains(workout.id) {
+        for var workout in fetched.values where !kept.contains(workout.id) {
+            workout.source = source
             context.insert(WorkoutRecord(workout))
         }
 

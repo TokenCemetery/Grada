@@ -4,11 +4,15 @@ import HealthKit
 
 /// Reads raw data from Apple Health for a date range. Garmin, Oura and others arrive here
 /// through their own Apple Health sync.
-final class HealthKitReader {
+final class HealthKitReader: HealthSource {
     let store = HKHealthStore()
     private let calendar = Calendar.current
 
+    nonisolated static let sourceID = "appleHealth"
+    var id: String { Self.sourceID }
+
     static var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
+    var isAvailable: Bool { Self.isAvailable }
 
     /// Every type the app reads.
     static let readTypes: [HKSampleType] =
@@ -58,24 +62,64 @@ final class HealthKitReader {
         return dates.compactMap { $0 }.min()
     }
 
-    /// One value per day in `days` (start of day ..< start of day), oldest first.
+    func batch(for days: DateInterval) async throws -> HealthBatch {
+        var batch = HealthBatch(days: days)
+        for metric in QuantityMetric.allCases {
+            batch.daily[metric] = try await daily(metric, in: days)
+        }
+        batch.standHours = try await standHours(in: days)
+        batch.sleepNights = try await sleepNights(in: days)
+        batch.overnight = try await overnightVitals(in: days)
+        batch.workouts = try await workouts(in: days)
+        return batch
+    }
+
+    /// One value per day in `days` (start of day ..< start of day), oldest first. Totals are merged
+    /// by Apple Health, which drops overlaps between apps by the source priority set in the Health app.
+    /// Readings such as HRV come from one app per metric; see `SourceMerge.rankByCoverage`.
     func daily(_ metric: QuantityMetric, in days: DateInterval) async throws -> [DayValue] {
+        guard metric.isCumulative else { return try await readings(metric, in: days) }
         let descriptor = HKStatisticsCollectionQueryDescriptor(
             predicate: .quantitySample(
                 type: HKQuantityType(metric.identifier),
                 predicate: HKQuery.predicateForSamples(withStart: days.start, end: days.end)
             ),
-            options: metric.isCumulative ? .cumulativeSum : .discreteAverage,
+            options: .cumulativeSum,
             anchorDate: days.start,
             intervalComponents: DateComponents(day: 1)
         )
         let collection = try await descriptor.result(for: store)
         var values: [DayValue] = []
         collection.enumerateStatistics(from: days.start, to: days.end) { statistics, _ in
-            let quantity = metric.isCumulative ? statistics.sumQuantity() : statistics.averageQuantity()
-            values.append(DayValue(day: statistics.startDate, value: quantity.map(metric.convert)))
+            values.append(DayValue(day: statistics.startDate, value: statistics.sumQuantity().map(metric.convert)))
         }
         return values
+    }
+
+    /// Daily averages of a reading, from the app with the most days of it lately; other apps fill only
+    /// the days it missed. Averaging apps together would blend devices that measure differently.
+    private func readings(_ metric: QuantityMetric, in days: DateInterval) async throws -> [DayValue] {
+        let start = min(days.start, calendar.date(byAdding: .day, value: -SourceMerge.coverageDays, to: days.end)!)
+        let descriptor = HKStatisticsCollectionQueryDescriptor(
+            predicate: .quantitySample(
+                type: HKQuantityType(metric.identifier),
+                predicate: HKQuery.predicateForSamples(withStart: start, end: days.end)
+            ),
+            options: [.discreteAverage, .separateBySource],
+            anchorDate: start,
+            intervalComponents: DateComponents(day: 1)
+        )
+        let collection = try await descriptor.result(for: store)
+        var bySource: [String: [DayValue]] = [:]
+        collection.enumerateStatistics(from: start, to: days.end) { statistics, _ in
+            for source in statistics.sources ?? [] {
+                if let average = statistics.averageQuantity(for: source) {
+                    bySource[source.bundleIdentifier, default: []].append(DayValue(day: statistics.startDate, value: metric.convert(average)))
+                }
+            }
+        }
+        let order = SourceMerge.rankByCoverage(bySource, endingBefore: days.end, calendar: calendar)
+        return SourceMerge.firstAvailable(bySource, order: order, days: dayStarts(in: days))
     }
 
     /// Hourly totals of a cumulative metric in `interval`, oldest first; hours without data are left out.
@@ -136,11 +180,17 @@ final class HealthKitReader {
 
     /// Average heart rate per 5 minutes, oldest first; intervals without data are left out.
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
+        try await heartRate(in: interval, from: nil)
+    }
+
+    /// `from` limits the readings to one app; nil uses every app.
+    private func heartRate(in interval: DateInterval, from source: HKSource?) async throws -> [TimedValue] {
+        var predicate = HKQuery.predicateForSamples(withStart: interval.start, end: interval.end)
+        if let source {
+            predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [predicate, HKQuery.predicateForObjects(from: source)])
+        }
         let descriptor = HKStatisticsCollectionQueryDescriptor(
-            predicate: .quantitySample(
-                type: HKQuantityType(.heartRate),
-                predicate: HKQuery.predicateForSamples(withStart: interval.start, end: interval.end)
-            ),
+            predicate: .quantitySample(type: HKQuantityType(.heartRate), predicate: predicate),
             options: .discreteAverage,
             anchorDate: interval.start,
             intervalComponents: DateComponents(minute: 5)
@@ -155,23 +205,33 @@ final class HealthKitReader {
         return values
     }
 
-    /// HRV and lowest heart rate while asleep, for each wake-up day in `days`.
+    /// HRV and lowest heart rate while asleep, for each wake-up day in `days`. Both come from the app with
+    /// the most days of HRV lately, as `readings` picks, so each night's values come from one device.
     func overnightVitals(in days: DateInterval) async throws -> [OvernightVitals] {
         // Start the afternoon before the first day so that night is complete.
         let window = DateInterval(start: calendar.date(byAdding: .hour, value: -12, to: days.start)!, end: days.end)
         let sleep = try await sleepPeriods(in: window)
         guard !sleep.isEmpty else { return [] }
+        let coverageStart = min(window.start, calendar.date(byAdding: .day, value: -SourceMerge.coverageDays, to: days.end)!)
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.quantitySample(
                 type: HKQuantityType(.heartRateVariabilitySDNN),
-                predicate: HKQuery.predicateForSamples(withStart: window.start, end: window.end)
+                predicate: HKQuery.predicateForSamples(withStart: coverageStart, end: window.end)
             )],
             sortDescriptors: [SortDescriptor(\.startDate)]
         )
-        let hrv = try await descriptor.result(for: store).map {
+        let samples = try await descriptor.result(for: store)
+        let daysBySource = Dictionary(grouping: samples) { $0.sourceRevision.source.bundleIdentifier }.mapValues { samples in
+            Set(samples.map { calendar.startOfDay(for: $0.startDate) }).map { DayValue(day: $0, value: 1) }
+        }
+        let mainID = SourceMerge.rankByCoverage(daysBySource, endingBefore: days.end, calendar: calendar).first
+        let main = samples.first { $0.sourceRevision.source.bundleIdentifier == mainID }?.sourceRevision.source
+        let hrv = samples.filter { $0.sourceRevision.source == main && $0.startDate >= window.start }.map {
             TimedValue(date: $0.startDate, value: $0.quantity.doubleValue(for: .secondUnit(with: .milli)))
         }
-        return OvernightVitals.make(hrv: hrv, heartRate: try await heartRate(in: window), sleep: sleep, calendar: calendar)
+        var heartRate = try await self.heartRate(in: window, from: main)
+        if heartRate.isEmpty { heartRate = try await self.heartRate(in: window) }
+        return OvernightVitals.make(hrv: hrv, heartRate: heartRate, sleep: sleep, calendar: calendar)
             .filter { $0.wakeDay >= days.start && $0.wakeDay < days.end }
     }
 
@@ -234,13 +294,13 @@ final class HealthKitReader {
 
     private static let bpm = HKUnit.count().unitDivided(by: .minute())
 
-    /// Workouts that started in `days`, newest first.
+    /// Workouts that started in `days`, newest first. A workout several apps wrote is kept once.
     func workouts(in days: DateInterval) async throws -> [WorkoutSummary] {
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.workout(HKQuery.predicateForSamples(withStart: days.start, end: days.end))],
             sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)]
         )
-        return try await descriptor.result(for: store).map { workout in
+        let workouts = try await descriptor.result(for: store).map { workout in
             let info = WorkoutNames.info(for: workout.workoutActivityType)
             return WorkoutSummary(
                 id: workout.uuid.uuidString,
@@ -254,6 +314,7 @@ final class HealthKitReader {
                     .averageQuantity()?.doubleValue(for: .count().unitDivided(by: .minute()))
             )
         }
+        return SourceMerge.uniqueWorkouts(workouts)
     }
 
     func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail {

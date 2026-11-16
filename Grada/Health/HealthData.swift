@@ -43,7 +43,7 @@ nonisolated struct SleepNight: Equatable {
 }
 
 nonisolated struct WorkoutSummary: Hashable {
-    /// The Apple Health sample UUID, stable across devices.
+    /// The workout's ID in its source, e.g. the Apple Health sample UUID; stable across devices.
     let id: String
     let start: Date
     let duration: TimeInterval
@@ -51,6 +51,8 @@ nonisolated struct WorkoutSummary: Hashable {
     let symbol: String
     let energyKcal: Double?
     let averageHeartRate: Double?
+    /// The `HealthSource.id` the workout came from.
+    var source: String = HealthKitReader.sourceID
 }
 
 /// What a workout's own screen needs beyond its summary, read live from Apple Health on this device.
