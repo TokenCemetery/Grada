@@ -316,6 +316,13 @@ struct RelatedCardTests {
         #expect(CardKind.heartRate.related.kinds == [.resources, .dayIntensity, .strain, .healthStatus, .recovery, .healthAge])
     }
 
+    @Test func scoresListTheDataOfWhatTheyAreBasedOn() {
+        #expect(CardKind.steps.dataKinds == [.steps])
+        #expect(CardKind.heartRate.dataKinds.isEmpty, "Read live, not imported")
+        #expect(CardKind.recovery.dataKinds == [.overnightHRV, .hrv, .restingHeartRate, .sleep, .respiratoryRate])
+        #expect(CardKind.trainingReadiness.dataKinds.contains(.workouts))
+    }
+
     @Test func noDetailScreenLinksToARetiredCard() {
         for kind in CardKind.allCases {
             #expect(kind.related.kinds.allSatisfy { !$0.isRetired && $0 != kind }, "\(kind)")

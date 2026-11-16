@@ -208,6 +208,15 @@ struct SampleDataSource: HealthDataSource {
         lastDays(182).first
     }
 
+    /// A watch records everything; the phone also counts steps, distance and floors. Oura last sent HRV a week ago.
+    func origins() async throws -> [DataKind: [DataOrigin]] {
+        let today = calendar.startOfDay(for: .now)
+        var origins = Dictionary(uniqueKeysWithValues: DataKind.allCases.map { ($0, [DataOrigin(name: "Apple Watch", lastDay: today)]) })
+        for kind in [DataKind.steps, .distance, .floors] { origins[kind]!.append(DataOrigin(name: "iPhone", lastDay: today)) }
+        origins[.hrv]!.append(DataOrigin(name: "Oura", lastDay: calendar.date(byAdding: .day, value: -7, to: today)!))
+        return origins
+    }
+
     private func lastDays(_ count: Int) -> [Date] {
         let today = calendar.startOfDay(for: .now)
         return (0..<count).reversed().map { calendar.date(byAdding: .day, value: -$0, to: today)! }

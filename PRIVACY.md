@@ -1,6 +1,6 @@
 # Grada Privacy Policy
 
-Effective November 15, 2026
+Effective November 16, 2026
 
 Grada is an iPhone app that summarizes your health data from Apple Health. This policy explains what data Grada uses, where it is kept, and the control you have over it.
 
@@ -32,7 +32,7 @@ Grada uses the data only to show you daily summaries, scores, calendars and tren
 
 ## Where your data is stored
 
-Grada keeps a copy of daily summaries and workouts, together with your card layout and display settings, in the app's storage on your device.
+Grada keeps a copy of daily summaries and workouts, together with your card layout and display settings, in the app's storage on your device. With each day and workout it keeps the names Apple Health gives the apps and devices the data came from, such as "Oura" or "Apple Watch", to show you where your data came from.
 
 Grada can sync this copy between your devices through your private iCloud database. Data in that database belongs to your Apple Account, and only you can access it. The developer cannot read it. Apple stores it under the [Apple Privacy Policy](https://www.apple.com/legal/privacy/).
 

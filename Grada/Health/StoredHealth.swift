@@ -38,6 +38,10 @@ final class DaySummary {
     var sleepAwake: Double?
     var sleepUnspecified: Double?
 
+    /// Names of the apps and devices inside the source that this day's values came from, keyed by
+    /// `DataKind.rawValue`, e.g. ["hrv": ["Oura"], "steps": ["Oleg’s iPhone", "Oleg’s Apple Watch"]].
+    var origins: [String: [String]] = [:]
+
     init(day: Date, dayKey: String, source: String) {
         self.day = day
         self.dayKey = dayKey
@@ -99,6 +103,8 @@ final class WorkoutRecord {
     var symbol: String = ""
     var energyKcal: Double?
     var averageHeartRate: Double?
+    /// The app or device inside the source that recorded it.
+    var origin: String?
 
     init(_ workout: WorkoutSummary) {
         healthID = workout.id
@@ -109,11 +115,12 @@ final class WorkoutRecord {
         energyKcal = workout.energyKcal
         averageHeartRate = workout.averageHeartRate
         source = workout.source
+        origin = workout.origin
     }
 
     var summary: WorkoutSummary {
         WorkoutSummary(id: healthID, start: start, duration: duration, name: name, symbol: symbol,
-                       energyKcal: energyKcal, averageHeartRate: averageHeartRate, source: source)
+                       energyKcal: energyKcal, averageHeartRate: averageHeartRate, source: source, origin: origin)
     }
 }
 
@@ -195,7 +202,31 @@ struct StoredHealthData: HealthDataSource {
     }
 
     func workouts(days: Int) async throws -> [WorkoutSummary] {
-        let start = lastDays(days).first!
+        try workouts(since: lastDays(days).first!)
+    }
+
+    /// Per kind, the first source in order with origins wins each day, as it does for the values.
+    func origins() async throws -> [DataKind: [DataOrigin]] {
+        var lastDay: [DataKind: [String: Date]] = [:]
+        for dayRows in try rows(since: .distantPast).values {
+            for kind in DataKind.allCases {
+                guard let row = dayRows.first(where: { !($0.origins[kind.rawValue] ?? []).isEmpty }) else { continue }
+                for name in row.origins[kind.rawValue]! {
+                    lastDay[kind, default: [:]][name] = max(lastDay[kind]?[name] ?? .distantPast, row.day)
+                }
+            }
+        }
+        for workout in try workouts(since: .distantPast) {
+            guard let name = workout.origin else { continue }
+            let day = calendar.startOfDay(for: workout.start)
+            lastDay[.workouts, default: [:]][name] = max(lastDay[.workouts]?[name] ?? .distantPast, day)
+        }
+        return lastDay.mapValues { days in
+            days.map { DataOrigin(name: $0, lastDay: $1) }.sorted { ($0.lastDay, $1.name) > ($1.lastDay, $0.name) }
+        }
+    }
+
+    private func workouts(since start: Date) throws -> [WorkoutSummary] {
         let descriptor = FetchDescriptor<WorkoutRecord>(
             predicate: #Predicate { $0.start >= start },
             sortBy: [SortDescriptor(\.start, order: .reverse)]
@@ -239,7 +270,10 @@ struct StoredHealthData: HealthDataSource {
 
     /// Rows by day key, each day's sorted by source preference. If iCloud delivered a source's day twice, the first wins.
     private func rows(days: Int) throws -> [String: [DaySummary]] {
-        let start = lastDays(days).first!
+        try rows(since: lastDays(days).first!)
+    }
+
+    private func rows(since start: Date) throws -> [String: [DaySummary]] {
         let fetched = try context.fetch(FetchDescriptor<DaySummary>(predicate: #Predicate { $0.day >= start }))
         let rank = rank(Set(fetched.map(\.source)))
         var seen = Set<[String]>()

@@ -353,6 +353,42 @@ struct HealthImporterTests {
         let workouts = try await StoredHealthData(context: context, sources: [FakeSource(id: "preferred")]).workouts(days: 1)
         #expect(workouts.map(\.id) == ["watch"])
     }
+
+    @Test func listsWhereDataCameFromByLastDay() async throws {
+        var older = batch(steps: [5000, nil])
+        older.origins[.steps] = [day(-1): ["iPhone", "Apple Watch"]]
+        try importer.save(older, from: health)
+        var latest = batch(steps: [6000], workouts: [workout("run")])
+        latest.workouts[0].origin = "Garmin Connect · Forerunner 265"
+        latest.origins[.steps] = [today: ["Apple Watch"]]
+        latest.origins[.hrv] = [today: ["Oura"]]
+        try importer.save(latest, from: health)
+
+        let origins = try await StoredHealthData(context: context).origins()
+        #expect(origins[.steps] == [DataOrigin(name: "Apple Watch", lastDay: today), DataOrigin(name: "iPhone", lastDay: day(-1))])
+        #expect(origins[.hrv]?.map(\.name) == ["Oura"])
+        #expect(origins[.workouts] == [DataOrigin(name: "Garmin Connect · Forerunner 265", lastDay: today)])
+        #expect(origins[.sleep] == nil)
+    }
+
+    @Test func originsFollowTheSourceWhoseValuesAreUsed() async throws {
+        var preferred = batch(steps: [4000])
+        preferred.origins[.steps] = [today: ["Watch"]]
+        var other = batch(steps: [5000])
+        other.origins[.steps] = [today: ["Band"]]
+        try importer.save(other, from: "other")
+        try importer.save(preferred, from: "preferred")
+        let origins = try await StoredHealthData(context: context, sources: [FakeSource(id: "preferred")]).origins()
+        #expect(origins[.steps]?.map(\.name) == ["Watch"])
+    }
+
+    @Test func reimportFillsInOriginOfKeptWorkouts() async throws {
+        try importer.save(batch(steps: [nil], workouts: [workout("run")]), from: health)
+        var again = batch(steps: [nil], workouts: [workout("run")])
+        again.workouts[0].origin = "Apple Watch"
+        try importer.save(again, from: health)
+        #expect(try context.fetch(FetchDescriptor<WorkoutRecord>()).map(\.origin) == ["Apple Watch"])
+    }
 }
 
 /// A source that only exists to set the merge order.

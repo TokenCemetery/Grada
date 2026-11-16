@@ -65,40 +65,53 @@ final class HealthKitReader: HealthSource {
     func batch(for days: DateInterval) async throws -> HealthBatch {
         var batch = HealthBatch(days: days)
         for metric in QuantityMetric.allCases {
-            batch.daily[metric] = try await daily(metric, in: days)
+            (batch.daily[metric], batch.origins[DataKind(metric)]) = try await daily(metric, in: days)
         }
-        batch.standHours = try await standHours(in: days)
-        batch.sleepNights = try await sleepNights(in: days)
-        batch.overnight = try await overnightVitals(in: days)
+        (batch.standHours, batch.origins[.standHours]) = try await standHours(in: days)
+        (batch.sleepNights, batch.origins[.sleep]) = try await sleepNights(in: days)
+        (batch.overnight, batch.origins[.overnightHRV]) = try await overnightVitals(in: days)
         batch.workouts = try await workouts(in: days)
         return batch
     }
 
-    /// One value per day in `days` (start of day ..< start of day), oldest first. Totals are merged
-    /// by Apple Health, which drops overlaps between apps by the source priority set in the Health app.
-    /// Readings such as HRV come from one app per metric; see `SourceMerge.rankByCoverage`.
-    func daily(_ metric: QuantityMetric, in days: DateInterval) async throws -> [DayValue] {
+    /// The name Apple Health shows for a source, plus the device when it says more, e.g.
+    /// "Garmin Connect · Forerunner 265". Apple's own sources are already named after the device.
+    nonisolated static func originName(_ source: HKSource, device: HKDevice?) -> String {
+        guard let device = device?.name, !device.isEmpty, !source.name.localizedCaseInsensitiveContains(device) else {
+            return source.name
+        }
+        return "\(source.name) · \(device)"
+    }
+
+    /// One value per day in `days` (start of day ..< start of day), oldest first, and the apps it came
+    /// from. Totals are merged by Apple Health, which drops overlaps between apps by the source priority
+    /// set in the Health app. Readings such as HRV come from one app per metric; see `SourceMerge.rankByCoverage`.
+    func daily(_ metric: QuantityMetric, in days: DateInterval) async throws -> ([DayValue], [Date: [String]]) {
         guard metric.isCumulative else { return try await readings(metric, in: days) }
         let descriptor = HKStatisticsCollectionQueryDescriptor(
             predicate: .quantitySample(
                 type: HKQuantityType(metric.identifier),
                 predicate: HKQuery.predicateForSamples(withStart: days.start, end: days.end)
             ),
-            options: .cumulativeSum,
+            options: [.cumulativeSum, .separateBySource],
             anchorDate: days.start,
             intervalComponents: DateComponents(day: 1)
         )
         let collection = try await descriptor.result(for: store)
         var values: [DayValue] = []
+        var origins: [Date: [String]] = [:]
         collection.enumerateStatistics(from: days.start, to: days.end) { statistics, _ in
             values.append(DayValue(day: statistics.startDate, value: statistics.sumQuantity().map(metric.convert)))
+            let names = (statistics.sources ?? []).filter { (statistics.sumQuantity(for: $0).map(metric.convert) ?? 0) > 0 }
+                .map { Self.originName($0, device: nil) }
+            if !names.isEmpty { origins[statistics.startDate] = names.sorted() }
         }
-        return values
+        return (values, origins)
     }
 
     /// Daily averages of a reading, from the app with the most days of it lately; other apps fill only
     /// the days it missed. Averaging apps together would blend devices that measure differently.
-    private func readings(_ metric: QuantityMetric, in days: DateInterval) async throws -> [DayValue] {
+    private func readings(_ metric: QuantityMetric, in days: DateInterval) async throws -> ([DayValue], [Date: [String]]) {
         let start = min(days.start, calendar.date(byAdding: .day, value: -SourceMerge.coverageDays, to: days.end)!)
         let descriptor = HKStatisticsCollectionQueryDescriptor(
             predicate: .quantitySample(
@@ -111,15 +124,22 @@ final class HealthKitReader: HealthSource {
         )
         let collection = try await descriptor.result(for: store)
         var bySource: [String: [DayValue]] = [:]
+        var names: [String: String] = [:]
         collection.enumerateStatistics(from: start, to: days.end) { statistics, _ in
             for source in statistics.sources ?? [] {
                 if let average = statistics.averageQuantity(for: source) {
                     bySource[source.bundleIdentifier, default: []].append(DayValue(day: statistics.startDate, value: metric.convert(average)))
+                    names[source.bundleIdentifier] = Self.originName(source, device: nil)
                 }
             }
         }
         let order = SourceMerge.rankByCoverage(bySource, endingBefore: days.end, calendar: calendar)
-        return SourceMerge.firstAvailable(bySource, order: order, days: dayStarts(in: days))
+        let dayStarts = dayStarts(in: days)
+        let daysBySource = bySource.mapValues { Set($0.map(\.day)) }
+        let origins = dayStarts.reduce(into: [Date: [String]]()) { origins, day in
+            if let id = order.first(where: { daysBySource[$0]!.contains(day) }) { origins[day] = [names[id]!] }
+        }
+        return (SourceMerge.firstAvailable(bySource, order: order, days: dayStarts), origins)
     }
 
     /// Hourly totals of a cumulative metric in `interval`, oldest first; hours without data are left out.
@@ -143,8 +163,9 @@ final class HealthKitReader: HealthSource {
         return values
     }
 
-    /// Hours with at least a minute of standing, per day. All nil when no stand data exists at all.
-    func standHours(in days: DateInterval) async throws -> [DayValue] {
+    /// Hours with at least a minute of standing, per day, and the devices that recorded them. All nil
+    /// when no stand data exists at all.
+    func standHours(in days: DateInterval) async throws -> ([DayValue], [Date: [String]]) {
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.categorySample(
                 type: HKCategoryType(.appleStandHour),
@@ -154,14 +175,20 @@ final class HealthKitReader: HealthSource {
         )
         let samples = try await descriptor.result(for: store)
         let dayStarts = self.dayStarts(in: days)
-        guard !samples.isEmpty else { return dayStarts.map { DayValue(day: $0, value: nil) } }
-        let stood = samples.filter { $0.value == HKCategoryValueAppleStandHour.stood.rawValue }
-        let counts = Dictionary(grouping: stood) { calendar.startOfDay(for: $0.startDate) }.mapValues { Double($0.count) }
-        return dayStarts.map { DayValue(day: $0, value: counts[$0] ?? 0) }
+        guard !samples.isEmpty else { return (dayStarts.map { DayValue(day: $0, value: nil) }, [:]) }
+        let byDay = Dictionary(grouping: samples) { calendar.startOfDay(for: $0.startDate) }
+        let counts = byDay.mapValues { samples in
+            Double(samples.filter { $0.value == HKCategoryValueAppleStandHour.stood.rawValue }.count)
+        }
+        let origins = byDay.mapValues { samples in
+            Set(samples.map { Self.originName($0.sourceRevision.source, device: $0.device) }).sorted()
+        }
+        return (dayStarts.map { DayValue(day: $0, value: counts[$0] ?? 0) }, origins)
     }
 
-    /// Nights whose wake-up day falls in `days`, oldest first. Sleep counts toward the day you wake up.
-    func sleepNights(in days: DateInterval) async throws -> [SleepNight] {
+    /// Nights whose wake-up day falls in `days`, oldest first, and the app each came from. Sleep counts
+    /// toward the day you wake up.
+    func sleepNights(in days: DateInterval) async throws -> ([SleepNight], [Date: [String]]) {
         // Start the afternoon before the first day so that night is complete.
         let start = calendar.date(byAdding: .hour, value: -12, to: days.start)!
         let descriptor = HKSampleQueryDescriptor(
@@ -173,9 +200,15 @@ final class HealthKitReader: HealthSource {
         )
         let samples = try await descriptor.result(for: store)
         let byDay = Dictionary(grouping: samples) { SleepNight.wakeDay(forEnd: $0.endDate, calendar: calendar) }
-        return byDay.keys.filter { $0 >= days.start && $0 < days.end }.sorted().compactMap { day in
-            Self.night(wakeDay: day, samples: byDay[day]!)
+        var nights: [SleepNight] = []
+        var origins: [Date: [String]] = [:]
+        for day in byDay.keys.filter({ $0 >= days.start && $0 < days.end }).sorted() {
+            let best = Self.bestSource(byDay[day]!)
+            guard let first = best.first else { continue }
+            nights.append(Self.night(wakeDay: day, sourceSamples: best))
+            origins[day] = [Self.originName(first.sourceRevision.source, device: first.device)]
         }
+        return (nights, origins)
     }
 
     /// Average heart rate per 5 minutes, oldest first; intervals without data are left out.
@@ -205,13 +238,14 @@ final class HealthKitReader: HealthSource {
         return values
     }
 
-    /// HRV and lowest heart rate while asleep, for each wake-up day in `days`. Both come from the app with
-    /// the most days of HRV lately, as `readings` picks, so each night's values come from one device.
-    func overnightVitals(in days: DateInterval) async throws -> [OvernightVitals] {
+    /// HRV and lowest heart rate while asleep, for each wake-up day in `days`, and the app they came from.
+    /// Both come from the app with the most days of HRV lately, as `readings` picks, so each night's values
+    /// come from one device.
+    func overnightVitals(in days: DateInterval) async throws -> ([OvernightVitals], [Date: [String]]) {
         // Start the afternoon before the first day so that night is complete.
         let window = DateInterval(start: calendar.date(byAdding: .hour, value: -12, to: days.start)!, end: days.end)
         let sleep = try await sleepPeriods(in: window)
-        guard !sleep.isEmpty else { return [] }
+        guard !sleep.isEmpty else { return ([], [:]) }
         let coverageStart = min(window.start, calendar.date(byAdding: .day, value: -SourceMerge.coverageDays, to: days.end)!)
         let descriptor = HKSampleQueryDescriptor(
             predicates: [.quantitySample(
@@ -230,9 +264,18 @@ final class HealthKitReader: HealthSource {
             TimedValue(date: $0.startDate, value: $0.quantity.doubleValue(for: .secondUnit(with: .milli)))
         }
         var heartRate = try await self.heartRate(in: window, from: main)
+        // Without HRV from any app, heart rate from every app is used, so no one app can be named.
+        let mainName = main.map { main in
+            Self.originName(main, device: samples.first { $0.sourceRevision.source == main }?.device)
+        }
         if heartRate.isEmpty { heartRate = try await self.heartRate(in: window) }
-        return OvernightVitals.make(hrv: hrv, heartRate: heartRate, sleep: sleep, calendar: calendar)
+        let nights = OvernightVitals.make(hrv: hrv, heartRate: heartRate, sleep: sleep, calendar: calendar)
             .filter { $0.wakeDay >= days.start && $0.wakeDay < days.end }
+        var origins: [Date: [String]] = [:]
+        if let mainName {
+            for night in nights where night.hrv != nil || night.heartRate != nil { origins[night.wakeDay] = [mainName] }
+        }
+        return (nights, origins)
     }
 
     /// Sleep stages overlapping `interval`, oldest first, from the best source of each night.
@@ -311,7 +354,8 @@ final class HealthKitReader: HealthSource {
                 energyKcal: workout.statistics(for: HKQuantityType(.activeEnergyBurned))?
                     .sumQuantity()?.doubleValue(for: .kilocalorie()),
                 averageHeartRate: workout.statistics(for: HKQuantityType(.heartRate))?
-                    .averageQuantity()?.doubleValue(for: .count().unitDivided(by: .minute()))
+                    .averageQuantity()?.doubleValue(for: .count().unitDivided(by: .minute())),
+                origin: Self.originName(workout.sourceRevision.source, device: workout.device)
             )
         }
         return SourceMerge.uniqueWorkouts(workouts)
@@ -401,13 +445,7 @@ final class HealthKitReader: HealthSource {
     }
 
     /// Several apps and watches can record the same night. Using one source avoids double counting:
-    /// the one with sleep stages, then the one with the most sleep.
-    private static func night(wakeDay: Date, samples: [HKCategorySample]) -> SleepNight? {
-        let best = bestSource(samples)
-        return best.isEmpty ? nil : night(wakeDay: wakeDay, sourceSamples: best)
-    }
-
-    /// One night's samples from the source with sleep stages, then the one with the most sleep.
+    /// one night's samples from the source with sleep stages, then the one with the most sleep.
     private static func bestSource(_ samples: [HKCategorySample]) -> [HKCategorySample] {
         let bySource = Dictionary(grouping: samples) { $0.sourceRevision.source.bundleIdentifier }.values
         let best = bySource.map { ($0, night(wakeDay: .distantPast, sourceSamples: $0)) }.max { lhs, rhs in

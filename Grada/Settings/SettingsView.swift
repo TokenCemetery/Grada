@@ -105,8 +105,11 @@ private struct AccessibilityView: View {
     }
 }
 
+/// Each kind of data Grada reads, and the apps and devices it came from, like Health's Data Sources & Access.
 private struct DataSourceView: View {
     @Environment(\.openURL) private var openURL
+    @Environment(\.healthSource) private var source
+    @State private var origins: [DataKind: [DataOrigin]]?
 
     var body: some View {
         Form {
@@ -117,8 +120,25 @@ private struct DataSourceView: View {
             } footer: {
                 Text("Grada reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps. Manage what Grada can read in Health › Sharing › Apps.")
             }
+            if let origins {
+                ForEach(DataKind.allCases) { kind in
+                    Section(kind.title) {
+                        if let list = origins[kind] {
+                            ForEach(list, id: \.name) { origin in
+                                LabeledContent(origin.name, value: OriginsView.lastDay(origin.lastDay))
+                            }
+                        } else {
+                            Text("No data yet").foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                Section {} footer: {
+                    Text("When several apps record the same readings, Grada uses the one that recorded the most days in the last month, and one app per night for sleep. Apple Health combines totals such as steps by the order set in the Health app's Data Sources & Access.")
+                }
+            }
         }
         .navigationTitle("Data Source")
+        .task { origins = (try? await source.origins()) ?? [:] }
     }
 }
 

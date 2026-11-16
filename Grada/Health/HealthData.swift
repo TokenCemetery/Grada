@@ -53,6 +53,8 @@ nonisolated struct WorkoutSummary: Hashable {
     let averageHeartRate: Double?
     /// The `HealthSource.id` the workout came from.
     var source: String = HealthKitReader.sourceID
+    /// The app or device inside the source that recorded it, e.g. "Garmin Connect · Forerunner 265".
+    var origin: String?
 }
 
 /// What a workout's own screen needs beyond its summary, read live from Apple Health on this device.
@@ -130,6 +132,59 @@ nonisolated struct OvernightVitals: Equatable {
     }
 }
 
+/// The kinds of imported data Grada keeps origins for, in the order Settings › Data Source lists them.
+/// Raw values are stored with each day, so they must never change.
+nonisolated enum DataKind: String, CaseIterable, Identifiable {
+    case restingHeartRate, hrv, overnightHRV, oxygenSaturation, respiratoryRate, wristTemperature, vo2Max
+    case sleep
+    case steps, activeEnergy, exerciseMinutes, distance, floors, standHours
+    case workouts
+
+    var id: String { rawValue }
+
+    init(_ metric: QuantityMetric) {
+        self = switch metric {
+        case .restingHeartRate: .restingHeartRate
+        case .hrv: .hrv
+        case .oxygenSaturation: .oxygenSaturation
+        case .respiratoryRate: .respiratoryRate
+        case .wristTemperature: .wristTemperature
+        case .steps: .steps
+        case .activeEnergy: .activeEnergy
+        case .exerciseMinutes: .exerciseMinutes
+        case .distance: .distance
+        case .floors: .floors
+        case .vo2Max: .vo2Max
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .restingHeartRate: "Resting Heart Rate"
+        case .hrv: "Heart Rate Variability"
+        case .overnightHRV: "HRV and Heart Rate While Asleep"
+        case .oxygenSaturation: "Blood Oxygen"
+        case .respiratoryRate: "Respiratory Rate"
+        case .wristTemperature: "Wrist Temperature"
+        case .vo2Max: "VO₂ Max"
+        case .sleep: "Sleep"
+        case .steps: "Steps"
+        case .activeEnergy: "Active Energy"
+        case .exerciseMinutes: "Exercise Minutes"
+        case .distance: "Walking and Running Distance"
+        case .floors: "Floors Climbed"
+        case .standHours: "Stand Hours"
+        case .workouts: "Workouts"
+        }
+    }
+}
+
+/// An app or device whose data Grada used, and the last day it did.
+nonisolated struct DataOrigin: Hashable {
+    let name: String
+    let lastDay: Date
+}
+
 /// Biological sex as Apple Health records it; zone tables like VO₂ max fitness depend on it.
 nonisolated enum BiologicalSex { case female, male }
 
@@ -160,11 +215,14 @@ protocol HealthDataSource {
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue]
     /// Heart rate, distance and route of one workout.
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail
+    /// The apps and devices whose data Grada used, per kind of data, most recently used first.
+    func origins() async throws -> [DataKind: [DataOrigin]]
 }
 
 extension HealthDataSource {
     func earliestDay() async throws -> Date? { nil }
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] { [] }
+    func origins() async throws -> [DataKind: [DataOrigin]] { [:] }
 
     /// Without workout samples, the 5-minute heart rate during the workout.
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {

@@ -12,6 +12,8 @@ struct HealthBatch {
     var sleepNights: [SleepNight] = []
     var overnight: [OvernightVitals] = []
     var workouts: [WorkoutSummary] = []
+    /// Names of the apps and devices inside the source that each day's values came from.
+    var origins: [DataKind: [Date: [String]]] = [:]
 }
 
 /// Copies each source's data into the app's store: the whole history on first launch,
@@ -36,9 +38,10 @@ final class HealthImporter {
 
     /// Oldest day imported so far, per source; lets an interrupted history import resume.
     /// Versioned: bumping it re-imports the whole history once, e.g. v2 added overnight vitals and
-    /// bed and wake times; v3 removes workouts and readings that several apps wrote to Apple Health.
-    private static func importedFromKey(_ source: any HealthSource) -> String { "historyImportedFrom.\(source.id).v3" }
-    private static func historyDoneKey(_ source: any HealthSource) -> String { "historyImportDone.\(source.id).v3" }
+    /// bed and wake times; v3 removes workouts and readings that several apps wrote to Apple Health;
+    /// v4 keeps which app or device each value came from.
+    private static func importedFromKey(_ source: any HealthSource) -> String { "historyImportedFrom.\(source.id).v4" }
+    private static func historyDoneKey(_ source: any HealthSource) -> String { "historyImportDone.\(source.id).v4" }
     /// Re-imported on every refresh: today, plus nights and late-syncing watches from the days before.
     static let recentDays = 3
 
@@ -219,6 +222,9 @@ final class HealthImporter {
                 summary.sleepingHeartRate = overnight?.heartRate
                 summary.bedtime = overnight?.bedtime
                 summary.wakeTime = overnight?.wakeTime
+                summary.origins = batch.origins.reduce(into: [:]) { origins, entry in
+                    if let names = entry.value[day], !names.isEmpty { origins[entry.key.rawValue] = names }
+                }
                 summary.updatedAt = .now
             }
             day = calendar.date(byAdding: .day, value: 1, to: day)!
@@ -230,7 +236,9 @@ final class HealthImporter {
             predicate: #Predicate { $0.source == source && $0.start >= start && $0.start < end }
         )
         for record in try context.fetch(workoutDescriptor) {
-            if fetched[record.healthID] == nil || !kept.insert(record.healthID).inserted {
+            if let workout = fetched[record.healthID], kept.insert(record.healthID).inserted {
+                record.origin = workout.origin
+            } else {
                 context.delete(record)
             }
         }

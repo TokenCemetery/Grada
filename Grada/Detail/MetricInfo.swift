@@ -100,6 +100,21 @@ extension CardKind {
         }
     }
 
+    /// The imported data a card is built from, for "Data from" on its detail screen. Heart rate through
+    /// the day is read live from Apple Health rather than imported, so it has no stored origin.
+    var dataKinds: [DataKind] {
+        var kinds: [DataKind] = switch self {
+        case .heartRate: []
+        case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: [.sleep]
+        case .standHours: [.standHours]
+        case .lastWorkout, .weeklyTraining: [.workouts]
+        case .recovery, .hrvStatus: [.overnightHRV]
+        default: quantityMetric.map { [DataKind($0)] } ?? []
+        }
+        for kind in basedOn.flatMap(\.dataKinds) where !kinds.contains(kind) { kinds.append(kind) }
+        return kinds
+    }
+
     /// The cards a detail screen links to: what this score is based on, or else what this metric affects.
     /// Retired inputs link to their replacement, which also lists what the retired card affected.
     var related: (title: String, kinds: [CardKind]) {

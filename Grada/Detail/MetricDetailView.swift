@@ -13,6 +13,7 @@ struct MetricDetailView: View {
     @State private var trend: Trend?
     @State private var trendLoaded = false
     @State private var breakdown: Breakdown?
+    @State private var origins: [(kind: DataKind, origins: [DataOrigin])] = []
 
     private var kind: CardKind { route.kind }
     private var calendar: Calendar { .current }
@@ -32,6 +33,9 @@ struct MetricDetailView: View {
                 }
                 DetailSection(title: "What it means") {
                     Text(kind.explanation).font(.subheadline).foregroundStyle(.secondary)
+                }
+                if !origins.isEmpty {
+                    DetailSection(title: "Data from") { OriginsView(origins: origins) }
                 }
                 if !kind.sources.isEmpty || kind.estimateNote != nil {
                     DetailSection(title: "Sources") { SourcesView(kind: kind) }
@@ -83,6 +87,8 @@ struct MetricDetailView: View {
             var builder = SnapshotBuilder.forDay(day, source: baseSource, calendar: calendar)
             builder.goals = GoalHistory(goalChanges)
             snapshot = try? await builder.snapshot(for: kind)
+            let all = (try? await baseSource.origins()) ?? [:]
+            origins = kind.dataKinds.compactMap { kind in all[kind].map { (kind, $0) } }
         }
         .task(id: period) {
             var trendBuilder = TrendBuilder(source: source, calendar: calendar)
@@ -163,6 +169,39 @@ private struct SourcesView: View {
                 }
             }
         }
+    }
+}
+
+/// The apps and devices whose data the card used, per kind of data, each with the last day it sent data.
+struct OriginsView: View {
+    let origins: [(kind: DataKind, origins: [DataOrigin])]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(origins, id: \.kind) { entry in
+                VStack(alignment: .leading, spacing: 2) {
+                    if origins.count > 1 {
+                        Text(entry.kind.title).font(.caption).foregroundStyle(.secondary)
+                    }
+                    ForEach(entry.origins, id: \.name) { origin in
+                        HStack {
+                            Text(origin.name)
+                            Spacer()
+                            Text(Self.lastDay(origin.lastDay)).foregroundStyle(.secondary)
+                        }
+                        .font(.subheadline)
+                    }
+                }
+            }
+        }
+    }
+
+    /// "Today", "Yesterday" or the date; Grada stores data per day, so there's no time to show.
+    static func lastDay(_ day: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(day) { return "Today" }
+        if calendar.isDateInYesterday(day) { return "Yesterday" }
+        return day.formatted(date: .abbreviated, time: .omitted)
     }
 }
 
