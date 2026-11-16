@@ -45,7 +45,8 @@ final class SimulatorHealthSeeder {
     /// Deletes only what this app wrote; data from other sources is untouched.
     func removeSampleData() async throws {
         let ownData = HKQuery.predicateForObjects(from: HKSource.default())
-        for type in Self.writeTypes {
+        // Deleting a type without write access throws, which would skip every type after it.
+        for type in Self.writeTypes where store.authorizationStatus(for: type) == .sharingAuthorized {
             _ = try await store.deleteObjects(of: type, predicate: ownData)
         }
     }
