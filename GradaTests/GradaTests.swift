@@ -382,6 +382,36 @@ struct HealthImporterTests {
         #expect(origins[.steps]?.map(\.name) == ["Watch"])
     }
 
+    @Test func fileImportsAddUpAndRepeatingChangesNothing() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let run = folder.appendingPathComponent("run.fit"), hrv = folder.appendingPathComponent("hrv.fit")
+        try FITImportTests.activity(start: day(0).addingTimeInterval(3600)).write(to: run)
+        try FITImportTests.hrv([(day(0).addingTimeInterval(2 * 3600), 50)]).write(to: hrv)
+
+        _ = try await importer.importFiles([run])
+        _ = try await importer.importFiles([hrv])
+        _ = try await importer.importFiles([run, hrv])
+        let stored = StoredHealthData(context: context)
+        #expect(try await stored.workouts(days: 1).map(\.name) == ["Run"])
+        #expect(try await stored.overnight(days: 1).map(\.hrv) == [50])
+        #expect(try context.fetchCount(FetchDescriptor<DaySummary>()) == 1)
+        #expect(try context.fetchCount(FetchDescriptor<WorkoutRecord>()) == 1)
+    }
+
+    @Test func importedHRVJoinsANightAppleHealthHasSleepFor() async throws {
+        var fromHealth = batch(steps: [nil])
+        fromHealth.overnight = [OvernightVitals(wakeDay: today, bedtime: today - 3600, wakeTime: today + 7 * 3600)]
+        try importer.save(fromHealth, from: health)
+        var fromFile = batch(steps: [nil])
+        fromFile.overnight = [OvernightVitals(wakeDay: today, hrv: 50)]
+        try importer.save(fromFile, from: FITImport.sourceID, merging: true)
+
+        let nights = try await StoredHealthData(context: context, sources: [FakeSource(id: health)]).overnight(days: 1)
+        #expect(nights.map(\.hrv) == [50])
+        #expect(nights.map(\.bedtime) == [today - 3600])
+    }
+
     @Test func reimportFillsInOriginOfKeptWorkouts() async throws {
         try importer.save(batch(steps: [nil], workouts: [workout("run")]), from: health)
         var again = batch(steps: [nil], workouts: [workout("run")])

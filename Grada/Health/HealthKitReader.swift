@@ -504,7 +504,7 @@ extension QuantityMetric {
     }
 }
 
-private enum WorkoutNames {
+nonisolated enum WorkoutNames {
     static func info(for type: HKWorkoutActivityType) -> (name: String, symbol: String) {
         switch type {
         case .running: ("Run", "figure.run")

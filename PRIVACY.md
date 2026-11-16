@@ -6,7 +6,7 @@ Grada is an iPhone app that summarizes your health data from Apple Health. This 
 
 ## Summary
 
-- Grada reads health data from Apple Health only with your permission.
+- Grada reads health data from Apple Health only with your permission, and from FIT files only when you choose them.
 - Your data stays on your devices and in your own private iCloud account. The developer never receives it.
 - Grada has no accounts, no analytics, no advertising and no third-party code, and it does not send your data over the network to anyone.
 - Grada never writes to, changes or deletes your Apple Health data.
@@ -24,7 +24,11 @@ When you grant access, Grada reads these types from Apple Health:
 
 You choose which types to share in the iOS permission screen. Grada works with whatever you allow and shows no data for the rest.
 
-Data from other apps and devices, such as Garmin or Oura, reaches Grada only through Apple Health, under the same permissions.
+Data from other apps and devices, such as Garmin or Oura, reaches Grada through Apple Health, under the same permissions, or from FIT files you import.
+
+## Files you import
+
+In Settings › Import › FIT Files you can choose FIT files, the format Garmin and other watches record in, or a folder of them such as a Garmin data export. Grada reads only the files you choose, on your device, and reads workouts, sleep stages, overnight heart rate variability and resting heart rate from them. It keeps what it read with the rest of its copy, described below, labelled with the device's brand, such as "Garmin (imported)". It doesn't keep the files or send them anywhere.
 
 ## How Grada uses it
 

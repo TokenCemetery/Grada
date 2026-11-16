@@ -183,10 +183,18 @@ final class HealthImporter {
         try save(batch, from: source.id)
     }
 
+    /// Reads FIT files the user picked and adds what they hold to what earlier imports saved.
+    func importFiles(_ urls: [URL]) async throws -> FITImport {
+        let files = await FITImport.read(urls, calendar: calendar)
+        if let batch = files.batch(calendar: calendar) { try save(batch, from: FITImport.sourceID, merging: true) }
+        return files
+    }
+
     /// Upserts one source's batch: one summary per day, one record per workout. Touches only that
     /// source's rows. Removes duplicates (e.g. from two devices importing the same history) and
-    /// workouts deleted from the source.
-    func save(_ batch: HealthBatch, from source: String) throws {
+    /// workouts deleted from the source. With `merging`, as for file imports that each hold only some
+    /// days and kinds of data, values and workouts the batch lacks are kept instead.
+    func save(_ batch: HealthBatch, from source: String, merging: Bool = false) throws {
         let start = batch.days.start, end = batch.days.end
 
         var summaries: [String: DaySummary] = [:]
@@ -204,6 +212,8 @@ final class HealthImporter {
             Dictionary(values.map { ($0.day, $0.value) }, uniquingKeysWith: { first, _ in first })
         }
 
+        func update<Value>(_ new: Value?, keeping old: Value?) -> Value? { merging ? new ?? old : new }
+
         var day = start
         while day < end {
             let key = DayKey.make(day, calendar: calendar)
@@ -215,16 +225,17 @@ final class HealthImporter {
 
             if let summary = summaries[key] ?? (hasData ? DaySummary(day: day, dayKey: key, source: source) : nil) {
                 if summaries[key] == nil { context.insert(summary) }
-                for (metric, value) in metrics { summary.setValue(value, for: metric) }
-                summary.standHours = stand
-                summary.setSleep(sleep)
-                summary.overnightHRV = overnight?.hrv
-                summary.sleepingHeartRate = overnight?.heartRate
-                summary.bedtime = overnight?.bedtime
-                summary.wakeTime = overnight?.wakeTime
-                summary.origins = batch.origins.reduce(into: [:]) { origins, entry in
+                for (metric, value) in metrics { summary.setValue(update(value, keeping: summary.value(for: metric)), for: metric) }
+                summary.standHours = update(stand, keeping: summary.standHours)
+                if sleep != nil || !merging { summary.setSleep(sleep) }
+                summary.overnightHRV = update(overnight?.hrv, keeping: summary.overnightHRV)
+                summary.sleepingHeartRate = update(overnight?.heartRate, keeping: summary.sleepingHeartRate)
+                summary.bedtime = update(overnight?.bedtime, keeping: summary.bedtime)
+                summary.wakeTime = update(overnight?.wakeTime, keeping: summary.wakeTime)
+                let origins: [String: [String]] = batch.origins.reduce(into: [:]) { origins, entry in
                     if let names = entry.value[day], !names.isEmpty { origins[entry.key.rawValue] = names }
                 }
+                summary.origins = merging ? summary.origins.merging(origins) { Array(Set($0 + $1)).sorted() } : origins
                 summary.updatedAt = .now
             }
             day = calendar.date(byAdding: .day, value: 1, to: day)!
@@ -236,9 +247,9 @@ final class HealthImporter {
             predicate: #Predicate { $0.source == source && $0.start >= start && $0.start < end }
         )
         for record in try context.fetch(workoutDescriptor) {
-            if let workout = fetched[record.healthID], kept.insert(record.healthID).inserted {
-                record.origin = workout.origin
-            } else {
+            if let workout = fetched[record.healthID] {
+                if kept.insert(record.healthID).inserted { record.origin = workout.origin } else { context.delete(record) }
+            } else if !merging {
                 context.delete(record)
             }
         }

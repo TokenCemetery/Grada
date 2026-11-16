@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 enum Appearance: String, CaseIterable, Identifiable {
     case system, light, dark
@@ -34,6 +35,7 @@ struct SettingsView: View {
                     NavigationLink { ThemeView() } label: { SettingsRow("Theme", icon: "paintpalette.fill", color: .indigo) }
                     NavigationLink { AccessibilityView() } label: { SettingsRow("Accessibility", icon: "accessibility", color: .cyan) }
                     NavigationLink { DataSourceView() } label: { SettingsRow("Data Source", icon: "heart.fill", color: .pink) }
+                    NavigationLink { ImportView() } label: { SettingsRow("Import", icon: "square.and.arrow.down.fill", color: .orange) }
 #if DEBUG && targetEnvironment(simulator)
                     NavigationLink { SimulatorDataView() } label: { SettingsRow("Simulator Data", icon: "hammer.fill", color: .gray) }
 #endif
@@ -118,7 +120,7 @@ private struct DataSourceView: View {
                     if let url = URL(string: "x-apple-health://") { openURL(url) }
                 }
             } footer: {
-                Text("Grada reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps. Manage what Grada can read in Health › Sharing › Apps.")
+                Text("Grada reads from Apple Health. To include Garmin, Oura or other devices, turn on Apple Health sync in their apps, or import their FIT files in Settings › Import. Manage what Grada can read in Health › Sharing › Apps.")
             }
             if let origins {
                 ForEach(DataKind.allCases) { kind in
@@ -139,6 +141,124 @@ private struct DataSourceView: View {
         }
         .navigationTitle("Data Source")
         .task { origins = (try? await source.origins()) ?? [:] }
+    }
+}
+
+/// Ways to bring in data that doesn't reach Apple Health, one row per kind of file.
+private struct ImportView: View {
+    var body: some View {
+        Form {
+            NavigationLink { ImportFilesView() } label: { SettingsRow("FIT Files", icon: "applewatch", color: .blue) }
+        }
+        .navigationTitle("Import")
+    }
+}
+
+/// Imports FIT files from watches whose Apple Health sync leaves data out, such as Garmin's overnight HRV.
+private struct ImportFilesView: View {
+    @Environment(HomeModel.self) private var model
+    @State private var isPicking = false
+    @State private var isImporting = false
+    @State private var result: FITImport?
+    @State private var error: String?
+
+    /// Folders let the user pick an unzipped Garmin export as a whole.
+    private static let types: [UTType] = [UTType(filenameExtension: "fit") ?? .data, .folder]
+
+    var body: some View {
+        Form {
+            Section {
+                Button("Choose Files or Folder") { isPicking = true }
+                    .disabled(isImporting || model.importer == nil)
+                if isImporting {
+                    LabeledContent("Reading files…") { ProgressView() }
+                }
+                if let error {
+                    Text(error).foregroundStyle(.red)
+                }
+            } header: {
+                Text("Garmin, COROS, Polar and Suunto devices record workouts in FIT files. Import them to bring in data their Apple Health sync leaves out. Files are read on this iPhone and never uploaded, and importing the same files again changes nothing.")
+                    .textCase(nil)
+            }
+            if let result {
+                Section {
+                    LabeledContent("Workouts", value: "\(result.workouts.count)")
+                    LabeledContent("Nights of Sleep", value: "\(result.sleepNights.count)")
+                    LabeledContent("Nights with HRV", value: "\(result.overnight.filter { $0.hrv != nil }.count)")
+                    LabeledContent("Days with Resting Heart Rate", value: "\(result.restingHeartRate.count)")
+                } header: {
+                    Text("Last Import")
+                } footer: {
+                    Text(result.filesRead == 1 ? "Read 1 file." : "Read \(result.filesRead) files.")
+                }
+                if !result.failures.isEmpty {
+                    Section("Couldn't Read") {
+                        ForEach(Array(result.failures.enumerated()), id: \.offset) { _, failure in
+                            VStack(alignment: .leading) {
+                                Text(failure.file)
+                                Text(failure.reason).font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+            Section {
+                ForEach(Self.guides, id: \.service) { guide in
+                    DisclosureGroup(guide.service) {
+                        ForEach(Array(guide.steps.enumerated()), id: \.offset) { index, step in
+                            Label { Text(step) } icon: { Text("\(index + 1).").monospacedDigit() }
+                        }
+                    }
+                }
+            } header: {
+                Text("How to Get FIT Files")
+            } footer: {
+                Text("Exports hold workouts. Sleep, overnight HRV and resting heart rate are read from Garmin watches' own daily FIT files when you have them; Garmin's account export may not include them.")
+            }
+        }
+        .navigationTitle("FIT Files")
+        .fileImporter(isPresented: $isPicking, allowedContentTypes: Self.types, allowsMultipleSelection: true) { picked in
+            switch picked {
+            case .success(let urls) where !urls.isEmpty: importFiles(urls)
+            case .success: break
+            case .failure(let failure): error = failure.localizedDescription
+            }
+        }
+    }
+
+    /// The services from #85 that export FIT files. Steps from their support pages; Garmin's from third-party guides.
+    private static let guides: [(service: String, steps: [String])] = [
+        ("Garmin", [
+            "On connect.garmin.com, open an activity, click the gear icon and choose Export Original. Garmin Connect on iPhone can't export files.",
+            "For your whole history, request an export on garmin.com in Account › Data Management › Export Your Data. Garmin emails a link, which can take several days.",
+            "Unzip the download in the Files app. In a full export, the FIT files are in zip files inside DI_CONNECT › DI-Connect-Uploaded-Files; unzip those too.",
+            "Choose the .fit files, or the unzipped folder.",
+        ]),
+        ("COROS", [
+            "For one activity: in the COROS app, open it under Activities, tap ⋯, choose Export Data, then .FIT, and save it to Files.",
+            "For your whole history: on t.coros.com, open Activity List, choose Export Data and pick .FIT. COROS emails the files.",
+            "Unzip them in the Files app if they arrive zipped, then choose them here.",
+        ]),
+        ("Polar", [
+            "On flow.polar.com, open Diary and click a training session.",
+            "Open the Export menu and choose FIT file. Sessions export one at a time.",
+            "Save the file to Files, then choose it here.",
+        ]),
+        ("Suunto", [
+            "In the Suunto app, open a workout and tap ⋯.",
+            "Export it as a FIT file and save it to Files. Workouts export one at a time.",
+            "Choose the file here.",
+        ]),
+    ]
+
+    private func importFiles(_ urls: [URL]) {
+        guard let importer = model.importer else { return }
+        isImporting = true
+        error = nil
+        Task {
+            do { result = try await importer.importFiles(urls) } catch { self.error = error.localizedDescription }
+            isImporting = false
+        }
     }
 }
 

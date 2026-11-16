@@ -9,7 +9,9 @@ Grada is an iPhone and iPad app that turns your Apple Health data into a daily s
 
 ## Data
 
-Grada reads Apple Health only. Garmin, Suunto and other devices show up through their own Apple Health sync. Grada never writes to Apple Health.
+Grada reads Apple Health. Garmin, Suunto and other devices show up through their own Apple Health sync. Grada never writes to Apple Health.
+
+For data a device's Apple Health sync leaves out, such as Garmin's overnight HRV, **Settings › Import › FIT Files** imports FIT files, or a folder of them such as an unzipped Garmin data export. Grada reads workouts, sleep stages, overnight HRV and resting heart rate from them, on the device, without network access. Data in Apple Health comes first; imported files fill the days it has nothing for. Importing the same files again changes nothing, and files Grada can't read are named.
 
 Settings › Data Source lists each kind of data Grada reads and the apps and devices it came from, with the last day each sent data. Each metric's detail screen names the same under "Data from". When several apps record the same readings, Grada uses the app with the most days in the last month, and one app per night for sleep.
 
