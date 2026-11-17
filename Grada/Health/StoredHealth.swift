@@ -133,8 +133,7 @@ enum DayKey {
 
 /// Card data read from the imported store, so cards load instantly and work offline. Each source's
 /// rows are merged in the order of `sources`: per day and metric, the first source with a value wins.
-/// Intraday data (5-minute heart rate, sleep timing) isn't stored; it's read live from the sources, with stored
-/// bed and wake times filling nights the sources have no sleep timing for.
+/// Intraday data (5-minute heart rate, sleep timing) isn't stored here; it's read live from the sources.
 struct StoredHealthData: HealthDataSource {
     let context: ModelContext
     /// In order of preference. Stored data from sources not listed here comes after them.
@@ -185,26 +184,19 @@ struct StoredHealthData: HealthDataSource {
         return nil
     }
 
-    /// Live periods from the first source that has any; nights it mostly lacks come from stored bed and wake times.
-    /// Imported nights (Garmin, FIT) have no stage timeline, so they count as asleep from one to the other (#95).
+    /// Each sleep comes whole from the first source that has it, as nights do in `sleepNights(days:)`, so stages from
+    /// different devices aren't mixed (#96). A sleep is a stretch of periods with no `SleepNight.separateSleepGap`;
+    /// a later source's sleep that overlaps one already taken is the same sleep, so a nap doesn't hide a night.
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] {
         var periods: [SleepPeriod] = []
+        var taken: [DateInterval] = []
         for source in sources {
-            periods = try await source.sleepPeriods(in: interval)
-            if !periods.isEmpty { break }
+            let sleeps = SleepNight.separateSleeps(try await source.sleepPeriods(in: interval), start: \.start, end: \.end)
+                .filter { sleep in !taken.contains { $0.start < sleep.span.end && sleep.span.start < $0.end } }
+            periods += sleeps.flatMap(\.items)
+            taken += sleeps.map(\.span)
         }
-        let asleep = periods.filter { $0.stage != .awake }
-        let days = max(calendar.dateComponents([.day], from: calendar.startOfDay(for: interval.start), to: .now).day! + 1, 1)
-        let stored = try await overnight(days: days).compactMap { night -> SleepPeriod? in
-            guard let bedtime = night.bedtime, let wakeTime = night.wakeTime, bedtime < wakeTime,
-                  bedtime < interval.end, wakeTime > interval.start
-            else { return nil }
-            // A night the live source mostly has stays its own; a nap on the same day doesn't hide it.
-            let covered = asleep.reduce(0) { $0 + max(0, min($1.end, wakeTime).timeIntervalSince(max($1.start, bedtime))) }
-            guard covered < wakeTime.timeIntervalSince(bedtime) / 2 else { return nil }
-            return SleepPeriod(start: bedtime, end: wakeTime, stage: nil)
-        }
-        return (periods + stored).sorted { $0.start < $1.start }
+        return periods.sorted { $0.start < $1.start }
     }
 
     /// Detail from the workout's own source. Sources without workout heart rate (Garmin, FIT files, which have no

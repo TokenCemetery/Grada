@@ -212,9 +212,11 @@ final class HealthImporter {
         try save(batch, from: source.id)
     }
 
-    /// Reads FIT files the user picked and adds what they hold to what earlier imports saved.
+    /// Reads FIT files the user picked through the `FITFileSource` in `sources`, and adds what they hold to what
+    /// earlier imports saved.
     func importFiles(_ urls: [URL]) async throws -> FITImport {
-        let files = await FITImport.read(urls, calendar: calendar)
+        guard let source = sources.lazy.compactMap({ $0 as? FITFileSource }).first else { preconditionFailure("No FITFileSource") }
+        let files = try await source.read(urls)
         if let batch = files.batch(calendar: calendar) { try save(batch, from: FITImport.sourceID, merging: true) }
         return files
     }

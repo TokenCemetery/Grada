@@ -74,7 +74,7 @@ struct GradaApp: App {
 #endif
         let reader = HealthKitReader()
         // Apple Health first: Garmin direct fills what its Apple Health sync leaves out, such as overnight HRV.
-        let importer = HealthImporter(sources: [reader, GarminSource()], context: context)
+        let importer = HealthImporter(sources: [reader, GarminSource(), FITFileSource()], context: context)
         // Started here, not from a view: iOS may relaunch the app in the background with no UI.
         Task { await importer.startBackgroundUpdates() }
         let source = StoredHealthData(context: context, sources: importer.sources)

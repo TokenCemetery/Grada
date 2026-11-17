@@ -20,8 +20,8 @@ protocol HealthSource: AnyObject {
 
     // Read live rather than stored: intraday data, workout screens and profile. `StoredHealthData` takes heart
     // rate per day, and hourly values (one day), the profile and max heart rate from the first source with any,
-    // the profile falling back to `EnteredProfile`; sleep periods from the first with any, plus stored nights it
-    // lacks; workout detail from the workout's own source, with heart rate over its time when that source has none;
+    // the profile falling back to `EnteredProfile`; each sleep's periods from the first source with that
+    // sleep; workout detail from the workout's own source, with heart rate over its time when that source has none;
     // activity time from the first source with any.
     func heartRate(in interval: DateInterval) async throws -> [TimedValue]
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod]

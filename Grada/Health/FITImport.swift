@@ -14,6 +14,8 @@ nonisolated struct FITImport {
 
     var workouts: [WorkoutSummary] = []
     var sleepNights: [SleepNight] = []
+    /// The stage timeline of each night in `sleepNights`.
+    var sleepPeriods: [SleepPeriod] = []
     var overnight: [OvernightVitals] = []
     var restingHeartRate: [DayValue] = []
     var origins: [DataKind: [Date: [String]]] = [:]
@@ -135,6 +137,7 @@ nonisolated struct FITImport {
                 for (period, _) in periods { stages[period.stage!, default: 0] += period.end.timeIntervalSince(period.start) }
                 guard stages.keys.contains(where: { $0 != .awake }) else { continue }
                 result.sleepNights.append(SleepNight(wakeDay: day, stages: stages, unspecified: 0))
+                result.sleepPeriods += periods.map(\.period)
                 result.origins[.sleep, default: [:]][day] = Array(Set(periods.map(\.device))).sorted()
                 let asleep = periods.map(\.period).filter { $0.stage != .awake }
                 vitals[day] = OvernightVitals(wakeDay: day, bedtime: asleep.map(\.start).min(), wakeTime: asleep.map(\.end).max())
@@ -155,6 +158,7 @@ nonisolated struct FITImport {
             }
             result.overnight = vitals.values.sorted { $0.wakeDay < $1.wakeDay }
             result.sleepNights.sort { $0.wakeDay < $1.wakeDay }
+            result.sleepPeriods.sort { $0.start < $1.start }
 
             result.restingHeartRate = restingHeartRate.map { DayValue(day: $0.key, value: $0.value.value) }.sorted { $0.day < $1.day }
             for (day, reading) in restingHeartRate { result.origins[.restingHeartRate, default: [:]][day] = [reading.device] }

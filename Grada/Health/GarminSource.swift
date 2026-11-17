@@ -35,11 +35,15 @@ final class GarminSource: HealthSource {
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let logger = Logger(subsystem: "Grada", category: "Garmin")
-    /// Intraday heart rate by start of day. Cleared when the key changes, since it may be another account's.
-    @ObservationIgnored private var heartRateDays: [Date: HeartRateDay] = [:]
-    private struct HeartRateDay {
+    /// Intraday heart rate, and each night's sleep by wake day, by start of day. Cleared when the key changes,
+    /// since it may be another account's.
+    @ObservationIgnored private var heartRateDays: [Date: CachedDay<[TimedValue]>] = [:]
+    @ObservationIgnored private var sleepDays: [Date: CachedDay<[Date: SleepPeriod]>] = [:]
+    /// `values` is nil if the request failed. Sleep is requested for several days at once, so each of them holds
+    /// the same request.
+    private struct CachedDay<Value> {
         let fetched: Date
-        let values: Task<[TimedValue]?, Never>
+        let values: Task<Value?, Never>
         var failed = false
     }
     /// How long a failed day's request waits before it's sent again, so an offline phone doesn't retry on every card.
@@ -79,6 +83,7 @@ final class GarminSource: HealthSource {
         isConnected = true
         needsReconnect = false
         heartRateDays = [:]
+        sleepDays = [:]
     }
 
     /// Removes the key from the Keychain. Data already imported stays.
@@ -90,6 +95,7 @@ final class GarminSource: HealthSource {
         lastSync = nil
         lastError = nil
         heartRateDays = [:]
+        sleepDays = [:]
     }
 
     func requestAuthorization() async throws {}
@@ -144,16 +150,10 @@ final class GarminSource: HealthSource {
     }
 
     /// One day's heart rate, nil if the request failed. Requests start at once, so a window's days load in
-    /// parallel, and cards built in parallel share a request in flight. Watches can sync hours late, so a day is
-    /// final only a full day after it ends; until then it's fetched again after `refreshInterval`, and after a
-    /// failure after `failureRetry`.
+    /// parallel, and cards built in parallel share a request in flight.
     private func heartRate(on day: Date) -> Task<[TimedValue]?, Never> {
         let now = Date.now
-        if let cached = heartRateDays[day] {
-            let age = now.timeIntervalSince(cached.fetched)
-            let final = cached.fetched >= calendar.date(byAdding: .day, value: 2, to: day)!
-            if cached.failed ? age < Self.failureRetry : final || age < refreshInterval { return cached.values }
-        }
+        if let cached = heartRateDays[day], isCurrent(cached, day: day, now: now) { return cached.values }
         let values = Task { () -> [TimedValue]? in
             do {
                 let data = try await call("Heart rate") { try await client.get("/wellness-service/wellness/dailyHeartRate", ["date": key(day)]) }
@@ -163,13 +163,66 @@ final class GarminSource: HealthSource {
                 return nil
             }
         }
-        heartRateDays[day] = HeartRateDay(fetched: now, values: values)
+        heartRateDays[day] = CachedDay(fetched: now, values: values)
         return values
     }
 
-    // Not read live. Sleep timing: `StoredHealthData` uses the stored bed and wake times. Workout detail: it uses
-    // the heart rate over the workout's time. Hourly totals: Garmin has none yet.
-    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { [] }
+    /// Each night's bed-to-wake period, without stages: Garmin's API has no stage timeline (#96). Cached and left out
+    /// on failure as heart rate is, with one request per `sleepChunk` days of nights not yet cached.
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] {
+        guard isAvailable else { return [] }
+        let now = Date.now
+        // A night that overlaps the interval ends on its first day through the day after its last.
+        var days: [Date] = []
+        var day = calendar.startOfDay(for: interval.start)
+        let last = min(calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: interval.end))!, calendar.startOfDay(for: now))
+        while day <= last {
+            days.append(day)
+            day = calendar.date(byAdding: .day, value: 1, to: day)!
+        }
+        let stale = days.filter { day in sleepDays[day].map { !isCurrent($0, day: day, now: now) } ?? true }
+        // Only runs of consecutive stale days are requested, so a failed request can't replace a day still current.
+        var runs: [[Date]] = []
+        for day in stale {
+            if let previous = runs.last?.last, calendar.date(byAdding: .day, value: 1, to: previous) == day {
+                runs[runs.count - 1].append(day)
+            } else {
+                runs.append([day])
+            }
+        }
+        for run in runs {
+            for (start, end) in chunks(from: run.first!, to: run.last!, days: Self.sleepChunk) {
+                let chunk = run.filter { $0 >= start && $0 <= end }
+                let nights = Task { () -> [Date: SleepPeriod]? in
+                    do {
+                        return GarminData.sleepPeriods(try await call("Sleep") { try await sleep(from: start, to: end) }, calendar: calendar)
+                    } catch {
+                        for day in chunk where sleepDays[day]?.fetched == now { sleepDays[day]?.failed = true }
+                        return nil
+                    }
+                }
+                for day in chunk { sleepDays[day] = CachedDay(fetched: now, values: nights) }
+            }
+        }
+        var periods: [SleepPeriod] = []
+        for day in days {
+            if let night = await sleepDays[day]?.values.value?[day], night.start < interval.end, night.end > interval.start {
+                periods.append(night)
+            }
+        }
+        return periods
+    }
+
+    /// Watches can sync hours late, so a day is final only a full day after it ends; until then it's fetched again
+    /// after `refreshInterval`, and after a failure after `failureRetry`.
+    private func isCurrent<Value>(_ cached: CachedDay<Value>, day: Date, now: Date) -> Bool {
+        let age = now.timeIntervalSince(cached.fetched)
+        let final = cached.fetched >= calendar.date(byAdding: .day, value: 2, to: day)!
+        return cached.failed ? age < Self.failureRetry : final || age < refreshInterval
+    }
+
+    // Not read live. Workout detail: `StoredHealthData` uses the heart rate over the workout's time. Hourly totals:
+    // Garmin has none yet.
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] { [] }
     func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail { WorkoutDetail() }
     func highestHeartRate(days: Int) async throws -> Double? { nil }
@@ -394,6 +447,18 @@ nonisolated enum GarminData {
 
         batch.workouts = activities.compactMap { workout($0) }.filter { days.holds($0.start) }
         return batch
+    }
+
+    /// Each night's bed-to-wake period by the day it ended, as `batch` keys its nights.
+    static func sleepPeriods(_ sleep: [Sleep], calendar: Calendar) -> [Date: SleepPeriod] {
+        var periods: [Date: SleepPeriod] = [:]
+        for night in sleep {
+            guard let start = night.sleepStartTimestampGMT.map({ Date(timeIntervalSince1970: $0 / 1000) }),
+                  let end = night.sleepEndTimestampGMT.map({ Date(timeIntervalSince1970: $0 / 1000) }), start < end
+            else { continue }
+            periods[SleepNight.wakeDay(forEnd: end, calendar: calendar)] = SleepPeriod(start: start, end: end, stage: nil)
+        }
+        return periods
     }
 
     private static let gmt: DateFormatter = {

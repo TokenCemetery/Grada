@@ -29,7 +29,7 @@ Data from other apps and devices, such as Garmin or Oura, reaches Grada through 
 
 ## Files you import
 
-In Settings › Import › FIT Files you can choose FIT files, the format Garmin and other watches record in, or a folder of them such as a Garmin data export. Grada reads only the files you choose, on your device, and reads workouts, sleep stages, overnight heart rate variability and resting heart rate from them. It keeps what it read with the rest of its copy, described below, labelled with the device's brand, such as "Garmin (imported)". It doesn't keep the files or send them anywhere.
+In Settings › Import › FIT Files you can choose FIT files, the format Garmin and other watches record in, or a folder of them such as a Garmin data export. Grada reads only the files you choose, on your device, and reads workouts, sleep stages, overnight heart rate variability and resting heart rate from them. It keeps what it read with the rest of its copy, described below, labelled with the device's brand, such as "Garmin (imported)". It also keeps each night's sleep stage timeline, when each stage started and ended, in a file in the app's storage on this device; that file isn't synced between your devices. It doesn't keep the files or send them anywhere.
 
 ## Garmin Connect
 

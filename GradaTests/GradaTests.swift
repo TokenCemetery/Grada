@@ -255,7 +255,8 @@ struct HealthImporterTests {
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         context = ModelContext(container)
-        importer = HealthImporter(sources: [], context: context)
+        let timeline = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).json")
+        importer = HealthImporter(sources: [FITFileSource(timelineURL: timeline)], context: context)
     }
 
     private var today: Date { calendar.startOfDay(for: .now) }
@@ -336,32 +337,70 @@ struct HealthImporterTests {
         #expect(try await reversed.daily(.steps, days: 2).map(\.value) == [4000, 5000])
     }
 
-    @Test func importedNightsAreSleepPeriodsWithoutLiveSleep() async throws {
-        let bedtime = day(-1).addingTimeInterval(23 * 3600), wakeTime = day(0).addingTimeInterval(7 * 3600)
-        var batch = batch(steps: [nil])
-        batch.overnight = [OvernightVitals(wakeDay: today, bedtime: bedtime, wakeTime: wakeTime)]
-        try importer.save(batch, from: "garminConnect")
-        let stored = StoredHealthData(context: context)
+    @Test func eachSleepComesWholeFromTheFirstSourceWithIt() async throws {
+        let hour: TimeInterval = 3600
+        let night = { (wake: Int, stage: SleepStage?) in
+            [SleepPeriod(start: self.day(wake) - hour, end: self.day(wake) + 3 * hour, stage: stage),
+             SleepPeriod(start: self.day(wake) + 3 * hour, end: self.day(wake) + 7 * hour, stage: stage == nil ? nil : .rem)]
+        }
+        let nap = SleepPeriod(start: day(0) + 13 * hour, end: day(0) + 14 * hour, stage: .core)
+        let health = FakeSource(id: HealthKitReader.sourceID)
+        health.sleep = night(-1, .core) + [nap]
+        let garmin = FakeSource(id: GarminSource.sourceID)
+        garmin.sleep = [SleepPeriod(start: day(-1) - 2 * hour, end: day(-1) + 6 * hour, stage: nil),
+                        SleepPeriod(start: day(0) - 2 * hour, end: day(0) + 6 * hour, stage: nil)]
+        let files = FakeSource(id: FITImport.sourceID)
+        files.sleep = night(0, .deep)
+        let stored = StoredHealthData(context: context, sources: [health, garmin, files])
 
-        #expect(try await stored.sleepPeriods(in: DateInterval(start: day(-1), end: .now))
-                == [SleepPeriod(start: bedtime, end: wakeTime, stage: nil)])
-        #expect(try await stored.sleepPeriods(in: DateInterval(start: wakeTime.addingTimeInterval(60), end: wakeTime.addingTimeInterval(120))).isEmpty)
+        // Apple Health's night and nap, and Garmin's night Apple Health lacks; stages from the FIT file aren't mixed in.
+        #expect(try await stored.sleepPeriods(in: DateInterval(start: day(-2), end: .now))
+                == night(-1, .core) + [garmin.sleep[1], nap])
     }
 
-    @Test func importedNightsFillNightsAppleHealthLacks() async throws {
-        let night = { (wake: Int) in
-            OvernightVitals(wakeDay: self.day(wake), bedtime: self.day(wake - 1).addingTimeInterval(23 * 3600),
-                            wakeTime: self.day(wake).addingTimeInterval(7 * 3600))
-        }
-        var batch = batch(steps: [nil, nil])
-        batch.overnight = [night(-1), night(0)]
-        try importer.save(batch, from: "garminConnect")
-        let health = FakeSource(id: HealthKitReader.sourceID)
-        let live = SleepPeriod(start: day(-1).addingTimeInterval(22 * 3600), end: day(0).addingTimeInterval(6 * 3600), stage: .core)
-        health.sleep = [live]
+    @Test func unreadableFITTimelineIsReplacedByTheNextImport() async throws {
+        let timeline = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).json")
+        try Data("not JSON".utf8).write(to: timeline)
+        let window = DateInterval(start: day(-1), end: day(1))
+        #expect(try await FITFileSource(timelineURL: timeline).sleepPeriods(in: window).isEmpty)
 
-        let periods = try await StoredHealthData(context: context, sources: [health]).sleepPeriods(in: DateInterval(start: day(-2), end: .now))
-        #expect(periods == [SleepPeriod(start: night(-1).bedtime!, end: night(-1).wakeTime!, stage: nil), live])
+        var writer = FITWriter()
+        writer.fileID()
+        writer.message(275, [(253, 4, FITWriter.time(day(0) - 3600)), (0, 1, 2)])
+        writer.message(275, [(253, 4, FITWriter.time(day(0) + 6 * 3600)), (0, 1, 1)])
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).fit")
+        try writer.bytes.write(to: file)
+        _ = try await FITFileSource(timelineURL: timeline).read([file])
+        #expect(try await FITFileSource(timelineURL: timeline).sleepPeriods(in: window)
+                == [SleepPeriod(start: day(0) - 3600, end: day(0) + 6 * 3600, stage: .core)])
+    }
+
+    @Test func importedFITNightReachesSleepScore() async throws {
+        // A week of 22:00 to 07:00 nights, each with two 6-minute awakenings: only a stage timeline counts them.
+        // One night per file, as watches export them.
+        let hour: TimeInterval = 3600
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        for wake in -7...(-1) {
+            var writer = FITWriter()
+            writer.fileID()
+            let bed = day(wake) - 2 * hour
+            for (offset, level) in [(0, 2), (3 * hour, 1), (3 * hour + 360, 3), (5 * hour, 1), (5 * hour + 360, 4), (9 * hour, 1)] as [(TimeInterval, Int64)] {
+                writer.message(275, [(253, 4, FITWriter.time(bed + offset)), (0, 1, level)])
+            }
+            try writer.bytes.write(to: folder.appendingPathComponent("sleep\(wake).fit"))
+        }
+        _ = try await importer.importFiles([folder])
+        _ = try await importer.importFiles([folder])
+
+        let stored = StoredHealthData(context: context, sources: importer.sources)
+        let lastNight = try await stored.sleepPeriods(in: DateInterval(start: day(-2) + 12 * hour, end: day(-1) + 12 * hour))
+        #expect(lastNight.map(\.stage) == [.core, .awake, .deep, .awake, .rem], "Importing the file again keeps one timeline")
+
+        var builder = SnapshotBuilder(source: stored)
+        builder.now = day(-1) + 12 * hour
+        let result = try #require(try await builder.sleepScoreDays(1).first?.result)
+        #expect(result.reason == "Woke up often")
     }
 
     @Test func heartRateComesPerDayFromTheFirstSourceWithIt() async throws {
@@ -411,19 +450,6 @@ struct HealthImporterTests {
         #expect(try await stored.age() == 40)
         #expect(try await stored.biologicalSex() == .female)
         #expect(try await HealthProfile.load(from: stored).maxHeartRate == Resources.maxHeartRate(age: 40, highestRecorded: nil))
-    }
-
-    @Test func napDoesNotHideAnImportedNight() async throws {
-        let night = OvernightVitals(wakeDay: today, bedtime: day(-1).addingTimeInterval(23 * 3600), wakeTime: day(0).addingTimeInterval(7 * 3600))
-        var batch = batch(steps: [nil])
-        batch.overnight = [night]
-        try importer.save(batch, from: "garminConnect")
-        let health = FakeSource(id: HealthKitReader.sourceID)
-        let nap = SleepPeriod(start: day(0).addingTimeInterval(13 * 3600), end: day(0).addingTimeInterval(14 * 3600), stage: .core)
-        health.sleep = [nap]
-
-        let periods = try await StoredHealthData(context: context, sources: [health]).sleepPeriods(in: DateInterval(start: day(-1), end: .now))
-        #expect(periods == [SleepPeriod(start: night.bedtime!, end: night.wakeTime!, stage: nil), nap])
     }
 
     @Test func sameNightFromTwoSourcesCountsOnce() async throws {

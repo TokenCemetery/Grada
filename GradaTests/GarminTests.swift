@@ -317,6 +317,23 @@ struct GarminTests {
         #expect(paths.filter { $0 == "/wellness-service/wellness/dailyHeartRate" }.count == 2)
     }
 
+    @Test func sleepPeriodsAreEachNightFromBedToWakeOnceThePastIsFetched() async throws {
+        let fake = FakeGarmin()
+        fake.answer = { $0.httpMethod == "POST" ? (200, self.jwt) : (200, self.sleepJSON) }
+        let (garmin, store) = try source(fake)
+        defer { store.delete() }
+        let interval = DateInterval(start: day("2026-11-09"), end: day("2026-11-11"))
+
+        let night = SleepPeriod(start: day("2026-11-09").addingTimeInterval(23 * 3600), end: day("2026-11-10").addingTimeInterval(7 * 3600), stage: nil)
+        #expect(try await garmin.sleepPeriods(in: interval) == [night])
+        #expect(try await garmin.sleepPeriods(in: DateInterval(start: night.end.addingTimeInterval(60), duration: 60)).isEmpty)
+        let paths = fake.requests.compactMap(\.url?.path)
+        #expect(paths.filter { $0.contains("dailySleepSummariesByDate") }.count == 1)
+
+        garmin.disconnect()
+        #expect(try await garmin.sleepPeriods(in: interval).isEmpty, "Nothing is read while disconnected")
+    }
+
     @Test func failedDayIsLeftOutAndRetriedLater() async throws {
         let fake = FakeGarmin()
         fake.answer = { request in

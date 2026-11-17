@@ -28,7 +28,7 @@ nonisolated enum TimedActivity {
     case daylight
 }
 
-nonisolated enum SleepStage: CaseIterable {
+nonisolated enum SleepStage: String, CaseIterable, Codable {
     case awake, rem, core, deep
 }
 
@@ -57,6 +57,11 @@ nonisolated struct SleepNight: Equatable {
     /// samples with no gap of `separateSleepGap`. Naps and evening dozes would otherwise add to the night's
     /// totals and move its bed and wake times (#101).
     static func mainSleep<T>(_ items: [T], start: (T) -> Date, end: (T) -> Date) -> [T] {
+        separateSleeps(items, start: start, end: end).max { $0.span.duration < $1.span.duration }?.items ?? []
+    }
+
+    /// `items` split into stretches with no gap of `separateSleepGap`, earliest first.
+    static func separateSleeps<T>(_ items: [T], start: (T) -> Date, end: (T) -> Date) -> [(items: [T], span: DateInterval)] {
         let sorted = items.sorted { start($0) < start($1) }
         var stretches: [(items: [T], start: Date, end: Date)] = []
         for item in sorted {
@@ -67,7 +72,7 @@ nonisolated struct SleepNight: Equatable {
                 stretches.append(([item], start(item), end(item)))
             }
         }
-        return stretches.max { $0.end.timeIntervalSince($0.start) < $1.end.timeIntervalSince($1.start) }?.items ?? []
+        return stretches.map { ($0.items, DateInterval(start: $0.start, end: max($0.start, $0.end))) }
     }
 }
 
@@ -113,7 +118,7 @@ nonisolated struct TimedValue: Equatable {
 }
 
 /// A stretch of sleep in one stage. `stage` is nil for asleep time without stage detail.
-nonisolated struct SleepPeriod: Equatable {
+nonisolated struct SleepPeriod: Equatable, Codable {
     let start: Date
     let end: Date
     let stage: SleepStage?
