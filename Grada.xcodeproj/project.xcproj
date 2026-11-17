@@ -49,7 +49,7 @@
         "GENERATE_INFOPLIST_FILE": "YES",
         "INFOPLIST_KEY_CFBundleDisplayName": "Grada",
         "INFOPLIST_KEY_LSApplicationCategoryType": "public.app-category.healthcare-fitness",
-        "INFOPLIST_KEY_NSHealthShareUsageDescription": "Grada reads your sleep, heart, activity and workout data from Apple Health to show your daily summary and trends. Your data stays on your devices and in your iCloud.",
+        "INFOPLIST_KEY_NSHealthShareUsageDescription": "Grada reads your sleep, heart, activity and workout data from Apple Health to show your daily summary and trends. Your health data stays on this device.",
         "INFOPLIST_FILE[config=Debug][sdk=iphonesimulator*]": "Config/Simulator-Info.plist",
         "INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]": "YES",
         "INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]": "YES",
