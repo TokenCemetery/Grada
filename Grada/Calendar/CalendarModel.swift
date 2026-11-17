@@ -35,32 +35,48 @@ final class CalendarModel {
         self.calendar = calendar
     }
 
+    /// What `load` reads, as plain values, so the reading and rating can run off the main actor.
+    private nonisolated struct Loaded {
+        var earliest: Date
+        var start: Date
+        var ratings: [Date: DayRating]
+        var workouts: [WorkoutSummary]
+    }
+
     func load(_ metric: CalendarMetric, goals: GoalHistory) async {
         do {
-            let today = calendar.startOfDay(for: .now)
-            let earliest = try await source.earliestDay().map { calendar.startOfDay(for: $0) }
-                ?? calendar.date(byAdding: .day, value: -fallbackDays + 1, to: today)!
             let months = loadedMonths
-            let currentMonth = calendar.dateInterval(of: .month, for: today)!.start
-            let loadedMonth = calendar.date(byAdding: .month, value: -(months - 1), to: currentMonth)!
-            let start = max(earliest, loadedMonth)
-            let days = (calendar.dateComponents([.day], from: start, to: today).day ?? 0) + 1
-
-            // Rating reads the same days once per metric, plus the baseline before them; Training only reads workouts.
-            let source = metric.isRated ? try source.withDaysLoaded(days + baselineDays) : source
-            let newRatings = try await ratings(metric, days: days, goals: goals, source: source)
-            let workouts = try await source.workouts(days: days)
+            let loaded = try await Self.read(metric, months: months, goals: goals, source: source, calendar: calendar,
+                                             baselineDays: baselineDays, fallbackDays: fallbackDays)
             // A longer load started meanwhile; let it fill in instead.
             guard months == loadedMonths else { return }
-            ratings = newRatings
-            workoutDays = WorkoutDay.byDay(workouts, calendar: calendar)
-            workoutsByDay = Dictionary(grouping: workouts) { calendar.startOfDay(for: $0.start) }
-            firstMonth = calendar.dateInterval(of: .month, for: earliest)?.start
-            firstLoadedMonth = calendar.dateInterval(of: .month, for: start)?.start
+            ratings = loaded.ratings
+            workoutDays = WorkoutDay.byDay(loaded.workouts, calendar: calendar)
+            workoutsByDay = Dictionary(grouping: loaded.workouts) { calendar.startOfDay(for: $0.start) }
+            firstMonth = calendar.dateInterval(of: .month, for: loaded.earliest)?.start
+            firstLoadedMonth = calendar.dateInterval(of: .month, for: loaded.start)?.start
         } catch {
             // Keep the last good month grid; the next load retries.
             logger.error("Loading calendar failed: \(error.localizedDescription)")
         }
+    }
+
+    @concurrent private static func read(_ metric: CalendarMetric, months: Int, goals: GoalHistory, source: HealthDataSource,
+                                         calendar: Calendar, baselineDays: Int, fallbackDays: Int) async throws -> Loaded {
+        let today = calendar.startOfDay(for: .now)
+        let earliest = try await source.earliestDay().map { calendar.startOfDay(for: $0) }
+            ?? calendar.date(byAdding: .day, value: -fallbackDays + 1, to: today)!
+        let currentMonth = calendar.dateInterval(of: .month, for: today)!.start
+        let loadedMonth = calendar.date(byAdding: .month, value: -(months - 1), to: currentMonth)!
+        let start = max(earliest, loadedMonth)
+        let days = (calendar.dateComponents([.day], from: start, to: today).day ?? 0) + 1
+
+        // Rating reads the same days once per metric, plus the baseline before them; Training only reads workouts.
+        let source = metric.isRated ? try await source.withDaysLoaded(days + baselineDays) : source
+        let ratings = try await ratings(metric, days: days, goals: goals, source: source, calendar: calendar,
+                                        baselineDays: baselineDays)
+        let workouts = try await source.workouts(days: days)
+        return Loaded(earliest: earliest, start: start, ratings: ratings, workouts: workouts)
     }
 
     /// Loads more history once `month`, the oldest loaded month or older, scrolls into view.
@@ -104,8 +120,8 @@ final class CalendarModel {
             .map(builder.workoutSnapshot)
     }
 
-    private func ratings(_ metric: CalendarMetric, days: Int, goals: GoalHistory,
-                         source: HealthDataSource) async throws -> [Date: DayRating] {
+    private nonisolated static func ratings(_ metric: CalendarMetric, days: Int, goals: GoalHistory, source: HealthDataSource,
+                                calendar: Calendar, baselineDays: Int) async throws -> [Date: DayRating] {
         switch metric {
         case .health:
             // Vitals need the baseline window before the first shown day.

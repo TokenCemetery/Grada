@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum CardSize {
+nonisolated enum CardSize {
     /// One column.
     case square
     /// Two columns with a square beside it when one is available, otherwise the full width.
@@ -9,7 +9,7 @@ enum CardSize {
     case big
 }
 
-enum CardCategory: CaseIterable {
+nonisolated enum CardCategory: CaseIterable {
     case status, sleep, heart, activity, training, history
 
     var title: String {
@@ -37,7 +37,7 @@ enum CardCategory: CaseIterable {
 }
 
 /// What a card's chart shows. The raw value is persisted, so don't rename cases.
-enum CardVariant: String, CaseIterable {
+nonisolated enum CardVariant: String, CaseIterable {
     /// Today against the goal or the personal normal range.
     case current
     /// The last 7 days, today last.
@@ -52,7 +52,7 @@ enum CardVariant: String, CaseIterable {
 }
 
 /// One card on Home: a metric and the variant it shows. A metric can sit on Home once per variant.
-struct CardID: Hashable, Identifiable {
+nonisolated struct CardID: Hashable, Identifiable {
     let kind: CardKind
     var variant: CardVariant = .current
 
@@ -65,7 +65,7 @@ struct CardID: Hashable, Identifiable {
 }
 
 /// Every card the home screen can show. The raw value is persisted, so don't rename cases.
-enum CardKind: String, CaseIterable, Identifiable {
+nonisolated enum CardKind: String, CaseIterable, Identifiable {
     case healthStatus, recovery, resources, healthAge
     case sleepDuration, sleepStages, sleepNeed, sleepConsistency, sleepScore
     case heartRate, restingHeartRate, hrv, hrvStatus, oxygenSaturation, respiratoryRate, wristTemperature

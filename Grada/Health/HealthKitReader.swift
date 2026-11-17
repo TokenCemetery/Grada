@@ -1,12 +1,14 @@
 import Foundation
 import CoreLocation
 import HealthKit
+import os
 
 /// Reads raw data from Apple Health for a date range. Garmin, Oura and others arrive here
 /// through their own Apple Health sync.
 final class HealthKitReader: HealthSource {
     let store = HKHealthStore()
     private let calendar = Calendar.current
+    private let logger = Logger(subsystem: "Grada", category: "HealthKitReader")
 
     nonisolated static let sourceID = "appleHealth"
     var id: String { Self.sourceID }
@@ -53,7 +55,12 @@ final class HealthKitReader: HealthSource {
                 nonisolated(unsafe) let completion = completion
                 onChange { completion() }
             })
-            try await store.enableBackgroundDelivery(for: type, frequency: .immediate)
+            // One type failing mustn't leave the rest without background delivery (#120).
+            do {
+                try await store.enableBackgroundDelivery(for: type, frequency: .immediate)
+            } catch {
+                logger.error("Background delivery for \(type.identifier) unavailable: \(error.localizedDescription)")
+            }
         }
     }
 

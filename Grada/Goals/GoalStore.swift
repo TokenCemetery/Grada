@@ -17,6 +17,14 @@ final class GoalChange {
         reasonRawValue = entry.reason.rawValue
     }
 
+    /// Stored values as they are, for moving goals between stores.
+    init(metricRawValue: String, value: Double, effectiveFrom: Date, reasonRawValue: String) {
+        self.metricRawValue = metricRawValue
+        self.value = value
+        self.effectiveFrom = effectiveFrom
+        self.reasonRawValue = reasonRawValue
+    }
+
     var entry: GoalEntry? {
         guard let metric = GoalMetric(rawValue: metricRawValue), let reason = GoalEntry.Reason(rawValue: reasonRawValue) else { return nil }
         return GoalEntry(metric: metric, value: value, effectiveFrom: effectiveFrom, reason: reason)

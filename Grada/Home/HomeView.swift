@@ -9,7 +9,7 @@ struct HomeView: View {
     @Query(sort: \HomeCard.position) private var cards: [HomeCard]
     @Query private var goalChanges: [GoalChange]
     @Environment(\.healthSource) private var healthSource
-    @AppStorage("didSeedHomeCards") private var didSeedHomeCards = false
+    @AppStorage(SettingsKey.didSeedHomeCards) private var didSeedHomeCards = false
     @AppStorage(EnteredProfile.birthDateKey) private var enteredBirthDate: Double = 0
     @AppStorage(EnteredProfile.sexKey) private var enteredSex = ""
     @State private var isCustomizing = false

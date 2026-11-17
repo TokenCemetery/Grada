@@ -22,7 +22,7 @@ struct JournalView: View {
     /// Tags health data suggests for the shown day, and the day they're for.
     @State private var suggestions: (day: Date, items: [JournalSuggestion]) = (.distantPast, [])
     /// Suggestions the user dismissed, as "dayKey:tag".
-    @AppStorage("dismissedJournalSuggestions") private var dismissed = ""
+    @AppStorage(SettingsKey.dismissedJournalSuggestions) private var dismissed = ""
 
     private let calendar = Calendar.current
     private var today: Date { calendar.startOfDay(for: .now) }
@@ -151,7 +151,8 @@ struct JournalView: View {
     @ViewBuilder
     private func row(_ tag: JournalTag, caption: String?, suggestion: JournalSuggestion?) -> some View {
         let entry = entries[tag]
-        let caption = suggestion.map { "Suggested · \($0.reason)" } ?? caption
+        // Illness comes from vitals alone, so it says it isn't a diagnosis (#107).
+        let caption = suggestion.map { "Suggested · \($0.reason)\($0.tag == .illness ? " · not a diagnosis" : "")" } ?? caption
         HStack {
             Button {
                 store.toggle(tag, on: day)

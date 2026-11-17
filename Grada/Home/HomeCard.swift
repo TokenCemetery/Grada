@@ -16,6 +16,13 @@ final class HomeCard {
         self.position = position
     }
 
+    /// Stored values as they are, for moving cards between stores.
+    init(kindRawValue: String, position: Int, variantRawValue: String) {
+        self.kindRawValue = kindRawValue
+        self.position = position
+        self.variantRawValue = variantRawValue
+    }
+
     /// Nil if the stored kind no longer exists in this app version.
     var kind: CardKind? { CardKind(rawValue: kindRawValue) }
 

@@ -24,8 +24,16 @@ enum Appearance: String, CaseIterable, Identifiable {
     }
 }
 
+/// App Review 1.4.1 asks health apps to remind people to see a doctor before making medical decisions (#107).
+enum MedicalNotice {
+    static let text = "Grada isn't a medical device and doesn't diagnose, treat or prevent any condition. Talk to a doctor before making medical decisions."
+}
+
 /// Every group is a row that opens its own screen, like iOS Settings.
 struct SettingsView: View {
+    /// The same URL as the privacy policy in App Store Connect (#108).
+    static let privacyPolicy = URL(string: "https://github.com/TokenCemetery/Grada/blob/main/PRIVACY.md")!
+
     var body: some View {
         NavigationStack {
             Form {
@@ -39,10 +47,17 @@ struct SettingsView: View {
 #if DEBUG && targetEnvironment(simulator)
                     NavigationLink { SimulatorDataView() } label: { SettingsRow("Simulator Data", icon: "hammer.fill", color: .gray) }
 #endif
+                }
+                Section {
+                    Link(destination: Self.privacyPolicy) { SettingsRow("Privacy Policy", icon: "hand.raised.fill", color: .blue) }
+                        .foregroundStyle(.primary)
                 } footer: {
-                    Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
-                        .frame(maxWidth: .infinity)
-                        .padding(.top)
+                    VStack(spacing: 16) {
+                        Text(MedicalNotice.text)
+                        Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .padding(.top)
                 }
             }
             .navigationTitle("Settings")
@@ -76,7 +91,7 @@ private struct SettingsRow: View {
 }
 
 private struct ThemeView: View {
-    @AppStorage("appearance") private var appearance: Appearance = .system
+    @AppStorage(SettingsKey.appearance) private var appearance: Appearance = .system
 
     var body: some View {
         Form {
@@ -93,7 +108,7 @@ private struct ThemeView: View {
 }
 
 private struct AccessibilityView: View {
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
 
     var body: some View {
         Form {

@@ -6,8 +6,8 @@ import SwiftUI
 struct CalendarView: View {
     @Environment(CalendarModel.self) private var model
     @Query private var goalChanges: [GoalChange]
-    @AppStorage("calendarMetric") private var metric: CalendarMetric = .health
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.calendarMetric) private var metric: CalendarMetric = .health
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var selectedDay: Date?
 

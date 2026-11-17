@@ -79,6 +79,10 @@ struct MetricDetailView: View {
                     .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
                 .buttonStyle(.plain)
+                Text(MedicalNotice.text)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
             }
             .padding(.horizontal)
             .padding(.bottom)
@@ -401,7 +405,7 @@ enum Breakdown {
 private struct BreakdownView: View {
     let breakdown: Breakdown
     let color: Color
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
 
     var body: some View {
         switch breakdown {

@@ -246,17 +246,18 @@ struct SnapshotBuilderTests {
 @MainActor
 struct HealthImporterTests {
     private let calendar = Calendar.current
+    private let container: ModelContainer
     private let context: ModelContext
     private let importer: HealthImporter
 
     init() throws {
-        let container = try ModelContainer(
+        container = try ModelContainer(
             for: HomeCard.self, DaySummary.self, WorkoutRecord.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         context = ModelContext(container)
         let timeline = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).json")
-        importer = HealthImporter(sources: [FITFileSource(timelineURL: timeline)], context: context)
+        importer = HealthImporter(sources: [], fitFiles: FITFileSource(timelineURL: timeline), container: container)
     }
 
     private var today: Date { calendar.startOfDay(for: .now) }
@@ -277,49 +278,62 @@ struct HealthImporterTests {
 
     private let health = HealthKitReader.sourceID
 
-    @Test func savesOnlyDaysWithDataAndUpdatesInPlace() throws {
-        try importer.save(batch(steps: [nil, 4000, 5000]), from: health)
+    @Test func savesOnlyDaysWithDataAndUpdatesInPlace() async throws {
+        try await importer.save(batch(steps: [nil, 4000, 5000]), from: health)
         #expect(try context.fetchCount(FetchDescriptor<DaySummary>()) == 2)
 
-        try importer.save(batch(steps: [nil, 4000, 7000]), from: health)
+        try await importer.save(batch(steps: [nil, 4000, 7000]), from: health)
         let summaries = try context.fetch(FetchDescriptor<DaySummary>(sortBy: [SortDescriptor(\.day)]))
         #expect(summaries.map(\.steps) == [4000, 7000])
     }
 
-    @Test func removesDuplicateDays() throws {
+    @Test func removesDuplicateDays() async throws {
         let key = DayKey.make(today, calendar: calendar)
         context.insert(DaySummary(day: today, dayKey: key, source: health))
         context.insert(DaySummary(day: today, dayKey: key, source: health))
-        try importer.save(batch(steps: [6000]), from: health)
+        try context.save()
+        try await importer.save(batch(steps: [6000]), from: health)
         #expect(try context.fetchCount(FetchDescriptor<DaySummary>()) == 1)
     }
 
-    @Test func syncsWorkoutsWithAppleHealth() throws {
-        try importer.save(batch(steps: [1000], workouts: [workout("a"), workout("b")]), from: health)
-        try importer.save(batch(steps: [1000], workouts: [workout("b")]), from: health)
+    /// A day imported 7 hours further east starts 7 hours earlier, before today's start here (#118).
+    @Test func findsDaysStoredInAnotherTimeZone() async throws {
+        let east = DaySummary(day: today.addingTimeInterval(-7 * 3600), dayKey: DayKey.make(today, calendar: calendar), source: health)
+        east.steps = 3000
+        context.insert(east)
+        try context.save()
+        #expect(try await StoredHealthData(container: container).daily(.steps, days: 1).map(\.value) == [3000])
+
+        try await importer.save(batch(steps: [6000]), from: health)
+        #expect(try context.fetch(FetchDescriptor<DaySummary>()).map(\.steps) == [6000])
+    }
+
+    @Test func syncsWorkoutsWithAppleHealth() async throws {
+        try await importer.save(batch(steps: [1000], workouts: [workout("a"), workout("b")]), from: health)
+        try await importer.save(batch(steps: [1000], workouts: [workout("b")]), from: health)
         let records = try context.fetch(FetchDescriptor<WorkoutRecord>())
         #expect(records.map(\.healthID) == ["b"])
     }
 
     @Test func storedDataFeedsCards() async throws {
-        try importer.save(batch(steps: [8000, 9000]), from: health)
-        let values = try await StoredHealthData(context: context).daily(.steps, days: 3)
+        try await importer.save(batch(steps: [8000, 9000]), from: health)
+        let values = try await StoredHealthData(container: container).daily(.steps, days: 3)
         #expect(values.map(\.value) == [nil, 8000, 9000])
     }
 
     @Test func storesOvernightVitals() async throws {
         var batch = batch(steps: [8000])
         batch.overnight = [OvernightVitals(wakeDay: today, hrv: 64, heartRate: 49)]
-        try importer.save(batch, from: health)
-        let overnight = try await StoredHealthData(context: context).overnight(days: 2)
+        try await importer.save(batch, from: health)
+        let overnight = try await StoredHealthData(container: container).overnight(days: 2)
         #expect(overnight.map(\.hrv) == [nil, 64])
         #expect(overnight.map(\.heartRate) == [nil, 49])
     }
 
-    @Test func savingOneSourceLeavesOthersAlone() throws {
-        try importer.save(batch(steps: [1000], workouts: [workout("a")]), from: health)
-        try importer.save(batch(steps: [2000], workouts: [workout("x")]), from: "other")
-        try importer.save(batch(steps: [3000]), from: "other")
+    @Test func savingOneSourceLeavesOthersAlone() async throws {
+        try await importer.save(batch(steps: [1000], workouts: [workout("a")]), from: health)
+        try await importer.save(batch(steps: [2000], workouts: [workout("x")]), from: "other")
+        try await importer.save(batch(steps: [3000]), from: "other")
         let records = try context.fetch(FetchDescriptor<WorkoutRecord>())
         #expect(records.map(\.healthID) == ["a"])
         #expect(records.map(\.source) == [health])
@@ -328,12 +342,12 @@ struct HealthImporterTests {
     }
 
     @Test func preferredSourceWinsAndOthersFillGaps() async throws {
-        try importer.save(batch(steps: [nil, 5000]), from: "other")
-        try importer.save(batch(steps: [4000, 6000]), from: "preferred")
-        let stored = StoredHealthData(context: context, sources: [FakeSource(id: "preferred")])
+        try await importer.save(batch(steps: [nil, 5000]), from: "other")
+        try await importer.save(batch(steps: [4000, 6000]), from: "preferred")
+        let stored = StoredHealthData(container: container, sources: [FakeSource(id: "preferred")])
         #expect(try await stored.daily(.steps, days: 2).map(\.value) == [4000, 6000])
 
-        let reversed = StoredHealthData(context: context, sources: [FakeSource(id: "other"), FakeSource(id: "preferred")])
+        let reversed = StoredHealthData(container: container, sources: [FakeSource(id: "other"), FakeSource(id: "preferred")])
         #expect(try await reversed.daily(.steps, days: 2).map(\.value) == [4000, 5000])
     }
 
@@ -351,7 +365,7 @@ struct HealthImporterTests {
                         SleepPeriod(start: day(0) - 2 * hour, end: day(0) + 6 * hour, stage: nil)]
         let files = FakeSource(id: FITImport.sourceID)
         files.sleep = night(0, .deep)
-        let stored = StoredHealthData(context: context, sources: [health, garmin, files])
+        let stored = StoredHealthData(container: container, sources: [health, garmin, files])
 
         // Apple Health's night and nap, and Garmin's night Apple Health lacks; stages from the FIT file aren't mixed in.
         #expect(try await stored.sleepPeriods(in: DateInterval(start: day(-2), end: .now))
@@ -393,7 +407,7 @@ struct HealthImporterTests {
         _ = try await importer.importFiles([folder])
         _ = try await importer.importFiles([folder])
 
-        let stored = StoredHealthData(context: context, sources: importer.sources)
+        let stored = StoredHealthData(container: container, sources: importer.liveSources)
         let lastNight = try await stored.sleepPeriods(in: DateInterval(start: day(-2) + 12 * hour, end: day(-1) + 12 * hour))
         #expect(lastNight.map(\.stage) == [.core, .awake, .deep, .awake, .rem], "Importing the file again keeps one timeline")
 
@@ -409,7 +423,7 @@ struct HealthImporterTests {
         health.heartRate = [hour(-1, 60)]
         let garmin = FakeSource(id: "garminConnect")
         garmin.heartRate = [hour(-2, 70), hour(-1, 71), hour(0, 72)]
-        let stored = StoredHealthData(context: context, sources: [health, garmin])
+        let stored = StoredHealthData(container: container, sources: [health, garmin])
         let window = DateInterval(start: day(-2), end: day(1))
 
         #expect(try await stored.heartRate(in: window) == [hour(-2, 70), hour(-1, 60), hour(0, 72)])
@@ -427,7 +441,7 @@ struct HealthImporterTests {
         garmin.heartRate = [TimedValue(date: start.addingTimeInterval(-600), value: 70),
                             TimedValue(date: start.addingTimeInterval(300), value: 140),
                             TimedValue(date: start.addingTimeInterval(900), value: 160)]
-        let stored = StoredHealthData(context: context, sources: [health, garmin])
+        let stored = StoredHealthData(container: container, sources: [health, garmin])
 
         for source in ["garminConnect", "fitFiles"] {
             let workout = WorkoutSummary(id: source, start: start, duration: 1800, name: "Run", symbol: "figure.run",
@@ -440,7 +454,7 @@ struct HealthImporterTests {
 
     @Test func enteredProfileStandsInForAppleHealth() async throws {
         let defaults = UserDefaults(suiteName: UUID().uuidString)!
-        var stored = StoredHealthData(context: context, sources: [FakeSource(id: HealthKitReader.sourceID)])
+        var stored = StoredHealthData(container: container, sources: [FakeSource(id: HealthKitReader.sourceID)])
         stored.defaults = defaults
         #expect(try await stored.age() == nil)
         #expect(try await stored.biologicalSex() == nil)
@@ -449,6 +463,8 @@ struct HealthImporterTests {
         defaults.set(BiologicalSex.female.rawValue, forKey: EnteredProfile.sexKey)
         #expect(try await stored.age() == 40)
         #expect(try await stored.biologicalSex() == .female)
+        // Entered values aren't a source's (#121).
+        #expect(stored.providesProfile() == (age: false, sex: false))
         #expect(try await HealthProfile.load(from: stored).maxHeartRate == Resources.maxHeartRate(age: 40, highestRecorded: nil))
     }
 
@@ -457,30 +473,30 @@ struct HealthImporterTests {
         first.sleepNights = [SleepNight(wakeDay: today, stages: [.core: 5 * 3600, .deep: 3600], unspecified: 0)]
         var second = batch(steps: [nil])
         second.sleepNights = [SleepNight(wakeDay: today, stages: [:], unspecified: 8 * 3600)]
-        try importer.save(first, from: "preferred")
-        try importer.save(second, from: "other")
-        let nights = try await StoredHealthData(context: context, sources: [FakeSource(id: "preferred")]).sleepNights(days: 1)
+        try await importer.save(first, from: "preferred")
+        try await importer.save(second, from: "other")
+        let nights = try await StoredHealthData(container: container, sources: [FakeSource(id: "preferred")]).sleepNights(days: 1)
         #expect(nights.map(\.asleep) == [6 * 3600])
     }
 
     @Test func sameWorkoutFromTwoSourcesCountsOnce() async throws {
-        try importer.save(batch(steps: [nil], workouts: [workout("watch", averageHeartRate: nil)]), from: "preferred")
-        try importer.save(batch(steps: [nil], workouts: [workout("band")]), from: "other")
-        let workouts = try await StoredHealthData(context: context, sources: [FakeSource(id: "preferred")]).workouts(days: 1)
+        try await importer.save(batch(steps: [nil], workouts: [workout("watch", averageHeartRate: nil)]), from: "preferred")
+        try await importer.save(batch(steps: [nil], workouts: [workout("band")]), from: "other")
+        let workouts = try await StoredHealthData(container: container, sources: [FakeSource(id: "preferred")]).workouts(days: 1)
         #expect(workouts.map(\.id) == ["watch"])
     }
 
     @Test func listsWhereDataCameFromByLastDay() async throws {
         var older = batch(steps: [5000, nil])
         older.origins[.steps] = [day(-1): ["iPhone", "Apple Watch"]]
-        try importer.save(older, from: health)
+        try await importer.save(older, from: health)
         var latest = batch(steps: [6000], workouts: [workout("run")])
         latest.workouts[0].origin = "Garmin Connect · Forerunner 265"
         latest.origins[.steps] = [today: ["Apple Watch"]]
         latest.origins[.hrv] = [today: ["Oura"]]
-        try importer.save(latest, from: health)
+        try await importer.save(latest, from: health)
 
-        let origins = try await StoredHealthData(context: context).origins()
+        let origins = try await StoredHealthData(container: container).origins()
         #expect(origins[.steps] == [DataOrigin(name: "Apple Watch", lastDay: today), DataOrigin(name: "iPhone", lastDay: day(-1))])
         #expect(origins[.hrv]?.map(\.name) == ["Oura"])
         #expect(origins[.workouts] == [DataOrigin(name: "Garmin Connect · Forerunner 265", lastDay: today)])
@@ -492,9 +508,9 @@ struct HealthImporterTests {
         preferred.origins[.steps] = [today: ["Watch"]]
         var other = batch(steps: [5000])
         other.origins[.steps] = [today: ["Band"]]
-        try importer.save(other, from: "other")
-        try importer.save(preferred, from: "preferred")
-        let origins = try await StoredHealthData(context: context, sources: [FakeSource(id: "preferred")]).origins()
+        try await importer.save(other, from: "other")
+        try await importer.save(preferred, from: "preferred")
+        let origins = try await StoredHealthData(container: container, sources: [FakeSource(id: "preferred")]).origins()
         #expect(origins[.steps]?.map(\.name) == ["Watch"])
     }
 
@@ -508,7 +524,7 @@ struct HealthImporterTests {
         _ = try await importer.importFiles([run])
         _ = try await importer.importFiles([hrv])
         _ = try await importer.importFiles([run, hrv])
-        let stored = StoredHealthData(context: context)
+        let stored = StoredHealthData(container: container)
         #expect(try await stored.workouts(days: 1).map(\.name) == ["Run"])
         #expect(try await stored.overnight(days: 1).map(\.hrv) == [50])
         #expect(try context.fetchCount(FetchDescriptor<DaySummary>()) == 1)
@@ -518,22 +534,22 @@ struct HealthImporterTests {
     @Test func importedHRVJoinsANightAppleHealthHasSleepFor() async throws {
         var fromHealth = batch(steps: [nil])
         fromHealth.overnight = [OvernightVitals(wakeDay: today, heartRate: 48, bedtime: today - 3600, wakeTime: today + 7 * 3600)]
-        try importer.save(fromHealth, from: health)
+        try await importer.save(fromHealth, from: health)
         var fromFile = batch(steps: [nil])
         fromFile.overnight = [OvernightVitals(wakeDay: today, hrv: 50)]
-        try importer.save(fromFile, from: FITImport.sourceID, merging: true)
+        try await importer.save(fromFile, from: FITImport.sourceID, merging: true)
 
-        let nights = try await StoredHealthData(context: context, sources: [FakeSource(id: health)]).overnight(days: 1)
+        let nights = try await StoredHealthData(container: container, sources: [FakeSource(id: health)]).overnight(days: 1)
         #expect(nights.map(\.hrv) == [50])
         #expect(nights.map(\.heartRate) == [48])
         #expect(nights.map(\.bedtime) == [today - 3600])
     }
 
     @Test func reimportFillsInOriginOfKeptWorkouts() async throws {
-        try importer.save(batch(steps: [nil], workouts: [workout("run")]), from: health)
+        try await importer.save(batch(steps: [nil], workouts: [workout("run")]), from: health)
         var again = batch(steps: [nil], workouts: [workout("run")])
         again.workouts[0].origin = "Apple Watch"
-        try importer.save(again, from: health)
+        try await importer.save(again, from: health)
         #expect(try context.fetch(FetchDescriptor<WorkoutRecord>()).map(\.origin) == ["Apple Watch"])
     }
 }
@@ -771,25 +787,25 @@ struct HRVStatusTests {
         #expect(status(window: [60, nil, nil, nil, nil, nil, 60]) == nil)
     }
 
-    @Test func averageInsideBaselineIsBalanced() throws {
+    @Test func averageInsideBaselineIsBalanced() async throws {
         let result = try #require(status(window: Array(repeating: 61, count: 7)))
         #expect(result.state == .balanced)
         #expect(abs(result.baseline.lowerBound - 58.487) < 0.01)
         #expect(abs(result.baseline.upperBound - 61.484) < 0.01)
     }
 
-    @Test func averageAboveOrSlightlyBelowIsUnbalanced() throws {
+    @Test func averageAboveOrSlightlyBelowIsUnbalanced() async throws {
         #expect(try #require(status(window: Array(repeating: 66, count: 7))).state == .unbalanced)
         #expect(try #require(status(window: Array(repeating: 57.5, count: 7))).state == .unbalanced)
     }
 
     /// More than one SD (0.05 in ln terms) below the baseline mean: 54 ms is ln −0.105.
-    @Test func averageWellBelowIsLow() throws {
+    @Test func averageWellBelowIsLow() async throws {
         #expect(try #require(status(window: Array(repeating: 54, count: 7))).state == .low)
         #expect(try #require(status(window: Array(repeating: 50, count: 7))).state == .low)
     }
 
-    @Test func missingNightsAreSkipped() throws {
+    @Test func missingNightsAreSkipped() async throws {
         let result = try #require(status(window: [nil, 61, nil, 61, nil, 61, 61]))
         #expect(abs(result.average - 61) < 1e-9)
     }
@@ -816,13 +832,13 @@ struct RecoveryTests {
         #expect(Recovery.status(input) == nil)
     }
 
-    @Test func nothingOffIsGood() throws {
+    @Test func nothingOffIsGood() async throws {
         let result = try #require(Recovery.status(input(breathing: 14.6)))
         #expect(result == Recovery.Result(rating: .good, measured: 4, inRange: 4, reason: "Close to your normal"))
     }
 
     /// HRV and resting HR flag at the smallest worthwhile change, 0.5 SD, and only in the direction of fatigue.
-    @Test func hrvAndRestingHeartRateFlagAtHalfASD() throws {
+    @Test func hrvAndRestingHeartRateFlagAtHalfASD() async throws {
         #expect(try #require(Recovery.status(input(hrv: 59.6))).rating == .good)
         #expect(try #require(Recovery.status(input(hrv: 59.3))).reason == "HRV below normal")
         #expect(try #require(Recovery.status(input(hrv: 80))).rating == .good, "High HRV isn't a fatigue sign")
@@ -832,26 +848,26 @@ struct RecoveryTests {
     }
 
     /// AASM/SRS: at least 7 hours.
-    @Test func sleepUnderSevenHoursIsOff() throws {
+    @Test func sleepUnderSevenHoursIsOff() async throws {
         #expect(try #require(Recovery.status(input(asleep: 7 * 3600))).rating == .good)
         let short = try #require(Recovery.status(input(asleep: 7 * 3600 - 60)))
         #expect(short.rating == .fair)
         #expect(short.reason == "Short sleep")
     }
 
-    @Test func onlyRaisedBreathingIsOff() throws {
+    @Test func onlyRaisedBreathingIsOff() async throws {
         #expect(try #require(Recovery.status(input(breathing: 15.4))).rating == .good)
         #expect(try #require(Recovery.status(input(breathing: 12))).rating == .good)
         #expect(try #require(Recovery.status(input(breathing: 15.6))).reason == "Breathing rate up")
     }
 
-    @Test func twoOrMoreOffIsPoorAndCounted() throws {
+    @Test func twoOrMoreOffIsPoorAndCounted() async throws {
         let result = try #require(Recovery.status(input(hrv: 50, rhr: 58, asleep: 5 * 3600, breathing: 17)))
         #expect(result == Recovery.Result(rating: .poor, measured: 4, inRange: 0, reason: "HRV below normal · 3 more off"))
         #expect(try #require(Recovery.status(input(hrv: 50, asleep: 6 * 3600))).rating == .poor)
     }
 
-    @Test func missingHRVUsesRestingHeartRateAlone() throws {
+    @Test func missingHRVUsesRestingHeartRateAlone() async throws {
         let result = try #require(Recovery.status(input(hrv: nil, asleep: nil)))
         #expect(result == Recovery.Result(rating: .good, measured: 1, inRange: 1, reason: "Close to your normal"))
     }
@@ -859,7 +875,7 @@ struct RecoveryTests {
 
 @MainActor
 struct OvernightVitalsTests {
-    @Test func usesOnlyReadingsTakenWhileAsleep() throws {
+    @Test func usesOnlyReadingsTakenWhileAsleep() async throws {
         let calendar = Calendar.current
         let wakeDay = calendar.startOfDay(for: .now)
         func at(_ hours: Double) -> Date { wakeDay.addingTimeInterval(hours * 3600) }
@@ -901,23 +917,23 @@ struct ResourcesTests {
                                   restingHeartRate: 55, maxHeartRate: 185, startLevel: startLevel)
     }
 
-    @Test func sleepCharges() throws {
+    @Test func sleepCharges() async throws {
         let night = [SleepPeriod(start: start, end: hours(8), stage: .core)]
         let level = try #require(run(8, heartRate: 50, sleep: night, startLevel: 20).last).value
         #expect(level > 70)
     }
 
-    @Test func calmDayDrainsSlowly() throws {
+    @Test func calmDayDrainsSlowly() async throws {
         let level = try #require(run(10, heartRate: 65, startLevel: 80).last).value
         #expect(level < 80 && level > 50)
     }
 
-    @Test func calmDaytimeRestCharges() throws {
+    @Test func calmDaytimeRestCharges() async throws {
         let level = try #require(run(2, heartRate: 56, startLevel: 50).last).value
         #expect(level > 50)
     }
 
-    @Test func workoutDrainsMoreThanRest() throws {
+    @Test func workoutDrainsMoreThanRest() async throws {
         let workout = [DateInterval(start: start, duration: 3600)]
         let worked = try #require(run(1, heartRate: 150, workouts: workout, startLevel: 80).last).value
         let rested = try #require(run(1, heartRate: 60, startLevel: 80).last).value
@@ -980,14 +996,14 @@ struct SleepConsistencyTests {
                     end: noon.addingTimeInterval((Double(day) * 24 + end) * 3600), stage: stage)
     }
 
-    @Test func identicalDaysScore100() throws {
+    @Test func identicalDaysScore100() async throws {
         let sleep = (0..<7).map { night($0, from: 11, to: 19) }
         #expect(try #require(SleepConsistency.index(sleep: sleep, start: noon)) == 100)
     }
 
     /// Phillips et al. 2017: 200 × P − 100. Alternating 23:00–07:00 and 01:00–09:00 nights differ in 4 of every
     /// 24 hours, so P = 20/24 and the index is 200 × 20/24 − 100 ≈ 66.7.
-    @Test func twoHourShiftEveryOtherNightMatchesTheFormula() throws {
+    @Test func twoHourShiftEveryOtherNightMatchesTheFormula() async throws {
         let sleep = (0..<7).map { $0.isMultiple(of: 2) ? night($0, from: 11, to: 19) : night($0, from: 13, to: 21) }
         let index = try #require(SleepConsistency.index(sleep: sleep, start: noon))
         #expect(abs(index - (200 * 20 / 24 - 100)) < 0.01)
@@ -995,19 +1011,19 @@ struct SleepConsistencyTests {
 
     /// Random states agree half the time: 200 × 0.5 − 100 = 0. Sleeping exactly the opposite half of each
     /// consecutive day gives −100.
-    @Test func oppositeDaysScoreMinus100() throws {
+    @Test func oppositeDaysScoreMinus100() async throws {
         let sleep = (0..<7).map { $0.isMultiple(of: 2) ? night($0, from: 0, to: 12) : night($0, from: 12, to: 24) }
         #expect(try #require(SleepConsistency.index(sleep: sleep, start: noon)) == -100)
     }
 
-    @Test func daysWithoutARecordAreLeftOutAndTooFewGiveNothing() throws {
+    @Test func daysWithoutARecordAreLeftOutAndTooFewGiveNothing() async throws {
         let missingOne = (0..<7).filter { $0 != 3 }.map { night($0, from: 11, to: 19) }
         #expect(try #require(SleepConsistency.index(sleep: missingOne, start: noon)) == 100, "Pairs with day 3 are skipped")
         let fourDays = (0..<4).map { night($0, from: 11, to: 19) }
         #expect(SleepConsistency.index(sleep: fourDays, start: noon) == nil)
     }
 
-    @Test func awakeInBedCountsAsAwake() throws {
+    @Test func awakeInBedCountsAsAwake() async throws {
         var sleep = (0..<7).map { night($0, from: 11, to: 19) }
         sleep.append(night(3, from: 14, to: 16, stage: .awake))
         // Day 3 is still asleep 01:00–03:00 in its core period, so the awake entry changes nothing.
@@ -1033,7 +1049,7 @@ struct SleepConsistencyTests {
 
 @MainActor
 struct HealthAgeTests {
-    @Test func fitHabitsLowerHealthAge() throws {
+    @Test func fitHabitsLowerHealthAge() async throws {
         let fit = HealthAge.Input(age: 40, sex: .male, sleepHours: 7.5, dailySteps: 11_000, restingHeartRate: 50,
                                   vo2Max: 50, exerciseMinutesPerWeek: 250)
         let unfit = HealthAge.Input(age: 40, sex: .male, sleepHours: 5.5, dailySteps: 3_000, restingHeartRate: 75,
@@ -1043,14 +1059,14 @@ struct HealthAgeTests {
     }
 
     /// A typical adult who meets the guidelines is their own age.
-    @Test func typicalAdultIsTheirOwnAge() throws {
+    @Test func typicalAdultIsTheirOwnAge() async throws {
         let typical = HealthAge.Input(age: 45, sex: .female, sleepHours: 7.5, dailySteps: 7_803, restingHeartRate: 71,
                                       vo2Max: 26.7, exerciseMinutesPerWeek: 200)
         #expect(abs(try #require(HealthAge.age(typical)) - 45) < 0.001)
     }
 
     /// FRIEND registry medians: a 45-year-old woman at 26.7 is average, while a man at 26.7 is 11.1 below his.
-    @Test func vo2MaxIsComparedWithTheNormForAgeAndSex() throws {
+    @Test func vo2MaxIsComparedWithTheNormForAgeAndSex() async throws {
         func vo2Years(_ sex: BiologicalSex?) -> Double? {
             HealthAge.impacts(HealthAge.Input(age: 45, sex: sex, vo2Max: 26.7)).first { $0.name == "VO₂ Max" }?.years
         }

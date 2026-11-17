@@ -4,7 +4,7 @@ import SwiftData
 /// One day of data imported from one source. Defaults on every property and no unique constraints
 /// keep it ready for CloudKit sync; `dayKey` and `source` together are the identity used to merge duplicates.
 @Model
-final class DaySummary {
+nonisolated final class DaySummary {
     /// "yyyy-MM-dd" in the calendar the day was imported with.
     var dayKey: String = ""
     /// The `HealthSource.id` this row came from. The default fills in rows imported before sources existed,
@@ -93,7 +93,7 @@ final class DaySummary {
 
 /// An imported workout; `healthID` is its ID in its source, e.g. the Apple Health sample UUID.
 @Model
-final class WorkoutRecord {
+nonisolated final class WorkoutRecord {
     var healthID: String = ""
     /// The `HealthSource.id` this workout came from; see `DaySummary.source` for the default.
     var source: String = "appleHealth"
@@ -124,29 +124,65 @@ final class WorkoutRecord {
     }
 }
 
-enum DayKey {
+nonisolated enum DayKey {
     static func make(_ day: Date, calendar: Calendar) -> String {
         let parts = calendar.dateComponents([.year, .month, .day], from: day)
         return String(format: "%04d-%02d-%02d", parts.year!, parts.month!, parts.day!)
     }
 }
 
+/// A plain copy of a `DaySummary`, so rows read on a background context can be used anywhere; SwiftData
+/// models must stay on the context that fetched them.
+nonisolated struct StoredDay {
+    let dayKey: String
+    let source: String
+    let day: Date
+    let metrics: [QuantityMetric: Double]
+    let standHours: Double?
+    let overnightHRV: Double?
+    let sleepingHeartRate: Double?
+    let bedtime: Date?
+    let wakeTime: Date?
+    let sleepNight: SleepNight?
+    let origins: [String: [String]]
+
+    init(_ summary: DaySummary) {
+        dayKey = summary.dayKey
+        source = summary.source
+        day = summary.day
+        metrics = Dictionary(uniqueKeysWithValues: QuantityMetric.allCases.compactMap { metric in
+            summary.value(for: metric).map { (metric, $0) }
+        })
+        standHours = summary.standHours
+        overnightHRV = summary.overnightHRV
+        sleepingHeartRate = summary.sleepingHeartRate
+        bedtime = summary.bedtime
+        wakeTime = summary.wakeTime
+        sleepNight = summary.sleepNight
+        origins = summary.origins
+    }
+
+    func value(for metric: QuantityMetric) -> Double? { metrics[metric] }
+}
+
 /// Card data read from the imported store, so cards load instantly and work offline. Each source's
 /// rows are merged in the order of `sources`: per day and metric, the first source with a value wins.
 /// Intraday data (5-minute heart rate, sleep timing) isn't stored here; it's read live from the sources.
-struct StoredHealthData: HealthDataSource {
-    let context: ModelContext
+/// Reads and merges on whatever executor calls it, never the main actor's by itself: each read opens its own
+/// `ModelContext` on `container`, because a context and its models belong to one actor.
+nonisolated struct StoredHealthData: HealthDataSource {
+    let container: ModelContainer
     /// In order of preference. Stored data from sources not listed here comes after them.
-    var sources: [any HealthSource] = []
+    var sources: [any LiveHealthSource] = []
     var calendar: Calendar = .current
     /// Where `EnteredProfile` is kept.
     var defaults: UserDefaults = .standard
     /// Rows from `loadedSince` on, set by `withDaysLoaded(_:)`; nil to fetch on each read. Fetching costs
     /// about the same per row whatever is read, so a calendar of years of days fetched once per metric was slow.
-    var loadedRows: [String: [DaySummary]]?
+    var loadedRows: [String: [StoredDay]]?
     var loadedSince: Date = .distantFuture
 
-    func withDaysLoaded(_ days: Int) throws -> HealthDataSource {
+    @concurrent func withDaysLoaded(_ days: Int) async throws -> HealthDataSource {
         var copy = self
         copy.loadedSince = lastDays(days).first!
         copy.loadedRows = try rows(since: copy.loadedSince)
@@ -212,11 +248,20 @@ struct StoredHealthData: HealthDataSource {
 
     /// From the first source that has it, else as entered in Settings › Profile (#99).
     func age() async throws -> Int? {
-        sources.lazy.compactMap { $0.age() }.first ?? EnteredProfile.age(defaults: defaults, calendar: calendar)
+        await sourceAge() ?? EnteredProfile.age(defaults: defaults, calendar: calendar)
     }
 
     func biologicalSex() async throws -> BiologicalSex? {
-        sources.lazy.compactMap { $0.biologicalSex() }.first ?? EnteredProfile.sex(defaults: defaults)
+        await sourceSex() ?? EnteredProfile.sex(defaults: defaults)
+    }
+
+    /// Sources are main-actor objects (HealthKit's characteristics are read there), so these hop to it.
+    @MainActor private func sourceAge() -> Int? { sources.lazy.compactMap { $0.age() }.first }
+    @MainActor private func sourceSex() -> BiologicalSex? { sources.lazy.compactMap { $0.biologicalSex() }.first }
+
+    /// Whether `age()` and `biologicalSex()` come from a source rather than from what was entered (#121).
+    @MainActor func providesProfile() -> (age: Bool, sex: Bool) {
+        (sources.contains { $0.age() != nil }, sources.contains { $0.biologicalSex() != nil })
     }
 
     func highestHeartRate(days: Int) async throws -> Double? {
@@ -285,7 +330,7 @@ struct StoredHealthData: HealthDataSource {
             sortBy: [SortDescriptor(\.start, order: .reverse)]
         )
         var seen = Set<[String]>()
-        let workouts = try context.fetch(descriptor).filter { seen.insert([$0.source, $0.healthID]).inserted }.map(\.summary)
+        let workouts = try ModelContext(container).fetch(descriptor).filter { seen.insert([$0.source, $0.healthID]).inserted }.map(\.summary)
         let rank = rank(Set(workouts.map(\.source)))
         return SourceMerge.uniqueWorkouts(workouts) { lhs, rhs in
             rank[lhs.source]! != rank[rhs.source]! ? rank[lhs.source]! < rank[rhs.source]! : SourceMerge.mostDetail(lhs, rhs)
@@ -305,11 +350,11 @@ struct StoredHealthData: HealthDataSource {
     func earliestDay() async throws -> Date? {
         var descriptor = FetchDescriptor<DaySummary>(sortBy: [SortDescriptor(\.day)])
         descriptor.fetchLimit = 1
-        return try context.fetch(descriptor).first?.day
+        return try ModelContext(container).fetch(descriptor).first?.day
     }
 
     /// For each day, the value from the first source in order that has one.
-    private func merged(days: Int, _ value: (DaySummary) -> Double?) throws -> [DayValue] {
+    private func merged(days: Int, _ value: (StoredDay) -> Double?) throws -> [DayValue] {
         let rows = try rows(days: days)
         return lastDays(days).map { day in
             DayValue(day: day, value: first(in: rows, on: day) { value($0) != nil }.flatMap(value))
@@ -317,20 +362,22 @@ struct StoredHealthData: HealthDataSource {
     }
 
     /// The first row on `day`, in source order, that `matches`.
-    private func first(in rows: [String: [DaySummary]], on day: Date, where matches: (DaySummary) -> Bool) -> DaySummary? {
+    private func first(in rows: [String: [StoredDay]], on day: Date, where matches: (StoredDay) -> Bool) -> StoredDay? {
         rows[DayKey.make(day, calendar: calendar)]?.first(where: matches)
     }
 
     /// Rows by day key, each day's sorted by source preference. If iCloud delivered a source's day twice, the first wins.
-    private func rows(days: Int) throws -> [String: [DaySummary]] {
+    private func rows(days: Int) throws -> [String: [StoredDay]] {
         let start = lastDays(days).first!
         // Extra days in `loadedRows` are harmless: callers look rows up by day.
         if let loadedRows, start >= loadedSince { return loadedRows }
         return try rows(since: start)
     }
 
-    private func rows(since start: Date) throws -> [String: [DaySummary]] {
-        let fetched = try context.fetch(FetchDescriptor<DaySummary>(predicate: #Predicate { $0.day >= start }))
+    private func rows(since start: Date) throws -> [String: [StoredDay]] {
+        // A day stored in a time zone further east starts before `start` as an instant (#118).
+        let from = calendar.date(byAdding: .day, value: -1, to: start)!
+        let fetched = try ModelContext(container).fetch(FetchDescriptor<DaySummary>(predicate: #Predicate { $0.day >= from })).map(StoredDay.init)
         let rank = rank(Set(fetched.map(\.source)))
         var seen = Set<[String]>()
         return Dictionary(grouping: fetched.filter { seen.insert([$0.dayKey, $0.source]).inserted }, by: \.dayKey)

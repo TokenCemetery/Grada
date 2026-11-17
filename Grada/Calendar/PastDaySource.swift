@@ -2,7 +2,7 @@ import Foundation
 
 /// A data source as it looked at the end of a past day, so `SnapshotBuilder` can build that day's cards.
 /// Requests for "the last n days ending today" get the n days ending on that day instead.
-struct PastDaySource: HealthDataSource {
+nonisolated struct PastDaySource: HealthDataSource {
     let base: HealthDataSource
     /// 1 for yesterday.
     let daysAgo: Int
@@ -27,6 +27,10 @@ struct PastDaySource: HealthDataSource {
 
     func biologicalSex() async throws -> BiologicalSex? {
         try await base.biologicalSex()
+    }
+
+    @MainActor func providesProfile() -> (age: Bool, sex: Bool) {
+        base.providesProfile()
     }
 
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] {
@@ -62,7 +66,7 @@ struct PastDaySource: HealthDataSource {
     }
 }
 
-extension PastDaySource {
+nonisolated extension PastDaySource {
     /// `base` as it looked at the end of `day`; `base` itself for today.
     static func asOf(_ day: Date, base: HealthDataSource, calendar: Calendar) -> HealthDataSource {
         let start = calendar.startOfDay(for: day)
@@ -72,7 +76,7 @@ extension PastDaySource {
     }
 }
 
-extension SnapshotBuilder {
+nonisolated extension SnapshotBuilder {
     /// Builds cards for `day` as they looked at the end of that day, or live for today.
     static func forDay(_ day: Date, source: HealthDataSource, calendar: Calendar) -> SnapshotBuilder {
         var builder = SnapshotBuilder(source: PastDaySource.asOf(day, base: source, calendar: calendar))

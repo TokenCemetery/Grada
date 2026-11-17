@@ -3,13 +3,11 @@ import os
 
 /// FIT files the user picks in Settings › Import › FIT Files. Their daily values and workouts are stored with every
 /// other source's; each night's sleep stage timeline is kept in a file on this device, so cards that read sleep
-/// periods, such as Sleep Score, see the stages (#96).
-final class FITFileSource: HealthSource {
+/// periods, such as Sleep Score, see the stages (#96). Not a `HealthSource`: the files aren't kept, so there's nothing
+/// to import again on a schedule, and a scheduled import's empty batch would clear the days they filled. Files arrive
+/// through `read(_:)` only, and `HealthImporter` is handed this source separately (#122).
+final class FITFileSource: LiveHealthSource {
     var id: String { FITImport.sourceID }
-    var name: String { "FIT files" }
-    /// Never imported from on a schedule: the files aren't kept, so there's nothing to read again, and a scheduled
-    /// import's empty batch would clear the days they filled. Files arrive through `read(_:)` only.
-    var isAvailable: Bool { false }
 
     private let timelineURL: URL
     private let calendar: Calendar
@@ -58,16 +56,4 @@ final class FITFileSource: HealthSource {
     }
 
     private func wakeDay(_ period: SleepPeriod) -> Date { SleepNight.wakeDay(forEnd: period.end, calendar: calendar) }
-
-    // Everything else FIT files hold is stored by `HealthImporter.importFiles`; intraday heart rate from monitoring
-    // files isn't read yet.
-    func requestAuthorization() async throws {}
-    func earliestSampleDate() async throws -> Date? { nil }
-    func batch(for days: DateInterval) async throws -> HealthBatch { HealthBatch(days: days) }
-    func heartRate(in interval: DateInterval) async throws -> [TimedValue] { [] }
-    func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] { [] }
-    func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail { WorkoutDetail() }
-    func highestHeartRate(days: Int) async throws -> Double? { nil }
-    func age() -> Int? { nil }
-    func biologicalSex() -> BiologicalSex? { nil }
 }

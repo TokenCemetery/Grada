@@ -1,13 +1,13 @@
 # Grada Privacy Policy
 
-Effective November 16, 2026
+Effective November 17, 2026
 
 Grada is an iPhone app that summarizes your health data from Apple Health. This policy explains what data Grada uses, where it is kept, and the control you have over it.
 
 ## Summary
 
 - Grada reads health data from Apple Health only with your permission, from FIT files only when you choose them, and from Garmin Connect only if you connect it with your own key.
-- Your data stays on your devices and in your own private iCloud account. The developer never receives it.
+- Your health data stays on your device. App data such as your card layout, goals and journal can sync through your own private iCloud account. The developer never receives any of it.
 - Grada has no accounts, no analytics, no advertising and no third-party code, and it does not send your health data over the network to anyone. Its only network calls are to Garmin, if you connect Garmin.
 - Grada never writes to, changes or deletes your Apple Health data.
 
@@ -43,9 +43,9 @@ Grada uses the data only to show you daily summaries, scores, calendars and tren
 
 ## Where your data is stored
 
-Grada keeps a copy of daily summaries and workouts, together with your card layout and display settings, in the app's storage on your device. If you enter a birth date or sex in Settings › Profile, for when Apple Health can't provide them, Grada keeps them in the app's settings on this device. With each day and workout it keeps the names Apple Health gives the apps and devices the data came from, such as "Oura" or "Apple Watch", to show you where your data came from.
+Grada keeps a copy of daily summaries and workouts in the app's storage on your device, and your card layout, goals, journal and display settings beside it. If you enter a birth date or sex in Settings › Profile, for when Apple Health can't provide them, Grada keeps them in the app's settings on this device. With each day and workout it keeps the names Apple Health gives the apps and devices the data came from, such as "Oura" or "Apple Watch", to show you where your data came from.
 
-Grada can sync this copy between your devices through your private iCloud database. Data in that database belongs to your Apple Account, and only you can access it. The developer cannot read it. Apple stores it under the [Apple Privacy Policy](https://www.apple.com/legal/privacy/).
+Grada never stores health data in iCloud: daily summaries and workouts stay on the device that imported them. Your card layout, goals and journal can sync between your devices through your private iCloud database. Data in that database belongs to your Apple Account, and only you can access it. The developer cannot read it. Apple stores it under the [Apple Privacy Policy](https://www.apple.com/legal/privacy/).
 
 Grada stores no data on any server run by the developer.
 
@@ -53,7 +53,7 @@ Grada stores no data on any server run by the developer.
 
 - **Change or revoke access:** open Settings › Privacy & Security › Health › Grada. Grada stops reading any type you turn off.
 - **Delete Grada's copy on a device:** delete the app.
-- **Delete Grada's iCloud data:** open Settings › [your name] › iCloud › Manage Storage (on some iOS versions, Manage Account Storage) and delete Grada's data.
+- **Delete Grada's iCloud data** (card layout, goals and journal): open Settings › [your name] › iCloud › Manage Storage (on some iOS versions, Manage Account Storage) and delete Grada's data.
 
 Removing Grada never removes anything from Apple Health.
 
