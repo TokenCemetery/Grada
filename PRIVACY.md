@@ -42,7 +42,7 @@ Grada uses the data only to show you daily summaries, scores, calendars and tren
 
 ## Where your data is stored
 
-Grada keeps a copy of daily summaries and workouts, together with your card layout and display settings, in the app's storage on your device. With each day and workout it keeps the names Apple Health gives the apps and devices the data came from, such as "Oura" or "Apple Watch", to show you where your data came from.
+Grada keeps a copy of daily summaries and workouts, together with your card layout and display settings, in the app's storage on your device. If you enter a birth date or sex in Settings › Profile, for when Apple Health can't provide them, Grada keeps them in the app's settings on this device. With each day and workout it keeps the names Apple Health gives the apps and devices the data came from, such as "Oura" or "Apple Watch", to show you where your data came from.
 
 Grada can sync this copy between your devices through your private iCloud database. Data in that database belongs to your Apple Account, and only you can access it. The developer cannot read it. Apple stores it under the [Apple Privacy Policy](https://www.apple.com/legal/privacy/).
 

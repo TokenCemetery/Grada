@@ -140,6 +140,8 @@ struct StoredHealthData: HealthDataSource {
     /// In order of preference. Stored data from sources not listed here comes after them.
     var sources: [any HealthSource] = []
     var calendar: Calendar = .current
+    /// Where `EnteredProfile` is kept.
+    var defaults: UserDefaults = .standard
     /// Rows from `loadedSince` on, set by `withDaysLoaded(_:)`; nil to fetch on each read. Fetching costs
     /// about the same per row whatever is read, so a calendar of years of days fetched once per metric was slow.
     var loadedRows: [String: [DaySummary]]?
@@ -206,12 +208,13 @@ struct StoredHealthData: HealthDataSource {
         return detail
     }
 
+    /// From the first source that has it, else as entered in Settings › Profile (#99).
     func age() async throws -> Int? {
-        sources.lazy.compactMap { $0.age() }.first
+        sources.lazy.compactMap { $0.age() }.first ?? EnteredProfile.age(defaults: defaults, calendar: calendar)
     }
 
     func biologicalSex() async throws -> BiologicalSex? {
-        sources.lazy.compactMap { $0.biologicalSex() }.first
+        sources.lazy.compactMap { $0.biologicalSex() }.first ?? EnteredProfile.sex(defaults: defaults)
     }
 
     func highestHeartRate(days: Int) async throws -> Double? {

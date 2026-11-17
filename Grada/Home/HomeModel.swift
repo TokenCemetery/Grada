@@ -26,6 +26,12 @@ final class HomeModel {
         }
     }
 
+    /// Whether a source such as Apple Health provides age and sex, so what's entered in Settings › Profile isn't used.
+    func sourcesProvideProfile() -> (age: Bool, sex: Bool) {
+        let sources = importer?.sources ?? []
+        return (sources.contains { $0.age() != nil }, sources.contains { $0.biologicalSex() != nil })
+    }
+
     /// Pulls the latest days from Apple Health, then rebuilds the cards.
     func refresh(_ cards: [CardID], goals: GoalHistory) async {
         await importer?.importRecent()

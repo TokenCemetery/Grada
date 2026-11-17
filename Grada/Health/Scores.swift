@@ -112,6 +112,7 @@ nonisolated struct HealthProfile: Equatable {
     enum MaxHeartRateSource: Equatable { case age, highestRecorded }
 
     var age: Int?
+    var sex: BiologicalSex?
     var maxHeartRate: Double?
     var maxHeartRateSource: MaxHeartRateSource?
     /// 7-day average, the same one Resources uses.
@@ -122,6 +123,7 @@ nonisolated struct HealthProfile: Equatable {
         let highest = age == nil ? try await source.highestHeartRate(days: 365) : nil
         return HealthProfile(
             age: age,
+            sex: try await source.biologicalSex(),
             maxHeartRate: Resources.maxHeartRate(age: age, highestRecorded: highest),
             maxHeartRateSource: age != nil ? .age : (highest != nil ? .highestRecorded : nil),
             restingHeartRate: Baseline.average(try await source.daily(.restingHeartRate, days: 8).compactMap(\.value))

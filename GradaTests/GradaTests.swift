@@ -399,6 +399,20 @@ struct HealthImporterTests {
         }
     }
 
+    @Test func enteredProfileStandsInForAppleHealth() async throws {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        var stored = StoredHealthData(context: context, sources: [FakeSource(id: HealthKitReader.sourceID)])
+        stored.defaults = defaults
+        #expect(try await stored.age() == nil)
+        #expect(try await stored.biologicalSex() == nil)
+
+        defaults.set(calendar.date(byAdding: .year, value: -40, to: day(-1))!.timeIntervalSince1970, forKey: EnteredProfile.birthDateKey)
+        defaults.set(BiologicalSex.female.rawValue, forKey: EnteredProfile.sexKey)
+        #expect(try await stored.age() == 40)
+        #expect(try await stored.biologicalSex() == .female)
+        #expect(try await HealthProfile.load(from: stored).maxHeartRate == Resources.maxHeartRate(age: 40, highestRecorded: nil))
+    }
+
     @Test func napDoesNotHideAnImportedNight() async throws {
         let night = OvernightVitals(wakeDay: today, bedtime: day(-1).addingTimeInterval(23 * 3600), wakeTime: day(0).addingTimeInterval(7 * 3600))
         var batch = batch(steps: [nil])

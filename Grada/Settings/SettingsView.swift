@@ -264,26 +264,73 @@ private struct ImportFilesView: View {
     }
 }
 
-/// Read-only: these values come from Apple Health and are changed there.
+/// Values from Apple Health, which are changed there. Birth date and sex it doesn't provide can be entered
+/// and saved here instead (#99).
 private struct ProfileView: View {
     @Environment(HomeModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
     @State private var profile: HealthProfile?
+    /// Which values Apple Health provides; nil until checked.
+    @State private var provided: (age: Bool, sex: Bool)?
+    @AppStorage(EnteredProfile.birthDateKey) private var savedBirthDate: Double = 0
+    @AppStorage(EnteredProfile.sexKey) private var savedSex = ""
+    @State private var birthDate = Date.now
+    @State private var sex = ""
 
     var body: some View {
         Form {
             profileSection
+            if let provided, !provided.age || !provided.sex {
+                entrySection(provided)
+            }
         }
         .navigationTitle("Profile")
         // Re-read when coming back from the Health app, where the user may have just changed them.
         .task(id: scenePhase) {
-            if scenePhase == .active { profile = await model.loadProfile() }
+            if scenePhase == .active { await load() }
+        }
+    }
+
+    private func load() async {
+        profile = await model.loadProfile()
+        provided = model.sourcesProvideProfile()
+        birthDate = savedBirthDate != 0 ? Date(timeIntervalSince1970: savedBirthDate)
+            : Calendar.current.date(byAdding: .year, value: -30, to: .now)!
+        sex = savedSex
+    }
+
+    /// Only the values Apple Health doesn't provide; nothing is kept until Save.
+    private func entrySection(_ provided: (age: Bool, sex: Bool)) -> some View {
+        let changed = (!provided.age && birthDate.timeIntervalSince1970 != savedBirthDate)
+            || (!provided.sex && sex != savedSex)
+        return Section {
+            if !provided.age {
+                DatePicker("Birth Date", selection: $birthDate, in: ...Date.now, displayedComponents: .date)
+            }
+            if !provided.sex {
+                Picker("Sex", selection: $sex) {
+                    Text("Not Set").tag("")
+                    Text("Female").tag(BiologicalSex.female.rawValue)
+                    Text("Male").tag(BiologicalSex.male.rawValue)
+                }
+            }
+            Button("Save") {
+                if !provided.age { savedBirthDate = birthDate.timeIntervalSince1970 }
+                if !provided.sex { savedSex = sex }
+                Task { profile = await model.loadProfile() }
+            }
+            .disabled(!changed)
+        } header: {
+            Text("Not in Apple Health")
+        } footer: {
+            Text("Grada can't read these from Apple Health, for example when your data comes from Garmin or FIT files. What you save is used instead and kept on this device.")
         }
     }
 
     private var profileSection: some View {
         Section {
             LabeledContent("Age", value: profile.map { $0.age.map { "\($0)" } ?? "Not available" } ?? "…")
+            LabeledContent("Sex", value: profile.map { $0.sex.map { $0 == .female ? "Female" : "Male" } ?? "Not available" } ?? "…")
             LabeledContent("Max Heart Rate") {
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(profile?.maxHeartRate.map { "\(Int($0.rounded())) bpm" } ?? "–")
@@ -302,8 +349,8 @@ private struct ProfileView: View {
             }
             LabeledContent("Sleep Need", value: SnapshotBuilder.hoursMinutes(SleepNeed.baseline))
         } footer: {
-            if profile != nil, profile?.age == nil {
-                Text("Grada can't read your birth date. Add it in Health › your picture › Health Details, then allow Grada to read Date of Birth in Health › Sharing › Apps › Grada.")
+            if let provided, !provided.age || !provided.sex {
+                Text("Used for Resources, Health age and Sleep need. Read from Apple Health where it's allowed: add your birth date and sex in Health › your picture › Health Details, then allow Grada to read them in Health › Sharing › Apps › Grada, or save them below.")
             } else {
                 Text("Used for Resources, Health age and Sleep need. Read from Apple Health; change them there.")
             }

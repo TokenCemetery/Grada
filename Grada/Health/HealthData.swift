@@ -186,7 +186,26 @@ nonisolated struct DataOrigin: Hashable {
 }
 
 /// Biological sex as Apple Health records it; zone tables like VO₂ max fitness depend on it.
-nonisolated enum BiologicalSex { case female, male }
+nonisolated enum BiologicalSex: String { case female, male }
+
+/// Birth date and sex entered in Settings › Profile, for when Apple Health can't provide them (#99).
+/// Kept in this device's settings.
+nonisolated enum EnteredProfile {
+    /// Seconds since 1970; 0 when not entered.
+    static let birthDateKey = "profile.birthDate"
+    /// A `BiologicalSex` raw value; empty when not entered.
+    static let sexKey = "profile.sex"
+
+    static func age(defaults: UserDefaults = .standard, calendar: Calendar = .current) -> Int? {
+        let seconds = defaults.double(forKey: birthDateKey)
+        guard seconds != 0 else { return nil }
+        return calendar.dateComponents([.year], from: Date(timeIntervalSince1970: seconds), to: .now).year
+    }
+
+    static func sex(defaults: UserDefaults = .standard) -> BiologicalSex? {
+        defaults.string(forKey: sexKey).flatMap(BiologicalSex.init(rawValue:))
+    }
+}
 
 /// Where cards get their data: the imported store in the app, sample data in previews and demo mode.
 protocol HealthDataSource {

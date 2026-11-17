@@ -10,6 +10,8 @@ struct HomeView: View {
     @Query private var goalChanges: [GoalChange]
     @Environment(\.healthSource) private var healthSource
     @AppStorage("didSeedHomeCards") private var didSeedHomeCards = false
+    @AppStorage(EnteredProfile.birthDateKey) private var enteredBirthDate: Double = 0
+    @AppStorage(EnteredProfile.sexKey) private var enteredSex = ""
     @State private var isCustomizing = false
 
     private var cardIDs: [CardID] { cards.compactMap(\.cardID) }
@@ -61,6 +63,10 @@ struct HomeView: View {
             Task { await model.reload([healthStatus] + cardIDs, goals: goals) }
         }
         .onChange(of: goals) {
+            Task { await model.reload([healthStatus] + cardIDs, goals: goals) }
+        }
+        // Age and sex entered in Settings › Profile change many cards' zones and ratings.
+        .onChange(of: "\(enteredBirthDate) \(enteredSex)") {
             Task { await model.reload([healthStatus] + cardIDs, goals: goals) }
         }
     }
