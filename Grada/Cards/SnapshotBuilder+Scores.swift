@@ -1,6 +1,6 @@
 import Foundation
 
-extension SnapshotBuilder {
+nonisolated extension SnapshotBuilder {
     // MARK: - Scores
 
     /// This morning's recovery. Until last night's vitals arrive, yesterday's, like Health status.

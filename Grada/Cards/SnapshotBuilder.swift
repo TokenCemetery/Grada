@@ -1,7 +1,7 @@
 import Foundation
 
 /// Turns raw Apple Health data into card snapshots. All calculations run on the device.
-struct SnapshotBuilder {
+nonisolated struct SnapshotBuilder {
     let source: HealthDataSource
     var calendar: Calendar = .current
     var now: Date = .now
@@ -12,8 +12,8 @@ struct SnapshotBuilder {
     /// History used for personal normal ranges.
     let baselineDays = 30
 
-    /// Cards with a single variant ignore `variant`.
-    func snapshot(for kind: CardKind, variant: CardVariant = .current) async throws -> CardSnapshot {
+    /// Cards with a single variant ignore `variant`. `@concurrent`, so reading and scoring never run on the main actor.
+    @concurrent func snapshot(for kind: CardKind, variant: CardVariant = .current) async throws -> CardSnapshot {
         switch kind {
         case .healthStatus: try await healthStatus()
         case .recovery: try await recovery(variant)
@@ -88,7 +88,7 @@ struct SnapshotBuilder {
         return "−\((goal - value).formatted(style)) of \(goal.formatted(style))"
     }
 
-    nonisolated static func hoursMinutes(_ seconds: TimeInterval) -> String {
+    static func hoursMinutes(_ seconds: TimeInterval) -> String {
         let minutes = Int((seconds / 60).rounded())
         return minutes >= 60 ? "\(minutes / 60)h \(String(format: "%02d", minutes % 60))m" : "\(minutes)m"
     }

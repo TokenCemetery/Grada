@@ -243,7 +243,8 @@ nonisolated enum EnteredProfile {
 }
 
 /// Where cards get their data: the imported store in the app, sample data in previews and demo mode.
-protocol HealthDataSource {
+/// Nonisolated so stores and builders can read and score off the main actor; each reader runs on its caller's executor.
+nonisolated protocol HealthDataSource {
     /// Average heart rate per 5 minutes in `interval`, oldest first; intervals without data are left out.
     func heartRate(in interval: DateInterval) async throws -> [TimedValue]
     /// Sleep stages that overlap `interval`, oldest first, from one source per night.
@@ -271,17 +272,20 @@ protocol HealthDataSource {
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail
     /// The apps and devices whose data Grada used, per kind of data, most recently used first.
     func origins() async throws -> [DataKind: [DataOrigin]]
+    /// Whether a source provides the user's age and sex, so what's entered in Settings › Profile isn't used (#121).
+    @MainActor func providesProfile() -> (age: Bool, sex: Bool)
     /// A copy that reads the last `days` days once, for callers that ask for long ranges many times in a row.
-    func withDaysLoaded(_ days: Int) throws -> HealthDataSource
+    @concurrent func withDaysLoaded(_ days: Int) async throws -> HealthDataSource
     /// Seconds of `activity` on `day`; nil without any record of it.
     func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval?
 }
 
-extension HealthDataSource {
+nonisolated extension HealthDataSource {
     func earliestDay() async throws -> Date? { nil }
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] { [] }
     func origins() async throws -> [DataKind: [DataOrigin]] { [:] }
-    func withDaysLoaded(_ days: Int) throws -> HealthDataSource { self }
+    @concurrent func withDaysLoaded(_ days: Int) async throws -> HealthDataSource { self }
+    @MainActor func providesProfile() -> (age: Bool, sex: Bool) { (false, false) }
     func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval? { nil }
 
     /// Without workout samples, the 5-minute heart rate during the workout.

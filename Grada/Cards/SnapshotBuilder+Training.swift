@@ -1,6 +1,6 @@
 import Foundation
 
-extension SnapshotBuilder {
+nonisolated extension SnapshotBuilder {
     // MARK: - Training
 
     /// Race times from the latest VO₂ max, and their trend against the reading about 4 weeks before it.

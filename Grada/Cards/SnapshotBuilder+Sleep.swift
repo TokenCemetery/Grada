@@ -1,6 +1,6 @@
 import Foundation
 
-extension SnapshotBuilder {
+nonisolated extension SnapshotBuilder {
     // MARK: - Sleep
 
     /// The night that ended today; until there is one (e.g. just after midnight), yesterday's.

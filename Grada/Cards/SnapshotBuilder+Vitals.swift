@@ -1,6 +1,6 @@
 import Foundation
 
-extension SnapshotBuilder {
+nonisolated extension SnapshotBuilder {
     // MARK: - Vitals
 
     /// The vitals behind Health status; the calendar rates days with the same set.

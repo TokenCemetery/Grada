@@ -1,7 +1,7 @@
 import Foundation
 
 /// Everything a card needs to render, already formatted.
-struct CardSnapshot {
+nonisolated struct CardSnapshot {
     enum Tone { case neutral, good, warning }
 
     enum Chart {
@@ -75,7 +75,7 @@ struct CardSnapshot {
 }
 
 /// One day's workouts: minutes per sport, longest first.
-struct WorkoutDay: Equatable {
+nonisolated struct WorkoutDay: Equatable {
     struct Sport: Equatable {
         let name: String
         let symbol: String
@@ -121,7 +121,7 @@ struct WorkoutDay: Equatable {
     }
 }
 
-struct VitalStatus: Equatable {
+nonisolated struct VitalStatus: Equatable {
     enum State { case inRange, outOfRange, calibrating, noData }
 
     let name: String

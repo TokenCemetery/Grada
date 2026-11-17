@@ -2,7 +2,7 @@ import Foundation
 
 /// Made-up but realistic data for SwiftUI previews and the simulator, which has no Health data.
 /// Enable in the app with the `-SampleData` launch argument.
-struct SampleDataSource: HealthDataSource {
+nonisolated struct SampleDataSource: HealthDataSource {
     var calendar: Calendar = .current
 
     func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
@@ -232,7 +232,7 @@ struct SampleDataSource: HealthDataSource {
 }
 
 /// Deterministic generator so previews look the same every time.
-struct SeededRandom {
+nonisolated struct SeededRandom {
     private var state: UInt64
 
     init(seed: UInt64) { state = seed &+ 0x9E37_79B9_7F4A_7C15 }
@@ -244,6 +244,6 @@ struct SeededRandom {
     }
 }
 
-private extension QuantityMetric {
+private nonisolated extension QuantityMetric {
     var hashSeed: Int { QuantityMetric.allCases.firstIndex(of: self)! + 1 }
 }

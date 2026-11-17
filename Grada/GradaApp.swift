@@ -13,7 +13,7 @@ struct GradaApp: App {
     init() {
         let container = Self.makeModelContainer()
         modelContainer = container
-        let (home, calendar, source) = Self.makeModels(context: container.mainContext)
+        let (home, calendar, source) = Self.makeModels(container: container)
         _homeModel = State(initialValue: home)
         _calendarModel = State(initialValue: calendar)
         healthSource = source
@@ -52,7 +52,7 @@ struct GradaApp: App {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
-    private static func makeModels(context: ModelContext) -> (HomeModel, CalendarModel, HealthDataSource) {
+    private static func makeModels(container: ModelContainer) -> (HomeModel, CalendarModel, HealthDataSource) {
 #if DEBUG
         if isTestHost || ProcessInfo.processInfo.arguments.contains("-SampleData") {
             let source = SampleDataSource()
@@ -61,11 +61,11 @@ struct GradaApp: App {
 #endif
         let reader = HealthKitReader()
         // Apple Health first: Garmin direct fills what its Apple Health sync leaves out, such as overnight HRV.
-        let importer = HealthImporter(sources: [reader, GarminSource(), FITFileSource()], context: context)
+        let importer = HealthImporter(sources: [reader, GarminSource()], fitFiles: FITFileSource(), container: container)
         // Started here, not from a view: iOS may relaunch the app in the background with no UI.
         Task { await importer.startBackgroundUpdates() }
-        let source = StoredHealthData(context: context, sources: importer.sources)
-        let notifier = ReportNotifier(source: source, context: context)
+        let source = StoredHealthData(container: container, sources: importer.liveSources)
+        let notifier = ReportNotifier(source: source, context: container.mainContext)
         importer.onRecentImport = { await notifier.update() }
         return (HomeModel(source: source, importer: importer), CalendarModel(source: source, importer: importer), source)
     }

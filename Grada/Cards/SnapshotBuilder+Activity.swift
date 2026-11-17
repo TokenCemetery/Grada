@@ -1,6 +1,6 @@
 import Foundation
 
-extension SnapshotBuilder {
+nonisolated extension SnapshotBuilder {
     // MARK: - Activity
 
     func cumulative(_ metric: QuantityMetric, goal: GoalMetric? = nil, _ variant: CardVariant) async throws -> CardSnapshot {
