@@ -1410,7 +1410,7 @@ struct JournalTests {
     }
 
     @Test func entriesOfRemovedTagsAreIgnoredButKept() throws {
-        let removed = JournalEntry(day: today, tag: .sauna, amount: nil)
+        let removed = JournalEntry(day: today, tag: .meditation, amount: nil)
         removed.tagRawValue = "stress"
         context.insert(removed)
         try context.save()
@@ -1426,8 +1426,8 @@ struct JournalTests {
     }
 
     @Test func duplicateEntriesFromSyncAreMerged() throws {
-        context.insert(JournalEntry(day: today, tag: .sauna, amount: nil))
-        context.insert(JournalEntry(day: today, tag: .sauna, amount: nil))
+        context.insert(JournalEntry(day: today, tag: .meditation, amount: nil))
+        context.insert(JournalEntry(day: today, tag: .meditation, amount: nil))
         try context.save()
         #expect(store.entries(on: today).count == 1)
         try context.save()

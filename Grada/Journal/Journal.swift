@@ -7,7 +7,7 @@ nonisolated enum JournalTag: String, CaseIterable, Identifiable {
     case alcohol, caffeine, nap
     case illness
     case travel, nightShift, outdoorTime
-    case meditation, sauna
+    case meditation
 
     enum Group: CaseIterable {
         case lifestyle, health, situation, recovery
@@ -49,7 +49,6 @@ nonisolated enum JournalTag: String, CaseIterable, Identifiable {
         case .nightShift: "Night shift"
         case .outdoorTime: "Outdoor time"
         case .meditation: "Meditation"
-        case .sauna: "Sauna"
         }
     }
 
@@ -63,7 +62,6 @@ nonisolated enum JournalTag: String, CaseIterable, Identifiable {
         case .nightShift: "moon.haze"
         case .outdoorTime: "sun.max"
         case .meditation: "figure.mind.and.body"
-        case .sauna: "flame"
         }
     }
 
@@ -72,7 +70,7 @@ nonisolated enum JournalTag: String, CaseIterable, Identifiable {
         case .alcohol, .caffeine, .nap: .lifestyle
         case .illness: .health
         case .travel, .nightShift, .outdoorTime: .situation
-        case .meditation, .sauna: .recovery
+        case .meditation: .recovery
         }
     }
 
