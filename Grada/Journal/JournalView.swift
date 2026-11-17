@@ -7,14 +7,15 @@ struct JournalView: View {
     @Environment(\.healthSource) private var healthSource
     @Environment(HomeModel.self) private var homeModel
     @Query private var goalChanges: [GoalChange]
-    @State private var report: MorningReport?
+    @State private var morning: DailyReport?
+    @State private var evening: DailyReport?
     /// A report row's detail screen.
     @State private var openedRoute: MetricRoute?
     @Query private var allEntries: [JournalEntry]
     @AppStorage("hiddenJournalTags") private var hiddenTags = HiddenTags()
     @State private var day = Calendar.current.startOfDay(for: .now)
     @State private var isEditingTags = false
-    /// The day `report` is for, so another day's report isn't shown while this one loads.
+    /// The day the reports are for, so another day's aren't shown while these load.
     @State private var loadedDay: Date?
     /// Changes on every save, for the haptic and the checkmark bounce.
     @State private var saves = 0
@@ -40,9 +41,14 @@ struct JournalView: View {
                     DayPicker(day: $day, today: today, isSaved: !entries.isEmpty, saves: saves)
                 }
                 Section {
-                    ReportColumns(morning: report, day: day) { openedRoute = $0 }
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                    VStack(spacing: 24) {
+                        ReportColumns(morning: morning, evening: evening, day: day) { openedRoute = $0 }
+                        if !recommendations.isEmpty {
+                            RecommendationsView(recommendations: recommendations)
+                        }
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 } footer: {
                     // The tags' explanation sits just above them.
                     Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nTags are saved as you tap them.")
@@ -69,17 +75,24 @@ struct JournalView: View {
             .navigationDestination(for: WorkoutRoute.self) { WorkoutDetailView(workout: $0.workout) }
             // Reloads for another day and whenever new Health data is saved.
             .task(id: ReportKey(day: day, revision: homeModel.importer?.revision ?? 0)) {
-                if loadedDay != day { report = nil }
+                if loadedDay != day { (morning, evening) = (nil, nil) }
                 var builder = SnapshotBuilder.forDay(day, source: healthSource, calendar: calendar)
                 builder.goals = GoalHistory(goalChanges)
-                let loaded = (try? await MorningReport.load(builder)) ?? MorningReport()
+                let loadedMorning = (try? await DailyReport.load(.morning, builder)) ?? DailyReport(kind: .morning)
+                let loadedEvening = (try? await DailyReport.load(.evening, builder)) ?? DailyReport(kind: .evening)
                 guard !Task.isCancelled else { return }
-                report = loaded
+                (morning, evening) = (loadedMorning, loadedEvening)
                 loadedDay = day
             }
             // A tapped report notification opens today's.
             .onChange(of: NotificationRouter.shared.journalRequests) { day = today }
         }
+    }
+
+    /// Both reports' recommendations, each once: both take Strain's.
+    private var recommendations: [Recommendation] {
+        let all = (morning?.recommendations ?? []) + (evening?.recommendations ?? [])
+        return all.enumerated().filter { index, item in !all[..<index].contains(item) }.map(\.element)
     }
 
     private struct ReportKey: Equatable {

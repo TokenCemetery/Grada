@@ -286,7 +286,7 @@ private struct ProfileView: View {
             Section {
                 NavigationLink("Sleep Schedule") { SleepScheduleView() }
             } footer: {
-                Text("Your wake-up time and the morning report notification.")
+                Text("Your bedtime and wake-up, and the morning and evening report notifications.")
             }
         }
         .navigationTitle("Profile")

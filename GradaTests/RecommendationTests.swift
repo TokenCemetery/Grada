@@ -66,6 +66,7 @@ struct BedtimeTests {
         #expect(plan.wake == monday.addingTimeInterval(6.75 * 3600), "Median of the three weekday wake-ups")
         #expect(plan.awakeInBed == 20 * 60)
         #expect(plan.bedtime == monday.addingTimeInterval((6.75 - 7.5) * 3600 - 20 * 60), "22:55 the evening before")
+        #expect(plan.usualBedtime == monday.addingTimeInterval(-3600), "Weekday nights started at 23:00")
     }
 
     @Test func weekendNightsAreKeptApart() throws {

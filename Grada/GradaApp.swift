@@ -78,7 +78,7 @@ struct GradaApp: App {
         // Started here, not from a view: iOS may relaunch the app in the background with no UI.
         Task { await importer.startBackgroundUpdates() }
         let source = StoredHealthData(context: context, sources: importer.sources)
-        let notifier = MorningReportNotifier(source: source, context: context)
+        let notifier = ReportNotifier(source: source, context: context)
         importer.onRecentImport = { await notifier.update() }
         return (HomeModel(source: source, importer: importer), CalendarModel(source: source, importer: importer), source)
     }

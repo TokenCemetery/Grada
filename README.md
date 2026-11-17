@@ -6,7 +6,7 @@ Grada is an iPhone and iPad app that turns your Apple Health data into a daily s
 - **Calendar:** colors each day by a metric, with a sheet for that day's details.
 - **Detail screens:** each metric's trend and breakdown, what it means, and the inputs it's based on. Some show today's recommendation with its reason: steps left to the goal as minutes of walking, a bedtime for your usual wake-up, or easing off when resting heart rate, HRV or training load is out of range.
 - **Goals and journal:** start from a goal preset that adjusts every week, and keep a daily journal of habits such as alcohol, caffeine, late meals or travel.
-- **Morning report:** each day in Journal opens with last night's sleep, Recovery, Health Status, Training Readiness and today's recommendations. **Settings › Profile › Sleep Schedule** can send it as a notification once last night's sleep is recorded, never before your wake-up time: your usual one from the last 14 nights, or one you set.
+- **Reports:** each day in Journal opens with two reports, side by side on iPad. The morning report has last night's sleep, Recovery, Health Status and Training Readiness. The evening report has the day's steps, active energy, intensity minutes, training and strain against your goals. Below them, Recommendations collects both reports' advice, including tonight's bedtime. **Settings › Profile › Sleep Schedule** sets your bedtime and wake-up (your usual ones from the last 14 nights, or your own) and can send each report as a notification: the morning one once last night's sleep is recorded, never before your wake-up, and the evening one a chosen time before bedtime.
 
 ## Data
 
@@ -57,7 +57,7 @@ Each version is a [GitHub milestone](https://github.com/TokenCemetery/Grada/mile
 |---|---|---|---|
 | v1 | Foundation | Apple Health import, iCloud sync, home cards, calendar, metric detail | Built; iCloud sync waits on a paid developer team ([#20](https://github.com/TokenCemetery/Grada/issues/20)) |
 | v2 | Personal | Goals, journal, intensity minutes, HRV status, Health Age | Built |
-| v3 | Guidance | Morning and evening reports, recommendations, monthly summary | In progress; recommendations and the morning report built |
+| v3 | Guidance | Morning and evening reports, recommendations, monthly summary | In progress; recommendations and the morning and evening reports built |
 | v4 | Scores | Sleep score, training readiness, strain and training load, recovery time | Built |
 | v5 | Energy | Resources energy card | Built; a stress card was declined because there's no published way to measure stress from iPhone data |
 

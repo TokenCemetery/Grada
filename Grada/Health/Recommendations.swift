@@ -2,6 +2,8 @@ import Foundation
 
 /// A short recommendation and the reason for it, always shown together.
 nonisolated struct Recommendation: Equatable {
+    /// SF Symbol for what it's about.
+    let symbol: String
     let text: String
     let reason: String
 }
@@ -18,6 +20,7 @@ nonisolated enum Recommendations {
         let left = goal - today
         let minutes = Int((left / stepsPerMinute).rounded(.up))
         return Recommendation(
+            symbol: "figure.walk",
             text: "Walk about \(minutes) more \(minutes == 1 ? "minute" : "minutes")",
             reason: "\(whole(left)) steps to today's goal of \(whole(goal)). A brisk walk is about \(whole(stepsPerMinute)) steps a minute."
         )
@@ -28,6 +31,7 @@ nonisolated enum Recommendations {
     static func restingHeartRate(_ value: Double, normal: ClosedRange<Double>) -> Recommendation? {
         guard value > normal.upperBound else { return nil }
         return Recommendation(
+            symbol: "heart",
             text: "Take it easy today",
             reason: "Resting heart rate \(whole(value)) bpm is above your normal \(whole(normal.lowerBound))–\(whole(normal.upperBound)). It rises with illness, stress, alcohol and too little recovery."
         )
@@ -37,6 +41,7 @@ nonisolated enum Recommendations {
     static func hrv(_ state: HRVStatus.State) -> Recommendation? {
         guard state == .low else { return nil }
         return Recommendation(
+            symbol: "waveform.path.ecg",
             text: "Keep training easy",
             reason: "Your 7-night HRV is well below your baseline. HRV-guided training switches to easy days when it drops this far."
         )
@@ -48,12 +53,14 @@ nonisolated enum Recommendations {
         let sweetSpot = "\(Strain.sweetSpot.lowerBound.formatted())–\(Strain.sweetSpot.upperBound.formatted())"
         if ratio > Strain.sweetSpot.upperBound {
             return Recommendation(
+                symbol: "chart.bar",
                 text: ratio >= Strain.dangerRatio ? "Ease off for a few days" : "Hold your load steady",
                 reason: "This week's load is \(shown)× your 4-week average. Athletes had the fewest injuries when it stayed at \(sweetSpot)×."
             )
         }
         if ratio < Strain.sweetSpot.lowerBound {
             return Recommendation(
+                symbol: "chart.bar",
                 text: "Build back up gradually",
                 reason: "This week's load is \(shown)× your 4-week average. Athletes had the fewest injuries when it stayed at \(sweetSpot)×."
             )
@@ -70,6 +77,7 @@ nonisolated enum Recommendations {
         }
         let awake = plan.awakeInBed >= 60 ? ", plus the \(SnapshotBuilder.hoursMinutes(plan.awakeInBed)) you usually lie awake" : ""
         return Recommendation(
+            symbol: "bed.double",
             text: "Go to bed by \(time(plan.bedtime))",
             reason: "For \(SnapshotBuilder.hoursMinutes(need)) of sleep before your \(usual) at \(time(plan.wake))\(awake)."
         )
@@ -95,6 +103,8 @@ nonisolated enum Bedtime {
     struct Plan: Equatable {
         let bedtime: Date
         let wake: Date
+        /// When sleep usually starts before this wake-up, from the same nights.
+        let usualBedtime: Date
         let awakeInBed: TimeInterval
         /// Whether the wake-up is the usual weekend or weekday one; nil when too few nights of that kind mixed both.
         let weekend: Bool?
@@ -112,10 +122,12 @@ nonisolated enum Bedtime {
         let used = sameKind.count >= minimumNights ? sameKind : nights
         guard used.count >= minimumNights,
               let wakeOffset = median(used.map { $0.end.timeIntervalSince(calendar.startOfDay(for: $0.wakeDay)) }),
+              let startOffset = median(used.map { $0.start.timeIntervalSince(calendar.startOfDay(for: $0.wakeDay)) }),
               let awake = median(used.map { max($0.end.timeIntervalSince($0.start) - $0.asleep, 0) })
         else { return nil }
         let wake = calendar.startOfDay(for: wakeDay).addingTimeInterval(wakeOffset)
-        return Plan(bedtime: wake.addingTimeInterval(-need - awake), wake: wake, awakeInBed: awake,
+        return Plan(bedtime: wake.addingTimeInterval(-need - awake), wake: wake,
+                    usualBedtime: calendar.startOfDay(for: wakeDay).addingTimeInterval(startOffset), awakeInBed: awake,
                     weekend: sameKind.count >= minimumNights ? weekend : nil)
     }
 
