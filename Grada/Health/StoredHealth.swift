@@ -160,7 +160,7 @@ struct StoredHealthData: HealthDataSource {
         return []
     }
 
-    /// Live periods from the first source that has any; nights it lacks come from stored bed and wake times.
+    /// Live periods from the first source that has any; nights it mostly lacks come from stored bed and wake times.
     /// Imported nights (Garmin, FIT) have no stage timeline, so they count as asleep from one to the other (#95).
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] {
         var periods: [SleepPeriod] = []
@@ -168,12 +168,15 @@ struct StoredHealthData: HealthDataSource {
             periods = try await source.sleepPeriods(in: interval)
             if !periods.isEmpty { break }
         }
-        let liveNights = Set(periods.map { SleepNight.wakeDay(forEnd: $0.end, calendar: calendar) })
+        let asleep = periods.filter { $0.stage != .awake }
         let days = max(calendar.dateComponents([.day], from: calendar.startOfDay(for: interval.start), to: .now).day! + 1, 1)
         let stored = try await overnight(days: days).compactMap { night -> SleepPeriod? in
-            guard !liveNights.contains(night.wakeDay), let bedtime = night.bedtime, let wakeTime = night.wakeTime,
+            guard let bedtime = night.bedtime, let wakeTime = night.wakeTime, bedtime < wakeTime,
                   bedtime < interval.end, wakeTime > interval.start
             else { return nil }
+            // A night the live source mostly has stays its own; a nap on the same day doesn't hide it.
+            let covered = asleep.reduce(0) { $0 + max(0, min($1.end, wakeTime).timeIntervalSince(max($1.start, bedtime))) }
+            guard covered < wakeTime.timeIntervalSince(bedtime) / 2 else { return nil }
             return SleepPeriod(start: bedtime, end: wakeTime, stage: nil)
         }
         return (periods + stored).sorted { $0.start < $1.start }

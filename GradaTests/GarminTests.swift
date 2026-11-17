@@ -70,8 +70,8 @@ struct GarminTests {
 
     // MARK: Client
 
-    /// Answers requests from a script and records them.
-    private final class FakeGarmin {
+    /// Answers requests from a script and records them. Main-actor isolated, since a window's days are requested in parallel.
+    @MainActor private final class FakeGarmin {
         var requests: [URLRequest] = []
         var answer: (URLRequest) -> (Int, String) = { _ in (200, "") }
 
@@ -317,19 +317,40 @@ struct GarminTests {
         #expect(paths.filter { $0 == "/wellness-service/wellness/dailyHeartRate" }.count == 2)
     }
 
-    @Test func heartRateIsEmptyWhenGarminFailsOrIsDisconnected() async throws {
+    @Test func failedDayIsLeftOutAndRetriedLater() async throws {
         let fake = FakeGarmin()
-        fake.answer = { $0.httpMethod == "POST" ? (200, self.jwt) : (500, "") }
+        fake.answer = { request in
+            if request.httpMethod == "POST" { return (200, self.jwt) }
+            let date = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "date" }!.value!
+            if date == "2026-10-30" { return (500, "") }
+            return (200, #"{"heartRateValues": [[\#(self.day(date).timeIntervalSince1970 * 1000), 55]]}"#)
+        }
         let (garmin, store) = try source(fake)
         defer { store.delete() }
         let interval = DateInterval(start: day("2026-10-30"), end: day("2026-11-01"))
 
-        #expect(try await garmin.heartRate(in: interval).isEmpty)
-        #expect(fake.requests.filter { $0.httpMethod == "GET" }.count == 1, "Stops at the first failed day")
+        #expect(try await garmin.heartRate(in: interval).map(\.date) == [day("2026-10-31")])
+        let sent = fake.requests.count
+        _ = try await garmin.heartRate(in: interval)
+        #expect(fake.requests.count == sent, "A failed day waits failureRetry before it's asked again")
+    }
+
+    @Test func heartRateIsDroppedWhenTheKeyChanges() async throws {
+        let fake = FakeGarmin()
+        fake.answer = { $0.httpMethod == "POST" ? (200, self.jwt) : (200, #"{"heartRateValues": []}"#) }
+        let (garmin, store) = try source(fake)
+        defer { store.delete() }
+        let interval = DateInterval(start: day("2026-10-30"), end: day("2026-10-31"))
+
+        _ = try await garmin.heartRate(in: interval)
         garmin.disconnect()
         let sent = fake.requests.count
         #expect(try await garmin.heartRate(in: interval).isEmpty)
-        #expect(fake.requests.count == sent)
+        #expect(fake.requests.count == sent, "Nothing is fetched while disconnected")
+
+        try await garmin.connect(key: "other-key")
+        _ = try await garmin.heartRate(in: interval)
+        #expect(fake.requests.compactMap(\.url?.path).filter { $0 == "/wellness-service/wellness/dailyHeartRate" }.count == 2)
     }
 
     @Test func refusedKeyAsksToReconnect() async throws {

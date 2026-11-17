@@ -35,8 +35,15 @@ final class GarminSource: HealthSource {
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let logger = Logger(subsystem: "Grada", category: "Garmin")
-    /// Intraday heart rate by start of day, and when it was requested.
-    @ObservationIgnored private var heartRateDays: [Date: (fetched: Date, values: Task<[TimedValue], Error>)] = [:]
+    /// Intraday heart rate by start of day. Cleared when the key changes, since it may be another account's.
+    @ObservationIgnored private var heartRateDays: [Date: HeartRateDay] = [:]
+    private struct HeartRateDay {
+        let fetched: Date
+        let values: Task<[TimedValue]?, Never>
+        var failed = false
+    }
+    /// How long a failed day's request waits before it's sent again, so an offline phone doesn't retry on every card.
+    nonisolated static let failureRetry: TimeInterval = 60
     private static let needsReconnectKey = "garmin.needsReconnect"
     private static let lastSyncKey = "garmin.lastSync"
 
@@ -71,6 +78,7 @@ final class GarminSource: HealthSource {
         }
         isConnected = true
         needsReconnect = false
+        heartRateDays = [:]
     }
 
     /// Removes the key from the Keychain. Data already imported stays.
@@ -81,6 +89,7 @@ final class GarminSource: HealthSource {
         needsReconnect = false
         lastSync = nil
         lastError = nil
+        heartRateDays = [:]
     }
 
     func requestAuthorization() async throws {}
@@ -118,50 +127,48 @@ final class GarminSource: HealthSource {
         return GarminData.batch(days: days, dailies: dailies, sleep: sleep, hrv: hrv, activities: activities, calendar: calendar)
     }
 
-    /// Garmin's intraday heart rate as 5-minute averages, one request per day, for Resources and Strain when Apple
-    /// Health has none (#95). Empty while disconnected or when Garmin can't be reached, so an offline phone leaves
-    /// those cards empty instead of failing them.
+    /// Garmin's intraday heart rate as 5-minute averages, one request per day, for Resources and Strain (#95).
+    /// Days Garmin can't return right now are left out, and nothing is fetched while disconnected, so an offline
+    /// phone leaves those cards empty instead of failing them.
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
         guard isAvailable else { return [] }
-        var values: [TimedValue] = []
+        var days: [Task<[TimedValue]?, Never>] = []
         var day = calendar.startOfDay(for: interval.start)
         while day < interval.end, day <= .now {
-            do {
-                values += try await heartRate(on: day)
-            } catch {
-                return []
-            }
+            days.append(heartRate(on: day))
             day = calendar.date(byAdding: .day, value: 1, to: day)!
         }
+        var values: [TimedValue] = []
+        for day in days { values += await day.value ?? [] }
         return values.filter { interval.start <= $0.date && $0.date < interval.end }
     }
 
-    /// One day's heart rate, fetched once after the day ends; until then at most every `refreshInterval`.
-    /// Cards are built in parallel, so a request in flight is shared rather than sent again.
-    private func heartRate(on day: Date) async throws -> [TimedValue] {
-        let dayEnd = calendar.date(byAdding: .day, value: 1, to: day)!
-        if let cached = heartRateDays[day], cached.fetched >= dayEnd || Date.now.timeIntervalSince(cached.fetched) < refreshInterval {
+    /// One day's heart rate, nil if the request failed. Requests start at once, so a window's days load in
+    /// parallel, and cards built in parallel share a request in flight. Watches can sync hours late, so a day is
+    /// final only a full day after it ends; until then it's fetched again after `refreshInterval`, and after a
+    /// failure after `failureRetry`.
+    private func heartRate(on day: Date) -> Task<[TimedValue]?, Never> {
+        let now = Date.now
+        if let cached = heartRateDays[day] {
+            let age = now.timeIntervalSince(cached.fetched)
+            let final = cached.fetched >= calendar.date(byAdding: .day, value: 2, to: day)!
+            if cached.failed ? age < Self.failureRetry : final || age < refreshInterval { return cached.values }
+        }
+        let values = Task { () -> [TimedValue]? in
             do {
-                return try await cached.values.value
+                let data = try await call("Heart rate") { try await client.get("/wellness-service/wellness/dailyHeartRate", ["date": key(day)]) }
+                return try data.map { GarminData.heartRate(try JSONDecoder().decode(GarminData.DailyHeartRate.self, from: $0)) } ?? []
             } catch {
-                heartRateDays[day] = nil
-                throw error
+                if heartRateDays[day]?.fetched == now { heartRateDays[day]?.failed = true }
+                return nil
             }
         }
-        let values = Task {
-            let data = try await call("Heart rate") { try await client.get("/wellness-service/wellness/dailyHeartRate", ["date": key(day)]) }
-            return try data.map { GarminData.heartRate(try JSONDecoder().decode(GarminData.DailyHeartRate.self, from: $0)) } ?? []
-        }
-        heartRateDays[day] = (.now, values)
-        do {
-            return try await values.value
-        } catch {
-            heartRateDays[day] = nil
-            throw error
-        }
+        heartRateDays[day] = HeartRateDay(fetched: now, values: values)
+        return values
     }
 
-    // Not read live: sleep timing comes from the stored nights, and workout screens from Apple Health.
+    // Not read live. Sleep timing: `StoredHealthData` uses the stored bed and wake times. Hourly totals and
+    // workout detail: Garmin workouts have none yet.
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { [] }
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] { [] }
     func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail { WorkoutDetail() }

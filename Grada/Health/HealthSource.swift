@@ -18,7 +18,9 @@ protocol HealthSource: AnyObject {
     /// Calls `onChange` when the source gets new data; `onChange` must call its completion handler when done.
     func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws
 
-    // Read live rather than stored: intraday data, workout screens and profile.
+    // Read live rather than stored: intraday data, workout screens and profile. `StoredHealthData` takes heart
+    // rate, hourly values, the profile and max heart rate from the first source with any; sleep periods from the
+    // first with any, plus stored nights it lacks; workout detail from the workout's own source.
     func heartRate(in interval: DateInterval) async throws -> [TimedValue]
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod]
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue]

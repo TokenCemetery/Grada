@@ -364,6 +364,19 @@ struct HealthImporterTests {
         #expect(periods == [SleepPeriod(start: night(-1).bedtime!, end: night(-1).wakeTime!, stage: nil), live])
     }
 
+    @Test func napDoesNotHideAnImportedNight() async throws {
+        let night = OvernightVitals(wakeDay: today, bedtime: day(-1).addingTimeInterval(23 * 3600), wakeTime: day(0).addingTimeInterval(7 * 3600))
+        var batch = batch(steps: [nil])
+        batch.overnight = [night]
+        try importer.save(batch, from: "garminConnect")
+        let health = FakeSource(id: HealthKitReader.sourceID)
+        let nap = SleepPeriod(start: day(0).addingTimeInterval(13 * 3600), end: day(0).addingTimeInterval(14 * 3600), stage: .core)
+        health.sleep = [nap]
+
+        let periods = try await StoredHealthData(context: context, sources: [health]).sleepPeriods(in: DateInterval(start: day(-1), end: .now))
+        #expect(periods == [SleepPeriod(start: night.bedtime!, end: night.wakeTime!, stage: nil), nap])
+    }
+
     @Test func sameNightFromTwoSourcesCountsOnce() async throws {
         var first = batch(steps: [nil])
         first.sleepNights = [SleepNight(wakeDay: today, stages: [.core: 5 * 3600, .deep: 3600], unspecified: 0)]
