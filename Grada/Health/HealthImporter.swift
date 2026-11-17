@@ -144,11 +144,12 @@ final class HealthImporter {
             return
         }
         let task = Task {
+            // The hook runs inside the loop, so a call that arrives while it runs still gets its pass.
             repeat {
                 recentImportPending = false
                 await importRecentDays()
+                await onRecentImport?()
             } while recentImportPending
-            await onRecentImport?()
             recentImport = nil
         }
         recentImport = task
