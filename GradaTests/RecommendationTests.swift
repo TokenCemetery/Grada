@@ -4,14 +4,15 @@ import Testing
 
 struct RecommendationTests {
     @Test func stepsLeftBecomeWalkingMinutes() throws {
-        let recommendation = try #require(Recommendations.steps(today: 8_420, goal: 10_000))
+        let recommendation = Recommendations.steps(today: 8_420, goal: 10_000)
         #expect(recommendation.text == "Walk about 16 more minutes", "1,580 steps at 100 a minute, rounded up")
         #expect(recommendation.reason.contains("today's goal"))
     }
 
-    @Test func noStepsRecommendationOnceGoalReached() {
-        #expect(Recommendations.steps(today: 10_000, goal: 10_000) == nil)
-        #expect(Recommendations.steps(today: 12_000, goal: 10_000) == nil)
+    @Test func reachedStepsGoalIsCongratulated() {
+        #expect(Recommendations.steps(today: 10_000, goal: 10_000).text == "Steps goal reached")
+        #expect(Recommendations.steps(today: 10_000, goal: 10_000).reason.contains("right on your goal"))
+        #expect(Recommendations.steps(today: 12_000, goal: 10_000).reason.contains("over your goal"))
     }
 
     @Test func restingHeartRateAboveNormalRangeSuggestsRest() throws {

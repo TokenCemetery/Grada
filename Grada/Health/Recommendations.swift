@@ -15,8 +15,17 @@ nonisolated enum Recommendations {
     /// Br J Sports Med 52:776).
     static let stepsPerMinute = 100.0
 
-    static func steps(today: Double, goal: Double) -> Recommendation? {
-        guard today < goal else { return nil }
+    /// Minutes of walking to today's goal, or a congratulation once it's reached.
+    static func steps(today: Double, goal: Double) -> Recommendation {
+        guard today < goal else {
+            let over = today - goal
+            return Recommendation(
+                symbol: "checkmark.circle",
+                text: "Steps goal reached",
+                reason: over >= 1 ? "\(whole(today)) steps today, \(whole(over)) over your goal of \(whole(goal))."
+                    : "\(whole(today)) steps today, right on your goal."
+            )
+        }
         let left = goal - today
         let minutes = Int((left / stepsPerMinute).rounded(.up))
         return Recommendation(
