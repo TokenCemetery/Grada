@@ -27,6 +27,14 @@ struct MetricDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 CardView(kind: kind, snapshot: snapshot)
+                if let recommendation = snapshot?.recommendation {
+                    DetailSection(title: "Recommendation") {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(recommendation.text).font(.subheadline.weight(.semibold))
+                            Text(recommendation.reason).font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }
+                }
                 trendSection
                 if let breakdown {
                     DetailSection(title: breakdown.title) { BreakdownView(breakdown: breakdown, color: color) }

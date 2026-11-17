@@ -66,6 +66,8 @@ struct CardSnapshot {
     var rating: DayRating?
     var chart: Chart = .none
     var detail: Detail = .none
+    /// Shown on the detail screen, today only.
+    var recommendation: Recommendation?
 
     static func noData(period: String) -> CardSnapshot {
         CardSnapshot(period: period, value: nil)

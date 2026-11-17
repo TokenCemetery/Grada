@@ -4,7 +4,7 @@ Grada is an iPhone and iPad app that turns your Apple Health data into a daily s
 
 - **Home:** cards for recovery, sleep, heart and vitals, activity and training. Add, remove and reorder them, and choose today or the last 7 days where both make sense.
 - **Calendar:** colors each day by a metric, with a sheet for that day's details.
-- **Detail screens:** each metric's trend and breakdown, what it means, and the inputs it's based on.
+- **Detail screens:** each metric's trend and breakdown, what it means, and the inputs it's based on. Some show today's recommendation with its reason: steps left to the goal as minutes of walking, a bedtime for your usual wake-up, or easing off when resting heart rate, HRV or training load is out of range.
 - **Goals and journal:** start from a goal preset that adjusts every week, and keep a daily journal of habits such as alcohol, caffeine, late meals or travel.
 
 ## Data
@@ -56,7 +56,7 @@ Each version is a [GitHub milestone](https://github.com/TokenCemetery/Grada/mile
 |---|---|---|---|
 | v1 | Foundation | Apple Health import, iCloud sync, home cards, calendar, metric detail | Built; iCloud sync waits on a paid developer team ([#20](https://github.com/TokenCemetery/Grada/issues/20)) |
 | v2 | Personal | Goals, journal, intensity minutes, HRV status, Health Age | Built |
-| v3 | Guidance | Morning and evening reports, recommendations, monthly summary | Planned |
+| v3 | Guidance | Morning and evening reports, recommendations, monthly summary | In progress; recommendations on detail screens built |
 | v4 | Scores | Sleep score, training readiness, strain and training load, recovery time | Built |
 | v5 | Energy | Resources energy card | Built; a stress card was declined because there's no published way to measure stress from iPhone data |
 

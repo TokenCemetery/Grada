@@ -26,6 +26,12 @@ struct MetricSource: Hashable {
     static let buchheit2014 = MetricSource("Buchheit 2014 · Frontiers in Physiology",
                                            "Reviews both thresholds; no fraction has been validated",
                                            doi: "10.3389/fphys.2014.00073")
+    static let kiviniemi2007 = MetricSource("Kiviniemi et al. 2007 · Eur J Appl Physiol",
+                                            "Training easy on days HRV falls below its usual range",
+                                            doi: "10.1007/s00421-007-0552-2")
+    static let mishra2020 = MetricSource("Mishra et al. 2020 · Nature Biomedical Engineering",
+                                         "Resting heart rate rising above its personal baseline before symptoms of illness",
+                                         doi: "10.1038/s41551-020-00640-6")
     static let tanaka2001 = MetricSource("Tanaka, Monahan & Seals 2001 · J Am Coll Cardiol",
                                          "Max heart rate from age: 208 − 0.7 × age",
                                          doi: "10.1016/s0735-1097(00)01054-8")
@@ -52,6 +58,9 @@ struct MetricSource: Hashable {
     static let windred2024 = MetricSource("Windred et al. 2024 · Sleep",
                                           "Typical scores and mortality risk by sleep regularity in 60,000 adults",
                                           doi: "10.1093/sleep/zsad253")
+    static let wittmann2006 = MetricSource("Wittmann et al. 2006 · Chronobiology International",
+                                           "People sleep later on free days than on work days",
+                                           doi: "10.1080/07420520500545979")
     static let vanDongen2003 = MetricSource("Van Dongen et al. 2003 · Sleep",
                                             "Deficits keep building over 14 nights of short sleep",
                                             doi: "10.1093/sleep/26.2.117")
@@ -108,20 +117,25 @@ struct MetricSource: Hashable {
     static let cappuccio2010 = MetricSource("Cappuccio et al. 2010 · Sleep",
                                             "Mortality risk of short and long sleep; studies drew the lines differently",
                                             doi: "10.1093/sleep/33.5.585")
+    static let tudorLocke2018 = MetricSource("Tudor-Locke et al. 2018 · Br J Sports Med",
+                                             "Walking at 100 steps a minute is moderate intensity",
+                                             doi: "10.1136/bjsports-2017-097628")
     static let arem2015 = MetricSource("Arem et al. 2015 · JAMA Intern Med",
                                        "Mortality risk by weekly exercise",
                                        doi: "10.1001/jamainternmed.2015.0533")
 }
 
 extension CardKind {
-    /// The studies a calculated metric rests on. Raw Apple Health readings have none.
+    /// The studies a calculated metric or its recommendation rests on. Other raw Apple Health readings have none.
     var sources: [MetricSource] {
         switch self {
         case .recovery: [.leMeur2013, .plews2012, .buchheit2014, .watson2015, .hirshkowitz2015]
-        case .hrvStatus: [.plews2012, .leMeur2013, .buchheit2014]
+        case .hrvStatus: [.plews2012, .leMeur2013, .buchheit2014, .kiviniemi2007]
         case .healthAge:
             [.finch1990, .kodama2009, .kaminsky2015, .zhang2016, .ostchega2011, .paluch2022, .cappuccio2010, .arem2015]
-        case .sleepNeed: [.watson2015, .hirshkowitz2015, .vanDongen2003, .kitamura2016]
+        case .sleepNeed: [.watson2015, .hirshkowitz2015, .vanDongen2003, .kitamura2016, .wittmann2006]
+        case .steps: [.tudorLocke2018, .paluch2022]
+        case .restingHeartRate: [.mishra2020]
         case .sleepConsistency: [.phillips2017, .windred2024]
         case .sleepScore: [.ohayon2017, .watson2015, .hirshkowitz2015, .phillips2017, .windred2024]
         case .intensityMinutes: [.bull2020, .garber2011, .tanaka2001]
@@ -149,6 +163,10 @@ extension CardKind {
             "The indicators come from the studies above. Counting each the same is Grada's choice; the experts didn't weigh them."
         case .recoveryTime:
             "The review grades intensity by physiological thresholds, not heart rate. Placing them at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices."
+        case .sleepNeed:
+            "Your usual wake-up and time awake in bed are the medians of the last \(Bedtime.nights) nights, weekdays and weekends apart once each has \(Bedtime.minimumNights) nights. The window is Grada's choice; no study sets one."
+        case .restingHeartRate:
+            "Studies show resting heart rate rising, not a cutoff. Suggesting rest whenever it's above your normal range (30-day average ± 2 standard deviations) is Grada's rule."
         case .trainingReadiness:
             "Garmin doesn't publish how it weighs these inputs and no study has tested a weighting, so each counts the same."
         default: nil

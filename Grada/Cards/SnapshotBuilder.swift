@@ -133,6 +133,7 @@ struct SnapshotBuilder {
         } ?? "Calibrating"
         // Low blood oxygen or HRV is the worry; for the others, a high reading is.
         let higherIsBetter = metric == .oxygenSaturation || metric == .hrv
+        let isTodays = isToday && latestIndex == series.count - 1
 
         return CardSnapshot(
             period: dayLabel(series[latestIndex].day),
@@ -143,7 +144,9 @@ struct SnapshotBuilder {
             rating: range.map { DayRatings.range(latest, normal: $0, higherIsBetter: higherIsBetter) },
             chart: variant == .week
                 ? .line(series.suffix(7).map(\.value), normalRange: range)
-                : range.map { .range(value: latest, normalRange: $0, higherIsBetter: higherIsBetter, decimals: 0) } ?? .none
+                : range.map { .range(value: latest, normalRange: $0, higherIsBetter: higherIsBetter, decimals: 0) } ?? .none,
+            recommendation: metric == .restingHeartRate && isTodays
+                ? range.flatMap { Recommendations.restingHeartRate(latest, normal: $0) } : nil
         )
     }
 
@@ -174,7 +177,8 @@ struct SnapshotBuilder {
             chart: variant == .week
                 ? .line((end - chartDays + 1...end).map { HRVStatus.status(nights: nights, endingAt: $0)?.average },
                         normalRange: shown.baseline)
-                : .range(value: shown.average, normalRange: shown.baseline, below: halfWidth, above: .infinity)
+                : .range(value: shown.average, normalRange: shown.baseline, below: halfWidth, above: .infinity),
+            recommendation: isToday ? Recommendations.hrv(shown.state) : nil
         )
     }
 
@@ -548,8 +552,13 @@ struct SnapshotBuilder {
         if metric == .distance, !usesMetric {
             series = series.map { DayValue(day: $0.day, value: $0.value.map { $0 * 0.621_371 }) }
         }
-        return totals(series, decimals: metric.decimals, unit: metric == .distance && !usesMetric ? "mi" : metric.unit,
-                      goal: goal.flatMap { goals.value($0, on: calendar.startOfDay(for: now)) }, variant: variant)
+        let goalValue = goal.flatMap { goals.value($0, on: calendar.startOfDay(for: now)) }
+        var snapshot = totals(series, decimals: metric.decimals, unit: metric == .distance && !usesMetric ? "mi" : metric.unit,
+                              goal: goalValue, variant: variant)
+        if metric == .steps, isToday, let goalValue, snapshot.value != nil {
+            snapshot.recommendation = Recommendations.steps(today: series.last?.value ?? 0, goal: goalValue)
+        }
+        return snapshot
     }
 
     /// The last 7 days' total against the weekly goal, or the WHO target without one.
@@ -707,12 +716,26 @@ struct SnapshotBuilder {
         guard let nights = try await sleepDebt(7) else { return .noData(period: tonightLabel) }
         let need = goals.value(.sleep, on: calendar.startOfDay(for: now)) ?? SleepNeed.baseline
         let owed = nights[nights.count - 1].debt
+        let bedtime = isToday ? try await bedtimePlan(need: need) : nil
         return CardSnapshot(
             period: tonightLabel,
             value: Self.hoursMinutes(need),
             comparison: owed >= 5 * 60 ? "Sleep debt \(Self.hoursMinutes(owed)) · \(SleepNeed.debtNights) nights" : "No sleep debt",
-            chart: .bars(nights.map { $0.shortfall / 3600 })
+            chart: .bars(nights.map { $0.shortfall / 3600 }),
+            recommendation: bedtime.map { Recommendations.bedtime($0, need: need) }
         )
+    }
+
+    /// Tonight's bedtime for a wake-up tomorrow, from the last `Bedtime.nights` nights.
+    func bedtimePlan(need: TimeInterval) async throws -> Bedtime.Plan? {
+        let asleep = Dictionary(try await source.sleepNights(days: Bedtime.nights).map { ($0.wakeDay, $0.asleep) },
+                                uniquingKeysWith: { first, _ in first })
+        let nights = try await source.overnight(days: Bedtime.nights).compactMap { night -> Bedtime.Night? in
+            guard let start = night.bedtime, let end = night.wakeTime, let slept = asleep[night.wakeDay], slept > 0 else { return nil }
+            return Bedtime.Night(wakeDay: night.wakeDay, start: start, end: end, asleep: slept)
+        }
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
+        return Bedtime.plan(nights: nights, need: need, wakeDay: tomorrow, calendar: calendar)
     }
 
     /// The Sleep Regularity Index over the last week, rated against UK Biobank adults, with the last 7 days.
@@ -824,6 +847,7 @@ struct SnapshotBuilder {
             snapshot.comparison = "\(Strain.word(ratio.value)) · ratio \(format(ratio.value, 2))"
             snapshot.rating = Strain.rating(ratio.value)
             snapshot.tone = Self.tone(Strain.rating(ratio.value))
+            snapshot.recommendation = isToday ? Recommendations.load(ratio: ratio.value) : nil
         } else {
             snapshot.comparison = "Ratio needs \(Strain.minimumChronicDays) days"
         }
