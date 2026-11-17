@@ -184,6 +184,14 @@ struct SampleDataSource: HealthDataSource {
         return periods
     }
 
+    /// 40 minutes of daylight a day, and a 10-minute meditation every other day.
+    func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval? {
+        switch activity {
+        case .daylight: 40 * 60
+        case .mindfulness: calendar.ordinality(of: .day, in: .era, for: day)!.isMultiple(of: 2) ? 10 * 60 : nil
+        }
+    }
+
     func age() async throws -> Int? { 35 }
     func biologicalSex() async throws -> BiologicalSex? { .male }
 

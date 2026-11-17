@@ -20,6 +20,14 @@ nonisolated enum QuantityMetric: CaseIterable {
     }
 }
 
+/// Time Apple Health records for an activity, read live for journal suggestions.
+nonisolated enum TimedActivity {
+    /// Mindful sessions, such as Mindfulness or a meditation app.
+    case mindfulness
+    /// Time in daylight, measured by Apple Watch.
+    case daylight
+}
+
 nonisolated enum SleepStage: CaseIterable {
     case awake, rem, core, deep
 }
@@ -260,6 +268,8 @@ protocol HealthDataSource {
     func origins() async throws -> [DataKind: [DataOrigin]]
     /// A copy that reads the last `days` days once, for callers that ask for long ranges many times in a row.
     func withDaysLoaded(_ days: Int) throws -> HealthDataSource
+    /// Seconds of `activity` on `day`; nil without any record of it.
+    func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval?
 }
 
 extension HealthDataSource {
@@ -267,6 +277,7 @@ extension HealthDataSource {
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] { [] }
     func origins() async throws -> [DataKind: [DataOrigin]] { [:] }
     func withDaysLoaded(_ days: Int) throws -> HealthDataSource { self }
+    func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval? { nil }
 
     /// Without workout samples, the 5-minute heart rate during the workout.
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {

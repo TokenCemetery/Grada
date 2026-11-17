@@ -21,7 +21,8 @@ protocol HealthSource: AnyObject {
     // Read live rather than stored: intraday data, workout screens and profile. `StoredHealthData` takes heart
     // rate per day, and hourly values (one day), the profile and max heart rate from the first source with any,
     // the profile falling back to `EnteredProfile`; sleep periods from the first with any, plus stored nights it
-    // lacks; workout detail from the workout's own source, with heart rate over its time when that source has none.
+    // lacks; workout detail from the workout's own source, with heart rate over its time when that source has none;
+    // activity time from the first source with any.
     func heartRate(in interval: DateInterval) async throws -> [TimedValue]
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod]
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue]
@@ -29,10 +30,13 @@ protocol HealthSource: AnyObject {
     func highestHeartRate(days: Int) async throws -> Double?
     func age() -> Int?
     func biologicalSex() -> BiologicalSex?
+    /// Seconds of `activity` in `interval`; nil without any record of it.
+    func time(in activity: TimedActivity, during interval: DateInterval) async throws -> TimeInterval?
 }
 
 extension HealthSource {
     var refreshInterval: TimeInterval { 0 }
+    func time(in activity: TimedActivity, during interval: DateInterval) async throws -> TimeInterval? { nil }
 
     /// Sources without change notifications are refreshed when the app asks for recent data.
     func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws {}

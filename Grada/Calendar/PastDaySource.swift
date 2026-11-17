@@ -17,6 +17,10 @@ struct PastDaySource: HealthDataSource {
         try await base.sleepPeriods(in: interval)
     }
 
+    func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval? {
+        try await base.time(in: activity, on: day)
+    }
+
     func age() async throws -> Int? {
         try await base.age()
     }

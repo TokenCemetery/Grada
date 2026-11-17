@@ -175,6 +175,16 @@ struct StoredHealthData: HealthDataSource {
         return values.sorted { $0.date < $1.date }
     }
 
+    /// From the first source with any record of it that day; read live, since only journal suggestions use it.
+    func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval? {
+        let start = calendar.startOfDay(for: day)
+        let interval = DateInterval(start: start, end: calendar.date(byAdding: .day, value: 1, to: start)!)
+        for source in sources {
+            if let time = try await source.time(in: activity, during: interval) { return time }
+        }
+        return nil
+    }
+
     /// Live periods from the first source that has any; nights it mostly lacks come from stored bed and wake times.
     /// Imported nights (Garmin, FIT) have no stage timeline, so they count as asleep from one to the other (#95).
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] {

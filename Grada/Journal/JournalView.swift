@@ -19,6 +19,10 @@ struct JournalView: View {
     @State private var saves = 0
     /// The last 90 nights, for how Alcohol and Caffeine change the night after.
     @State private var nights: [Date: [TagEffect.Metric: Double]]?
+    /// Tags health data suggests for the shown day, and the day they're for.
+    @State private var suggestions: (day: Date, items: [JournalSuggestion]) = (.distantPast, [])
+    /// Suggestions the user dismissed, as "dayKey:tag".
+    @AppStorage("dismissedJournalSuggestions") private var dismissed = ""
 
     private let calendar = Calendar.current
     private var today: Date { calendar.startOfDay(for: .now) }
@@ -51,12 +55,13 @@ struct JournalView: View {
                     .listRowBackground(Color.clear)
                 } footer: {
                     // The tags' explanation sits just above them.
-                    Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nUnder Alcohol and Caffeine, the night after days you logged them is compared with other nights in the last \(TagEffect.windowDays) days. A change shows only when it's clearly bigger than how much your nights vary, each side needs \(TagEffect.minimumNights) nights, and nights after Illness or Night shift are left out.\n\nTags are saved as you tap them.")
+                    Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nA dashed circle is a tag Grada suggests from your health data: tap it to keep it.\n\nUnder Alcohol and Caffeine, the night after days you logged them is compared with other nights in the last \(TagEffect.windowDays) days. A change shows only when it's clearly bigger than how much your nights vary, each side needs \(TagEffect.minimumNights) nights, and nights after Illness or Night shift are left out.\n\nTags are saved as you tap them.")
                 }
                 let captions = effectCaptions
+                let suggested = shownSuggestions
                 ForEach(JournalTag.Group.allCases, id: \.self) { group in
                     Section(group.title) {
-                        ForEach(group.tags) { row($0, caption: captions[$0]) }
+                        ForEach(group.tags) { row($0, caption: captions[$0], suggestion: suggested[$0]) }
                     }
                 }
             }
@@ -84,6 +89,12 @@ struct JournalView: View {
             .task(id: homeModel.importer?.revision ?? 0) {
                 nights = try? await TagEffect.nights(source: healthSource)
             }
+            .task(id: SuggestionKey(day: day, revision: homeModel.importer?.revision ?? 0, alcoholDayBefore: alcoholDayBefore)) {
+                let items = (try? await JournalSuggestion.load(day: day, alcoholDayBefore: alcoholDayBefore,
+                                                               source: healthSource, calendar: calendar)) ?? []
+                guard !Task.isCancelled else { return }
+                suggestions = (day, items)
+            }
             // A tapped report notification opens today's.
             .onChange(of: NotificationRouter.shared.journalRequests) { day = today }
         }
@@ -110,35 +121,74 @@ struct JournalView: View {
         return TagEffect.effects(logged: logged, nights: nights, calendar: calendar).mapValues(TagEffect.caption)
     }
 
+    private var alcoholDayBefore: Bool {
+        let key = DayKey.make(calendar.date(byAdding: .day, value: -1, to: day)!, calendar: calendar)
+        return allEntries.contains { $0.dayKey == key && $0.tag == .alcohol }
+    }
+
+    /// The shown day's suggestions by tag, without tags already logged or dismissed.
+    private var shownSuggestions: [JournalTag: JournalSuggestion] {
+        guard suggestions.day == day else { return [:] }
+        let logged = entries
+        let key = DayKey.make(day, calendar: calendar)
+        let dismissedKeys = Set(dismissed.split(separator: ",").map(String.init))
+        return Dictionary(suggestions.items.filter { logged[$0.tag] == nil && !dismissedKeys.contains("\(key):\($0.tag.rawValue)") }
+            .map { ($0.tag, $0) }) { first, _ in first }
+    }
+
+    private func dismiss(_ suggestion: JournalSuggestion) {
+        // The latest 200 are plenty: suggestions only show for days someone goes back to.
+        let keys = dismissed.split(separator: ",").map(String.init) + ["\(DayKey.make(day, calendar: calendar)):\(suggestion.tag.rawValue)"]
+        dismissed = keys.suffix(200).joined(separator: ",")
+    }
+
+    private struct SuggestionKey: Equatable {
+        let day: Date
+        let revision: Int
+        let alcoholDayBefore: Bool
+    }
+
     @ViewBuilder
-    private func row(_ tag: JournalTag, caption: String?) -> some View {
+    private func row(_ tag: JournalTag, caption: String?, suggestion: JournalSuggestion?) -> some View {
         let entry = entries[tag]
-        Button {
-            store.toggle(tag, on: day)
-            saves += 1
-        } label: {
-            HStack {
-                Label {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(tag.title)
-                        if let caption {
-                            Text(caption).font(.caption).foregroundStyle(.secondary)
+        let caption = suggestion.map { "Suggested · \($0.reason)" } ?? caption
+        HStack {
+            Button {
+                store.toggle(tag, on: day)
+                if let amount = suggestion?.amount { store.setAmount(amount, for: tag, on: day) }
+                saves += 1
+            } label: {
+                HStack {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tag.title)
+                            if let caption {
+                                Text(caption).font(.caption).foregroundStyle(.secondary)
+                            }
                         }
+                    } icon: {
+                        Image(systemName: tag.symbol)
                     }
-                } icon: {
-                    Image(systemName: tag.symbol)
+                    Spacer()
+                    Image(systemName: entry != nil ? "checkmark.circle.fill" : suggestion != nil ? "circle.dashed" : "circle")
+                        .foregroundStyle(entry != nil || suggestion != nil ? Color.accentColor : Color.secondary)
+                        .imageScale(.large)
                 }
-                Spacer()
-                Image(systemName: entry == nil ? "circle" : "checkmark.circle.fill")
-                    .foregroundStyle(entry == nil ? Color.secondary : Color.accentColor)
-                    .imageScale(.large)
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel(tag.title)
+            .accessibilityValue(caption ?? "")
+            .accessibilityAddTraits(entry == nil ? [] : .isSelected)
+            if let suggestion {
+                Button { dismiss(suggestion) } label: {
+                    Image(systemName: "xmark").foregroundStyle(.secondary)
+                }
+                .buttonStyle(.borderless)
+                .tint(.secondary)
+                .accessibilityLabel("Dismiss suggested \(tag.title)")
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(tag.title)
-        .accessibilityValue(caption ?? "")
-        .accessibilityAddTraits(entry == nil ? [] : .isSelected)
         if let entry, let amount = tag.amount {
             Stepper(amount.formatted(entry.amount ?? amount.initial),
                     value: Binding(get: { entry.amount ?? amount.initial },
