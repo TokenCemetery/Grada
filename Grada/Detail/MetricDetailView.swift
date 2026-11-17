@@ -405,7 +405,7 @@ enum Breakdown {
 private struct BreakdownView: View {
     let breakdown: Breakdown
     let color: Color
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
 
     var body: some View {
         switch breakdown {

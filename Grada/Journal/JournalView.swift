@@ -22,7 +22,7 @@ struct JournalView: View {
     /// Tags health data suggests for the shown day, and the day they're for.
     @State private var suggestions: (day: Date, items: [JournalSuggestion]) = (.distantPast, [])
     /// Suggestions the user dismissed, as "dayKey:tag".
-    @AppStorage("dismissedJournalSuggestions") private var dismissed = ""
+    @AppStorage(SettingsKey.dismissedJournalSuggestions) private var dismissed = ""
 
     private let calendar = Calendar.current
     private var today: Date { calendar.startOfDay(for: .now) }

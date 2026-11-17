@@ -91,7 +91,7 @@ private struct SettingsRow: View {
 }
 
 private struct ThemeView: View {
-    @AppStorage("appearance") private var appearance: Appearance = .system
+    @AppStorage(SettingsKey.appearance) private var appearance: Appearance = .system
 
     var body: some View {
         Form {
@@ -108,7 +108,7 @@ private struct ThemeView: View {
 }
 
 private struct AccessibilityView: View {
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
 
     var body: some View {
         Form {

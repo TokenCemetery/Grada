@@ -5,7 +5,7 @@ import SwiftUI
 struct MiniChart: View {
     let chart: CardSnapshot.Chart
     let color: Color
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
 
     static let plotHeight: CGFloat = 34
 

@@ -35,7 +35,7 @@ struct ReportCard: View {
     let day: Date
     /// Opens a row's detail screen. Buttons, not navigation links: in a List row, every link's tap goes to the last.
     let open: (MetricRoute) -> Void
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
 
     private var isToday: Bool { Calendar.current.isDateInToday(day) }
 

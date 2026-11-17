@@ -4,7 +4,7 @@ import SwiftUI
 struct CardView: View {
     let kind: CardKind
     let snapshot: CardSnapshot?
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
 
     static let squareHeight: CGFloat = 176
 
@@ -203,7 +203,7 @@ private struct ValueText: View {
 private struct CardDetailView: View {
     let detail: CardSnapshot.Detail
     let color: Color
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
 
     var body: some View {
         switch detail {
@@ -251,7 +251,7 @@ private struct CardDetailView: View {
 /// calibrating or without data stay grey.
 private struct VitalChip: View {
     let vital: VitalStatus
-    @AppStorage("colorBlindPalette") private var colorBlind = false
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
 
     var body: some View {
         Text(vital.name)
