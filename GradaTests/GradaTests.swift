@@ -294,6 +294,17 @@ struct HealthImporterTests {
         #expect(try context.fetchCount(FetchDescriptor<DaySummary>()) == 1)
     }
 
+    /// A day imported 7 hours further east starts 7 hours earlier, before today's start here (#118).
+    @Test func findsDaysStoredInAnotherTimeZone() async throws {
+        let east = DaySummary(day: today.addingTimeInterval(-7 * 3600), dayKey: DayKey.make(today, calendar: calendar), source: health)
+        east.steps = 3000
+        context.insert(east)
+        #expect(try await StoredHealthData(context: context).daily(.steps, days: 1).map(\.value) == [3000])
+
+        try importer.save(batch(steps: [6000]), from: health)
+        #expect(try context.fetch(FetchDescriptor<DaySummary>()).map(\.steps) == [6000])
+    }
+
     @Test func syncsWorkoutsWithAppleHealth() throws {
         try importer.save(batch(steps: [1000], workouts: [workout("a"), workout("b")]), from: health)
         try importer.save(batch(steps: [1000], workouts: [workout("b")]), from: health)

@@ -227,10 +227,14 @@ final class HealthImporter {
     /// days and kinds of data, values and workouts the batch lacks are kept instead.
     func save(_ batch: HealthBatch, from source: String, merging: Bool = false) throws {
         let start = batch.days.start, end = batch.days.end
+        // A day stored in another time zone starts at a different instant, so look a day either side and match
+        // rows by `dayKey`; otherwise an edge day after travel gets a second row (#118).
+        let fetchStart = calendar.date(byAdding: .day, value: -1, to: start)!
+        let fetchEnd = calendar.date(byAdding: .day, value: 1, to: end)!
 
         var summaries: [String: DaySummary] = [:]
         let summaryDescriptor = FetchDescriptor<DaySummary>(
-            predicate: #Predicate { $0.source == source && $0.day >= start && $0.day < end }
+            predicate: #Predicate { $0.source == source && $0.day >= fetchStart && $0.day < fetchEnd }
         )
         for summary in try context.fetch(summaryDescriptor) {
             if summaries[summary.dayKey] == nil { summaries[summary.dayKey] = summary } else { context.delete(summary) }

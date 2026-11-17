@@ -330,7 +330,9 @@ struct StoredHealthData: HealthDataSource {
     }
 
     private func rows(since start: Date) throws -> [String: [DaySummary]] {
-        let fetched = try context.fetch(FetchDescriptor<DaySummary>(predicate: #Predicate { $0.day >= start }))
+        // A day stored in a time zone further east starts before `start` as an instant (#118).
+        let from = calendar.date(byAdding: .day, value: -1, to: start)!
+        let fetched = try context.fetch(FetchDescriptor<DaySummary>(predicate: #Predicate { $0.day >= from }))
         let rank = rank(Set(fetched.map(\.source)))
         var seen = Set<[String]>()
         return Dictionary(grouping: fetched.filter { seen.insert([$0.dayKey, $0.source]).inserted }, by: \.dayKey)
