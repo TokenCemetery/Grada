@@ -1,12 +1,13 @@
 import Foundation
 import SwiftData
 
-/// Built-in journal tags. The raw value is persisted, so don't rename cases.
+/// Built-in journal tags: only those Grada can calculate with, flag a night with, or fill from health data
+/// (#102). The raw value is persisted, so don't rename cases; entries of removed tags are ignored.
 nonisolated enum JournalTag: String, CaseIterable, Identifiable {
-    case alcohol, caffeine, lateMeal, hydratedWell, screenBeforeBed, nap
-    case illness, stress, headache, medication, melatonin
-    case travel, workLate, nightShift, sharedBed, outdoorTime
-    case stretching, meditation, sauna, coldExposure
+    case alcohol, caffeine, nap
+    case illness
+    case travel, nightShift, outdoorTime
+    case meditation, sauna
 
     enum Group: CaseIterable {
         case lifestyle, health, situation, recovery
@@ -42,24 +43,13 @@ nonisolated enum JournalTag: String, CaseIterable, Identifiable {
         switch self {
         case .alcohol: "Alcohol"
         case .caffeine: "Caffeine"
-        case .lateMeal: "Late meal"
-        case .hydratedWell: "Hydrated well"
-        case .screenBeforeBed: "Screen before bed"
         case .nap: "Nap"
         case .illness: "Illness"
-        case .stress: "Stress"
-        case .headache: "Headache"
-        case .medication: "Medication"
-        case .melatonin: "Melatonin"
         case .travel: "Travel or jet lag"
-        case .workLate: "Work late"
         case .nightShift: "Night shift"
-        case .sharedBed: "Shared bed"
         case .outdoorTime: "Outdoor time"
-        case .stretching: "Stretching"
         case .meditation: "Meditation"
         case .sauna: "Sauna"
-        case .coldExposure: "Cold exposure"
         }
     }
 
@@ -67,33 +57,22 @@ nonisolated enum JournalTag: String, CaseIterable, Identifiable {
         switch self {
         case .alcohol: "wineglass"
         case .caffeine: "cup.and.saucer"
-        case .lateMeal: "fork.knife"
-        case .hydratedWell: "drop"
-        case .screenBeforeBed: "iphone"
         case .nap: "powersleep"
         case .illness: "facemask"
-        case .stress: "exclamationmark.triangle"
-        case .headache: "brain.head.profile"
-        case .medication: "pills"
-        case .melatonin: "moon.stars"
         case .travel: "airplane"
-        case .workLate: "briefcase"
         case .nightShift: "moon.haze"
-        case .sharedBed: "bed.double"
         case .outdoorTime: "sun.max"
-        case .stretching: "figure.flexibility"
         case .meditation: "figure.mind.and.body"
         case .sauna: "flame"
-        case .coldExposure: "snowflake"
         }
     }
 
     var group: Group {
         switch self {
-        case .alcohol, .caffeine, .lateMeal, .hydratedWell, .screenBeforeBed, .nap: .lifestyle
-        case .illness, .stress, .headache, .medication, .melatonin: .health
-        case .travel, .workLate, .nightShift, .sharedBed, .outdoorTime: .situation
-        case .stretching, .meditation, .sauna, .coldExposure: .recovery
+        case .alcohol, .caffeine, .nap: .lifestyle
+        case .illness: .health
+        case .travel, .nightShift, .outdoorTime: .situation
+        case .meditation, .sauna: .recovery
         }
     }
 

@@ -1394,9 +1394,9 @@ struct JournalTests {
     }
 
     @Test func togglingMarksAndUnmarksATag() {
-        store.toggle(.stress, on: today)
-        #expect(store.entries(on: today)[.stress] != nil)
-        store.toggle(.stress, on: today)
+        store.toggle(.illness, on: today)
+        #expect(store.entries(on: today)[.illness] != nil)
+        store.toggle(.illness, on: today)
         #expect(store.entries(on: today).isEmpty)
     }
 
@@ -1406,7 +1406,16 @@ struct JournalTests {
         store.setAmount(3, for: .alcohol, on: today)
         #expect(store.entries(on: today)[.alcohol]?.amount == 3)
         #expect(JournalTag.alcohol.label(amount: 3) == "Alcohol · 3 drinks")
-        #expect(JournalTag.stress.label(amount: nil) == "Stress")
+        #expect(JournalTag.illness.label(amount: nil) == "Illness")
+    }
+
+    @Test func entriesOfRemovedTagsAreIgnoredButKept() throws {
+        let removed = JournalEntry(day: today, tag: .sauna, amount: nil)
+        removed.tagRawValue = "stress"
+        context.insert(removed)
+        try context.save()
+        #expect(store.entries(on: today).isEmpty)
+        #expect(try context.fetchCount(FetchDescriptor<JournalEntry>()) == 1)
     }
 
     @Test func tagsBelongToTheirOwnDay() {
