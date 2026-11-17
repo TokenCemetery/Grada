@@ -43,5 +43,4 @@ Review this when iCloud sync of app data turns on (#20). Data in the user's priv
 
 ## Before submitting
 
-- Decide on Garmin Connect (#115): Garmin's Personal API terms may not cover a published app.
 - Bump `CURRENT_PROJECT_VERSION` for each upload.
