@@ -178,7 +178,8 @@ struct SnapshotBuilder {
                 ? .line((end - chartDays + 1...end).map { HRVStatus.status(nights: nights, endingAt: $0)?.average },
                         normalRange: shown.baseline)
                 : .range(value: shown.average, normalRange: shown.baseline, below: halfWidth, above: .infinity),
-            recommendation: isToday ? Recommendations.hrv(shown.state) : nil
+            // Not from the night before when last night's HRV hasn't arrived, as for resting heart rate.
+            recommendation: isToday && end == last ? Recommendations.hrv(shown.state) : nil
         )
     }
 
