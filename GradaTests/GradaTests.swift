@@ -381,6 +381,24 @@ struct HealthImporterTests {
         #expect(garmin.heartRateAsked.count == 1, "Not asked when Apple Health has every day")
     }
 
+    @Test func importedWorkoutGetsHeartRateOverItsTime() async throws {
+        let health = FakeSource(id: HealthKitReader.sourceID)
+        let garmin = FakeSource(id: "garminConnect")
+        let start = day(-1).addingTimeInterval(8 * 3600)
+        garmin.heartRate = [TimedValue(date: start.addingTimeInterval(-600), value: 70),
+                            TimedValue(date: start.addingTimeInterval(300), value: 140),
+                            TimedValue(date: start.addingTimeInterval(900), value: 160)]
+        let stored = StoredHealthData(context: context, sources: [health, garmin])
+
+        for source in ["garminConnect", "fitFiles"] {
+            let workout = WorkoutSummary(id: source, start: start, duration: 1800, name: "Run", symbol: "figure.run",
+                                         energyKcal: nil, averageHeartRate: nil, source: source)
+            let detail = try await stored.workoutDetail(workout)
+            #expect(detail.heartRate.map(\.value) == [140, 160], "\(source)")
+            #expect(detail.maxHeartRate == 160)
+        }
+    }
+
     @Test func napDoesNotHideAnImportedNight() async throws {
         let night = OvernightVitals(wakeDay: today, bedtime: day(-1).addingTimeInterval(23 * 3600), wakeTime: day(0).addingTimeInterval(7 * 3600))
         var batch = batch(steps: [nil])

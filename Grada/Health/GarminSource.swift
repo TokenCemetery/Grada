@@ -167,8 +167,8 @@ final class GarminSource: HealthSource {
         return values
     }
 
-    // Not read live. Sleep timing: `StoredHealthData` uses the stored bed and wake times. Hourly totals and
-    // workout detail: Garmin workouts have none yet.
+    // Not read live. Sleep timing: `StoredHealthData` uses the stored bed and wake times. Workout detail: it uses
+    // the heart rate over the workout's time. Hourly totals: Garmin has none yet.
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { [] }
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] { [] }
     func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail { WorkoutDetail() }

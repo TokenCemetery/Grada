@@ -195,8 +195,15 @@ struct StoredHealthData: HealthDataSource {
         return (periods + stored).sorted { $0.start < $1.start }
     }
 
+    /// Detail from the workout's own source. Sources without workout heart rate (Garmin, FIT files, which have no
+    /// source) get it from the heart rate over the workout's time instead (#98).
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {
-        try await sources.first { $0.id == workout.source }?.workoutDetail(workout) ?? WorkoutDetail()
+        var detail = try await sources.first { $0.id == workout.source }?.workoutDetail(workout) ?? WorkoutDetail()
+        if detail.heartRate.isEmpty {
+            detail.heartRate = try await heartRate(in: DateInterval(start: workout.start, duration: workout.duration))
+            detail.maxHeartRate = detail.maxHeartRate ?? detail.heartRate.map(\.value).max()
+        }
+        return detail
     }
 
     func age() async throws -> Int? {
