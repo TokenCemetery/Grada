@@ -430,8 +430,8 @@ nonisolated enum SleepScore {
         let asleep: TimeInterval
         /// Time awake between falling asleep and the final wake-up (WASO), gaps in the record included.
         let wakeAfterOnset: TimeInterval
-        /// Awake stretches longer than `longAwakening`.
-        let longAwakenings: Int
+        /// Awake stretches longer than `longAwakening`; nil from stage totals, which don't count them.
+        let longAwakenings: Int?
 
         /// Asleep time over the time from falling asleep to waking up. Without sleep latency this runs a
         /// little above the efficiency a sleep lab measures from lights out.
@@ -478,16 +478,27 @@ nonisolated enum SleepScore {
                        longAwakenings: gaps.filter { $0 > longAwakening }.count)
     }
 
-    /// Nil until the night has stage detail and the week has a Sleep Regularity Index.
+    /// Continuity from a night's stage totals, for sources with no stage timeline, such as Garmin's API (#100):
+    /// its awake total is the time awake after onset. Nil without stages, as for periods.
+    static func quality(_ night: SleepNight) -> Quality? {
+        let asleep = [SleepStage.deep, .core, .rem].reduce(0) { $0 + (night.stages[$1] ?? 0) }
+        guard asleep > 0 else { return nil }
+        return Quality(asleep: asleep, wakeAfterOnset: night.stages[.awake] ?? 0, longAwakenings: nil)
+    }
+
+    /// Nil until the night has stage detail and the week has a Sleep Regularity Index. Without a count of
+    /// awakenings, that check is left out rather than counted as met.
     static func score(quality: Quality?, need: TimeInterval, regularity: Double?, age: Int?) -> Result? {
         guard let quality, let regularity else { return nil }
-        let checks: [(met: Bool, miss: String)] = [
+        var checks: [(met: Bool, miss: String)] = [
             (quality.asleep >= need, "Short sleep"),
             (quality.efficiency >= minimumEfficiency, "Low sleep efficiency"),
             (quality.wakeAfterOnset <= maximumWakeAfterOnset(age: age), "Long time awake"),
-            (quality.longAwakenings <= maximumLongAwakenings(age: age), "Woke up often"),
-            (SleepConsistency.rating(regularity) != .poor, "Irregular schedule"),
         ]
+        if let awakenings = quality.longAwakenings {
+            checks.append((awakenings <= maximumLongAwakenings(age: age), "Woke up often"))
+        }
+        checks.append((SleepConsistency.rating(regularity) != .poor, "Irregular schedule"))
         let missed = checks.filter { !$0.met }
         let reason = switch missed.count {
         case 0: "All indicators met"

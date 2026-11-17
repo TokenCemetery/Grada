@@ -25,6 +25,16 @@ struct SleepScoreTests {
 
     @Test func noQualityWithoutStages() {
         #expect(SleepScore.quality([period(0, 480, nil)]) == nil)
+        #expect(SleepScore.quality(SleepNight(wakeDay: start, stages: [:], unspecified: 8 * 3600)) == nil)
+    }
+
+    /// Garmin's API gives stage totals only: awake is WASO, and awakenings can't be counted, so that check is left out.
+    @Test func stageTotalsScoreWithoutTheAwakeningsCheck() throws {
+        let night = SleepNight(wakeDay: start, stages: [.deep: 3600, .core: 4 * 3600, .rem: 2.5 * 3600, .awake: 25 * 60], unspecified: 0)
+        let quality = try #require(SleepScore.quality(night))
+        #expect(quality == SleepScore.Quality(asleep: 7.5 * 3600, wakeAfterOnset: 25 * 60, longAwakenings: nil))
+        let result = try #require(SleepScore.score(quality: quality, need: 7 * 3600, regularity: 85, age: 35))
+        #expect(result == SleepScore.Result(score: 75, rating: .fair, reason: "Long time awake"))
     }
 
     @Test func everyIndicatorMetScores100() throws {

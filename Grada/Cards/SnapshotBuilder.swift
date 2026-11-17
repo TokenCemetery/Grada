@@ -772,19 +772,23 @@ struct SnapshotBuilder {
     }
 
     /// The sleep score of the night ending on each of the last `count` days, oldest first. `hasData` is false
-    /// without any sleep that night; `result` is also nil while the regularity index calibrates or without stages.
+    /// without any sleep that night; `result` is also nil while the regularity index calibrates or without stages,
+    /// from either a timeline or totals.
     func sleepScoreDays(_ count: Int) async throws -> [(day: Date, hasData: Bool, result: SleepScore.Result?)] {
         let days = lastDays(count)
         let first = calendar.date(byAdding: .day, value: -1, to: days[0])!
         let periods = try await source.sleepPeriods(in: DateInterval(start: first, end: max(now, first)))
         let byNight = Dictionary(grouping: periods) { SleepNight.wakeDay(forEnd: $0.end, calendar: calendar) }
+        // Stage totals stand in for nights without a stage timeline, such as Garmin's (#100).
+        let totals = Dictionary(try await source.sleepNights(days: count).map { ($0.wakeDay, $0) }) { first, _ in first }
         let regularity = try await sleepRegularity(count)
         let needs = sleepGoals(count)
         let age = try await source.age()
         return days.indices.map { index in
             let night = byNight[days[index]] ?? []
             let hasData = night.contains { $0.stage != .awake }
-            let result = SleepScore.score(quality: SleepScore.quality(night), need: needs[index].value ?? SleepNeed.baseline,
+            let quality = SleepScore.quality(night) ?? totals[days[index]].flatMap(SleepScore.quality)
+            let result = SleepScore.score(quality: quality, need: needs[index].value ?? SleepNeed.baseline,
                                           regularity: regularity[index].index, age: age)
             return (days[index], hasData, result)
         }
