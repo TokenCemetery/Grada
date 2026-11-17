@@ -31,15 +31,18 @@ struct GradaApp: App {
         .modelContainer(modelContainer)
     }
 
-    /// See `ModelStores`.
+    /// See `ModelStores`. If the stores on disk can't be opened, the app still launches with an in-memory store
+    /// rather than crashing on every launch (#124).
     private static func makeModelContainer() -> ModelContainer {
-        if isTestHost {
-            return try! ModelContainer(for: ModelStores.schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        do {
+            if !isTestHost { return try ModelStores.makeContainer() }
+        } catch {
+            Logger(subsystem: "Grada", category: "Storage").fault("Stores unavailable, using memory: \(error.localizedDescription)")
         }
         do {
-            return try ModelStores.makeContainer()
+            return try ModelStores.makeInMemoryContainer()
         } catch {
-            fatalError("Could not create the stores: \(error)")
+            preconditionFailure("SwiftData can't create an in-memory store: \(error)")
         }
     }
 

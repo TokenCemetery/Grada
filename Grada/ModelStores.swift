@@ -45,6 +45,11 @@ enum ModelStores {
         return container
     }
 
+    /// In memory, for tests and for a launch whose store can't be opened.
+    static func makeInMemoryContainer() throws -> ModelContainer {
+        try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    }
+
     /// App data from the store all models shared before #111, copied out so it survives the move.
     private static func legacyAppData(at url: URL) throws -> LegacyAppData? {
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
