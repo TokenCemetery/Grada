@@ -364,6 +364,23 @@ struct HealthImporterTests {
         #expect(periods == [SleepPeriod(start: night(-1).bedtime!, end: night(-1).wakeTime!, stage: nil), live])
     }
 
+    @Test func heartRateComesPerDayFromTheFirstSourceWithIt() async throws {
+        let hour = { (day: Int, bpm: Double) in TimedValue(date: self.day(day).addingTimeInterval(3600), value: bpm) }
+        let health = FakeSource(id: HealthKitReader.sourceID)
+        health.heartRate = [hour(-1, 60)]
+        let garmin = FakeSource(id: "garminConnect")
+        garmin.heartRate = [hour(-2, 70), hour(-1, 71), hour(0, 72)]
+        let stored = StoredHealthData(context: context, sources: [health, garmin])
+        let window = DateInterval(start: day(-2), end: day(1))
+
+        #expect(try await stored.heartRate(in: window) == [hour(-2, 70), hour(-1, 60), hour(0, 72)])
+        #expect(garmin.heartRateAsked == [window])
+
+        health.heartRate = [hour(-2, 60), hour(-1, 61), hour(0, 62)]
+        _ = try await stored.heartRate(in: window)
+        #expect(garmin.heartRateAsked.count == 1, "Not asked when Apple Health has every day")
+    }
+
     @Test func napDoesNotHideAnImportedNight() async throws {
         let night = OvernightVitals(wakeDay: today, bedtime: day(-1).addingTimeInterval(23 * 3600), wakeTime: day(0).addingTimeInterval(7 * 3600))
         var batch = batch(steps: [nil])
@@ -467,13 +484,18 @@ struct HealthImporterTests {
 private final class FakeSource: HealthSource {
     let id: String
     var sleep: [SleepPeriod] = []
+    var heartRate: [TimedValue] = []
+    private(set) var heartRateAsked: [DateInterval] = []
     init(id: String) { self.id = id }
     var name: String { id }
     var isAvailable: Bool { true }
     func requestAuthorization() async throws {}
     func earliestSampleDate() async throws -> Date? { nil }
     func batch(for days: DateInterval) async throws -> HealthBatch { HealthBatch(days: days) }
-    func heartRate(in interval: DateInterval) async throws -> [TimedValue] { [] }
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
+        heartRateAsked.append(interval)
+        return heartRate.filter { interval.contains($0.date) }
+    }
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { sleep }
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] { [] }
     func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail { WorkoutDetail() }

@@ -152,12 +152,25 @@ struct StoredHealthData: HealthDataSource {
         return copy
     }
 
+    /// Each day from the first source with heart rate that day, as daily values are; later sources are asked only
+    /// for the span of days still empty (#97).
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
-        for source in sources {
-            let values = try await source.heartRate(in: interval)
-            if !values.isEmpty { return values }
+        var missing: [Date] = []
+        var day = calendar.startOfDay(for: interval.start)
+        while day < interval.end {
+            missing.append(day)
+            day = calendar.date(byAdding: .day, value: 1, to: day)!
         }
-        return []
+        var values: [TimedValue] = []
+        for source in sources {
+            guard let first = missing.first, let last = missing.last else { break }
+            let span = DateInterval(start: max(first, interval.start),
+                                    end: min(calendar.date(byAdding: .day, value: 1, to: last)!, interval.end))
+            let byDay = Dictionary(grouping: try await source.heartRate(in: span)) { calendar.startOfDay(for: $0.date) }
+            for day in missing where byDay[day] != nil { values += byDay[day]! }
+            missing.removeAll { byDay[$0] != nil }
+        }
+        return values.sorted { $0.date < $1.date }
     }
 
     /// Live periods from the first source that has any; nights it mostly lacks come from stored bed and wake times.

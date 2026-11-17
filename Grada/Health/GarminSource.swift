@@ -127,7 +127,7 @@ final class GarminSource: HealthSource {
         return GarminData.batch(days: days, dailies: dailies, sleep: sleep, hrv: hrv, activities: activities, calendar: calendar)
     }
 
-    /// Garmin's intraday heart rate as 5-minute averages, one request per day, for Resources and Strain (#95).
+    /// Garmin's intraday heart rate as 5-minute averages, one request per day, for days Apple Health has none (#95, #97).
     /// Days Garmin can't return right now are left out, and nothing is fetched while disconnected, so an offline
     /// phone leaves those cards empty instead of failing them.
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
