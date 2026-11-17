@@ -54,6 +54,22 @@ final class GradaUITests: XCTestCase {
     }
 
     @MainActor
+    func testTagEffects() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-SampleData"]
+        app.launch()
+        if app.navigationBars["Choose your goals"].waitForExistence(timeout: 5) {
+            app.staticTexts["Balanced"].tap()
+        }
+
+        app.tabBars.buttons["Journal"].tap()
+        app.navigationBars["Journal"].buttons["Tag Effects"].tap()
+        XCTAssertTrue(app.navigationBars["Tag Effects"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Log Alcohol on 5 days to see how it changes the night after · 0 so far"].waitForExistence(timeout: 5))
+        attachScreenshot("Tag Effects")
+    }
+
+    @MainActor
     private func attachScreenshot(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name

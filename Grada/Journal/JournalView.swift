@@ -62,6 +62,9 @@ struct JournalView: View {
                 NavigationLink { MonthSummaryView(day: day) } label: {
                     Label("Month Summary", systemImage: "calendar.badge.clock")
                 }
+                NavigationLink { TagEffectsView() } label: {
+                    Label("Tag Effects", systemImage: "chart.bar.xaxis")
+                }
             }
             .sensoryFeedback(.selection, trigger: saves)
             .navigationDestination(for: MetricRoute.self) { MetricDetailView(route: $0) }
