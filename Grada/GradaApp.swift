@@ -31,31 +31,15 @@ struct GradaApp: App {
         .modelContainer(modelContainer)
     }
 
-    /// App data lives in the user's private iCloud database and syncs across their devices.
-    ///
-    /// `.automatic` syncs with the iCloud container from the app's entitlements and stays local-only
-    /// without one. iCloud is off for now: personal (free) teams can't sign the iCloud capability.
-    /// To turn it on with a paid team, add in Signing & Capabilities: iCloud › CloudKit with container
-    /// `iCloud.com.GitHub.TokenCemetery.Grada`, and Background Modes › Remote notifications.
-    ///
-    /// Falls back to a local-only store so the app still works if iCloud can't be set up.
+    /// See `ModelStores`.
     private static func makeModelContainer() -> ModelContainer {
-        let schema = Schema([HomeCard.self, DaySummary.self, WorkoutRecord.self, GoalChange.self, JournalEntry.self])
         if isTestHost {
-            return try! ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            return try! ModelContainer(for: ModelStores.schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         }
         do {
-            let configuration = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)
-            return try ModelContainer(for: schema, configurations: configuration)
+            return try ModelStores.makeContainer()
         } catch {
-            Logger(subsystem: "Grada", category: "Storage")
-                .error("iCloud store unavailable, using local store: \(error.localizedDescription)")
-            do {
-                let configuration = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
-                return try ModelContainer(for: schema, configurations: configuration)
-            } catch {
-                fatalError("Could not create the local store: \(error)")
-            }
+            fatalError("Could not create the stores: \(error)")
         }
     }
 

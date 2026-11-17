@@ -110,6 +110,14 @@ final class JournalEntry {
         updatedAt = .now
     }
 
+    /// Stored values as they are, for moving entries between stores.
+    init(dayKey: String, day: Date, tagRawValue: String, amount: Double?) {
+        self.dayKey = dayKey
+        self.day = day
+        self.tagRawValue = tagRawValue
+        self.amount = amount
+    }
+
     /// Nil if the stored tag no longer exists in this app version.
     var tag: JournalTag? { JournalTag(rawValue: tagRawValue) }
 }
