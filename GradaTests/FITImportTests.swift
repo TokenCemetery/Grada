@@ -111,6 +111,21 @@ struct FITImportTests {
         #expect(result.origins[.sleep]?[midnight] == ["Garmin (imported)"])
     }
 
+    @Test func napStaysOutOfTheNight() async throws {
+        let hour: TimeInterval = 3600
+        func sleep(from start: TimeInterval, to end: TimeInterval) -> Data {
+            var writer = FITWriter()
+            writer.fileID()
+            writer.message(275, [(253, 4, FITWriter.time(midnight + start)), (0, 1, 2)])
+            writer.message(275, [(253, 4, FITWriter.time(midnight + end)), (0, 1, 1)])
+            return writer.bytes
+        }
+        let result = try await read(["night.fit": sleep(from: -hour, to: 7 * hour), "nap.fit": sleep(from: 14 * hour, to: 15 * hour)])
+        #expect(result.sleepNights.map(\.stages) == [[.core: 8 * hour]])
+        #expect(result.overnight.first?.bedtime == midnight - hour)
+        #expect(result.overnight.first?.wakeTime == midnight + 7 * hour)
+    }
+
     @Test func hrvAveragesTheNightOrFallsBackToTheWatchSummary() async throws {
         let nextMidnight = midnight.addingTimeInterval(86_400)
         var summary = FITWriter()

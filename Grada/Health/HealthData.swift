@@ -40,6 +40,27 @@ nonisolated struct SleepNight: Equatable {
     static func wakeDay(forEnd end: Date, calendar: Calendar) -> Date {
         calendar.startOfDay(for: end.addingTimeInterval(6 * 3600))
     }
+
+    /// Sleep at least this far from the rest of the day's sleep is a separate sleep, such as a nap. Within a
+    /// night, watches record waking as awake samples, so a gap this long means the night had ended.
+    static let separateSleepGap: TimeInterval = 2 * 3600
+
+    /// The night's main sleep out of everything that counts toward one `wakeDay`: the longest stretch of
+    /// samples with no gap of `separateSleepGap`. Naps and evening dozes would otherwise add to the night's
+    /// totals and move its bed and wake times (#101).
+    static func mainSleep<T>(_ items: [T], start: (T) -> Date, end: (T) -> Date) -> [T] {
+        let sorted = items.sorted { start($0) < start($1) }
+        var stretches: [(items: [T], start: Date, end: Date)] = []
+        for item in sorted {
+            if let last = stretches.last, start(item).timeIntervalSince(last.end) < separateSleepGap {
+                stretches[stretches.count - 1].items.append(item)
+                stretches[stretches.count - 1].end = max(last.end, end(item))
+            } else {
+                stretches.append(([item], start(item), end(item)))
+            }
+        }
+        return stretches.max { $0.end.timeIntervalSince($0.start) < $1.end.timeIntervalSince($1.start) }?.items ?? []
+    }
 }
 
 nonisolated struct WorkoutSummary: Hashable {
@@ -104,8 +125,9 @@ nonisolated struct OvernightVitals: Equatable {
 
     /// Groups readings by the night they fall in. All arrays must be sorted by time; awake periods are skipped.
     static func make(hrv: [TimedValue], heartRate: [TimedValue], sleep: [SleepPeriod], calendar: Calendar) -> [OvernightVitals] {
-        let asleep = sleep.filter { $0.stage != .awake }
-        let nights = Dictionary(grouping: asleep) { SleepNight.wakeDay(forEnd: $0.end, calendar: calendar) }
+        let nights = Dictionary(grouping: sleep.filter { $0.stage != .awake }) { SleepNight.wakeDay(forEnd: $0.end, calendar: calendar) }
+            .mapValues { SleepNight.mainSleep($0, start: \.start, end: \.end) }
+        let asleep = nights.values.flatMap { $0 }.sorted { $0.start < $1.start }
         let hrvByNight = byNight(hrv, asleep, calendar)
         let heartRateByNight = byNight(heartRate, asleep, calendar)
         return nights.keys.sorted().map { day in

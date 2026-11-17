@@ -803,6 +803,7 @@ struct SnapshotBuilder {
         let first = calendar.date(byAdding: .day, value: -1, to: days[0])!
         let periods = try await source.sleepPeriods(in: DateInterval(start: first, end: max(now, first)))
         let byNight = Dictionary(grouping: periods) { SleepNight.wakeDay(forEnd: $0.end, calendar: calendar) }
+            .mapValues { SleepNight.mainSleep($0, start: \.start, end: \.end) }
         // Stage totals stand in for nights without a stage timeline, such as Garmin's (#100).
         let totals = Dictionary(try await source.sleepNights(days: count).map { ($0.wakeDay, $0) }) { first, _ in first }
         let regularity = try await sleepRegularity(count)

@@ -204,7 +204,7 @@ final class HealthKitReader: HealthSource {
         var nights: [SleepNight] = []
         var origins: [Date: [String]] = [:]
         for day in byDay.keys.filter({ $0 >= days.start && $0 < days.end }).sorted() {
-            let best = Self.bestSource(byDay[day]!)
+            let best = SleepNight.mainSleep(Self.bestSource(byDay[day]!), start: \.startDate, end: \.endDate)
             guard let first = best.first else { continue }
             nights.append(Self.night(wakeDay: day, sourceSamples: best))
             origins[day] = [Self.originName(first.sourceRevision.source, device: first.device)]

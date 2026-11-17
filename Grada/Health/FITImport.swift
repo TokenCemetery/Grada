@@ -128,6 +128,7 @@ nonisolated struct FITImport {
 
             let periods = sleep.values.sorted { $0.period.start < $1.period.start }
             let nights = Dictionary(grouping: periods) { SleepNight.wakeDay(forEnd: $0.period.end, calendar: calendar) }
+                .mapValues { SleepNight.mainSleep($0, start: { $0.period.start }, end: { $0.period.end }) }
             var vitals: [Date: OvernightVitals] = [:]
             for (day, periods) in nights {
                 var stages: [SleepStage: TimeInterval] = [:]

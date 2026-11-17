@@ -658,6 +658,34 @@ struct AfterMidnightTests {
     }
 }
 
+struct SeparateSleepTests {
+    private let calendar = Calendar.current
+    private var midnight: Date { calendar.startOfDay(for: .now) }
+    private func at(_ hours: Double) -> Date { midnight.addingTimeInterval(hours * 3600) }
+
+    @Test func napStaysOutOfTheNight() {
+        let night = SleepPeriod(start: at(-1), end: at(7), stage: .core)
+        let nap = SleepPeriod(start: at(14), end: at(14.75), stage: .core)
+        #expect(SleepNight.mainSleep([nap, night], start: \.start, end: \.end) == [night])
+
+        let napHRV = TimedValue(date: at(14.5), value: 90)
+        let vitals = OvernightVitals.make(hrv: [napHRV], heartRate: [napHRV], sleep: [night, nap], calendar: calendar)
+        #expect(vitals == [OvernightVitals(wakeDay: midnight, bedtime: at(-1), wakeTime: at(7))])
+    }
+
+    @Test func eveningDozeStaysOutOfTheNight() {
+        let doze = SleepPeriod(start: at(-4.5), end: at(-4), stage: nil)
+        let night = SleepPeriod(start: at(-1), end: at(7), stage: nil)
+        #expect(SleepNight.mainSleep([doze, night], start: \.start, end: \.end) == [night])
+    }
+
+    @Test func wakingInTheNightKeepsOneNight() {
+        let periods = [SleepPeriod(start: at(-1), end: at(3), stage: .core), SleepPeriod(start: at(3), end: at(4), stage: .awake),
+                       SleepPeriod(start: at(5), end: at(7), stage: .rem)]
+        #expect(SleepNight.mainSleep(periods, start: \.start, end: \.end) == periods)
+    }
+}
+
 @MainActor
 struct SleepChartTests {
     @Test func nightSplitsIntoStageHours() {
