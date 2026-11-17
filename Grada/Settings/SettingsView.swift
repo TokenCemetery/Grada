@@ -24,6 +24,11 @@ enum Appearance: String, CaseIterable, Identifiable {
     }
 }
 
+/// App Review 1.4.1 asks health apps to remind people to see a doctor before making medical decisions (#107).
+enum MedicalNotice {
+    static let text = "Grada isn't a medical device and doesn't diagnose, treat or prevent any condition. Talk to a doctor before making medical decisions."
+}
+
 /// Every group is a row that opens its own screen, like iOS Settings.
 struct SettingsView: View {
     /// The same URL as the privacy policy in App Store Connect (#108).
@@ -47,9 +52,12 @@ struct SettingsView: View {
                     Link(destination: Self.privacyPolicy) { SettingsRow("Privacy Policy", icon: "hand.raised.fill", color: .blue) }
                         .foregroundStyle(.primary)
                 } footer: {
-                    Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
-                        .frame(maxWidth: .infinity)
-                        .padding(.top)
+                    VStack(spacing: 16) {
+                        Text(MedicalNotice.text)
+                        Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .padding(.top)
                 }
             }
             .navigationTitle("Settings")

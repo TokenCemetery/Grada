@@ -151,7 +151,8 @@ struct JournalView: View {
     @ViewBuilder
     private func row(_ tag: JournalTag, caption: String?, suggestion: JournalSuggestion?) -> some View {
         let entry = entries[tag]
-        let caption = suggestion.map { "Suggested · \($0.reason)" } ?? caption
+        // Illness comes from vitals alone, so it says it isn't a diagnosis (#107).
+        let caption = suggestion.map { "Suggested · \($0.reason)\($0.tag == .illness ? " · not a diagnosis" : "")" } ?? caption
         HStack {
             Button {
                 store.toggle(tag, on: day)

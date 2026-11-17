@@ -79,6 +79,10 @@ struct MetricDetailView: View {
                     .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
                 .buttonStyle(.plain)
+                Text(MedicalNotice.text)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
             }
             .padding(.horizontal)
             .padding(.bottom)
