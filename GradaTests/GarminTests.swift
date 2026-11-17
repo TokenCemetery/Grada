@@ -287,6 +287,51 @@ struct GarminTests {
         #expect(garmin.lastSync != nil)
     }
 
+    @Test func dailyHeartRateIsAveragedPerFiveMinutes() throws {
+        let start = day("2026-11-01").timeIntervalSince1970 * 1000
+        let json = """
+        {"heartRateValueDescriptors": [{"key": "heartrate", "index": 1}, {"key": "timestamp", "index": 0}],
+         "heartRateValues": [[\(start), 60], [\(start + 120_000), 70], [\(start + 240_000), null], [\(start + 360_000), 80]]}
+        """
+        let values = GarminData.heartRate(try JSONDecoder().decode(GarminData.DailyHeartRate.self, from: Data(json.utf8)))
+        #expect(values == [TimedValue(date: day("2026-11-01"), value: 65),
+                           TimedValue(date: day("2026-11-01").addingTimeInterval(300), value: 80)])
+    }
+
+    @Test func heartRateIsReadPerDayOnceThePastDayIsFetched() async throws {
+        let fake = FakeGarmin()
+        fake.answer = { request in
+            if request.httpMethod == "POST" { return (200, self.jwt) }
+            let date = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "date" }!.value!
+            let ms = self.day(date).timeIntervalSince1970 * 1000 + 3_600_000
+            return (200, #"{"heartRateValues": [[\#(ms), 55]]}"#)
+        }
+        let (garmin, store) = try source(fake)
+        defer { store.delete() }
+
+        let interval = DateInterval(start: day("2026-10-30"), end: day("2026-11-01"))
+        #expect(try await garmin.heartRate(in: interval).map(\.date)
+                == [day("2026-10-30").addingTimeInterval(3600), day("2026-10-31").addingTimeInterval(3600)])
+        _ = try await garmin.heartRate(in: interval)
+        let paths = fake.requests.compactMap(\.url?.path)
+        #expect(paths.filter { $0 == "/wellness-service/wellness/dailyHeartRate" }.count == 2)
+    }
+
+    @Test func heartRateIsEmptyWhenGarminFailsOrIsDisconnected() async throws {
+        let fake = FakeGarmin()
+        fake.answer = { $0.httpMethod == "POST" ? (200, self.jwt) : (500, "") }
+        let (garmin, store) = try source(fake)
+        defer { store.delete() }
+        let interval = DateInterval(start: day("2026-10-30"), end: day("2026-11-01"))
+
+        #expect(try await garmin.heartRate(in: interval).isEmpty)
+        #expect(fake.requests.filter { $0.httpMethod == "GET" }.count == 1, "Stops at the first failed day")
+        garmin.disconnect()
+        let sent = fake.requests.count
+        #expect(try await garmin.heartRate(in: interval).isEmpty)
+        #expect(fake.requests.count == sent)
+    }
+
     @Test func refusedKeyAsksToReconnect() async throws {
         let fake = FakeGarmin()
         fake.answer = { _ in (401, "") }

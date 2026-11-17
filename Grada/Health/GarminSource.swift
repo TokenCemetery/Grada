@@ -35,6 +35,8 @@ final class GarminSource: HealthSource {
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let logger = Logger(subsystem: "Grada", category: "Garmin")
+    /// Intraday heart rate by start of day, and when it was requested.
+    @ObservationIgnored private var heartRateDays: [Date: (fetched: Date, values: Task<[TimedValue], Error>)] = [:]
     private static let needsReconnectKey = "garmin.needsReconnect"
     private static let lastSyncKey = "garmin.lastSync"
 
@@ -116,8 +118,50 @@ final class GarminSource: HealthSource {
         return GarminData.batch(days: days, dailies: dailies, sleep: sleep, hrv: hrv, activities: activities, calendar: calendar)
     }
 
-    // Not read live: intraday heart rate, sleep timing and workout screens come from Apple Health.
-    func heartRate(in interval: DateInterval) async throws -> [TimedValue] { [] }
+    /// Garmin's intraday heart rate as 5-minute averages, one request per day, for Resources and Strain when Apple
+    /// Health has none (#95). Empty while disconnected or when Garmin can't be reached, so an offline phone leaves
+    /// those cards empty instead of failing them.
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
+        guard isAvailable else { return [] }
+        var values: [TimedValue] = []
+        var day = calendar.startOfDay(for: interval.start)
+        while day < interval.end, day <= .now {
+            do {
+                values += try await heartRate(on: day)
+            } catch {
+                return []
+            }
+            day = calendar.date(byAdding: .day, value: 1, to: day)!
+        }
+        return values.filter { interval.start <= $0.date && $0.date < interval.end }
+    }
+
+    /// One day's heart rate, fetched once after the day ends; until then at most every `refreshInterval`.
+    /// Cards are built in parallel, so a request in flight is shared rather than sent again.
+    private func heartRate(on day: Date) async throws -> [TimedValue] {
+        let dayEnd = calendar.date(byAdding: .day, value: 1, to: day)!
+        if let cached = heartRateDays[day], cached.fetched >= dayEnd || Date.now.timeIntervalSince(cached.fetched) < refreshInterval {
+            do {
+                return try await cached.values.value
+            } catch {
+                heartRateDays[day] = nil
+                throw error
+            }
+        }
+        let values = Task {
+            let data = try await call("Heart rate") { try await client.get("/wellness-service/wellness/dailyHeartRate", ["date": key(day)]) }
+            return try data.map { GarminData.heartRate(try JSONDecoder().decode(GarminData.DailyHeartRate.self, from: $0)) } ?? []
+        }
+        heartRateDays[day] = (.now, values)
+        do {
+            return try await values.value
+        } catch {
+            heartRateDays[day] = nil
+            throw error
+        }
+    }
+
+    // Not read live: sleep timing comes from the stored nights, and workout screens from Apple Health.
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { [] }
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] { [] }
     func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail { WorkoutDetail() }
@@ -252,6 +296,30 @@ nonisolated enum GarminData {
         var activityType: ActivityType?
 
         struct ActivityType: Decodable { var typeKey: String? }
+    }
+
+    /// `heartRateValues` rows are laid out by `heartRateValueDescriptors`: a timestamp in milliseconds since 1970
+    /// and beats per minute, null while the watch wasn't worn.
+    struct DailyHeartRate: Decodable {
+        var heartRateValueDescriptors: [Descriptor]?
+        var heartRateValues: [[Double?]]?
+
+        struct Descriptor: Decodable { var key: String; var index: Int }
+    }
+
+    /// Garmin's readings, about every 2 minutes, averaged per 5 minutes as Apple Health's are.
+    static func heartRate(_ day: DailyHeartRate) -> [TimedValue] {
+        let time = day.heartRateValueDescriptors?.first { $0.key == "timestamp" }?.index ?? 0
+        let bpm = day.heartRateValueDescriptors?.first { $0.key == "heartrate" }?.index ?? 1
+        let bucket: TimeInterval = 5 * 60
+        let readings = (day.heartRateValues ?? []).compactMap { row -> (start: TimeInterval, value: Double)? in
+            guard row.indices.contains(time), row.indices.contains(bpm), let ms = row[time], let value = row[bpm], value > 0
+            else { return nil }
+            return ((ms / 1000 / bucket).rounded(.down) * bucket, value)
+        }
+        return Dictionary(grouping: readings, by: \.start)
+            .map { TimedValue(date: Date(timeIntervalSince1970: $0.key), value: $0.value.map(\.value).reduce(0, +) / Double($0.value.count)) }
+            .sorted { $0.date < $1.date }
     }
 
     static func parseDay(_ calendarDate: String?, calendar: Calendar) -> Date? {

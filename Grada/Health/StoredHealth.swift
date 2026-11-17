@@ -133,7 +133,8 @@ enum DayKey {
 
 /// Card data read from the imported store, so cards load instantly and work offline. Each source's
 /// rows are merged in the order of `sources`: per day and metric, the first source with a value wins.
-/// Intraday data (5-minute heart rate, sleep timing) isn't stored; it's read live from the sources.
+/// Intraday data (5-minute heart rate, sleep timing) isn't stored; it's read live from the sources, with stored
+/// bed and wake times filling nights the sources have no sleep timing for.
 struct StoredHealthData: HealthDataSource {
     let context: ModelContext
     /// In order of preference. Stored data from sources not listed here comes after them.
@@ -159,12 +160,23 @@ struct StoredHealthData: HealthDataSource {
         return []
     }
 
+    /// Live periods from the first source that has any; nights it lacks come from stored bed and wake times.
+    /// Imported nights (Garmin, FIT) have no stage timeline, so they count as asleep from one to the other (#95).
     func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] {
+        var periods: [SleepPeriod] = []
         for source in sources {
-            let periods = try await source.sleepPeriods(in: interval)
-            if !periods.isEmpty { return periods }
+            periods = try await source.sleepPeriods(in: interval)
+            if !periods.isEmpty { break }
         }
-        return []
+        let liveNights = Set(periods.map { SleepNight.wakeDay(forEnd: $0.end, calendar: calendar) })
+        let days = max(calendar.dateComponents([.day], from: calendar.startOfDay(for: interval.start), to: .now).day! + 1, 1)
+        let stored = try await overnight(days: days).compactMap { night -> SleepPeriod? in
+            guard !liveNights.contains(night.wakeDay), let bedtime = night.bedtime, let wakeTime = night.wakeTime,
+                  bedtime < interval.end, wakeTime > interval.start
+            else { return nil }
+            return SleepPeriod(start: bedtime, end: wakeTime, stage: nil)
+        }
+        return (periods + stored).sorted { $0.start < $1.start }
     }
 
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {

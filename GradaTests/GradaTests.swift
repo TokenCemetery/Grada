@@ -336,6 +336,34 @@ struct HealthImporterTests {
         #expect(try await reversed.daily(.steps, days: 2).map(\.value) == [4000, 5000])
     }
 
+    @Test func importedNightsAreSleepPeriodsWithoutLiveSleep() async throws {
+        let bedtime = day(-1).addingTimeInterval(23 * 3600), wakeTime = day(0).addingTimeInterval(7 * 3600)
+        var batch = batch(steps: [nil])
+        batch.overnight = [OvernightVitals(wakeDay: today, bedtime: bedtime, wakeTime: wakeTime)]
+        try importer.save(batch, from: "garminConnect")
+        let stored = StoredHealthData(context: context)
+
+        #expect(try await stored.sleepPeriods(in: DateInterval(start: day(-1), end: .now))
+                == [SleepPeriod(start: bedtime, end: wakeTime, stage: nil)])
+        #expect(try await stored.sleepPeriods(in: DateInterval(start: wakeTime.addingTimeInterval(60), end: wakeTime.addingTimeInterval(120))).isEmpty)
+    }
+
+    @Test func importedNightsFillNightsAppleHealthLacks() async throws {
+        let night = { (wake: Int) in
+            OvernightVitals(wakeDay: self.day(wake), bedtime: self.day(wake - 1).addingTimeInterval(23 * 3600),
+                            wakeTime: self.day(wake).addingTimeInterval(7 * 3600))
+        }
+        var batch = batch(steps: [nil, nil])
+        batch.overnight = [night(-1), night(0)]
+        try importer.save(batch, from: "garminConnect")
+        let health = FakeSource(id: HealthKitReader.sourceID)
+        let live = SleepPeriod(start: day(-1).addingTimeInterval(22 * 3600), end: day(0).addingTimeInterval(6 * 3600), stage: .core)
+        health.sleep = [live]
+
+        let periods = try await StoredHealthData(context: context, sources: [health]).sleepPeriods(in: DateInterval(start: day(-2), end: .now))
+        #expect(periods == [SleepPeriod(start: night(-1).bedtime!, end: night(-1).wakeTime!, stage: nil), live])
+    }
+
     @Test func sameNightFromTwoSourcesCountsOnce() async throws {
         var first = batch(steps: [nil])
         first.sleepNights = [SleepNight(wakeDay: today, stages: [.core: 5 * 3600, .deep: 3600], unspecified: 0)]
@@ -425,6 +453,7 @@ struct HealthImporterTests {
 /// A source that only exists to set the merge order.
 private final class FakeSource: HealthSource {
     let id: String
+    var sleep: [SleepPeriod] = []
     init(id: String) { self.id = id }
     var name: String { id }
     var isAvailable: Bool { true }
@@ -432,7 +461,7 @@ private final class FakeSource: HealthSource {
     func earliestSampleDate() async throws -> Date? { nil }
     func batch(for days: DateInterval) async throws -> HealthBatch { HealthBatch(days: days) }
     func heartRate(in interval: DateInterval) async throws -> [TimedValue] { [] }
-    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { [] }
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { sleep }
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] { [] }
     func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail { WorkoutDetail() }
     func highestHeartRate(days: Int) async throws -> Double? { nil }
