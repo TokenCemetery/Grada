@@ -17,6 +17,8 @@ struct JournalView: View {
     @State private var loadedDay: Date?
     /// Changes on every save, for the haptic and the checkmark bounce.
     @State private var saves = 0
+    /// The last 90 nights, for how Alcohol and Caffeine change the night after.
+    @State private var nights: [Date: [TagEffect.Metric: Double]]?
 
     private let calendar = Calendar.current
     private var today: Date { calendar.startOfDay(for: .now) }
@@ -49,11 +51,12 @@ struct JournalView: View {
                     .listRowBackground(Color.clear)
                 } footer: {
                     // The tags' explanation sits just above them.
-                    Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nTags are saved as you tap them.")
+                    Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nUnder Alcohol and Caffeine, the night after days you logged them is compared with other nights in the last \(TagEffect.windowDays) days. A change shows only when it's clearly bigger than how much your nights vary, each side needs \(TagEffect.minimumNights) nights, and nights after Illness or Night shift are left out.\n\nTags are saved as you tap them.")
                 }
+                let captions = effectCaptions
                 ForEach(JournalTag.Group.allCases, id: \.self) { group in
                     Section(group.title) {
-                        ForEach(group.tags) { row($0) }
+                        ForEach(group.tags) { row($0, caption: captions[$0]) }
                     }
                 }
             }
@@ -61,9 +64,6 @@ struct JournalView: View {
             .toolbar {
                 NavigationLink { MonthSummaryView(day: day) } label: {
                     Label("Month Summary", systemImage: "calendar.badge.clock")
-                }
-                NavigationLink { TagEffectsView() } label: {
-                    Label("Tag Effects", systemImage: "chart.bar.xaxis")
                 }
             }
             .sensoryFeedback(.selection, trigger: saves)
@@ -81,6 +81,9 @@ struct JournalView: View {
                 (morning, evening) = (loadedMorning, loadedEvening)
                 loadedDay = day
             }
+            .task(id: homeModel.importer?.revision ?? 0) {
+                nights = try? await TagEffect.nights(source: healthSource)
+            }
             // A tapped report notification opens today's.
             .onChange(of: NotificationRouter.shared.journalRequests) { day = today }
         }
@@ -97,15 +100,34 @@ struct JournalView: View {
         let revision: Int
     }
 
+    /// Each compared tag's line on the night after, from every logged day and the loaded nights.
+    private var effectCaptions: [JournalTag: String] {
+        guard let nights else { return [:] }
+        var logged: [String: Set<JournalTag>] = [:]
+        for entry in allEntries {
+            if let tag = entry.tag { logged[entry.dayKey, default: []].insert(tag) }
+        }
+        return TagEffect.effects(logged: logged, nights: nights, calendar: calendar).mapValues(TagEffect.caption)
+    }
+
     @ViewBuilder
-    private func row(_ tag: JournalTag) -> some View {
+    private func row(_ tag: JournalTag, caption: String?) -> some View {
         let entry = entries[tag]
         Button {
             store.toggle(tag, on: day)
             saves += 1
         } label: {
             HStack {
-                Label(tag.title, systemImage: tag.symbol)
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(tag.title)
+                        if let caption {
+                            Text(caption).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                } icon: {
+                    Image(systemName: tag.symbol)
+                }
                 Spacer()
                 Image(systemName: entry == nil ? "circle" : "checkmark.circle.fill")
                     .foregroundStyle(entry == nil ? Color.secondary : Color.accentColor)
@@ -114,6 +136,8 @@ struct JournalView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(tag.title)
+        .accessibilityValue(caption ?? "")
         .accessibilityAddTraits(entry == nil ? [] : .isSelected)
         if let entry, let amount = tag.amount {
             Stepper(amount.formatted(entry.amount ?? amount.initial),

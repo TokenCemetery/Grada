@@ -33,20 +33,19 @@ struct TagEffectTests {
     }
 
     /// A drink on day D pairs with the night ending on D + 1; a night after Illness counts on neither side.
-    @Test func tagPairsWithTheNightAfterAndIllnessIsLeftOut() {
-        var logged: [String: [JournalTag: Double]] = [:]
+    @Test func tagPairsWithTheNightAfterAndIllnessIsLeftOut() throws {
+        var logged: [String: Set<JournalTag>] = [:]
         var nights: [Date: [TagEffect.Metric: Double]] = [:]
         for offset in 1...30 {
             let drank = offset <= 6
-            if drank { logged[key(-offset)] = [.alcohol: 2] }
+            if drank { logged[key(-offset)] = [.alcohol] }
             nights[day(-offset + 1)] = [.hrv: drank ? 40 + Double(offset % 2) : 60 + Double(offset % 2)]
         }
-        logged[key(-10)] = [.illness: 1]
+        logged[key(-10)] = [.illness]
         nights[day(-9)] = [.hrv: 10]
 
-        let alcohol = TagEffect.sections(logged: logged, nights: nights, calendar: calendar)[0]
-        #expect(alcohol.tag == .alcohol && alcohol.dose == nil)
-        let hrv = alcohol.rows[0]
+        let hrv = try #require(TagEffect.effects(logged: logged, nights: nights, calendar: calendar)[.alcohol]?.first)
+        #expect(hrv.metric == .hrv)
         #expect(hrv.nightsWith == 6)
         #expect(hrv.nightsWithout == 23, "30 days, less 6 with alcohol and 1 after illness")
         #expect(hrv.with == 40.5)
@@ -54,24 +53,26 @@ struct TagEffectTests {
         #expect(abs(difference + 20) < 0.1, "About 20 ms lower, and the illness night's 10 ms isn't counted")
     }
 
-    @Test func doseSectionsShowOnlyWhenEveryDoseHasEnoughNights() {
-        var logged: [String: [JournalTag: Double]] = [:]
-        var nights: [Date: [TagEffect.Metric: Double]] = [:]
-        for offset in 1...40 {
-            if offset <= 5 { logged[key(-offset)] = [.alcohol: 1] }
-            if (6...9).contains(offset) { logged[key(-offset)] = [.alcohol: 4] }
-            nights[day(-offset + 1)] = [.hrv: 50 + Double(offset % 3)]
-        }
-        #expect(TagEffect.sections(logged: logged, nights: nights, calendar: calendar).map(\.dose) == [nil, nil], "Alcohol and Caffeine")
-
-        logged[key(-10)] = [.alcohol: 3]
-        let doses = TagEffect.sections(logged: logged, nights: nights, calendar: calendar).filter { $0.tag == .alcohol }.map(\.dose)
-        #expect(doses == [nil, "1–2 drinks", "3 or more drinks"])
+    @Test func caffeineShowsOnlySleepOutcomes() {
+        let caffeine = TagEffect.effects(logged: [:], nights: [:], calendar: calendar)[.caffeine]
+        #expect(caffeine?.map(\.metric) == [.sleep, .deep, .awake])
     }
 
-    @Test func caffeineShowsOnlySleepOutcomes() {
-        let caffeine = TagEffect.sections(logged: [:], nights: [:], calendar: calendar).first { $0.tag == .caffeine }
-        #expect(caffeine?.rows.map(\.metric) == [.sleep, .deep, .awake])
+    @Test func captionListsOnlyClearChanges() {
+        let rows = [
+            TagEffect.Row(metric: .hrv, with: 45, without: 53, nightsWith: 8, nightsWithout: 40, change: .changed(-8)),
+            TagEffect.Row(metric: .sleepingHeartRate, with: 55, without: 54, nightsWith: 8, nightsWithout: 40, change: .withinVariation),
+            TagEffect.Row(metric: .rem, with: 4_500, without: 5_400, nightsWith: 8, nightsWithout: 40, change: .changed(-900)),
+        ]
+        #expect(TagEffect.caption(rows) == "Night after: HRV ↓ 8 ms · REM ↓ 15m")
+        #expect(TagEffect.caption([rows[1]]) == "Night after: no clear change")
+    }
+
+    @Test func captionSaysWhatsMissing() {
+        let few = TagEffect.Row(metric: .sleep, with: nil, without: nil, nightsWith: 2, nightsWithout: 40, change: .notEnough)
+        #expect(TagEffect.caption([few]) == "Night after: 2 of 5 days logged")
+        let noControls = TagEffect.Row(metric: .sleep, with: nil, without: nil, nightsWith: 9, nightsWithout: 3, change: .notEnough)
+        #expect(TagEffect.caption([noControls]) == "Night after: needs more nights to compare")
     }
 
     @Test func nightsComeFromOvernightVitalsAndSleepTotals() async throws {
