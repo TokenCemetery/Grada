@@ -56,6 +56,8 @@ struct CalendarView: View {
                     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
             }
         }
+        // The tab bar stays tappable behind the sheet; without this the sheet follows the user to the next tab.
+        .onDisappear { selectedDay = nil }
         .task(id: metric) { await model.load(metric, goals: GoalHistory(goalChanges)) }
         .onChange(of: model.importer?.revision) {
             Task { await model.load(metric, goals: GoalHistory(goalChanges)) }
