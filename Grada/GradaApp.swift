@@ -75,6 +75,7 @@ struct RootView: View {
     @AppStorage(SettingsKey.appearance) private var appearance: Appearance = .system
     @AppStorage(SettingsKey.calendarMetric) private var calendarMetric: CalendarMetric = .health
     @Environment(HomeModel.self) private var homeModel
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var goalChanges: [GoalChange]
     @State private var tab = Tab.home
     /// Goal setup waits until the Apple Health permission screen is answered.
@@ -109,10 +110,15 @@ struct RootView: View {
         .sheet(isPresented: Binding(get: { isAuthorized && goalChanges.isEmpty }, set: { _ in })) {
             GoalSetupView()
         }
-        .task {
-            await homeModel.importer?.authorize()
-            isAuthorized = true
-            await homeModel.importer?.importHistoryIfNeeded()
+        // On every return too: asks again if the permission sheet timed out in the background (#128).
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            if phase == .active { Task { await authorizeAndImport() } }
         }
+    }
+
+    private func authorizeAndImport() async {
+        await homeModel.importer?.authorize()
+        isAuthorized = true
+        await homeModel.importer?.importHistoryIfNeeded()
     }
 }

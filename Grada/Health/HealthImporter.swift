@@ -68,10 +68,16 @@ final class HealthImporter {
     func authorize() async {
         if authorization == nil {
             authorization = Task {
+                var failed = false
                 for source in availableSources {
                     do { try await source.requestAuthorization() }
-                    catch { logger.error("Authorization for \(source.id) failed: \(error.localizedDescription)") }
+                    catch {
+                        failed = true
+                        logger.error("Authorization for \(source.id) failed: \(error.localizedDescription)")
+                    }
                 }
+                // Lets the next call ask again: the Apple Health sheet times out if left unanswered (#128).
+                if failed { authorization = nil }
             }
         }
         await authorization?.value
@@ -79,9 +85,10 @@ final class HealthImporter {
 
     /// Imports everything each source has, a year at a time, newest first so recent cards fill in quickly.
     func importHistoryIfNeeded() async {
+        // Checked after authorizing, so overlapping calls can't both pass the guard while it waits.
+        await authorize()
         let pending = availableSources.filter { !defaults.bool(forKey: Self.historyDoneKey($0)) }
         guard !pending.isEmpty, historyProgress == nil else { return }
-        await authorize()
         historyProgress = 0
         defer {
             historyProgress = nil
