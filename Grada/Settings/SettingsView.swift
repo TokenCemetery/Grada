@@ -26,6 +26,9 @@ enum Appearance: String, CaseIterable, Identifiable {
 
 /// Every group is a row that opens its own screen, like iOS Settings.
 struct SettingsView: View {
+    /// The same URL as the privacy policy in App Store Connect (#108).
+    static let privacyPolicy = URL(string: "https://github.com/TokenCemetery/Grada/blob/main/PRIVACY.md")!
+
     var body: some View {
         NavigationStack {
             Form {
@@ -39,6 +42,10 @@ struct SettingsView: View {
 #if DEBUG && targetEnvironment(simulator)
                     NavigationLink { SimulatorDataView() } label: { SettingsRow("Simulator Data", icon: "hammer.fill", color: .gray) }
 #endif
+                }
+                Section {
+                    Link(destination: Self.privacyPolicy) { SettingsRow("Privacy Policy", icon: "hand.raised.fill", color: .blue) }
+                        .foregroundStyle(.primary)
                 } footer: {
                     Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
                         .frame(maxWidth: .infinity)

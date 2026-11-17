@@ -20,7 +20,7 @@ Settings › Data Source lists each kind of data Grada reads and the apps and de
 
 ## Privacy
 
-All calculations run on the device. Grada has no accounts, analytics or advertising, and it sends your data to no one. Its only network calls are to Garmin, if you connect Garmin. App data such as your home layout, goals and journal stays on your devices; syncing it through your private iCloud is ready but switched off until [#20](https://github.com/TokenCemetery/Grada/issues/20). See the [privacy policy](PRIVACY.md).
+All calculations run on the device. Grada has no accounts, analytics or advertising, and it sends your data to no one. Its only network calls are to Garmin, if you connect Garmin. App data such as your home layout, goals and journal stays on your devices; syncing it through your private iCloud is ready but switched off until [#20](https://github.com/TokenCemetery/Grada/issues/20). See the [privacy policy](PRIVACY.md), also linked from Settings.
 
 ## Scientific basis
 
