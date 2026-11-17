@@ -64,6 +64,9 @@ struct JournalView: View {
             }
             .navigationTitle("Journal")
             .toolbar {
+                NavigationLink { MonthSummaryView(day: day) } label: {
+                    Label("Month Summary", systemImage: "calendar.badge.clock")
+                }
                 Button("Edit tags") { isEditingTags = true }
             }
             .sheet(isPresented: $isEditingTags) {

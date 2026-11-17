@@ -10,7 +10,6 @@ struct CalendarView: View {
     @AppStorage("colorBlindPalette") private var colorBlind = false
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var selectedDay: Date?
-    // TODO(#40, v3, Reports): a monthly summary like Whoop's "Month in Review" belongs in reports, not here.
 
     private var calendar: Calendar { .current }
     private var today: Date { calendar.startOfDay(for: .now) }

@@ -6,7 +6,7 @@ Grada is an iPhone and iPad app that turns your Apple Health data into a daily s
 - **Calendar:** colors each day by a metric, with a sheet for that day's details.
 - **Detail screens:** each metric's trend and breakdown, what it means, and the inputs it's based on. Some show today's recommendation with its reason: steps left to the goal as minutes of walking (or a congratulation once it's reached), a bedtime for your usual wake-up, or easing off when resting heart rate, HRV or training load is out of range.
 - **Goals and journal:** start from a goal preset that adjusts every week, and keep a daily journal of habits such as alcohol, caffeine, late meals or travel.
-- **Reports:** each day in Journal opens with two reports, side by side on iPad. The morning report has last night's sleep, Recovery, Health Status and Training Readiness. The evening report has the day's steps, active energy, intensity minutes, training and strain against your goals. Below them, Recommendations collects both reports' advice, including tonight's bedtime. **Settings › Profile › Sleep Schedule** sets your bedtime and wake-up (your usual ones from the last 14 nights, or your own) and can send each report as a notification: the morning one once last night's sleep is recorded, never before your wake-up, and the evening one a chosen time before bedtime.
+- **Reports:** each day in Journal opens with two reports, side by side on iPad. The morning report has last night's sleep, Recovery, Health Status and Training Readiness. The evening report has the day's steps, active energy, intensity minutes, training and strain against your goals. Below them, Recommendations collects both reports' advice, including tonight's bedtime. **Settings › Profile › Sleep Schedule** sets your bedtime and wake-up (your usual ones from the last 14 nights, or your own) and can send each report as a notification: the morning one once last night's sleep is recorded, never before your wake-up, and the evening one a chosen time before bedtime. The month summary button in Journal's toolbar shows the month's average steps, exercise, resting heart rate, overnight HRV, sleep and VO₂ max, and how each changed from the month before; a change counts only when it's bigger than a fifth of how much your days vary, and a month needs 14 days with data (2 VO₂ max readings).
 
 ## Data
 
@@ -57,7 +57,7 @@ Each version is a [GitHub milestone](https://github.com/TokenCemetery/Grada/mile
 |---|---|---|---|
 | v1 | Foundation | Apple Health import, iCloud sync, home cards, calendar, metric detail | Built; iCloud sync waits on a paid developer team ([#20](https://github.com/TokenCemetery/Grada/issues/20)) |
 | v2 | Personal | Goals, journal, intensity minutes, HRV status, Health Age | Built |
-| v3 | Guidance | Morning and evening reports, recommendations, monthly summary | In progress; recommendations and the morning and evening reports built |
+| v3 | Guidance | Morning and evening reports, recommendations, monthly summary | Built |
 | v4 | Scores | Sleep score, training readiness, strain and training load, recovery time | Built |
 | v5 | Energy | Resources energy card | Built; a stress card was declined because there's no published way to measure stress from iPhone data |
 
