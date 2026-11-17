@@ -726,8 +726,8 @@ struct SnapshotBuilder {
         )
     }
 
-    /// Tonight's bedtime for a wake-up tomorrow, from the last `Bedtime.nights` nights.
-    func bedtimePlan(need: TimeInterval) async throws -> Bedtime.Plan? {
+    /// The bedtime for a wake-up on `wakeDay` (tomorrow by default), from the last `Bedtime.nights` nights.
+    func bedtimePlan(need: TimeInterval, wakeDay: Date? = nil) async throws -> Bedtime.Plan? {
         let asleep = Dictionary(try await source.sleepNights(days: Bedtime.nights).map { ($0.wakeDay, $0.asleep) },
                                 uniquingKeysWith: { first, _ in first })
         let nights = try await source.overnight(days: Bedtime.nights).compactMap { night -> Bedtime.Night? in
@@ -735,7 +735,7 @@ struct SnapshotBuilder {
             return Bedtime.Night(wakeDay: night.wakeDay, start: start, end: end, asleep: slept)
         }
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
-        return Bedtime.plan(nights: nights, need: need, wakeDay: tomorrow, calendar: calendar)
+        return Bedtime.plan(nights: nights, need: need, wakeDay: wakeDay ?? tomorrow, calendar: calendar)
     }
 
     /// The Sleep Regularity Index over the last week, rated against UK Biobank adults, with the last 7 days.

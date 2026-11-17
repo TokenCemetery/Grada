@@ -283,6 +283,11 @@ private struct ProfileView: View {
             if let provided, !provided.age || !provided.sex {
                 entrySection(provided)
             }
+            Section {
+                NavigationLink("Sleep Schedule") { SleepScheduleView() }
+            } footer: {
+                Text("Your wake-up time and the morning report notification.")
+            }
         }
         .navigationTitle("Profile")
         // Re-read when coming back from the Health app, where the user may have just changed them.

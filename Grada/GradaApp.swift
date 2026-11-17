@@ -1,6 +1,7 @@
 import os
 import SwiftData
 import SwiftUI
+import UserNotifications
 
 @main
 struct GradaApp: App {
@@ -16,6 +17,8 @@ struct GradaApp: App {
         _homeModel = State(initialValue: home)
         _calendarModel = State(initialValue: calendar)
         healthSource = source
+        // Set before launch finishes, so a tap that launched the app still reaches it.
+        UNUserNotificationCenter.current().delegate = NotificationRouter.shared
     }
 
     var body: some Scene {
@@ -75,6 +78,8 @@ struct GradaApp: App {
         // Started here, not from a view: iOS may relaunch the app in the background with no UI.
         Task { await importer.startBackgroundUpdates() }
         let source = StoredHealthData(context: context, sources: importer.sources)
+        let notifier = MorningReportNotifier(source: source, context: context)
+        importer.onRecentImport = { await notifier.update() }
         return (HomeModel(source: source, importer: importer), CalendarModel(source: source, importer: importer), source)
     }
 }
@@ -105,6 +110,7 @@ struct RootView: View {
                 .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(Tab.settings)
         }
+        .onChange(of: NotificationRouter.shared.journalRequests) { tab = .journal }
         .environment(\.openCalendar, OpenCalendarAction { metric in
             if let metric { calendarMetric = metric }
             tab = .calendar

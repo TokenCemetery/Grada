@@ -36,6 +36,8 @@ final class HealthImporter {
     @ObservationIgnored private var recentImport: Task<Void, Never>?
     @ObservationIgnored private var recentImportPending = false
     @ObservationIgnored private var didStartBackgroundUpdates = false
+    /// Runs after each import of recent days, e.g. to send the morning report.
+    @ObservationIgnored var onRecentImport: (() async -> Void)?
     /// When each source's recent days were last imported, for `HealthSource.refreshInterval`.
     @ObservationIgnored private var lastRecentImport: [String: Date] = [:]
     private let logger = Logger(subsystem: "Grada", category: "HealthImporter")
@@ -146,6 +148,7 @@ final class HealthImporter {
                 recentImportPending = false
                 await importRecentDays()
             } while recentImportPending
+            await onRecentImport?()
             recentImport = nil
         }
         recentImport = task

@@ -4,10 +4,18 @@ import SwiftUI
 /// Tags for today or a past day, grouped like the tag list. Amount tags show a stepper once marked.
 struct JournalView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.healthSource) private var healthSource
+    @Environment(HomeModel.self) private var homeModel
+    @Query private var goalChanges: [GoalChange]
+    @State private var report: MorningReport?
+    /// A report row's detail screen.
+    @State private var openedRoute: MetricRoute?
     @Query private var allEntries: [JournalEntry]
     @AppStorage("hiddenJournalTags") private var hiddenTags = HiddenTags()
     @State private var day = Calendar.current.startOfDay(for: .now)
     @State private var isEditingTags = false
+    /// The day `report` is for, so another day's report isn't shown while this one loads.
+    @State private var loadedDay: Date?
     /// Changes on every save, for the haptic and the checkmark bounce.
     @State private var saves = 0
 
@@ -30,7 +38,13 @@ struct JournalView: View {
             List {
                 Section {
                     DayPicker(day: $day, today: today, isSaved: !entries.isEmpty, saves: saves)
+                }
+                Section {
+                    ReportColumns(morning: report, day: day) { openedRoute = $0 }
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                 } footer: {
+                    // The tags' explanation sits just above them.
                     Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nTags are saved as you tap them.")
                 }
                 ForEach(JournalTag.Group.allCases, id: \.self) { group in
@@ -50,7 +64,27 @@ struct JournalView: View {
                 TagVisibilityView(hiddenTags: $hiddenTags)
             }
             .sensoryFeedback(.selection, trigger: saves)
+            .navigationDestination(for: MetricRoute.self) { MetricDetailView(route: $0) }
+            .navigationDestination(item: $openedRoute) { MetricDetailView(route: $0) }
+            .navigationDestination(for: WorkoutRoute.self) { WorkoutDetailView(workout: $0.workout) }
+            // Reloads for another day and whenever new Health data is saved.
+            .task(id: ReportKey(day: day, revision: homeModel.importer?.revision ?? 0)) {
+                if loadedDay != day { report = nil }
+                var builder = SnapshotBuilder.forDay(day, source: healthSource, calendar: calendar)
+                builder.goals = GoalHistory(goalChanges)
+                let loaded = (try? await MorningReport.load(builder)) ?? MorningReport()
+                guard !Task.isCancelled else { return }
+                report = loaded
+                loadedDay = day
+            }
+            // A tapped report notification opens today's.
+            .onChange(of: NotificationRouter.shared.journalRequests) { day = today }
         }
+    }
+
+    private struct ReportKey: Equatable {
+        let day: Date
+        let revision: Int
     }
 
     @ViewBuilder
@@ -255,5 +289,7 @@ private struct FlowLayout: Layout {
 
 #Preview {
     JournalView()
-        .modelContainer(for: JournalEntry.self, inMemory: true)
+        .environment(HomeModel(source: SampleDataSource()))
+        .environment(\.healthSource, SampleDataSource())
+        .modelContainer(for: [JournalEntry.self, GoalChange.self], inMemory: true)
 }
