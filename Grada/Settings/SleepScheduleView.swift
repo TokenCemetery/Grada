@@ -101,7 +101,7 @@ struct SleepScheduleView: View {
             let center = UNUserNotificationCenter.current()
             guard enabled else {
                 setting.wrappedValue = false
-                center.removePendingNotificationRequests(withIdentifiers: [id])
+                ReportNotifier.withdraw(id)
                 return
             }
             Task {

@@ -41,6 +41,18 @@ final class ReportNotifier {
         now < time ? .at(time) : .skip
     }
 
+    /// Seconds until `date`, at least one. A calendar trigger would drop the seconds and could land in the past.
+    nonisolated static func delay(until date: Date, now: Date) -> TimeInterval {
+        max(date.timeIntervalSince(now), 1)
+    }
+
+    /// Withdraws a pending report. The morning one also forgets it was scheduled today, so turning it back on
+    /// later that day sends it.
+    static func withdraw(_ id: String, defaults: UserDefaults = .standard) {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
+        if id == morningID { defaults.removeObject(forKey: morningScheduledDayKey) }
+    }
+
     func update() async {
         let morning = defaults.bool(forKey: SleepSchedule.morningReportKey)
         let evening = defaults.bool(forKey: SleepSchedule.eveningReportKey)
@@ -60,7 +72,7 @@ final class ReportNotifier {
                     let scheduled = (defaults.object(forKey: Self.morningScheduledDayKey) as? Double)
                         .map(Date.init(timeIntervalSince1970:))
                     let action = Self.morningAction(now: now, wake: wake, today: today, scheduledDay: scheduled)
-                    if try await send(report, id: Self.morningID, action: action, calendar: calendar) {
+                    if try await send(report, id: Self.morningID, action: action) {
                         defaults.set(today.timeIntervalSince1970, forKey: Self.morningScheduledDayKey)
                     }
                 }
@@ -73,8 +85,7 @@ final class ReportNotifier {
                     // The time has passed, or moved earlier than now: nothing should still wait for tonight.
                     UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Self.eveningID])
                 } else {
-                    _ = try await send(try await DailyReport.load(.evening, builder), id: Self.eveningID, action: action,
-                                       calendar: calendar)
+                    _ = try await send(try await DailyReport.load(.evening, builder), id: Self.eveningID, action: action)
                 }
             }
         } catch {
@@ -83,14 +94,13 @@ final class ReportNotifier {
     }
 
     /// Adds or replaces the notification; false when `action` is to skip.
-    private func send(_ report: DailyReport, id: String, action: Action, calendar: Calendar) async throws -> Bool {
+    private func send(_ report: DailyReport, id: String, action: Action) async throws -> Bool {
         let trigger: UNNotificationTrigger?
         switch action {
         case .skip: return false
         case .now: trigger = nil
         case .at(let date):
-            trigger = UNCalendarNotificationTrigger(
-                dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date), repeats: false)
+            trigger = UNTimeIntervalNotificationTrigger(timeInterval: Self.delay(until: date, now: .now), repeats: false)
         }
         let content = UNMutableNotificationContent()
         content.title = report.kind.title

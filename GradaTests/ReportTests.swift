@@ -41,6 +41,22 @@ struct ReportTests {
         #expect(ReportNotifier.eveningAction(now: today.addingTimeInterval(22.5 * 3600), at: time) == .skip)
     }
 
+    /// Seconds, not a calendar minute: a wake-up at 07:00:40 seen at 07:00:20 must still come, 20 seconds later.
+    @Test func notificationDelayKeepsTheSeconds() {
+        let wake = today.addingTimeInterval(7 * 3600 + 40)
+        #expect(ReportNotifier.delay(until: wake, now: today.addingTimeInterval(7 * 3600 + 20)) == 20)
+        #expect(ReportNotifier.delay(until: wake, now: wake.addingTimeInterval(5)) == 1, "Never zero or negative")
+    }
+
+    @Test func turningTheMorningReportOffForgetsTodaysSchedule() throws {
+        let defaults = try freshDefaults()
+        defaults.set(today.timeIntervalSince1970, forKey: ReportNotifier.morningScheduledDayKey)
+        ReportNotifier.withdraw(ReportNotifier.eveningID, defaults: defaults)
+        #expect(defaults.object(forKey: ReportNotifier.morningScheduledDayKey) != nil, "The evening report leaves it")
+        ReportNotifier.withdraw(ReportNotifier.morningID, defaults: defaults)
+        #expect(defaults.object(forKey: ReportNotifier.morningScheduledDayKey) == nil)
+    }
+
     @Test func morningSummaryLeavesOutCalibratingScores() {
         var report = DailyReport(kind: .morning, hasData: true)
         report.snapshots[.sleepDuration] = CardSnapshot(period: "Last night", value: "7h 20m")
