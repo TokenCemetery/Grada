@@ -110,7 +110,10 @@ struct RootView: View {
                 .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(Tab.settings)
         }
-        .onChange(of: NotificationRouter.shared.journalRequests) { tab = .journal }
+        // Initial too: a tap that launched the app can arrive before this view first draws.
+        .onChange(of: NotificationRouter.shared.journalRequests, initial: true) { _, requests in
+            if requests > 0 { tab = .journal }
+        }
         .environment(\.openCalendar, OpenCalendarAction { metric in
             if let metric { calendarMetric = metric }
             tab = .calendar
