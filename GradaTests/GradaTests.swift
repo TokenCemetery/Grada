@@ -1433,14 +1433,6 @@ struct JournalTests {
         try context.save()
         #expect(try context.fetchCount(FetchDescriptor<JournalEntry>()) == 1)
     }
-
-    @Test func hiddenTagsRoundTrip() throws {
-        var hidden = HiddenTags()
-        hidden.set(.nap, hidden: true)
-        hidden.set(.sauna, hidden: true)
-        let restored = try #require(HiddenTags(rawValue: hidden.rawValue))
-        #expect(restored.contains(.nap) && restored.contains(.sauna) && !restored.contains(.alcohol))
-    }
 }
 
 struct WorkoutDetailTests {

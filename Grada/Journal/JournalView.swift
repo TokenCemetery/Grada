@@ -12,9 +12,7 @@ struct JournalView: View {
     /// A report row's detail screen.
     @State private var openedRoute: MetricRoute?
     @Query private var allEntries: [JournalEntry]
-    @AppStorage("hiddenJournalTags") private var hiddenTags = HiddenTags()
     @State private var day = Calendar.current.startOfDay(for: .now)
-    @State private var isEditingTags = false
     /// The day the reports are for, so another day's aren't shown while these load.
     @State private var loadedDay: Date?
     /// Changes on every save, for the haptic and the checkmark bounce.
@@ -54,11 +52,8 @@ struct JournalView: View {
                     Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nTags are saved as you tap them.")
                 }
                 ForEach(JournalTag.Group.allCases, id: \.self) { group in
-                    let tags = group.tags.filter { !hiddenTags.contains($0) }
-                    if !tags.isEmpty {
-                        Section(group.title) {
-                            ForEach(tags) { row($0) }
-                        }
+                    Section(group.title) {
+                        ForEach(group.tags) { row($0) }
                     }
                 }
             }
@@ -67,10 +62,6 @@ struct JournalView: View {
                 NavigationLink { MonthSummaryView(day: day) } label: {
                     Label("Month Summary", systemImage: "calendar.badge.clock")
                 }
-                Button("Edit tags") { isEditingTags = true }
-            }
-            .sheet(isPresented: $isEditingTags) {
-                TagVisibilityView(hiddenTags: $hiddenTags)
             }
             .sensoryFeedback(.selection, trigger: saves)
             .navigationDestination(for: MetricRoute.self) { MetricDetailView(route: $0) }
@@ -192,52 +183,6 @@ private struct DayPicker: View {
 
     private func move(_ days: Int) {
         day = min(calendar.date(byAdding: .day, value: days, to: day)!, today)
-    }
-}
-
-/// Tags the user doesn't use, kept out of the journal list.
-struct HiddenTags: RawRepresentable, Equatable {
-    private var tags: Set<JournalTag>
-
-    init() { tags = [] }
-
-    init?(rawValue: String) {
-        tags = Set(rawValue.split(separator: ",").compactMap { JournalTag(rawValue: String($0)) })
-    }
-
-    var rawValue: String { tags.map(\.rawValue).sorted().joined(separator: ",") }
-
-    func contains(_ tag: JournalTag) -> Bool { tags.contains(tag) }
-
-    mutating func set(_ tag: JournalTag, hidden: Bool) {
-        if hidden { tags.insert(tag) } else { tags.remove(tag) }
-    }
-}
-
-private struct TagVisibilityView: View {
-    @Binding var hiddenTags: HiddenTags
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            List {
-                ForEach(JournalTag.Group.allCases, id: \.self) { group in
-                    Section(group.title) {
-                        ForEach(group.tags) { tag in
-                            Toggle(isOn: Binding(get: { !hiddenTags.contains(tag) },
-                                                 set: { hiddenTags.set(tag, hidden: !$0) })) {
-                                Label(tag.title, systemImage: tag.symbol)
-                            }
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Show tags")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                Button("Done") { dismiss() }.fontWeight(.semibold)
-            }
-        }
     }
 }
 
