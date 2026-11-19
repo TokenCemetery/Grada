@@ -21,17 +21,18 @@ nonisolated enum Recommendations {
             let over = today - goal
             return Recommendation(
                 symbol: "checkmark.circle",
-                text: "Steps goal reached",
-                reason: over >= 1 ? "\(whole(today)) steps today, \(whole(over)) over your goal of \(whole(goal))."
-                    : "\(whole(today)) steps today, right on your goal."
+                text: String(localized: "Steps goal reached"),
+                reason: over >= 1
+                    ? String(localized: "\(whole(today)) steps today, \(whole(over)) over your goal of \(whole(goal)).")
+                    : String(localized: "\(whole(today)) steps today, right on your goal.")
             )
         }
         let left = goal - today
         let minutes = Int((left / stepsPerMinute).rounded(.up))
         return Recommendation(
             symbol: "figure.walk",
-            text: "Walk about \(minutes) more \(minutes == 1 ? "minute" : "minutes")",
-            reason: "\(whole(left)) steps to today's goal of \(whole(goal)). A brisk walk is about \(whole(stepsPerMinute)) steps a minute."
+            text: minutes == 1 ? String(localized: "Walk about 1 more minute") : String(localized: "Walk about \(minutes) more minutes"),
+            reason: String(localized: "\(whole(left)) steps to today's goal of \(whole(goal)). A brisk walk is about \(whole(stepsPerMinute)) steps a minute.")
         )
     }
 
@@ -41,8 +42,8 @@ nonisolated enum Recommendations {
         guard value > normal.upperBound else { return nil }
         return Recommendation(
             symbol: "heart",
-            text: "Take it easy today",
-            reason: "Resting heart rate \(whole(value)) bpm is above your normal \(whole(normal.lowerBound))–\(whole(normal.upperBound)). It rises with illness, stress, alcohol and too little recovery."
+            text: String(localized: "Take it easy today"),
+            reason: String(localized: "Resting heart rate \(whole(value)) bpm is above your normal \(whole(normal.lowerBound))–\(whole(normal.upperBound)). It rises with illness, stress, alcohol and too little recovery.")
         )
     }
 
@@ -51,8 +52,8 @@ nonisolated enum Recommendations {
         guard state == .low else { return nil }
         return Recommendation(
             symbol: "waveform.path.ecg",
-            text: "Keep training easy",
-            reason: "Your 7-night HRV is well below your baseline. HRV-guided training switches to easy days when it drops this far."
+            text: String(localized: "Keep training easy"),
+            reason: String(localized: "Your 7-night HRV is well below your baseline. HRV-guided training switches to easy days when it drops this far.")
         )
     }
 
@@ -63,15 +64,15 @@ nonisolated enum Recommendations {
         if ratio > Strain.sweetSpot.upperBound {
             return Recommendation(
                 symbol: "chart.bar",
-                text: ratio >= Strain.dangerRatio ? "Ease off for a few days" : "Hold your load steady",
-                reason: "This week's load is \(shown)× your 4-week average. Athletes had the fewest injuries when it stayed at \(sweetSpot)×."
+                text: ratio >= Strain.dangerRatio ? String(localized: "Ease off for a few days") : String(localized: "Hold your load steady"),
+                reason: String(localized: "This week's load is \(shown)× your 4-week average. Athletes had the fewest injuries when it stayed at \(sweetSpot)×.")
             )
         }
         if ratio < Strain.sweetSpot.lowerBound {
             return Recommendation(
                 symbol: "chart.bar",
-                text: "Build back up gradually",
-                reason: "This week's load is \(shown)× your 4-week average. Athletes had the fewest injuries when it stayed at \(sweetSpot)×."
+                text: String(localized: "Build back up gradually"),
+                reason: String(localized: "This week's load is \(shown)× your 4-week average. Athletes had the fewest injuries when it stayed at \(sweetSpot)×.")
             )
         }
         return nil
@@ -80,15 +81,19 @@ nonisolated enum Recommendations {
     static func bedtime(_ plan: Bedtime.Plan, need: TimeInterval) -> Recommendation {
         let time = { (date: Date) in date.formatted(date: .omitted, time: .shortened) }
         let usual = switch plan.weekend {
-        case true?: "usual weekend wake-up"
-        case false?: "usual weekday wake-up"
-        case nil: "usual wake-up"
+        case true?: String(localized: "usual weekend wake-up")
+        case false?: String(localized: "usual weekday wake-up")
+        case nil: String(localized: "usual wake-up")
         }
-        let awake = plan.awakeInBed >= 60 ? ", plus the \(SnapshotBuilder.hoursMinutes(plan.awakeInBed)) you usually lie awake" : ""
+        let sleepNeed = SnapshotBuilder.hoursMinutes(need)
+        let wake = time(plan.wake)
+        let reason = plan.awakeInBed >= 60
+            ? String(localized: "For \(sleepNeed) of sleep before your \(usual) at \(wake), plus the \(SnapshotBuilder.hoursMinutes(plan.awakeInBed)) you usually lie awake.")
+            : String(localized: "For \(sleepNeed) of sleep before your \(usual) at \(wake).")
         return Recommendation(
             symbol: "bed.double",
-            text: "Go to bed by \(time(plan.bedtime))",
-            reason: "For \(SnapshotBuilder.hoursMinutes(need)) of sleep before your \(usual) at \(time(plan.wake))\(awake)."
+            text: String(localized: "Go to bed by \(time(plan.bedtime))"),
+            reason: reason
         )
     }
 

@@ -6,9 +6,9 @@ nonisolated enum DayRating: CaseIterable {
 
     var title: String {
         switch self {
-        case .good: "Good"
-        case .fair: "Fair"
-        case .poor: "Poor"
+        case .good: String(localized: "Good")
+        case .fair: String(localized: "Fair")
+        case .poor: String(localized: "Poor")
         }
     }
 
@@ -67,9 +67,9 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .health: "Health"
-        case .recovery: "Recovery"
-        case .training: "Training"
+        case .health: String(localized: "Health")
+        case .recovery: String(localized: "Recovery")
+        case .training: String(localized: "Training")
         }
     }
 

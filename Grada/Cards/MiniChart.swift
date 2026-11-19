@@ -118,14 +118,15 @@ private struct GoalBar: View {
             HStack {
                 Text("0%")
                 Spacer()
-                Text(isAverage ? "7-day avg" : "100%")
+                Text(isAverage ? LocalizedStringKey("7-day avg") : LocalizedStringKey("100%"))
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
         .frame(height: MiniChart.plotHeight + 16)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(Int((share * 100).rounded()))% of \(isAverage ? "7-day average" : "goal")")
+        .accessibilityLabel(isAverage ? String(localized: "\(Int((share * 100).rounded()))% of 7-day average")
+            : String(localized: "\(Int((share * 100).rounded()))% of goal"))
     }
 }
 
@@ -243,8 +244,8 @@ private struct RangeBar: View {
         }
         .frame(height: MiniChart.plotHeight + 16)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(normalRange.contains(value) ? "In your normal range"
-            : value > normalRange.upperBound ? "Above your normal range" : "Below your normal range")
+        .accessibilityLabel(normalRange.contains(value) ? String(localized: "In your normal range")
+            : value > normalRange.upperBound ? String(localized: "Above your normal range") : String(localized: "Below your normal range"))
     }
 
     /// Seven section edges, left to right. A side without a finite yellow band borrows the other side's
@@ -368,10 +369,10 @@ extension SleepStage {
 
     var title: String {
         switch self {
-        case .deep: "Deep"
-        case .core: "Core"
-        case .rem: "REM"
-        case .awake: "Awake"
+        case .deep: String(localized: "Deep", comment: "Deep sleep stage")
+        case .core: String(localized: "Core", comment: "Core sleep stage")
+        case .rem: String(localized: "REM", comment: "REM sleep stage")
+        case .awake: String(localized: "Awake", comment: "Awake time during sleep")
         }
     }
 

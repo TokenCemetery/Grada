@@ -55,10 +55,10 @@ nonisolated enum Recovery {
 
         var name: String {
             switch kind {
-            case .hrv: "HRV"
-            case .restingHeartRate: "Resting HR"
-            case .sleep: "Sleep"
-            case .breathing: "Breathing"
+            case .hrv: String(localized: "HRV")
+            case .restingHeartRate: String(localized: "Resting HR")
+            case .sleep: String(localized: "Sleep")
+            case .breathing: String(localized: "Breathing")
             }
         }
     }
@@ -71,24 +71,24 @@ nonisolated enum Recovery {
         if let hrv = input.hrv, hrv > 0,
            let spread = Baseline.spread(history: input.hrvHistory.filter { $0 > 0 }.map(log), minimumSD: minimumLogHRVSD) {
             checks.append(Check(kind: .hrv, value: hrv, limit: exp(spread.mean - smallestWorthwhileChangeInSD * spread.sd),
-                                higherIsBetter: true, reason: "HRV below normal"))
+                                higherIsBetter: true, reason: String(localized: "HRV below normal")))
         }
         if let rhr = input.restingHeartRate,
            let spread = Baseline.spread(history: input.restingHeartRateHistory,
                                         minimumSD: QuantityMetric.restingHeartRate.minimumHalfWidth / 2) {
             checks.append(Check(kind: .restingHeartRate, value: rhr, limit: spread.mean + smallestWorthwhileChangeInSD * spread.sd,
-                                higherIsBetter: false, reason: "Resting HR high"))
+                                higherIsBetter: false, reason: String(localized: "Resting HR high")))
         }
         guard !checks.isEmpty else { return nil }
         if let asleep = input.asleep {
-            checks.append(Check(kind: .sleep, value: asleep, limit: minimumSleep, higherIsBetter: true, reason: "Short sleep"))
+            checks.append(Check(kind: .sleep, value: asleep, limit: minimumSleep, higherIsBetter: true, reason: String(localized: "Short sleep")))
         }
         // Breathing uses the same ±2 SD normal range as the Respiratory Rate card; only a rise counts.
         if let rate = input.respiratoryRate,
            let normal = Baseline.normalRange(history: input.respiratoryRateHistory,
                                              minimumHalfWidth: QuantityMetric.respiratoryRate.minimumHalfWidth) {
             checks.append(Check(kind: .breathing, value: rate, limit: normal.upperBound, higherIsBetter: false,
-                                reason: "Breathing rate up"))
+                                reason: String(localized: "Breathing rate up")))
         }
         return checks
     }
@@ -98,9 +98,9 @@ nonisolated enum Recovery {
         guard let checks = checks(input) else { return nil }
         let off = checks.filter(\.isOff)
         let reason = switch off.count {
-        case 0: "Close to your normal"
+        case 0: String(localized: "Close to your normal")
         case 1: off[0].reason
-        default: "\(off[0].reason) · \(off.count - 1) more off"
+        default: String(localized: "\(off[0].reason) · \(off.count - 1) more off")
         }
         return Result(rating: DayRatings.healthStatus(outOfRange: off.count),
                       measured: checks.count, inRange: checks.count - off.count, reason: reason)
@@ -164,11 +164,11 @@ nonisolated enum Resources {
 
         var title: String {
             switch self {
-            case .sleep: "Sleep"
-            case .rest: "Calm rest"
-            case .awake: "Being awake"
-            case .raisedHeartRate: "Raised heart rate"
-            case .workout: "Workouts"
+            case .sleep: String(localized: "Sleep")
+            case .rest: String(localized: "Calm rest")
+            case .awake: String(localized: "Being awake")
+            case .raisedHeartRate: String(localized: "Raised heart rate")
+            case .workout: String(localized: "Workouts")
             }
         }
     }
@@ -283,9 +283,9 @@ nonisolated enum HRVStatus {
 
         var word: String {
             switch self {
-            case .balanced: "Balanced"
-            case .unbalanced: "Unbalanced"
-            case .low: "Low"
+            case .balanced: String(localized: "hrv.balanced", defaultValue: "Balanced", comment: "HRV status: within the usual range")
+            case .unbalanced: String(localized: "Unbalanced")
+            case .low: String(localized: "Low")
             }
         }
 

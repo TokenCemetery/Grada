@@ -41,22 +41,22 @@ nonisolated enum HealthAge {
         if let vo2 = input.vo2Max, let sex = input.sex {
             // Kodama et al. 2009 (JAMA 301:2024): RR 0.87 per 1 MET (3.5 ml/kg·min) higher fitness.
             let mets = (vo2 - expectedVO2Max(age: input.age, sex: sex)) / 3.5
-            impacts.append(Impact(name: "VO₂ Max", years: mets * years(riskRatio: 0.87)))
+            impacts.append(Impact(name: String(localized: "VO₂ Max"), years: mets * years(riskRatio: 0.87)))
         }
         if let rhr = input.restingHeartRate, let sex = input.sex {
             // Zhang et al. 2016 (CMAJ 188:E53): RR 1.09 per 10 bpm higher.
             let tens = (rhr - expectedRestingHeartRate(age: input.age, sex: sex)) / 10
-            impacts.append(Impact(name: "Resting HR", years: tens * years(riskRatio: 1.09)))
+            impacts.append(Impact(name: String(localized: "Resting HR"), years: tens * years(riskRatio: 1.09)))
         }
         if let steps = input.dailySteps {
             let reference = input.age < 60 ? 7_803.0 : 5_649.0
-            impacts.append(Impact(name: "Steps", years: years(riskRatio: stepsRisk(steps) / stepsRisk(reference))))
+            impacts.append(Impact(name: String(localized: "Steps"), years: years(riskRatio: stepsRisk(steps) / stepsRisk(reference))))
         }
         if let hours = input.sleepHours {
-            impacts.append(Impact(name: "Sleep", years: years(riskRatio: sleepRisk(hours))))
+            impacts.append(Impact(name: String(localized: "Sleep"), years: years(riskRatio: sleepRisk(hours))))
         }
         if let minutes = input.exerciseMinutesPerWeek {
-            impacts.append(Impact(name: "Exercise", years: years(riskRatio: exerciseRisk(minutes))))
+            impacts.append(Impact(name: String(localized: "Exercise"), years: years(riskRatio: exerciseRisk(minutes))))
         }
         return impacts
     }

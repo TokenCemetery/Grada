@@ -145,19 +145,19 @@ nonisolated enum SleepScore {
     static func score(quality: Quality?, need: TimeInterval, regularity: Double?, age: Int?) -> Result? {
         guard let quality, let regularity else { return nil }
         var checks: [(met: Bool, miss: String)] = [
-            (quality.asleep >= need, "Short sleep"),
-            (quality.efficiency >= minimumEfficiency, "Low sleep efficiency"),
-            (quality.wakeAfterOnset <= maximumWakeAfterOnset(age: age), "Long time awake"),
+            (quality.asleep >= need, String(localized: "Short sleep")),
+            (quality.efficiency >= minimumEfficiency, String(localized: "Low sleep efficiency")),
+            (quality.wakeAfterOnset <= maximumWakeAfterOnset(age: age), String(localized: "Long time awake")),
         ]
         if let awakenings = quality.longAwakenings {
-            checks.append((awakenings <= maximumLongAwakenings(age: age), "Woke up often"))
+            checks.append((awakenings <= maximumLongAwakenings(age: age), String(localized: "Woke up often")))
         }
-        checks.append((SleepConsistency.rating(regularity) != .poor, "Irregular schedule"))
+        checks.append((SleepConsistency.rating(regularity) != .poor, String(localized: "Irregular schedule")))
         let missed = checks.filter { !$0.met }
         let reason = switch missed.count {
-        case 0: "All indicators met"
+        case 0: String(localized: "All indicators met")
         case 1: missed[0].miss
-        default: "\(missed[0].miss) · \(missed.count - 1) more"
+        default: String(localized: "\(missed[0].miss) · \(missed.count - 1) more")
         }
         let met = checks.count - missed.count
         return Result(score: Int((100 * Double(met) / Double(checks.count)).rounded()),

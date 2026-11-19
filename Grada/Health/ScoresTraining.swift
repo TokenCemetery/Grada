@@ -9,11 +9,11 @@ nonisolated enum VO2MaxZones {
 
         var word: String {
             switch self {
-            case .poor: "Poor"
-            case .fair: "Fair"
-            case .good: "Good"
-            case .excellent: "Excellent"
-            case .superior: "Superior"
+            case .poor: String(localized: "Poor")
+            case .fair: String(localized: "Fair")
+            case .good: String(localized: "Good")
+            case .excellent: String(localized: "Excellent")
+            case .superior: String(localized: "Superior")
             }
         }
 
@@ -51,16 +51,17 @@ nonisolated enum VO2MaxZones {
 /// from its own VO₂ max. Assumes training for the distance; real results vary with it.
 nonisolated enum RacePredictor {
     static let distances: [(name: String, meters: Double)] = [
-        ("5K", 5_000), ("10K", 10_000), ("Half", 21_097.5), ("Marathon", 42_195),
+        (String(localized: "5K", comment: "Race distance name"), 5_000), (String(localized: "10K", comment: "Race distance name"), 10_000),
+        (String(localized: "Half", comment: "Race distance name, short for half marathon"), 21_097.5), (String(localized: "Marathon", comment: "Race distance name"), 42_195),
     ]
 
     /// Direction of the race times from a VO₂ max change. Watches estimate VO₂ max to about ±0.5, so
     /// smaller changes count as steady.
     static func trend(from earlier: Double, to latest: Double) -> String {
         let change = latest - earlier
-        if change >= 0.5 { return "Improving" }
-        if change <= -0.5 { return "Declining" }
-        return "Steady"
+        if change >= 0.5 { return String(localized: "Improving") }
+        if change <= -0.5 { return String(localized: "Declining") }
+        return String(localized: "Steady")
     }
 
     /// Seconds to run `meters` at the given VO₂ max.
@@ -159,9 +160,9 @@ nonisolated enum Strain {
     }
 
     static func word(_ ratio: Double) -> String {
-        if ratio >= dangerRatio { return "Very high" }
-        if ratio > sweetSpot.upperBound { return "High" }
-        return ratio < sweetSpot.lowerBound ? "Low" : "Optimal"
+        if ratio >= dangerRatio { return String(localized: "Very high") }
+        if ratio > sweetSpot.upperBound { return String(localized: "High") }
+        return ratio < sweetSpot.lowerBound ? String(localized: "Low") : String(localized: "Optimal")
     }
 
     /// Green in the sweet spot, red from the danger zone, yellow between them or below the sweet spot,
@@ -255,9 +256,9 @@ nonisolated enum TrainingReadiness {
 
         var word: String {
             switch rating {
-            case .good: "High"
-            case .fair: "Moderate"
-            case .poor: "Low"
+            case .good: String(localized: "High")
+            case .fair: String(localized: "Moderate")
+            case .poor: String(localized: "Low")
             }
         }
     }
@@ -266,20 +267,28 @@ nonisolated enum TrainingReadiness {
     /// Fewer inputs than this and the rating would rest on too little; Grada's own rule.
     static let minimumInputs = 3
 
+    private static func hrvReason(_ state: HRVStatus.State) -> String {
+        switch state {
+        case .balanced: String(localized: "HRV balanced")
+        case .unbalanced: String(localized: "HRV unbalanced")
+        case .low: String(localized: "HRV low")
+        }
+    }
+
     static func status(_ input: Input) -> Result? {
         var checks: [(isOff: Bool, reason: String)] = []
-        if let rating = input.sleepScore { checks.append((rating == .poor, "Poor sleep")) }
-        if let recovering = input.recovering { checks.append((recovering, "Still recovering")) }
-        if let state = input.hrvStatus { checks.append((state != .balanced, "HRV \(state.word.lowercased())")) }
-        if let ratio = input.loadRatio { checks.append((ratio > Strain.sweetSpot.upperBound, "Load rising fast")) }
-        if let sleep = input.recentSleep { checks.append((sleep < input.recentNeed, "Short sleep \(historyDays) nights")) }
+        if let rating = input.sleepScore { checks.append((rating == .poor, String(localized: "Poor sleep"))) }
+        if let recovering = input.recovering { checks.append((recovering, String(localized: "Still recovering"))) }
+        if let state = input.hrvStatus { checks.append((state != .balanced, hrvReason(state))) }
+        if let ratio = input.loadRatio { checks.append((ratio > Strain.sweetSpot.upperBound, String(localized: "Load rising fast"))) }
+        if let sleep = input.recentSleep { checks.append((sleep < input.recentNeed, String(localized: "Short sleep \(historyDays) nights"))) }
         guard checks.count >= minimumInputs else { return nil }
 
         let off = checks.filter(\.isOff)
         let reason = switch off.count {
-        case 0: "Ready for hard training"
+        case 0: String(localized: "Ready for hard training")
         case 1: off[0].reason
-        default: "\(off[0].reason) · \(off.count - 1) more off"
+        default: String(localized: "\(off[0].reason) · \(off.count - 1) more off")
         }
         return Result(rating: DayRatings.healthStatus(outOfRange: off.count), measured: checks.count,
                       inRange: checks.count - off.count, reason: reason)

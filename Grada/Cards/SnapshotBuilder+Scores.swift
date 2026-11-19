@@ -12,7 +12,7 @@ nonisolated extension SnapshotBuilder {
         guard days[shownIndex].hasData else { return .noData(period: todayLabel) }
         let period = hasToday ? todayLabel : yesterdayLabel
         guard let shown = days[shownIndex].result else {
-            return CardSnapshot(period: period, value: "Calibrating", comparison: "Needs \(Baseline.minimumDays) nights of data")
+            return CardSnapshot(period: period, value: String(localized: "Calibrating"), comparison: String(localized: "Needs \(Baseline.minimumDays) nights of data"))
         }
         return CardSnapshot(
             period: period,
@@ -67,7 +67,7 @@ nonisolated extension SnapshotBuilder {
         guard heartRate.contains(where: { $0.date >= today }) else { return .noData(period: nowLabel) }
 
         guard let (steps, sleep) = try await resourcesSteps(interval: interval, heartRate: heartRate) else {
-            return CardSnapshot(period: nowLabel, value: "Calibrating", comparison: "Needs resting and max heart rate")
+            return CardSnapshot(period: nowLabel, value: String(localized: "Calibrating"), comparison: String(localized: "Needs resting and max heart rate"))
         }
         let todayLevels = steps.filter { $0.date >= today }.map { TimedValue(date: $0.date, value: $0.level) }
         guard let current = todayLevels.last, let midnight = todayLevels.first else { return .noData(period: nowLabel) }
@@ -77,8 +77,9 @@ nonisolated extension SnapshotBuilder {
         let wake = sleep.last { $0.stage != .awake && $0.end > today && $0.end <= min(noon, now) }?.end
         let reference = wake.flatMap { wake in todayLevels.last { $0.date <= wake } } ?? midnight
         let change = Int((current.value - reference.value).rounded())
-        let since = wake.map { $0.formatted(date: .omitted, time: .shortened) } ?? "midnight"
-        let comparison = change == 0 ? "No change since \(since)" : "\(change > 0 ? "▲" : "▼") \(abs(change))% since \(since)"
+        let since = wake.map { $0.formatted(date: .omitted, time: .shortened) } ?? String(localized: "midnight", comment: "Fills: No change since midnight")
+        let comparison = change == 0 ? String(localized: "No change since \(since)")
+            : change > 0 ? String(localized: "▲ \(abs(change))% since \(since)") : String(localized: "▼ \(abs(change))% since \(since)")
         let level = Int(current.value.rounded())
 
         return CardSnapshot(
@@ -96,8 +97,8 @@ nonisolated extension SnapshotBuilder {
     func trainingReadiness() async throws -> CardSnapshot {
         let days = try await readinessDays(7)
         guard let shown = days.last?.result else {
-            return CardSnapshot(period: todayLabel, value: "Calibrating",
-                                comparison: "Needs \(TrainingReadiness.minimumInputs) inputs, like sleep and HRV")
+            return CardSnapshot(period: todayLabel, value: String(localized: "Calibrating"),
+                                comparison: String(localized: "Needs \(TrainingReadiness.minimumInputs) inputs, like sleep and HRV"))
         }
         return CardSnapshot(
             period: todayLabel,
@@ -178,22 +179,22 @@ nonisolated extension SnapshotBuilder {
     /// Health age from the last 30 days, against the user's age, with the three inputs that move it most.
     /// It changes too slowly for a 7-day chart to say anything.
     func healthAge() async throws -> CardSnapshot {
-        let period = "Last 30 days"
+        let period = String(localized: "Last 30 days")
         guard let age = try await source.age() else {
-            return CardSnapshot(period: period, value: "Needs your age", comparison: "Add your birth date in Apple Health")
+            return CardSnapshot(period: period, value: String(localized: "Needs your age"), comparison: String(localized: "Add your birth date in Apple Health"))
         }
         guard let recentInput = try await healthAgeInputs(age: age, count: 1).last?.input,
               let recent = HealthAge.age(recentInput) else {
-            return CardSnapshot(period: period, value: "Calibrating",
-                                comparison: "Needs \(HealthAge.minimumInputs) of: steps, sleep, resting HR, VO₂ max, exercise")
+            return CardSnapshot(period: period, value: String(localized: "Calibrating"),
+                                comparison: String(localized: "Needs \(HealthAge.minimumInputs) of: steps, sleep, resting HR, VO₂ max, exercise"))
         }
         return CardSnapshot(
             period: period,
             value: format(recent, 1),
-            unit: "yrs",
-            comparison: "\(format(recent - Double(age), 1, signed: true)) yrs vs your age",
+            unit: String(localized: "yrs", comment: "Unit after a number of years"),
+            comparison: String(localized: "\(format(recent - Double(age), 1, signed: true)) yrs vs your age"),
             detail: .rows(HealthAge.impacts(recentInput).sorted { abs($0.years) > abs($1.years) }.prefix(3).map {
-                (label: $0.name, value: "\(format($0.years, 1, signed: true)) yrs",
+                (label: $0.name, value: String(localized: "\(format($0.years, 1, signed: true)) yrs", comment: "Years added to or taken off health age"),
                  rating: $0.years < 0 ? .good : $0.years > 0 ? .poor : nil)
             })
         )
@@ -228,9 +229,9 @@ nonisolated extension SnapshotBuilder {
 
     /// The last 4 weeks of workout time by intensity zone, against the 80% low-intensity target.
     func loadFocus() async throws -> CardSnapshot {
-        let period = "Last 4 weeks"
+        let period = String(localized: "Last 4 weeks")
         guard let days = try await loadFocusDays(1) else {
-            return CardSnapshot(period: period, value: "Calibrating", comparison: "Needs your age or max heart rate")
+            return CardSnapshot(period: period, value: String(localized: "Calibrating"), comparison: String(localized: "Needs your age or max heart rate"))
         }
         guard let shares = days.last.flatMap({ LoadFocus.shares($0.seconds) }) else { return .noData(period: period) }
         let rating = LoadFocus.rating(lowShare: shares[0])
@@ -238,14 +239,14 @@ nonisolated extension SnapshotBuilder {
         return CardSnapshot(
             period: period,
             value: percent(shares[0]),
-            unit: "low",
-            comparison: "Target \(percent(LoadFocus.lowTarget)) or more low",
+            unit: String(localized: "low", comment: "After a percentage: share of training at low intensity, e.g. 78% low"),
+            comparison: String(localized: "Target \(percent(LoadFocus.lowTarget)) or more low"),
             tone: Self.tone(rating),
             rating: rating,
             detail: .rows(IntensityZones.Zone.allCases.map { zone in
                 let bound = zone == .low ? "<\(percent(IntensityZones.lowerBounds[0]))"
                     : "≥\(percent(IntensityZones.lowerBounds[zone.rawValue - 1]))"
-                return (label: "\(zone.title) · \(bound) max HR", value: percent(shares[zone.rawValue]),
+                return (label: String(localized: "\(zone.title) · \(bound) max HR"), value: percent(shares[zone.rawValue]),
                         rating: zone == .low ? rating : nil)
             })
         )
@@ -283,10 +284,10 @@ nonisolated extension SnapshotBuilder {
         else { return .noData(period: todayLabel) }
 
         let resting = try await source.daily(.restingHeartRate, days: baselineDays + 1)
-        var comparison = "Avg \(format(average, 0)) bpm"
+        var comparison = String(localized: "Avg \(format(average, 0)) bpm")
         var rating: DayRating?
         if let todayResting = resting.last?.value {
-            comparison = "Avg \(format(average, 0)) · Resting \(format(todayResting, 0))"
+            comparison = String(localized: "Avg \(format(average, 0)) · Resting \(format(todayResting, 0))")
             let history = resting.dropLast().compactMap(\.value)
             if let normal = Baseline.normalRange(history: history, minimumHalfWidth: QuantityMetric.restingHeartRate.minimumHalfWidth) {
                 rating = DayRatings.range(todayResting, normal: normal, higherIsBetter: false)
@@ -295,7 +296,7 @@ nonisolated extension SnapshotBuilder {
         return CardSnapshot(
             period: todayLabel,
             value: "\(format(low, 0))–\(format(high, 0))",
-            unit: "bpm",
+            unit: String(localized: "bpm"),
             comparison: comparison,
             rating: rating,
             chart: .intraday(values.map { (hour: $0.date.timeIntervalSince(today) / 3600, value: $0.value) }, domain: nil)

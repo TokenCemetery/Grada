@@ -10,9 +10,9 @@ struct MetricSource: Hashable {
     /// The DOI link, or the publisher's page when there is no DOI. Books have none.
     let url: URL?
 
-    private init(_ citation: String, _ supports: String, doi: String? = nil, url: String? = nil) {
+    private init(_ citation: String, _ supports: LocalizedStringResource, doi: String? = nil, url: String? = nil) {
         self.citation = citation
-        self.supports = supports
+        self.supports = String(localized: supports)
         self.url = (doi.map { "https://doi.org/" + $0 } ?? url).flatMap(URL.init(string:))
     }
 
@@ -154,21 +154,21 @@ extension CardKind {
     var estimateNote: String? {
         switch self {
         case .healthStatus:
-            "Your normal range is your 30-day average ± 2 standard deviations. How many vitals out of range make Fair or Poor is Grada's choice; no study has set it."
+            String(localized: "Your normal range is your 30-day average ± 2 standard deviations. How many vitals out of range make Fair or Poor is Grada's choice; no study has set it.")
         case .recovery:
-            "Each threshold comes from the studies above. Counting inputs off into Good, Fair and Poor is Grada's choice."
+            String(localized: "Each threshold comes from the studies above. Counting inputs off into Good, Fair and Poor is Grada's choice.")
         case .resources:
-            "No published method estimates energy through the day without beat-to-beat HRV, which iPhone doesn't record. The charge and drain rates are Grada's own, and the colour bands are borrowed from WHOOP."
+            String(localized: "No published method estimates energy through the day without beat-to-beat HRV, which iPhone doesn't record. The charge and drain rates are Grada's own, and the colour bands are borrowed from WHOOP.")
         case .sleepScore:
-            "The indicators come from the studies above. Counting each the same is Grada's choice; the experts didn't weigh them."
+            String(localized: "The indicators come from the studies above. Counting each the same is Grada's choice; the experts didn't weigh them.")
         case .recoveryTime:
-            "The review grades intensity by physiological thresholds, not heart rate. Placing them at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices."
+            String(localized: "The review grades intensity by physiological thresholds, not heart rate. Placing them at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices.")
         case .sleepNeed:
-            "Your usual wake-up and time awake in bed are the medians of the last \(Bedtime.nights) nights, weekdays and weekends apart once each has \(Bedtime.minimumNights) nights. The window is Grada's choice; no study sets one."
+            String(localized: "Your usual wake-up and time awake in bed are the medians of the last \(Bedtime.nights) nights, weekdays and weekends apart once each has \(Bedtime.minimumNights) nights. The window is Grada's choice; no study sets one.")
         case .restingHeartRate:
-            "Studies show resting heart rate rising, not a cutoff. Suggesting rest whenever it's above your normal range (30-day average ± 2 standard deviations) is Grada's rule."
+            String(localized: "Studies show resting heart rate rising, not a cutoff. Suggesting rest whenever it's above your normal range (30-day average ± 2 standard deviations) is Grada's rule.")
         case .trainingReadiness:
-            "Garmin doesn't publish how it weighs these inputs and no study has tested a weighting, so each counts the same."
+            String(localized: "Garmin doesn't publish how it weighs these inputs and no study has tested a weighting, so each counts the same.")
         default: nil
         }
     }

@@ -12,12 +12,12 @@ nonisolated struct TagEffect: Equatable {
 
         var title: String {
             switch self {
-            case .hrv: "HRV"
-            case .sleepingHeartRate: "Sleeping HR"
-            case .sleep: "Sleep"
-            case .rem: "REM"
-            case .deep: "Deep sleep"
-            case .awake: "Awake"
+            case .hrv: String(localized: "HRV")
+            case .sleepingHeartRate: String(localized: "Sleeping HR")
+            case .sleep: String(localized: "Sleep")
+            case .rem: String(localized: "REM")
+            case .deep: String(localized: "Deep sleep")
+            case .awake: String(localized: "Awake", comment: "Sleep stage: time awake during the night")
             }
         }
     }
@@ -98,19 +98,20 @@ nonisolated struct TagEffect: Equatable {
     static func caption(_ rows: [Row]) -> String {
         guard rows.contains(where: { $0.change != .notEnough }) else {
             let logged = rows.map(\.nightsWith).max() ?? 0
-            return logged < minimumNights ? "Night after: \(logged) of \(minimumNights) days logged"
-                : "Night after: needs more nights to compare"
+            return logged < minimumNights ? String(localized: "Night after: \(logged) of \(minimumNights) days logged")
+                : String(localized: "Night after: needs more nights to compare")
         }
         let changes = rows.compactMap { row -> String? in
             guard case .changed(let difference) = row.change else { return nil }
             let size = switch row.metric {
-            case .hrv: "\(Int(abs(difference).rounded())) ms"
-            case .sleepingHeartRate: "\(Int(abs(difference).rounded())) bpm"
+            case .hrv: String(localized: "\(Int(abs(difference).rounded())) ms")
+            case .sleepingHeartRate: String(localized: "\(Int(abs(difference).rounded())) bpm")
             case .sleep, .rem, .deep, .awake: SnapshotBuilder.hoursMinutes(abs(difference))
             }
             return "\(row.metric.title) \(difference > 0 ? "↑" : "↓") \(size)"
         }
-        return changes.isEmpty ? "Night after: no clear change" : "Night after: " + changes.joined(separator: " · ")
+        return changes.isEmpty ? String(localized: "Night after: no clear change")
+            : String(localized: "Night after: \(changes.joined(separator: " · "))")
     }
 
     /// Each night's values over the window, by the day it ended. Stages only for nights that have them.

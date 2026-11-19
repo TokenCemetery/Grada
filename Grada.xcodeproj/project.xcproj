@@ -8,6 +8,15 @@
     "development": "en",
     "supported": [
       "Base",
+      "en",
+      "es",
+      "zh-Hans",
+      "hi",
+      "pt",
+      "ru",
+      "fr",
+      "de",
+      "it",
     ],
   },
   "files": [

@@ -1,0 +1,91 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Grada"
+          }
+        }
+      },
+      "shouldTranslate" : false
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Grada"
+          }
+        }
+      }
+    },
+    "NSHealthShareUsageDescription" : {
+      "comment" : "Privacy - Health Share Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grada liest deine Schlaf-, Herz-, Aktivitäts- und Trainingsdaten aus Apple Health, um deine Tageszusammenfassung und Trends anzuzeigen. Deine Gesundheitsdaten bleiben auf diesem Gerät."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Grada reads your sleep, heart, activity and workout data from Apple Health to show your daily summary and trends. Your health data stays on this device."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grada lee tus datos de sueño, corazón, actividad y entrenamientos de la app Salud para mostrar tu resumen diario y tus tendencias. Tus datos de salud se quedan en este dispositivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grada lit vos données de sommeil, de cœur, d’activité et d’entraînement dans l’app Santé pour afficher votre résumé quotidien et vos tendances. Vos données de santé restent sur cet appareil."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grada आपका दैनिक सारांश और रुझान दिखाने के लिए Apple Health से आपकी नींद, हृदय, गतिविधि और वर्कआउट का डेटा पढ़ता है। आपका स्वास्थ्य डेटा इसी डिवाइस पर रहता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grada legge i tuoi dati su sonno, cuore, attività e allenamenti dall’app Salute per mostrarti il riepilogo giornaliero e le tendenze. I tuoi dati sanitari restano su questo dispositivo."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Grada lê seus dados de sono, coração, atividade e treinos do app Saúde da Apple para mostrar seu resumo diário e suas tendências. Seus dados de saúde ficam neste dispositivo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grada считывает данные о сне, сердце, активности и тренировках из приложения «Здоровье», чтобы показывать вашу ежедневную сводку и тенденции. Ваши данные о здоровье остаются на этом устройстве."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grada 会从“健康”App 读取你的睡眠、心脏、活动和体能训练数据，以显示你的每日摘要和趋势。你的健康数据仅保存在此设备上。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

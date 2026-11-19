@@ -7,11 +7,11 @@ enum TrendPeriod: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .week: "W"
-        case .month: "M"
-        case .threeMonths: "3M"
-        case .sixMonths: "6M"
-        case .year: "Y"
+        case .week: String(localized: "W", comment: "Trend period button: one week")
+        case .month: String(localized: "M", comment: "Trend period button: one month")
+        case .threeMonths: String(localized: "3M", comment: "Trend period button: three months")
+        case .sixMonths: String(localized: "6M", comment: "Trend period button: six months")
+        case .year: String(localized: "Y", comment: "Trend period button: one year")
         }
     }
 
@@ -84,28 +84,28 @@ struct TrendBuilder {
             var unit = metric.unit
             if metric == .distance, !usesMetric {
                 series = series.map { DayValue(day: $0.day, value: $0.value.map { $0 * 0.621_371 }) }
-                unit = "mi"
+                unit = String(localized: "mi", comment: "Unit: miles")
             }
             return make(series, period, style: .bars, unit: unit, format: .number(decimals: metric.decimals))
         case .intensityMinutes:
-            return make(try await cardBuilder.intensityDays(days), period, style: .bars, unit: "min",
+            return make(try await cardBuilder.intensityDays(days), period, style: .bars, unit: String(localized: "min", comment: "Unit: minutes"),
                         format: .number(decimals: 0), weeklyTotals: true)
         case .dayIntensity:
             let active = (try await cardBuilder.dayIntensityDays(days) ?? []).map { day in
                 DayValue(day: day.day, value: day.seconds.map { $0.filter { $0.key != .veryLight }.values.reduce(0, +) / 3600 })
             }
-            return make(active, period, style: .bars, unit: "h", format: .number(decimals: 1), title: "Light or harder")
+            return make(active, period, style: .bars, unit: String(localized: "h", comment: "Unit: hours"), format: .number(decimals: 1), title: String(localized: "Light or harder"))
         case .standHours:
-            return make(try await source.standHours(days: days), period, style: .bars, unit: "h", format: .number(decimals: 0))
+            return make(try await source.standHours(days: days), period, style: .bars, unit: String(localized: "h", comment: "Unit: hours"), format: .number(decimals: 0))
         case .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .heartRate:
             return try await vital(kind.quantityMetric!, period,
-                                   title: kind == .heartRate ? "Resting heart rate" : nil)
+                                   title: kind == .heartRate ? String(localized: "Resting heart rate") : nil)
         case .hrvStatus:
             return try await hrvStatus(period)
         case .vo2Max, .racePredictor:
             let series = try await source.daily(.vo2Max, days: days)
             return make(series, period, style: .line, unit: QuantityMetric.vo2Max.unit, format: .number(decimals: 1),
-                        title: kind == .racePredictor ? "VO₂ Max" : nil)
+                        title: kind == .racePredictor ? String(localized: "VO₂ Max") : nil)
         case .sleepDuration, .sleepStages:
             return try await sleep(period)
         case .sleepNeed:
@@ -118,7 +118,7 @@ struct TrendBuilder {
         case .lastWorkout, .weeklyTraining, .last30Days:
             let workouts = try await source.workouts(days: days)
             let minutes = minutesPerDay(workouts, days: days)
-            return make(minutes, period, style: .bars, unit: "", format: .hours, title: "Workout time",
+            return make(minutes, period, style: .bars, unit: "", format: .hours, title: String(localized: "Workout time"),
                         weeklyTotals: true, transform: { $0 / 60 })
         case .healthStatus:
             return try await healthStatus(period)
@@ -127,12 +127,12 @@ struct TrendBuilder {
         case .recovery:
             let inRange = try await cardBuilder.recoveryDays(days)
                 .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
-            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: "Inputs in range")
+            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Inputs in range"))
         case .healthAge:
             guard let age = try await source.age() else { return nil }
             let ages = try await cardBuilder.healthAgeInputs(age: age, count: days)
                 .map { DayValue(day: $0.day, value: HealthAge.age($0.input)) }
-            return make(ages, period, style: .line, unit: "yrs", format: .number(decimals: 1))
+            return make(ages, period, style: .line, unit: String(localized: "yrs", comment: "Unit: years"), format: .number(decimals: 1))
         // Rebuilding each day needs a year of 5-minute heart rate, too slow for a chart, and storing a daily value
         // would freeze an estimated formula (#42). The detail screen shows today's breakdown instead.
         case .resources:
@@ -143,11 +143,11 @@ struct TrendBuilder {
         case .trainingReadiness:
             let inRange = try await cardBuilder.readinessDays(days)
                 .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
-            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: "Inputs in range")
+            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Inputs in range"))
         case .loadFocus:
             guard let days = try await cardBuilder.loadFocusDays(days) else { return nil }
             var trend = make(days.map { DayValue(day: $0.day, value: LoadFocus.shares($0.seconds).map { $0[0] * 100 }) },
-                             period, style: .line, unit: "%", format: .number(decimals: 0), title: "Low intensity, 4 weeks")
+                             period, style: .line, unit: "%", format: .number(decimals: 0), title: String(localized: "Low intensity, 4 weeks"))
             trend.normalRange = LoadFocus.lowTarget * 100...100
             return trend
         }
@@ -204,12 +204,12 @@ struct TrendBuilder {
     private func sleepNeed(_ period: TrendPeriod) async throws -> Trend? {
         guard let nights = try await cardBuilder.sleepDebt(period.days) else { return nil }
         let debt = zip(lastDays(period.days), nights).map { DayValue(day: $0, value: $1.debt / 3600) }
-        return make(debt, period, style: .bars, unit: "", format: .hours, title: "Sleep debt")
+        return make(debt, period, style: .bars, unit: "", format: .hours, title: String(localized: "Sleep debt"))
     }
 
     private func sleepConsistency(_ period: TrendPeriod) async throws -> Trend {
         let indexes = try await cardBuilder.sleepRegularity(period.days).map { DayValue(day: $0.day, value: $0.index) }
-        return make(indexes, period, style: .line, unit: "", format: .number(decimals: 0), title: "Sleep Regularity Index")
+        return make(indexes, period, style: .line, unit: "", format: .number(decimals: 0), title: String(localized: "Sleep Regularity Index"))
     }
 
     /// The 7-night average for each day, with the shown day's baseline as the normal range.
@@ -221,7 +221,7 @@ struct TrendBuilder {
             DayValue(day: overnight[end].wakeDay, value: HRVStatus.status(nights: nights, endingAt: end)?.average)
         }
         var trend = make(averages, period, style: .line, unit: QuantityMetric.hrv.unit, format: .number(decimals: 0),
-                         title: "7-night average HRV")
+                         title: String(localized: "7-night average HRV"))
         trend.normalRange = HRVStatus.status(nights: nights, endingAt: nights.count - 1)?.baseline
         return trend
     }
@@ -230,7 +230,7 @@ struct TrendBuilder {
     private func strain(_ period: TrendPeriod) async throws -> Trend? {
         guard let days = try await cardBuilder.strainDays(period.days) else { return nil }
         var trend = make(days.map { DayValue(day: $0.day, value: $0.ratio?.acute) }, period, style: .line, unit: "TRIMP",
-                         format: .number(decimals: 0), title: "7-day load against 28-day")
+                         format: .number(decimals: 0), title: String(localized: "7-day load against 28-day"))
         trend.normalRange = days.last?.ratio.map {
             Strain.sweetSpot.lowerBound * $0.chronic...Strain.sweetSpot.upperBound * $0.chronic
         }
@@ -255,7 +255,7 @@ struct TrendBuilder {
             }
             return DayValue(day: days[index], value: measured > 0 ? Double(inRange) : nil)
         }
-        return make(counts, period, style: .bars, unit: "", format: .number(decimals: 0), title: "Vitals in range")
+        return make(counts, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Vitals in range"))
     }
 
     // MARK: - Helpers

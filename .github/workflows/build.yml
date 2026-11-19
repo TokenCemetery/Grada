@@ -41,4 +41,5 @@ jobs:
             -scheme Grada \
             -destination "id=${{ steps.simulator.outputs.id }}" \
             -only-testing:GradaTests \
+            -testLanguage en -testRegion US \
             CODE_SIGNING_ALLOWED=NO

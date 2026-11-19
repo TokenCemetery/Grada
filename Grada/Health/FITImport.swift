@@ -51,7 +51,7 @@ nonisolated struct FITImport {
                 for file in files.sorted(by: { $0.path < $1.path }) {
                     switch file.pathExtension.lowercased() {
                     case "fit": reader.read(file)
-                    case "zip": reader.result.failures.append(Failure(file: file.lastPathComponent, reason: "Unzip it in the Files app first."))
+                    case "zip": reader.result.failures.append(Failure(file: file.lastPathComponent, reason: String(localized: "Unzip it in the Files app first.")))
                     default: break
                     }
                 }
@@ -84,9 +84,9 @@ nonisolated struct FITImport {
                 messages = try FITDecoder.decode(Data(contentsOf: file))
             } catch let error as FITError {
                 let reason = switch error {
-                case .notFIT: "Not a FIT file."
-                case .truncated: "The file is incomplete."
-                case .badChecksum, .undefinedMessage: "The file is damaged."
+                case .notFIT: String(localized: "Not a FIT file.")
+                case .truncated: String(localized: "The file is incomplete.")
+                case .badChecksum, .undefinedMessage: String(localized: "The file is damaged.")
                 }
                 result.failures.append(Failure(file: file.lastPathComponent, reason: reason))
                 return
@@ -97,7 +97,7 @@ nonisolated struct FITImport {
             result.filesRead += 1
 
             let manufacturer = messages.first { $0.number == Message.fileID }?.fields[1]
-            let device = FITImport.brand(manufacturer).map { "\($0) (imported)" } ?? "Imported FIT file"
+            let device = FITImport.brand(manufacturer).map { String(localized: "\($0) (imported)") } ?? String(localized: "Imported FIT file")
             var levels: [(time: Date, level: Int64)] = []
             for message in messages {
                 switch message.number {

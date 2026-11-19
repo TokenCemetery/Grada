@@ -10,8 +10,8 @@ struct DailyReport {
 
         var title: String {
             switch self {
-            case .morning: "Morning Report"
-            case .evening: "Evening Report"
+            case .morning: String(localized: "Morning Report")
+            case .evening: String(localized: "Evening Report")
             }
         }
 
@@ -62,14 +62,16 @@ struct DailyReport {
     /// One line for the notification, e.g. "Slept 7h 20m · Recovery Good · All in range".
     var summary: String {
         // Calibrating scores have nothing to say yet.
-        let value = { (card: CardKind) in self.snapshots[card]?.value.flatMap { $0 == "Calibrating" ? nil : $0 } }
+        let value = { (card: CardKind) in self.snapshots[card]?.value.flatMap { $0 == String(localized: "Calibrating") ? nil : $0 } }
         let parts: [String?] = switch kind {
         case .morning:
-            [value(.sleepDuration).map { "Slept \($0)" }, value(.sleepScore).map { "Sleep Score \($0)" },
-             value(.recovery).map { "Recovery \($0)" }, value(.healthStatus)]
+            [value(.sleepDuration).map { String(localized: "Slept \($0)") },
+             value(.sleepScore).map { String(localized: "Sleep Score \($0)") },
+             value(.recovery).map { String(localized: "Recovery \($0)") }, value(.healthStatus)]
         case .evening:
-            [value(.steps).map { "\($0) steps" }, value(.intensityMinutes).map { "\($0) intensity min this week" },
-             value(.strain).map { "Strain \($0)" }]
+            [value(.steps).map { String(localized: "\($0) steps") },
+             value(.intensityMinutes).map { String(localized: "\($0) intensity min this week") },
+             value(.strain).map { String(localized: "Strain \($0)") }]
         }
         return parts.compactMap { $0 }.joined(separator: " · ")
     }

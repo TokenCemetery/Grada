@@ -1527,22 +1527,22 @@ struct WorkoutDetailTests {
     }
 
     @Test func swimsSplitAndPacePer100() {
-        let metric = DistanceUnits(sport: "Swim", isUS: false)
+        let metric = DistanceUnits(symbol: "figure.pool.swim", isUS: false)
         #expect(metric.splitMeters == 100)
         #expect(metric.splitName == "100 m")
-        #expect(metric.distance(1500) == "1500 m")
+        #expect(metric.distance(1500) == "1,500 m")
         #expect(metric.paceOrSpeed(meters: 1000, seconds: 1200).value == "2:00 /100m")
         #expect(metric.pace(meters: 100, seconds: 110) == "1:50")
 
-        let us = DistanceUnits(sport: "Swim", isUS: true)
+        let us = DistanceUnits(symbol: "figure.pool.swim", isUS: true)
         #expect(us.splitName == "100 yd")
-        #expect(us.distance(914.4) == "1000 yd")
+        #expect(us.distance(914.4) == "1,000 yd")
         #expect(us.paceOrSpeed(meters: 914.4, seconds: 1200).value == "2:00 /100yd")
     }
 
     @Test func runsSplitPerKilometerOrMile() {
-        #expect(DistanceUnits(sport: "Run", isUS: false).paceOrSpeed(meters: 5000, seconds: 1500).value == "5:00 /km")
-        #expect(DistanceUnits(sport: "Run", isUS: true).splitMeters == 1_609.344)
+        #expect(DistanceUnits(symbol: "figure.run", isUS: false).paceOrSpeed(meters: 5000, seconds: 1500).value == "5:00 /km")
+        #expect(DistanceUnits(symbol: "figure.run", isUS: true).splitMeters == 1_609.344)
     }
 }
 

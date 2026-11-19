@@ -8,9 +8,9 @@ enum Appearance: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .system: "System"
-        case .light: "Light"
-        case .dark: "Dark"
+        case .system: String(localized: "System", comment: "Appearance option that follows the device setting")
+        case .light: String(localized: "Light", comment: "Appearance option: light mode")
+        case .dark: String(localized: "Dark", comment: "Appearance option: dark mode")
         }
     }
 
@@ -26,7 +26,7 @@ enum Appearance: String, CaseIterable, Identifiable {
 
 /// App Review 1.4.1 asks health apps to remind people to see a doctor before making medical decisions (#107).
 enum MedicalNotice {
-    static let text = "Grada isn't a medical device and doesn't diagnose, treat or prevent any condition. Talk to a doctor before making medical decisions."
+    static let text = String(localized: "Grada isn't a medical device and doesn't diagnose, treat or prevent any condition. Talk to a doctor before making medical decisions.")
 }
 
 /// Every group is a row that opens its own screen, like iOS Settings.
@@ -67,11 +67,11 @@ struct SettingsView: View {
 
 /// White symbol on a colored tile, like the iOS Settings app.
 private struct SettingsRow: View {
-    let title: String
+    let title: LocalizedStringKey
     let icon: String
     let color: Color
 
-    init(_ title: String, icon: String, color: Color) {
+    init(_ title: LocalizedStringKey, icon: String, color: Color) {
         self.title = title
         self.icon = icon
         self.color = color
@@ -205,7 +205,7 @@ private struct ImportFilesView: View {
                 } header: {
                     Text("Last Import")
                 } footer: {
-                    Text(result.filesRead == 1 ? "Read 1 file." : "Read \(result.filesRead) files.")
+                    Text(result.filesRead == 1 ? String(localized: "Read 1 file.") : String(localized: "Read \(result.filesRead) files."))
                 }
                 if !result.failures.isEmpty {
                     Section("Couldn't Read") {
@@ -222,7 +222,7 @@ private struct ImportFilesView: View {
                 ForEach(Self.guides, id: \.service) { guide in
                     DisclosureGroup(guide.service) {
                         ForEach(Array(guide.steps.enumerated()), id: \.offset) { index, step in
-                            Label { Text(LocalizedStringKey(step)) } icon: { Text("\(index + 1).").monospacedDigit() }
+                            Label { Text(step) } icon: { Text("\(index + 1).").monospacedDigit() }
                         }
                     }
                 }
@@ -244,7 +244,7 @@ private struct ImportFilesView: View {
 
     /// The services from #85 that export FIT files. Steps from their support pages; Garmin's from third-party guides.
     /// Steps are Markdown, so links open the export pages.
-    private static let guides: [(service: String, steps: [String])] = [
+    private static let guides: [(service: String, steps: [LocalizedStringKey])] = [
         ("Garmin", [
             "On [Garmin Connect](https://connect.garmin.com/app/activities), open an activity, click the gear icon and choose Export Original. Garmin Connect on iPhone can't export files.",
             "For your whole history, request an export in [Account › Data Management › Export Your Data](https://www.garmin.com/account/datamanagement/exportdata/). Garmin emails a link, which can take several days.",
@@ -349,19 +349,19 @@ private struct ProfileView: View {
 
     private var profileSection: some View {
         Section {
-            LabeledContent("Age", value: profile.map { $0.age.map { "\($0)" } ?? "Not available" } ?? "…")
-            LabeledContent("Sex", value: profile.map { $0.sex.map { $0 == .female ? "Female" : "Male" } ?? "Not available" } ?? "…")
+            LabeledContent("Age", value: profile.map { $0.age.map { "\($0)" } ?? String(localized: "Not available") } ?? "…")
+            LabeledContent("Sex", value: profile.map { $0.sex.map { $0 == .female ? String(localized: "Female") : String(localized: "Male") } ?? String(localized: "Not available") } ?? "…")
             LabeledContent("Max Heart Rate") {
                 VStack(alignment: .trailing, spacing: 0) {
-                    Text(profile?.maxHeartRate.map { "\(Int($0.rounded())) bpm" } ?? "–")
+                    Text(profile?.maxHeartRate.map { String(localized: "\(Int($0.rounded())) bpm") } ?? "–")
                     if let source = profile?.maxHeartRateSource {
-                        Text(source == .age ? "208 − 0.7 × age" : "Highest recorded").font(.caption).foregroundStyle(.secondary)
+                        Text(source == .age ? String(localized: "208 − 0.7 × age") : String(localized: "Highest recorded")).font(.caption).foregroundStyle(.secondary)
                     }
                 }
             }
             LabeledContent("Resting Heart Rate") {
                 VStack(alignment: .trailing, spacing: 0) {
-                    Text(profile?.restingHeartRate.map { "\(Int($0.rounded())) bpm" } ?? "–")
+                    Text(profile?.restingHeartRate.map { String(localized: "\(Int($0.rounded())) bpm") } ?? "–")
                     if profile?.restingHeartRate != nil {
                         Text("7-day average").font(.caption).foregroundStyle(.secondary)
                     }

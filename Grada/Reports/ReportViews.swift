@@ -63,7 +63,7 @@ struct ReportCard: View {
                 }
             } else {
                 // Only the morning report waits for data.
-                Text(isToday ? "Waiting for last night's sleep from Apple Health." : "No sleep recorded that night.")
+                Text(isToday ? String(localized: "Waiting for last night's sleep from Apple Health.") : String(localized: "No sleep recorded that night."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(16)
@@ -117,7 +117,7 @@ struct RecommendationsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ReportHeader(title: "Recommendations")
+            ReportHeader(title: String(localized: "Recommendations"))
             if sizeClass == .regular {
                 Grid(horizontalSpacing: 20, verticalSpacing: 12) {
                     ForEach(Array(stride(from: 0, to: recommendations.count, by: 2)), id: \.self) { start in

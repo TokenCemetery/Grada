@@ -24,7 +24,7 @@ nonisolated extension SnapshotBuilder {
         return CardSnapshot(
             period: shown.period,
             value: Self.hoursMinutes(shown.night.asleep),
-            comparison: "\(Self.signedMinutes(shown.night.asleep - goal)) of \(Self.hoursMinutes(goal)) goal",
+            comparison: String(localized: "\(Self.signedMinutes(shown.night.asleep - goal)) of \(Self.hoursMinutes(goal)) goal"),
             chart: withStages ? .sleep(days.map { byDay[$0] })
                 : variant == .week ? .sleep(days.map { byDay[$0] }, target: goal / 3600)
                 : .progress(value: shown.night.asleep, goal: goal),
@@ -60,7 +60,9 @@ nonisolated extension SnapshotBuilder {
         return CardSnapshot(
             period: tonightLabel,
             value: Self.hoursMinutes(need),
-            comparison: owed >= 5 * 60 ? "Sleep debt \(Self.hoursMinutes(owed)) · \(SleepNeed.debtNights) nights" : "No sleep debt",
+            comparison: owed >= 5 * 60
+                ? String(localized: "Sleep debt \(Self.hoursMinutes(owed)) · \(SleepNeed.debtNights) nights")
+                : String(localized: "No sleep debt"),
             chart: .bars(nights.map { $0.shortfall / 3600 }),
             recommendation: bedtime.map { Recommendations.bedtime($0, need: need) }
         )
@@ -80,18 +82,18 @@ nonisolated extension SnapshotBuilder {
 
     /// The Sleep Regularity Index over the last week, rated against UK Biobank adults, with the last 7 days.
     func sleepConsistency() async throws -> CardSnapshot {
-        let period = "Last \(SleepConsistency.days) days"
+        let period = String(localized: "Last \(SleepConsistency.days) days")
         let days = try await sleepRegularity(7)
         guard days.contains(where: { $0.hasData }) else { return .noData(period: period) }
         guard let shown = days.last?.index ?? days.dropLast().last?.index else {
-            return CardSnapshot(period: period, value: "Calibrating",
-                                comparison: "Needs \(SleepConsistency.minimumDays) of \(SleepConsistency.days) nights")
+            return CardSnapshot(period: period, value: String(localized: "Calibrating"),
+                                comparison: String(localized: "Needs \(SleepConsistency.minimumDays) of \(SleepConsistency.days) nights"))
         }
         let rating = SleepConsistency.rating(shown)
         return CardSnapshot(
             period: period,
             value: format(shown, 0),
-            comparison: "Typical adult \(format(SleepConsistency.populationMedian, 0))",
+            comparison: String(localized: "Typical adult \(format(SleepConsistency.populationMedian, 0))"),
             tone: Self.tone(rating),
             rating: rating,
             chart: .bars(days.map { $0.index.map { max($0, 0) } }, target: 100,
@@ -121,8 +123,8 @@ nonisolated extension SnapshotBuilder {
         guard days[shownIndex].hasData else { return .noData(period: lastNightLabel) }
         let period = shownIndex == last ? lastNightLabel : yesterdayLabel
         guard let shown = days[shownIndex].result else {
-            return CardSnapshot(period: period, value: "Calibrating",
-                                comparison: "Needs sleep stages and \(SleepConsistency.minimumDays) of \(SleepConsistency.days) nights")
+            return CardSnapshot(period: period, value: String(localized: "Calibrating"),
+                                comparison: String(localized: "Needs sleep stages and \(SleepConsistency.minimumDays) of \(SleepConsistency.days) nights"))
         }
         return CardSnapshot(
             period: period,

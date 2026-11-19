@@ -14,12 +14,24 @@ nonisolated enum CardCategory: CaseIterable {
 
     var title: String {
         switch self {
-        case .status: "Status"
-        case .sleep: "Sleep"
-        case .heart: "Heart and vitals"
-        case .activity: "Activity"
-        case .training: "Training"
-        case .history: "History"
+        case .status: String(localized: "Status")
+        case .sleep: String(localized: "Sleep")
+        case .heart: String(localized: "Heart and vitals")
+        case .activity: String(localized: "Activity")
+        case .training: String(localized: "Training")
+        case .history: String(localized: "History")
+        }
+    }
+
+    /// The Customize section header, a whole phrase so languages can inflect the category.
+    var addTitle: String {
+        switch self {
+        case .status: String(localized: "Add status")
+        case .sleep: String(localized: "Add sleep")
+        case .heart: String(localized: "Add heart and vitals")
+        case .activity: String(localized: "Add activity")
+        case .training: String(localized: "Add training")
+        case .history: String(localized: "Add history")
         }
     }
 
@@ -45,8 +57,8 @@ nonisolated enum CardVariant: String, CaseIterable {
 
     var title: String {
         switch self {
-        case .current: "Current"
-        case .week: "7 days"
+        case .current: String(localized: "Current", comment: "Card chart variant: today against the goal or normal range")
+        case .week: String(localized: "7 days", comment: "Card chart variant: the last 7 days")
         }
     }
 }
@@ -122,38 +134,38 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .healthStatus: "Health Status"
-        case .recovery: "Recovery"
-        case .resources: "Resources"
-        case .heartRate: "Heart Rate"
-        case .sleepDuration, .sleepStages: "Sleep"
-        case .sleepNeed: "Sleep Need"
-        case .sleepConsistency: "Sleep Consistency"
-        case .sleepScore: "Sleep Score"
-        case .healthAge: "Health Age"
-        case .racePredictor: "Race Predictor"
-        case .trainingReadiness: "Training Readiness"
-        case .loadFocus: "Load Focus"
-        case .restingHeartRate: "Resting HR"
-        case .hrv: "Nightly HRV"
-        case .hrvStatus: "HRV"
-        case .oxygenSaturation: "Blood Oxygen"
-        case .respiratoryRate: "Respiratory Rate"
-        case .wristTemperature: "Wrist Temp"
-        case .steps: "Steps"
-        case .activeEnergy: "Active Energy"
-        case .exerciseMinutes: "Exercise"
-        case .intensityMinutes: "Intensity Minutes"
-        case .distance: "Distance"
-        case .floors: "Floors"
-        case .standHours: "Stand Hours"
-        case .dayIntensity: "Day Intensity"
-        case .lastWorkout: "Last Workout"
-        case .weeklyTraining: "Training Volume"
-        case .strain: "Strain"
-        case .recoveryTime: "Recovery Time"
-        case .vo2Max: "VO₂ Max"
-        case .last30Days: "Workouts Calendar"
+        case .healthStatus: String(localized: "Health Status")
+        case .recovery: String(localized: "Recovery")
+        case .resources: String(localized: "Resources")
+        case .heartRate: String(localized: "Heart Rate")
+        case .sleepDuration, .sleepStages: String(localized: "Sleep")
+        case .sleepNeed: String(localized: "Sleep Need")
+        case .sleepConsistency: String(localized: "Sleep Consistency")
+        case .sleepScore: String(localized: "Sleep Score")
+        case .healthAge: String(localized: "Health Age")
+        case .racePredictor: String(localized: "Race Predictor")
+        case .trainingReadiness: String(localized: "Training Readiness")
+        case .loadFocus: String(localized: "Load Focus")
+        case .restingHeartRate: String(localized: "Resting HR")
+        case .hrv: String(localized: "Nightly HRV")
+        case .hrvStatus: String(localized: "HRV")
+        case .oxygenSaturation: String(localized: "Blood Oxygen")
+        case .respiratoryRate: String(localized: "Respiratory Rate")
+        case .wristTemperature: String(localized: "Wrist Temp")
+        case .steps: String(localized: "Steps")
+        case .activeEnergy: String(localized: "Active Energy")
+        case .exerciseMinutes: String(localized: "Exercise")
+        case .intensityMinutes: String(localized: "Intensity Minutes")
+        case .distance: String(localized: "Distance")
+        case .floors: String(localized: "Floors")
+        case .standHours: String(localized: "Stand Hours")
+        case .dayIntensity: String(localized: "Day Intensity")
+        case .lastWorkout: String(localized: "Last Workout")
+        case .weeklyTraining: String(localized: "Training Volume")
+        case .strain: String(localized: "Strain")
+        case .recoveryTime: String(localized: "Recovery Time")
+        case .vo2Max: String(localized: "VO₂ Max")
+        case .last30Days: String(localized: "Workouts Calendar")
         }
     }
 
@@ -232,11 +244,11 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
     /// Shown when Apple Health has no data for this card.
     var missingDataHint: String {
         switch category {
-        case .heart: "Recorded by Apple Watch or a watch that syncs to Apple Health."
-        case .sleep: "Wear a watch to bed or track sleep in a sleep app."
-        case .activity: "Recorded by your iPhone or watch."
-        case .training, .history: "Record a workout on your watch or in a fitness app."
-        case .status: "Needs heart rate and overnight vitals from Apple Watch or a compatible watch."
+        case .heart: String(localized: "Recorded by Apple Watch or a watch that syncs to Apple Health.")
+        case .sleep: String(localized: "Wear a watch to bed or track sleep in a sleep app.")
+        case .activity: String(localized: "Recorded by your iPhone or watch.")
+        case .training, .history: String(localized: "Record a workout on your watch or in a fitness app.")
+        case .status: String(localized: "Needs heart rate and overnight vitals from Apple Watch or a compatible watch.")
         }
     }
 }

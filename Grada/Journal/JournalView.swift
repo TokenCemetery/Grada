@@ -152,7 +152,10 @@ struct JournalView: View {
     private func row(_ tag: JournalTag, caption: String?, suggestion: JournalSuggestion?) -> some View {
         let entry = entries[tag]
         // Illness comes from vitals alone, so it says it isn't a diagnosis (#107).
-        let caption = suggestion.map { "Suggested · \($0.reason)\($0.tag == .illness ? " · not a diagnosis" : "")" } ?? caption
+        let caption = suggestion.map {
+            $0.tag == .illness ? String(localized: "Suggested · \($0.reason) · not a diagnosis")
+                : String(localized: "Suggested · \($0.reason)")
+        } ?? caption
         HStack {
             Button {
                 store.toggle(tag, on: day)
@@ -252,7 +255,7 @@ private struct DayPicker: View {
 
     /// "Today", otherwise the weekday and date, with the year only outside the current one.
     private var title: String {
-        if day == today { return "Today" }
+        if day == today { return String(localized: "Today") }
         let format = Date.FormatStyle.dateTime.weekday(.wide).day().month(.abbreviated)
         return calendar.isDate(day, equalTo: today, toGranularity: .year)
             ? day.formatted(format)

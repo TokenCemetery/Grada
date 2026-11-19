@@ -16,7 +16,7 @@ struct GoalSetupView: View {
         NavigationStack {
             List {
                 if let lastWeek {
-                    option(title: "From your last 7 days", summary: "Your recent activity",
+                    option(title: String(localized: "From your last 7 days"), summary: String(localized: "Your recent activity"),
                            goals: Goals.fromLastWeek(lastWeek, fallback: .balanced), reason: .lastWeek)
                 }
                 ForEach(GoalPreset.allCases) { preset in
@@ -112,24 +112,27 @@ struct GoalsView: View {
                 Text(changeText(metric)).font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Text(history.value(metric, on: today).map(metric.formatted) ?? (metric == .sleep ? "Sleep need" : "–"))
+            Text(history.value(metric, on: today).map(metric.formatted) ?? (metric == .sleep ? String(localized: "Sleep need") : "–"))
                 .foregroundStyle(.secondary)
         }
         .contentShape(Rectangle())
     }
 
     private func changeText(_ metric: GoalMetric) -> String {
-        if metric == .sleep, history.value(.sleep, on: today) == nil { return "Follows your Sleep need" }
-        guard let (entry, previous) = history.latestChange(metric) else { return "Not set" }
+        if metric == .sleep, history.value(.sleep, on: today) == nil { return String(localized: "Follows your Sleep need") }
+        guard let (entry, previous) = history.latestChange(metric) else { return String(localized: "Not set") }
         let date = entry.effectiveFrom.formatted(.dateTime.day().month(.abbreviated))
         switch entry.reason {
-        case .preset: return "Set from a preset on \(date)"
-        case .lastWeek: return "Set from your last 7 days on \(date)"
-        case .edit: return "Changed by you on \(date)"
+        case .preset: return String(localized: "Set from a preset on \(date)")
+        case .lastWeek: return String(localized: "Set from your last 7 days on \(date)")
+        case .edit: return String(localized: "Changed by you on \(date)")
         case .automatic:
-            guard let previous else { return "Adjusted on \(date)" }
-            let verb = entry.value > previous ? "Raised" : "Lowered"
-            return "\(verb) from \(metric.formatted(previous)) to \(metric.formatted(entry.value)) on \(date)"
+            guard let previous else { return String(localized: "Adjusted on \(date)") }
+            let from = metric.formatted(previous)
+            let to = metric.formatted(entry.value)
+            return entry.value > previous
+                ? String(localized: "Raised from \(from) to \(to) on \(date)")
+                : String(localized: "Lowered from \(from) to \(to) on \(date)")
         }
     }
 

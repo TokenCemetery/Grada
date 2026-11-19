@@ -9,7 +9,7 @@ nonisolated extension SnapshotBuilder {
             series = series.map { DayValue(day: $0.day, value: $0.value.map { $0 * 0.621_371 }) }
         }
         let goalValue = goal.flatMap { goals.value($0, on: calendar.startOfDay(for: now)) }
-        var snapshot = totals(series, decimals: metric.decimals, unit: metric == .distance && !usesMetric ? "mi" : metric.unit,
+        var snapshot = totals(series, decimals: metric.decimals, unit: metric == .distance && !usesMetric ? String(localized: "mi", comment: "Unit: miles") : metric.unit,
                               goal: goalValue, variant: variant)
         if metric == .steps, isToday, let goalValue, snapshot.value != nil {
             snapshot.recommendation = Recommendations.steps(today: series.last?.value ?? 0, goal: goalValue)
@@ -19,7 +19,7 @@ nonisolated extension SnapshotBuilder {
 
     /// The last 7 days' total against the weekly goal, or the WHO target without one.
     func intensityMinutes() async throws -> CardSnapshot {
-        let period = "Last 7 days"
+        let period = String(localized: "Last 7 days")
         let days = try await intensityDays(7)
         guard days.contains(where: { $0.value != nil }) else { return .noData(period: period) }
 
@@ -28,7 +28,7 @@ nonisolated extension SnapshotBuilder {
         return CardSnapshot(
             period: period,
             value: format(total, 0),
-            unit: "min",
+            unit: String(localized: "min", comment: "Unit: minutes"),
             comparison: Self.goalComparison(total, goal: target, decimals: 0),
             tone: total >= target ? .good : .neutral,
             chart: .progress(value: total, goal: target)
@@ -38,14 +38,15 @@ nonisolated extension SnapshotBuilder {
     /// Today's waking time at light effort or harder, with the last 7 days split by ACSM band.
     func dayIntensity() async throws -> CardSnapshot {
         guard let days = try await dayIntensityDays(7) else {
-            return CardSnapshot(period: todayLabel, value: "Calibrating", comparison: "Needs resting and max heart rate")
+            return CardSnapshot(period: todayLabel, value: String(localized: "Calibrating"),
+                                comparison: String(localized: "Needs resting and max heart rate"))
         }
         guard let today = days.last?.seconds else { return .noData(period: todayLabel) }
         let active = today.filter { $0.key != .veryLight }.values.reduce(0, +)
         return CardSnapshot(
             period: todayLabel,
             value: Self.hoursMinutes(active),
-            comparison: "\(Self.hoursMinutes(today[.veryLight] ?? 0)) very light",
+            comparison: String(localized: "\(Self.hoursMinutes(today[.veryLight] ?? 0)) very light"),
             chart: .intensity(days.map(\.seconds))
         )
     }
@@ -102,7 +103,7 @@ nonisolated extension SnapshotBuilder {
             snapshot.comparison = Self.goalComparison(today, goal: goal, decimals: decimals)
             snapshot.tone = today >= goal ? .good : .neutral
         } else {
-            snapshot.comparison = average.map { "7-day avg \(format($0, decimals))" }
+            snapshot.comparison = average.map { String(localized: "7-day avg \(format($0, decimals))") }
         }
         switch variant {
         case .current:

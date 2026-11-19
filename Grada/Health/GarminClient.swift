@@ -51,11 +51,11 @@ final class GarminClient {
 
         var errorDescription: String? {
             switch self {
-            case .noKey: "No Garmin key is saved."
-            case .keyRejected: "Garmin didn't accept the key. It may have expired or been deleted."
-            case .rateLimited: "Garmin asked Grada to slow down. Grada will try again later."
-            case .http(let status): "Garmin answered with HTTP \(status)."
-            case .notGarminToken: "Garmin's answer didn't contain a token."
+            case .noKey: String(localized: "No Garmin key is saved.")
+            case .keyRejected: String(localized: "Garmin didn't accept the key. It may have expired or been deleted.")
+            case .rateLimited: String(localized: "Garmin asked Grada to slow down. Grada will try again later.")
+            case .http(let status): String(localized: "Garmin answered with HTTP \(status).")
+            case .notGarminToken: String(localized: "Garmin's answer didn't contain a token.")
             }
         }
     }

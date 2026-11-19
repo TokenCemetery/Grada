@@ -195,21 +195,21 @@ nonisolated enum DataKind: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .restingHeartRate: "Resting Heart Rate"
-        case .hrv: "Heart Rate Variability"
-        case .overnightHRV: "HRV and Heart Rate While Asleep"
-        case .oxygenSaturation: "Blood Oxygen"
-        case .respiratoryRate: "Respiratory Rate"
-        case .wristTemperature: "Wrist Temperature"
-        case .vo2Max: "VO₂ Max"
-        case .sleep: "Sleep"
-        case .steps: "Steps"
-        case .activeEnergy: "Active Energy"
-        case .exerciseMinutes: "Exercise Minutes"
-        case .distance: "Walking and Running Distance"
-        case .floors: "Floors Climbed"
-        case .standHours: "Stand Hours"
-        case .workouts: "Workouts"
+        case .restingHeartRate: String(localized: "Resting Heart Rate")
+        case .hrv: String(localized: "Heart Rate Variability")
+        case .overnightHRV: String(localized: "HRV and Heart Rate While Asleep")
+        case .oxygenSaturation: String(localized: "Blood Oxygen")
+        case .respiratoryRate: String(localized: "Respiratory Rate")
+        case .wristTemperature: String(localized: "Wrist Temperature")
+        case .vo2Max: String(localized: "VO₂ Max")
+        case .sleep: String(localized: "Sleep")
+        case .steps: String(localized: "Steps")
+        case .activeEnergy: String(localized: "Active Energy")
+        case .exerciseMinutes: String(localized: "Exercise Minutes")
+        case .distance: String(localized: "Walking and Running Distance")
+        case .floors: String(localized: "Floors Climbed")
+        case .standHours: String(localized: "Stand Hours")
+        case .workouts: String(localized: "Workouts")
         }
     }
 }

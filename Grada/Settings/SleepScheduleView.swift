@@ -79,7 +79,7 @@ struct SleepScheduleView: View {
 
     private func usualText(_ kind: KeyPath<UsualTimes, Bedtime.Plan?>) -> String {
         guard let usual else { return "…" }
-        return usual[keyPath: kind].map { "\(time($0.usualBedtime))–\(time($0.wake))" } ?? "Not enough nights"
+        return usual[keyPath: kind].map { "\(time($0.usualBedtime))–\(time($0.wake))" } ?? String(localized: "Not enough nights")
     }
 
     private func time(_ date: Date) -> String { date.formatted(date: .omitted, time: .shortened) }

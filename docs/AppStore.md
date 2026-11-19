@@ -40,6 +40,7 @@ Review this when iCloud sync of app data turns on (#20). Data in the user's priv
 - **Age rating:** answer "Medical or Treatment Information" as Infrequent/Mild. The journal logs alcohol but doesn't encourage it.
 - **Export compliance:** not asked. `ITSAppUsesNonExemptEncryption` is NO, because Grada uses only HTTPS.
 - **Availability:** iPhone and iPad only. Mac and Vision Pro are off because Apple Health isn't there.
+- **Languages:** the app is localized into English, Spanish, Simplified Chinese, Hindi, Portuguese, Russian, French, German and Italian. The listing text in this file is English; add translated listings in App Store Connect for the other languages, or they show the English one.
 
 ## Before submitting
 

@@ -538,18 +538,18 @@ extension QuantityMetric {
 nonisolated enum WorkoutNames {
     static func info(for type: HKWorkoutActivityType) -> (name: String, symbol: String) {
         switch type {
-        case .running: ("Run", "figure.run")
-        case .walking: ("Walk", "figure.walk")
-        case .hiking: ("Hike", "figure.hiking")
-        case .cycling: ("Ride", "figure.outdoor.cycle")
-        case .swimming: ("Swim", "figure.pool.swim")
-        case .traditionalStrengthTraining, .functionalStrengthTraining: ("Strength", "figure.strengthtraining.traditional")
-        case .highIntensityIntervalTraining: ("HIIT", "figure.highintensity.intervaltraining")
-        case .yoga: ("Yoga", "figure.yoga")
-        case .rowing: ("Row", "figure.rower")
-        case .elliptical: ("Elliptical", "figure.elliptical")
-        case .crossCountrySkiing, .downhillSkiing: ("Ski", "figure.skiing.downhill")
-        default: ("Workout", "figure.mixed.cardio")
+        case .running: (String(localized: "Run", comment: "Workout type name"), "figure.run")
+        case .walking: (String(localized: "Walk", comment: "Workout type name"), "figure.walk")
+        case .hiking: (String(localized: "Hike", comment: "Workout type name"), "figure.hiking")
+        case .cycling: (String(localized: "Ride", comment: "Workout type name"), "figure.outdoor.cycle")
+        case .swimming: (String(localized: "Swim", comment: "Workout type name"), "figure.pool.swim")
+        case .traditionalStrengthTraining, .functionalStrengthTraining: (String(localized: "Strength", comment: "Workout type name"), "figure.strengthtraining.traditional")
+        case .highIntensityIntervalTraining: (String(localized: "HIIT", comment: "Workout type name"), "figure.highintensity.intervaltraining")
+        case .yoga: (String(localized: "Yoga", comment: "Workout type name"), "figure.yoga")
+        case .rowing: (String(localized: "Row", comment: "Workout type name"), "figure.rower")
+        case .elliptical: (String(localized: "Elliptical", comment: "Workout type name"), "figure.elliptical")
+        case .crossCountrySkiing, .downhillSkiing: (String(localized: "Ski", comment: "Workout type name"), "figure.skiing.downhill")
+        default: (String(localized: "Workout", comment: "Workout type name"), "figure.mixed.cardio")
         }
     }
 }

@@ -26,8 +26,8 @@ struct GarminConnectView: View {
 
     private func status(_ garmin: GarminSource) -> some View {
         Section {
-            LabeledContent("Status", value: garmin.needsReconnect ? "Key Expired or Deleted" : "Connected")
-            LabeledContent("Last Sync", value: garmin.lastSync?.formatted(date: .abbreviated, time: .shortened) ?? "Not Yet")
+            LabeledContent("Status", value: garmin.needsReconnect ? String(localized: "Key Expired or Deleted") : String(localized: "Connected"))
+            LabeledContent("Last Sync", value: garmin.lastSync?.formatted(date: .abbreviated, time: .shortened) ?? String(localized: "Not Yet", comment: "Last sync time when Garmin has never synced"))
             if let progress {
                 LabeledContent(progress) { ProgressView() }
             }
@@ -48,8 +48,8 @@ struct GarminConnectView: View {
             .disabled(progress != nil)
         } footer: {
             Text(garmin.needsReconnect
-                 ? "Garmin no longer accepts the saved key. Create a new one and paste it below. Data already imported stays."
-                 : "Grada checks Garmin for new data at most every 15 minutes, when the app refreshes. Disconnecting deletes the key from this iPhone; data already imported stays.")
+                 ? String(localized: "Garmin no longer accepts the saved key. Create a new one and paste it below. Data already imported stays.")
+                 : String(localized: "Grada checks Garmin for new data at most every 15 minutes, when the app refreshes. Disconnecting deletes the key from this iPhone; data already imported stays."))
         }
     }
 
@@ -58,7 +58,7 @@ struct GarminConnectView: View {
             SecureField("Personal API Key", text: $key)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-            Button(garmin.needsReconnect ? "Save New Key" : "Connect") { connect(garmin) }
+            Button(garmin.needsReconnect ? String(localized: "Save New Key") : String(localized: "Connect", comment: "Button that connects the Garmin account")) { connect(garmin) }
                 .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || progress != nil)
             if let progress, !garmin.isConnected {
                 LabeledContent(progress) { ProgressView() }
@@ -87,7 +87,7 @@ struct GarminConnectView: View {
 
     /// Imports whatever history is still missing, then the latest days, ignoring the 15-minute wait.
     private func sync(_ garmin: GarminSource) {
-        progress = "Importing from Garmin…"
+        progress = String(localized: "Importing from Garmin…")
         Task {
             await model.importer?.sourceConnected(garmin)
             progress = nil
@@ -96,12 +96,12 @@ struct GarminConnectView: View {
 
     private func connect(_ garmin: GarminSource) {
         error = nil
-        progress = "Checking the key…"
+        progress = String(localized: "Checking the key…")
         Task {
             do {
                 try await garmin.connect(key: key)
                 key = ""
-                progress = "Importing from Garmin…"
+                progress = String(localized: "Importing from Garmin…")
                 await model.importer?.sourceConnected(garmin)
             } catch {
                 self.error = error.localizedDescription

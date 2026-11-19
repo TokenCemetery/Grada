@@ -27,7 +27,7 @@ struct CustomizeView: View {
                 ForEach(CardCategory.allCases, id: \.self) { category in
                     let available = CardID.gallery.filter { $0.kind.category == category && !onHome.contains($0) }
                     if !available.isEmpty {
-                        Section("Add \(category.title.lowercased())") {
+                        Section(category.addTitle) {
                             ForEach(available) { card in
                                 Button { add(card) } label: {
                                     HStack {
@@ -91,9 +91,9 @@ private struct CardRow: View {
     var body: some View {
         let kind = card.kind
         let size = switch kind.size {
-        case .square: "Square"
-        case .wide: "Wide"
-        case .big: "Big"
+        case .square: String(localized: "Square", comment: "Card size: one column")
+        case .wide: String(localized: "Wide", comment: "Card size: two columns")
+        case .big: String(localized: "Big", comment: "Card size: two columns, two squares tall")
         }
         HStack(spacing: 12) {
             Image(systemName: kind.symbol)
@@ -101,7 +101,7 @@ private struct CardRow: View {
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 0) {
                 Text(kind.title)
-                Text(kind.variants.count > 1 ? "\(card.variant.title) · \(size)" : size)
+                Text(kind.variants.count > 1 ? String(localized: "\(card.variant.title) · \(size)") : size)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

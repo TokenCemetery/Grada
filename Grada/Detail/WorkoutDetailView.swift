@@ -18,22 +18,22 @@ struct WorkoutDetailView: View {
 
     private var color: Color { WorkoutColors.color(symbol: workout.symbol) }
     private var end: Date { workout.start.addingTimeInterval(workout.duration) }
-    private var units: DistanceUnits { DistanceUnits(sport: workout.name) }
+    private var units: DistanceUnits { DistanceUnits(symbol: workout.symbol) }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 header
-                DetailSection(title: "Summary") { stats }
+                DetailSection(title: String(localized: "Summary")) { stats }
                 if let detail, let maxHeartRate, !detail.heartRate.isEmpty {
                     let zones = HeartRateZones.time(detail.heartRate, end: end, maxHeartRate: maxHeartRate)
-                    DetailSection(title: "Training Load") { TrainingLoadView(timeInZones: zones) }
-                    DetailSection(title: "Heart Rate") {
+                    DetailSection(title: String(localized: "Training Load")) { TrainingLoadView(timeInZones: zones) }
+                    DetailSection(title: String(localized: "Heart Rate")) {
                         HeartRateChart(readings: detail.heartRate, start: workout.start, end: end, maxHeartRate: maxHeartRate)
                         ZoneRows(seconds: zones, maxHeartRate: maxHeartRate)
                     }
                 } else if loaded, detail?.heartRate.isEmpty == false {
-                    DetailSection(title: "Heart Rate Zones") {
+                    DetailSection(title: String(localized: "Heart Rate Zones")) {
                         Text("Add your birth date in Apple Health to see heart rate zones and training load.")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
@@ -42,10 +42,10 @@ struct WorkoutDetailView: View {
                     let splits = Splits.make(track: detail.distanceTrack, heartRate: detail.heartRate,
                                              start: workout.start, length: units.splitMeters)
                     if splits.count > 1 {
-                        DetailSection(title: "Splits") { SplitsTable(splits: splits, units: units) }
+                        DetailSection(title: String(localized: "Splits")) { SplitsTable(splits: splits, units: units) }
                     }
                     if detail.route.count > 1 {
-                        DetailSection(title: "Route") { RouteMap(route: detail.route, color: color) }
+                        DetailSection(title: String(localized: "Route")) { RouteMap(route: detail.route, color: color) }
                     }
                 }
                 if !loaded {
@@ -84,15 +84,15 @@ struct WorkoutDetailView: View {
 
     private var stats: some View {
         let whole = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0))
-        var items: [(label: String, value: String)] = [("Duration", SnapshotBuilder.hoursMinutes(workout.duration))]
+        var items: [(label: String, value: String)] = [(String(localized: "Duration"), SnapshotBuilder.hoursMinutes(workout.duration))]
         if let meters = detail?.distance, meters > 0 {
-            items.append(("Distance", units.distance(meters)))
+            items.append((String(localized: "Distance"), units.distance(meters)))
             items.append(units.paceOrSpeed(meters: meters, seconds: workout.duration))
         }
-        if let kcal = workout.energyKcal { items.append(("Calories", "\(kcal.formatted(whole)) kcal")) }
-        if let average = workout.averageHeartRate { items.append(("Avg Heart Rate", "\(average.formatted(whole)) bpm")) }
-        if let highest = detail?.maxHeartRate { items.append(("Max Heart Rate", "\(highest.formatted(whole)) bpm")) }
-        if let climb = detail?.elevationGain { items.append(("Elevation Gain", units.elevation(climb))) }
+        if let kcal = workout.energyKcal { items.append((String(localized: "Calories"), String(localized: "\(kcal.formatted(whole)) kcal", comment: "Energy in kilocalories"))) }
+        if let average = workout.averageHeartRate { items.append((String(localized: "Avg Heart Rate"), String(localized: "\(average.formatted(whole)) bpm", comment: "Heart rate in beats per minute"))) }
+        if let highest = detail?.maxHeartRate { items.append((String(localized: "Max Heart Rate"), String(localized: "\(highest.formatted(whole)) bpm", comment: "Heart rate in beats per minute"))) }
+        if let climb = detail?.elevationGain { items.append((String(localized: "Elevation Gain"), units.elevation(climb))) }
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .leading), count: 3), alignment: .leading, spacing: 12) {
             ForEach(items, id: \.label) { item in
                 VStack(alignment: .leading, spacing: 2) {
@@ -108,30 +108,43 @@ struct WorkoutDetailView: View {
 /// Kilometers, or miles in the US. Swims are measured in meters per 100 m (yards per 100 yd in the US),
 /// rides by speed.
 struct DistanceUnits {
-    let sport: String
+    /// The workout's SF Symbol, which names the sport in any language; stored names follow the import's language.
+    let symbol: String
     var isUS = Locale.current.measurementSystem == .us
-    private var isSwim: Bool { sport == "Swim" }
+    private var isSwim: Bool { symbol == "figure.pool.swim" }
 
     /// One split, and the length pace is given for.
     var splitMeters: Double {
         isSwim ? (isUS ? 91.44 : 100) : (isUS ? 1_609.344 : 1_000)
     }
-    var splitName: String { isSwim ? (isUS ? "100 yd" : "100 m") : (isUS ? "Mile" : "Km") }
-    private var paceName: String { isSwim ? (isUS ? "100yd" : "100m") : (isUS ? "mi" : "km") }
+    var splitName: String { isSwim
+            ? (isUS ? String(localized: "100 yd", comment: "Split length: 100 yards") : String(localized: "100 m", comment: "Split length: 100 meters"))
+            : (isUS ? String(localized: "Mile", comment: "Split length: one mile") : String(localized: "Km", comment: "Split length: one kilometer")) }
+    private var paceName: String { isSwim
+            ? (isUS ? String(localized: "100yd", comment: "Pace unit: per 100 yards") : String(localized: "100m", comment: "Pace unit: per 100 meters"))
+            : (isUS ? String(localized: "mi", comment: "Unit: miles") : String(localized: "km", comment: "Unit: kilometers")) }
 
     func distance(_ value: Double) -> String {
         if isSwim {
-            return isUS ? "\(Int((value / 0.9144).rounded())) yd" : "\(Int(value.rounded())) m"
+            return isUS
+                ? String(localized: "\(Int((value / 0.9144).rounded())) yd", comment: "Distance in yards")
+                : String(localized: "\(Int(value.rounded())) m", comment: "Distance in meters")
         }
-        return "\((value / splitMeters).formatted(.number.precision(.fractionLength(2)))) \(isUS ? "mi" : "km")"
+        let miles = (value / splitMeters).formatted(.number.precision(.fractionLength(2)))
+        return isUS
+            ? String(localized: "\(miles) mi", comment: "Distance in miles")
+            : String(localized: "\(miles) km", comment: "Distance in kilometers")
     }
 
     func paceOrSpeed(meters value: Double, seconds: TimeInterval) -> (label: String, value: String) {
-        if sport == "Ride" {
+        if symbol == "figure.outdoor.cycle" {
             let speed = value / splitMeters / (seconds / 3600)
-            return ("Avg Speed", "\(speed.formatted(.number.precision(.fractionLength(1)))) \(isUS ? "mph" : "km/h")")
+            let formatted = speed.formatted(.number.precision(.fractionLength(1)))
+            return (String(localized: "Avg Speed"),
+                    isUS ? String(localized: "\(formatted) mph", comment: "Speed in miles per hour")
+                         : String(localized: "\(formatted) km/h", comment: "Speed in kilometers per hour"))
         }
-        return ("Avg Pace", "\(pace(meters: value, seconds: seconds)) /\(paceName)")
+        return (String(localized: "Avg Pace"), String(localized: "\(pace(meters: value, seconds: seconds)) /\(paceName)", comment: "Pace: time per distance unit, e.g. 5:00 /km"))
     }
 
     /// Time per split length.
@@ -140,7 +153,9 @@ struct DistanceUnits {
     }
 
     func elevation(_ value: Double) -> String {
-        isUS ? "\(Int((value * 3.280_84).rounded())) ft" : "\(Int(value.rounded())) m"
+        isUS
+            ? String(localized: "\(Int((value * 3.280_84).rounded())) ft", comment: "Elevation in feet")
+            : String(localized: "\(Int(value.rounded())) m", comment: "Elevation in meters")
     }
 
     /// "5:42" or "1:02:10".
@@ -284,7 +299,7 @@ private struct SplitsTable: View {
         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
             GridRow {
                 Text(units.splitName)
-                Text("Time")
+                Text("Time", comment: "Splits table column: time for the split")
                 Text("Pace").gridColumnAlignment(.trailing)
                 Text("Avg HR").gridColumnAlignment(.trailing)
             }

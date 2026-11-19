@@ -28,7 +28,7 @@ struct MetricDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 CardView(kind: kind, snapshot: snapshot)
                 if let recommendation = snapshot?.recommendation {
-                    DetailSection(title: "Recommendation") {
+                    DetailSection(title: String(localized: "Recommendation")) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(recommendation.text).font(.subheadline.weight(.semibold))
                             Text(recommendation.reason).font(.subheadline).foregroundStyle(.secondary)
@@ -39,14 +39,14 @@ struct MetricDetailView: View {
                 if let breakdown {
                     DetailSection(title: breakdown.title) { BreakdownView(breakdown: breakdown, color: color) }
                 }
-                DetailSection(title: "What it means") {
+                DetailSection(title: String(localized: "What it means")) {
                     Text(kind.explanation).font(.subheadline).foregroundStyle(.secondary)
                 }
                 if !origins.isEmpty {
-                    DetailSection(title: "Data from") { OriginsView(origins: origins) }
+                    DetailSection(title: String(localized: "Data from")) { OriginsView(origins: origins) }
                 }
                 if !kind.sources.isEmpty || kind.estimateNote != nil {
-                    DetailSection(title: "Sources") { SourcesView(kind: kind) }
+                    DetailSection(title: String(localized: "Sources")) { SourcesView(kind: kind) }
                 }
                 if !related.kinds.isEmpty {
                     DetailSection(title: related.title) {
@@ -88,7 +88,7 @@ struct MetricDetailView: View {
             .padding(.bottom)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle(route.day.map { "\(kind.title), \($0.formatted(.dateTime.day().month(.abbreviated)))" } ?? kind.title)
+        .navigationTitle(route.day.map { String(localized: "\(kind.title), \($0.formatted(.dateTime.day().month(.abbreviated)))") } ?? kind.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -114,7 +114,7 @@ struct MetricDetailView: View {
 
     @ViewBuilder
     private var trendSection: some View {
-        DetailSection(title: trend?.title ?? "Trend") {
+        DetailSection(title: trend?.title ?? String(localized: "Trend")) {
             VStack(alignment: .leading, spacing: 12) {
                 Picker("Period", selection: $period) {
                     ForEach(TrendPeriod.allCases) { Text($0.label).tag($0) }
@@ -211,8 +211,8 @@ struct OriginsView: View {
     /// "Today", "Yesterday" or the date; Grada stores data per day, so there's no time to show.
     static func lastDay(_ day: Date) -> String {
         let calendar = Calendar.current
-        if calendar.isDateInToday(day) { return "Today" }
-        if calendar.isDateInYesterday(day) { return "Yesterday" }
+        if calendar.isDateInToday(day) { return String(localized: "Today") }
+        if calendar.isDateInYesterday(day) { return String(localized: "Yesterday") }
         return day.formatted(date: .abbreviated, time: .omitted)
     }
 }
@@ -304,7 +304,7 @@ private struct TrendChart: View {
 
     private func label(_ date: Date) -> String {
         period.isWeekly
-            ? "Week of \(date.formatted(.dateTime.day().month(.abbreviated)))"
+            ? String(localized: "Week of \(date.formatted(.dateTime.day().month(.abbreviated)))")
             : date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
     }
 }
@@ -321,7 +321,7 @@ private struct TrendStats: View {
         }
     }
 
-    private func stat(_ label: String, _ value: Double?) -> some View {
+    private func stat(_ label: LocalizedStringKey, _ value: Double?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label).font(.caption).foregroundStyle(.secondary)
             Text(value.map { "\(trend.formatted($0)) \(trend.unit)" } ?? "–")
@@ -346,12 +346,12 @@ enum Breakdown {
 
     var title: String {
         switch self {
-        case .hourly: "By hour"
-        case .heartRate: "Through the day"
-        case .sleep: "Last night"
-        case .workouts: "Workouts"
-        case .recovery: "Inputs"
-        case .resources: "Since midnight"
+        case .hourly: String(localized: "By hour")
+        case .heartRate: String(localized: "Through the day")
+        case .sleep: String(localized: "Last night")
+        case .workouts: String(localized: "Workouts")
+        case .recovery: String(localized: "Inputs")
+        case .resources: String(localized: "Since midnight")
         }
     }
 
@@ -365,7 +365,7 @@ enum Breakdown {
             var unit = metric.unit
             if metric == .distance, Locale.current.measurementSystem == .us {
                 hours = hours.map { TimedValue(date: $0.date, value: $0.value * 0.621_371) }
-                unit = "mi"
+                unit = String(localized: "mi", comment: "Unit: miles")
             }
             return hours.isEmpty ? nil : .hourly(hours, unit: unit, decimals: metric.decimals)
         case .vital:
@@ -434,11 +434,11 @@ private struct BreakdownView: View {
                         row(stage.title, SnapshotBuilder.hoursMinutes(seconds), dot: stage.color(base: color))
                     }
                 }
-                if night.unspecified > 0 { row("Asleep, no stages", SnapshotBuilder.hoursMinutes(night.unspecified)) }
+                if night.unspecified > 0 { row(String(localized: "Asleep, no stages"), SnapshotBuilder.hoursMinutes(night.unspecified)) }
                 Divider()
-                if let bedtime { row("Bedtime", bedtime.formatted(date: .omitted, time: .shortened)) }
-                if let wakeTime { row("Woke up", wakeTime.formatted(date: .omitted, time: .shortened)) }
-                row("Sleep debt", debt >= 5 * 60 ? SnapshotBuilder.hoursMinutes(debt) : "None")
+                if let bedtime { row(String(localized: "Bedtime"), bedtime.formatted(date: .omitted, time: .shortened)) }
+                if let wakeTime { row(String(localized: "Woke up"), wakeTime.formatted(date: .omitted, time: .shortened)) }
+                row(String(localized: "Sleep debt"), debt >= 5 * 60 ? SnapshotBuilder.hoursMinutes(debt) : String(localized: "None"))
             }
         case .workouts(let workouts):
             VStack(spacing: 0) {
@@ -475,7 +475,7 @@ private struct BreakdownView: View {
                         Circle().fill(rating.fill(colorBlind: colorBlind)).frame(width: 8, height: 8)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(check.name).font(.subheadline)
-                            Text("\(check.isOff ? check.reason : "Within threshold") · \(check.higherIsBetter ? "≥" : "≤") \(Self.recoveryValue(check.limit, check, decimals: Self.decimals(check)))")
+                            Text("\(check.isOff ? check.reason : String(localized: "Within threshold")) · \(check.higherIsBetter ? "≥" : "≤") \(Self.recoveryValue(check.limit, check, decimals: Self.decimals(check)))")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -486,7 +486,7 @@ private struct BreakdownView: View {
             }
         case .resources(let midnight, let now, let amounts):
             VStack(spacing: 6) {
-                row("At midnight", "\(Int(midnight.rounded()))%")
+                row(String(localized: "At midnight"), "\(Int(midnight.rounded()))%")
                 Divider()
                 ForEach(Resources.Cause.allCases, id: \.self) { cause in
                     if let amount = amounts[cause], abs(amount) >= 0.5 {
@@ -500,7 +500,7 @@ private struct BreakdownView: View {
                     }
                 }
                 Divider()
-                row("Now", "\(Int(now.rounded()))%")
+                row(String(localized: "Now", comment: "Resources: the current charge, as opposed to at midnight"), "\(Int(now.rounded()))%")
             }
         }
     }

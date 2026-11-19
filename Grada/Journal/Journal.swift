@@ -14,26 +14,26 @@ nonisolated enum JournalTag: String, CaseIterable, Identifiable {
 
         var title: String {
             switch self {
-            case .lifestyle: "Lifestyle"
-            case .health: "Health"
-            case .situation: "Situation"
-            case .recovery: "Recovery"
+            case .lifestyle: String(localized: "Lifestyle", comment: "Journal tag group")
+            case .health: String(localized: "Health", comment: "Journal tag group")
+            case .situation: String(localized: "Situation", comment: "Journal tag group")
+            case .recovery: String(localized: "Recovery", comment: "Journal tag group")
             }
         }
 
         var tags: [JournalTag] { JournalTag.allCases.filter { $0.group == self } }
     }
 
-    /// What an amount tag counts, with its unit for one and for several.
+    /// What an amount tag counts. `format` writes a whole count with its unit, so the String Catalog can
+    /// pick each language's plural form.
     struct Amount {
-        let singular: String
-        let plural: String
+        let format: (Int) -> String
         let step: Double
         let range: ClosedRange<Double>
         let initial: Double
 
         func formatted(_ value: Double) -> String {
-            "\(value.formatted(.number.precision(.fractionLength(0)))) \(value == 1 ? singular : plural)"
+            format(Int(value.rounded()))
         }
     }
 
@@ -41,14 +41,14 @@ nonisolated enum JournalTag: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .alcohol: "Alcohol"
-        case .caffeine: "Caffeine"
-        case .nap: "Nap"
-        case .illness: "Illness"
-        case .travel: "Travel or jet lag"
-        case .nightShift: "Night shift"
-        case .outdoorTime: "Outdoor time"
-        case .meditation: "Meditation"
+        case .alcohol: String(localized: "Alcohol")
+        case .caffeine: String(localized: "Caffeine")
+        case .nap: String(localized: "Nap", comment: "Journal tag for daytime sleep")
+        case .illness: String(localized: "Illness")
+        case .travel: String(localized: "Travel or jet lag")
+        case .nightShift: String(localized: "Night shift")
+        case .outdoorTime: String(localized: "Outdoor time")
+        case .meditation: String(localized: "Meditation")
         }
     }
 
@@ -77,9 +77,12 @@ nonisolated enum JournalTag: String, CaseIterable, Identifiable {
     /// Nil for yes/no tags.
     var amount: Amount? {
         switch self {
-        case .alcohol: Amount(singular: "drink", plural: "drinks", step: 1, range: 1...20, initial: 1)
-        case .caffeine: Amount(singular: "cup", plural: "cups", step: 1, range: 1...10, initial: 1)
-        case .nap: Amount(singular: "min", plural: "min", step: 5, range: 5...240, initial: 20)
+        case .alcohol: Amount(format: { String(localized: "\($0) drinks", comment: "Alcoholic drinks logged; 1 drinks reads 1 drink") },
+                              step: 1, range: 1...20, initial: 1)
+        case .caffeine: Amount(format: { String(localized: "\($0) cups", comment: "Cups of coffee logged; 1 cups reads 1 cup") },
+                               step: 1, range: 1...10, initial: 1)
+        case .nap: Amount(format: { String(localized: "\($0) min", comment: "Nap length in minutes") },
+                          step: 5, range: 5...240, initial: 20)
         default: nil
         }
     }

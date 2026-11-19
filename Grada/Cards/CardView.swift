@@ -269,12 +269,12 @@ private struct VitalChip: View {
 
     private var stateLabel: String {
         switch (vital.state, vital.rating) {
-        case (.calibrating, _): "calibrating"
-        case (.noData, _): "no data"
-        case (_, .fair): "slightly out of range"
-        case (_, .poor): "well out of range"
-        case (.outOfRange, _): "out of range"
-        default: "in range"
+        case (.calibrating, _): String(localized: "calibrating")
+        case (.noData, _): String(localized: "no data")
+        case (_, .fair): String(localized: "slightly out of range")
+        case (_, .poor): String(localized: "well out of range")
+        case (.outOfRange, _): String(localized: "out of range")
+        default: String(localized: "in range")
         }
     }
 }
@@ -299,20 +299,33 @@ private struct SleepStagesBar: View {
                 .clipShape(RoundedRectangle(cornerRadius: 3))
             }
             .frame(height: 8)
-            HStack(spacing: 8) {
-                ForEach(SleepStage.chartOrder, id: \.self) { stage in
-                    HStack(spacing: 4) {
-                        Circle().fill(stage.color(base: color)).background(Circle().fill(.white)).frame(width: 7, height: 7)
-                        Text("\(stage.title) \(SnapshotBuilder.hoursMinutes(stages[stage] ?? 0))")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+            // Longer stage names in some languages don't fit one row; two rows keep every name whole.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    ForEach(SleepStage.chartOrder, id: \.self) { legendItem($0) }
+                }
+                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 2) {
+                    let order = SleepStage.chartOrder
+                    ForEach(Array(stride(from: 0, to: order.count, by: 2)), id: \.self) { i in
+                        GridRow {
+                            legendItem(order[i])
+                            if i + 1 < order.count { legendItem(order[i + 1]) }
+                        }
                     }
                 }
             }
         }
         .opacity(stages.isEmpty ? 0 : 1)
+    }
+
+    private func legendItem(_ stage: SleepStage) -> some View {
+        HStack(spacing: 4) {
+            Circle().fill(stage.color(base: color)).background(Circle().fill(.white)).frame(width: 7, height: 7)
+            Text("\(stage.title) \(SnapshotBuilder.hoursMinutes(stages[stage] ?? 0))")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
     }
 }
 
@@ -341,12 +354,12 @@ private struct WorkoutStats: View {
         let whole = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0))
         HStack(alignment: .top, spacing: 8) {
             stat("Duration", SnapshotBuilder.hoursMinutes(workout.duration))
-            stat("Calories", workout.energyKcal.map { "\($0.formatted(whole)) kcal" })
-            stat("Avg Heart Rate", workout.averageHeartRate.map { "\($0.formatted(whole)) bpm" })
+            stat("Calories", workout.energyKcal.map { String(localized: "\($0.formatted(whole)) kcal") })
+            stat("Avg Heart Rate", workout.averageHeartRate.map { String(localized: "\($0.formatted(whole)) bpm") })
         }
     }
 
-    private func stat(_ label: String, _ value: String?) -> some View {
+    private func stat(_ label: LocalizedStringKey, _ value: String?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label).font(.caption).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
             Text(value ?? "–").font(.headline).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)

@@ -41,7 +41,7 @@ nonisolated struct SnapshotBuilder {
         case .dayIntensity: try await dayIntensity()
         case .distance: try await cumulative(.distance, variant)
         case .floors: try await cumulative(.floors, goal: .floors, variant)
-        case .standHours: totals(try await source.standHours(days: 8), decimals: 0, unit: "h", variant: variant)
+        case .standHours: totals(try await source.standHours(days: 8), decimals: 0, unit: String(localized: "h", comment: "Unit: hours"), variant: variant)
         case .lastWorkout: try await lastWorkout()
         case .weeklyTraining: try await weeklyTraining()
         case .strain: try await strain()
@@ -61,17 +61,17 @@ nonisolated struct SnapshotBuilder {
 
     /// False when building a past day's cards for the calendar, where "Today" would be wrong.
     var isToday: Bool { calendar.isDateInToday(now) }
-    var todayLabel: String { isToday ? "Today" : "That day" }
-    var tonightLabel: String { isToday ? "Tonight" : "That night" }
-    var lastNightLabel: String { isToday ? "Last night" : "Night before" }
+    var todayLabel: String { isToday ? String(localized: "Today") : String(localized: "That day") }
+    var tonightLabel: String { isToday ? String(localized: "Tonight") : String(localized: "That night") }
+    var lastNightLabel: String { isToday ? String(localized: "Last night") : String(localized: "Night before") }
     /// Resources at the end of a past day.
-    var nowLabel: String { isToday ? "Now" : "End of day" }
+    var nowLabel: String { isToday ? String(localized: "Now") : String(localized: "End of day") }
     var yesterdayLabel: String { dayLabel(calendar.date(byAdding: .day, value: -1, to: now)!) }
 
     func dayLabel(_ date: Date) -> String {
         if calendar.isDate(date, inSameDayAs: now) { return todayLabel }
         if isToday, let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
-            return "Yesterday"
+            return String(localized: "Yesterday")
         }
         return date.formatted(.dateTime.month(.abbreviated).day())
     }
@@ -83,14 +83,16 @@ nonisolated struct SnapshotBuilder {
 
     /// "−1,580 of 10,000", or "Goal reached" at or above it.
     static func goalComparison(_ value: Double, goal: Double, decimals: Int) -> String {
-        guard value < goal else { return "Goal reached" }
+        guard value < goal else { return String(localized: "Goal reached") }
         let style = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(decimals))
-        return "−\((goal - value).formatted(style)) of \(goal.formatted(style))"
+        return String(localized: "−\((goal - value).formatted(style)) of \(goal.formatted(style))")
     }
 
     static func hoursMinutes(_ seconds: TimeInterval) -> String {
         let minutes = Int((seconds / 60).rounded())
-        return minutes >= 60 ? "\(minutes / 60)h \(String(format: "%02d", minutes % 60))m" : "\(minutes)m"
+        guard minutes >= 60 else { return String(localized: "\(minutes)m", comment: "Duration in minutes, e.g. 45m") }
+        let paddedMinutes = String(format: "%02d", minutes % 60)
+        return String(localized: "\(minutes / 60)h \(paddedMinutes)m", comment: "Duration in hours and minutes, e.g. 7h 05m")
     }
 
     /// "24:10" under an hour, "1:51:20" above.

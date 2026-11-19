@@ -5,8 +5,9 @@ nonisolated extension SnapshotBuilder {
 
     /// The vitals behind Health status; the calendar rates days with the same set.
     static let vitals: [(QuantityMetric, String)] = [
-        (.hrv, "HRV"), (.restingHeartRate, "RHR"), (.respiratoryRate, "Resp"),
-        (.oxygenSaturation, "SpO₂"), (.wristTemperature, "Temp"),
+        (.hrv, String(localized: "HRV")), (.restingHeartRate, String(localized: "RHR", comment: "Abbreviation for resting heart rate")),
+        (.respiratoryRate, String(localized: "Resp", comment: "Abbreviation for respiratory rate")),
+        (.oxygenSaturation, String(localized: "SpO₂")), (.wristTemperature, String(localized: "Temp", comment: "Abbreviation for temperature")),
     ]
 
     /// One value per day for a vital, oldest first. HRV is the night's, as Recovery and HRV status use: one series
@@ -53,17 +54,18 @@ nonisolated extension SnapshotBuilder {
 
         var snapshot = CardSnapshot(period: period, value: nil, detail: .vitals(statuses))
         if outOfRange > 0 {
-            snapshot.value = outOfRange == 1 ? "1 vital out of range" : "\(outOfRange) vitals out of range"
+            snapshot.value = outOfRange == 1 ? String(localized: "1 vital out of range")
+                : String(localized: "\(outOfRange) vitals out of range")
             snapshot.tone = .warning
         } else if inRange == 0 {
-            snapshot.value = "Calibrating"
-            snapshot.comparison = "Needs \(Baseline.minimumDays) nights of data"
+            snapshot.value = String(localized: "Calibrating")
+            snapshot.comparison = String(localized: "Needs \(Baseline.minimumDays) nights of data")
         } else {
-            snapshot.value = "All in range"
+            snapshot.value = String(localized: "All in range")
             snapshot.tone = .good
         }
         if snapshot.comparison == nil {
-            snapshot.comparison = "\(inRange) of \(measured.count) vitals normal"
+            snapshot.comparison = String(localized: "\(inRange) of \(measured.count) vitals normal")
         }
         return snapshot
     }
@@ -79,8 +81,8 @@ nonisolated extension SnapshotBuilder {
         let history = series[..<latestIndex].compactMap(\.value)
         let range = Baseline.normalRange(history: history, minimumHalfWidth: metric.minimumHalfWidth)
         let comparison = range.map {
-            "Normal \(format($0.lowerBound, metric.decimals))–\(format($0.upperBound, metric.decimals))"
-        } ?? "Calibrating"
+            String(localized: "Normal \(format($0.lowerBound, metric.decimals))–\(format($0.upperBound, metric.decimals))")
+        } ?? String(localized: "Calibrating")
         // Low blood oxygen or HRV is the worry; for the others, a high reading is.
         let higherIsBetter = metric == .oxygenSaturation || metric == .hrv
         let isTodays = isToday && latestIndex == series.count - 1
@@ -104,7 +106,7 @@ nonisolated extension SnapshotBuilder {
     /// Current shows the 7-night average on a gauge: yellow above the baseline ("Unbalanced"), yellow then red
     /// below it ("Low" from twice the half-width under the mean). 7 days draws the line through the baseline.
     func hrvStatus(_ variant: CardVariant) async throws -> CardSnapshot {
-        let period = "Last \(HRVStatus.window) nights"
+        let period = String(localized: "Last \(HRVStatus.window) nights")
         let chartDays = 7
         let nights = try await source.overnight(days: HRVStatus.baselineNights + HRVStatus.window + chartDays - 1).map(\.hrv)
         guard nights.suffix(HRVStatus.window + 1).contains(where: { $0 != nil }) else { return .noData(period: period) }
@@ -112,8 +114,8 @@ nonisolated extension SnapshotBuilder {
         let last = nights.count - 1
         let end = nights[last] == nil ? last - 1 : last
         guard let shown = HRVStatus.status(nights: nights, endingAt: end) else {
-            return CardSnapshot(period: period, value: "Calibrating",
-                                comparison: "Needs \(HRVStatus.minimumBaselineNights + HRVStatus.window) nights of data")
+            return CardSnapshot(period: period, value: String(localized: "Calibrating"),
+                                comparison: String(localized: "Needs \(HRVStatus.minimumBaselineNights + HRVStatus.window) nights of data"))
         }
         let baseline = "\(format(shown.baseline.lowerBound, 0))–\(format(shown.baseline.upperBound, 0))"
         let halfWidth = (shown.baseline.upperBound - shown.baseline.lowerBound) / 2
@@ -121,7 +123,7 @@ nonisolated extension SnapshotBuilder {
             period: period,
             value: format(shown.average, 0),
             unit: QuantityMetric.hrv.unit,
-            comparison: "\(shown.state.word) · baseline \(baseline)",
+            comparison: String(localized: "\(shown.state.word) · baseline \(baseline)"),
             tone: shown.state.tone,
             rating: shown.state.rating,
             chart: variant == .week
@@ -148,7 +150,7 @@ nonisolated extension SnapshotBuilder {
 
         let week = series.suffix(7).map { $0.value.map(toDisplay) }
         guard history.count >= Baseline.minimumDays, let mean = Baseline.average(history) else {
-            return CardSnapshot(period: period, value: format(toDisplay(latest), 1), unit: unit, comparison: "Calibrating",
+            return CardSnapshot(period: period, value: format(toDisplay(latest), 1), unit: unit, comparison: String(localized: "Calibrating"),
                                 chart: variant == .week ? .line(week, normalRange: nil) : .none)
         }
         let range = Baseline.normalRange(history: history, minimumHalfWidth: QuantityMetric.wristTemperature.minimumHalfWidth)
@@ -164,7 +166,7 @@ nonisolated extension SnapshotBuilder {
             period: period,
             value: format(toDisplay(latest), 1),
             unit: unit,
-            comparison: "\(format(deviation, 1, signed: true))° vs baseline",
+            comparison: String(localized: "\(format(deviation, 1, signed: true))° vs baseline"),
             rating: range.map { DayRatings.range(latest, normal: $0, higherIsBetter: false) },
             chart: chart
         )
@@ -172,14 +174,14 @@ nonisolated extension SnapshotBuilder {
 
     func vo2Max() async throws -> CardSnapshot {
         let readings = try await source.daily(.vo2Max, days: 90).filter { $0.value != nil }
-        guard let latest = readings.last, let value = latest.value else { return .noData(period: "Latest") }
+        guard let latest = readings.last, let value = latest.value else { return .noData(period: String(localized: "Latest")) }
         guard let age = try await source.age(), let sex = try await source.biologicalSex() else {
             let points = readings.suffix(7).map(\.value)
             return CardSnapshot(
                 period: dayLabel(latest.day),
                 value: format(value, 1),
                 unit: QuantityMetric.vo2Max.unit,
-                comparison: "Add your age and sex in Apple Health",
+                comparison: String(localized: "Add your age and sex in Apple Health"),
                 chart: .line(Array(repeating: nil, count: 7 - points.count) + points, normalRange: nil)
             )
         }
@@ -199,15 +201,15 @@ nonisolated extension SnapshotBuilder {
 nonisolated extension QuantityMetric {
     var unit: String {
         switch self {
-        case .restingHeartRate: "bpm"
-        case .hrv: "ms"
+        case .restingHeartRate: String(localized: "bpm", comment: "Unit: beats per minute")
+        case .hrv: String(localized: "ms", comment: "Unit: milliseconds")
         case .oxygenSaturation: "%"
-        case .respiratoryRate: "br/min"
+        case .respiratoryRate: String(localized: "br/min", comment: "Unit: breaths per minute")
         case .wristTemperature: "°C"
         case .steps, .floors: ""
-        case .activeEnergy: "kcal"
-        case .exerciseMinutes: "min"
-        case .distance: "km"
+        case .activeEnergy: String(localized: "kcal", comment: "Unit: kilocalories")
+        case .exerciseMinutes: String(localized: "min", comment: "Unit: minutes")
+        case .distance: String(localized: "km", comment: "Unit: kilometers")
         case .vo2Max: "ml/kg·min"
         }
     }

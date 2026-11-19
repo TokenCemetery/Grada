@@ -264,10 +264,26 @@ private struct MonthView: View {
         let month = days.compactMap { model.workoutDays[$0] }
         let count = month.reduce(0) { $0 + $1.workouts }
         let minutes = month.reduce(0) { $0 + $1.minutes }
-        return Text(count == 0 ? "No workouts" : "\(count == 1 ? "1 workout" : "\(count) workouts") · \(SnapshotBuilder.hoursMinutes(minutes * 60))")
+        let time = SnapshotBuilder.hoursMinutes(minutes * 60)
+        let text = if count == 0 {
+            String(localized: "No workouts")
+        } else if count == 1 {
+            String(localized: "1 workout · \(time)")
+        } else {
+            String(localized: "\(count) workouts · \(time)")
+        }
+        return Text(text)
             .font(.caption.weight(.semibold))
             .monospacedDigit()
             .foregroundStyle(.secondary)
+    }
+
+    private func countLabel(_ count: Int, _ rating: DayRating) -> String {
+        switch rating {
+        case .good: String(localized: "\(count) good days")
+        case .fair: String(localized: "\(count) fair days")
+        case .poor: String(localized: "\(count) poor days")
+        }
     }
 
     /// Green, yellow and red day counts for the month.
@@ -283,7 +299,7 @@ private struct MonthView: View {
                         .padding(.vertical, 2)
                         .foregroundStyle(rating.foreground(colorBlind: colorBlind))
                         .background(rating.fill(colorBlind: colorBlind), in: Capsule())
-                        .accessibilityLabel("\(count) \(rating.title.lowercased()) days")
+                        .accessibilityLabel(countLabel(count, rating))
                 }
             }
         }
@@ -346,8 +362,8 @@ private struct DayCell: View {
 
     private var accessibilityText: String {
         var parts = [day.formatted(date: .complete, time: .omitted)]
-        parts.append(rating?.title ?? (isFuture ? "Upcoming" : "No data"))
-        if hasWorkout { parts.append("Workout") }
+        parts.append(rating?.title ?? (isFuture ? String(localized: "Upcoming") : String(localized: "No data")))
+        if hasWorkout { parts.append(String(localized: "Workout")) }
         return parts.joined(separator: ", ")
     }
 }
@@ -400,11 +416,11 @@ private struct TrainingDayCell: View {
     private var accessibilityText: String {
         var parts = [day.formatted(date: .complete, time: .omitted)]
         if isFuture {
-            parts.append("Upcoming")
+            parts.append(String(localized: "Upcoming"))
         } else if let workouts, !workouts.sports.isEmpty {
             parts += workouts.sports.map { "\($0.name) \(SnapshotBuilder.hoursMinutes($0.minutes * 60))" }
         } else {
-            parts.append("Rest day")
+            parts.append(String(localized: "Rest day"))
         }
         return parts.joined(separator: ", ")
     }

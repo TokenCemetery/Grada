@@ -41,10 +41,10 @@ nonisolated struct JournalSuggestion: Equatable {
         if alcoholDayBefore, !off.contains(.breathing), !off.contains(.temperature) { return nil }
         let names = off.map { kind in
             switch kind {
-            case .hrv: "HRV low"
-            case .restingHeartRate: "resting HR high"
-            case .breathing: "breathing fast"
-            case .temperature: "temperature up"
+            case .hrv: String(localized: "HRV low", comment: "Part of a list of vitals outside the normal range")
+            case .restingHeartRate: String(localized: "resting HR high", comment: "Part of a list of vitals outside the normal range")
+            case .breathing: String(localized: "breathing fast", comment: "Part of a list of vitals outside the normal range")
+            case .temperature: String(localized: "temperature up", comment: "Part of a list of vitals outside the normal range")
             }
         }
         return JournalSuggestion(tag: .illness, reason: names.joined(separator: ", ").capitalizedFirst)
@@ -60,19 +60,19 @@ nonisolated struct JournalSuggestion: Equatable {
         let asleep = naps.reduce(0) { $0 + $1.end.timeIntervalSince($1.start) }
         guard asleep >= 10 * 60, let amount = JournalTag.nap.amount else { return nil }
         let minutes = min(max((asleep / 60 / amount.step).rounded() * amount.step, amount.range.lowerBound), amount.range.upperBound)
-        return JournalSuggestion(tag: .nap, reason: "\(SnapshotBuilder.hoursMinutes(asleep)) of daytime sleep", amount: minutes)
+        return JournalSuggestion(tag: .nap, reason: String(localized: "\(SnapshotBuilder.hoursMinutes(asleep)) of daytime sleep"), amount: minutes)
     }
 
     /// Any mindful session of 5 minutes or more; Breathe sessions of a minute aren't a meditation. Grada's estimate.
     static func meditation(_ time: TimeInterval?) -> JournalSuggestion? {
         guard let time, time >= 5 * 60 else { return nil }
-        return JournalSuggestion(tag: .meditation, reason: "\(SnapshotBuilder.hoursMinutes(time)) of mindful sessions")
+        return JournalSuggestion(tag: .meditation, reason: String(localized: "\(SnapshotBuilder.hoursMinutes(time)) of mindful sessions"))
     }
 
     /// 30 minutes or more in daylight; no study sets a bar for "time outdoors", so it's Grada's estimate.
     static func outdoorTime(_ time: TimeInterval?) -> JournalSuggestion? {
         guard let time, time >= 30 * 60 else { return nil }
-        return JournalSuggestion(tag: .outdoorTime, reason: "\(SnapshotBuilder.hoursMinutes(time)) in daylight")
+        return JournalSuggestion(tag: .outdoorTime, reason: String(localized: "\(SnapshotBuilder.hoursMinutes(time)) in daylight"))
     }
 
     /// The suggestions for `day`. `alcoholDayBefore` is whether Alcohol is logged on the day before, whose night

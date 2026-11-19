@@ -230,13 +230,14 @@ final class GarminSource: HealthSource {
     func biologicalSex() -> BiologicalSex? { nil }
 
     /// Keeps why `request` failed for Settings, and marks the connection as needing a new key when Garmin refuses this one.
-    private func call<T>(_ name: String, _ request: () async throws -> T) async throws -> T {
+    private func call<T>(_ name: LocalizedStringResource, _ request: () async throws -> T) async throws -> T {
         do {
             return try await request()
         } catch {
             if case GarminClient.Failure.keyRejected = error { needsReconnect = true }
-            lastError = "\(name): \(Self.describe(error))"
-            logger.error("Garmin \(name, privacy: .public) failed: \(Self.describe(error), privacy: .public)")
+            let label = String(localized: name)
+            lastError = "\(label): \(Self.describe(error))"
+            logger.error("Garmin \(label, privacy: .public) failed: \(Self.describe(error), privacy: .public)")
             throw error
         }
     }
@@ -250,7 +251,8 @@ final class GarminSource: HealthSource {
         @unknown default: return error.localizedDescription
         }
         let path = context.codingPath.map { $0.intValue.map { "[\($0)]" } ?? $0.stringValue }.joined(separator: ".")
-        return "unexpected data at \(path.isEmpty ? "top level" : path): \(context.debugDescription)"
+        let location = path.isEmpty ? String(localized: "top level") : path
+        return String(localized: "unexpected data at \(location): \(context.debugDescription)")
     }
 
     private func dailies(from start: Date, to end: Date) async throws -> [GarminData.Daily] {

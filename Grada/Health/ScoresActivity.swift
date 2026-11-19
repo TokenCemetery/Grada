@@ -38,10 +38,10 @@ nonisolated enum DayIntensity {
 
         var title: String {
             switch self {
-            case .veryLight: "Very light"
-            case .light: "Light"
-            case .moderate: "Moderate"
-            case .vigorous: "Vigorous"
+            case .veryLight: String(localized: "Very light")
+            case .light: String(localized: "Light")
+            case .moderate: String(localized: "Moderate")
+            case .vigorous: String(localized: "Vigorous")
             }
         }
     }
@@ -82,9 +82,9 @@ nonisolated enum IntensityZones {
 
         var title: String {
             switch self {
-            case .low: "Low"
-            case .threshold: "Threshold"
-            case .high: "High"
+            case .low: String(localized: "Low")
+            case .threshold: String(localized: "Threshold")
+            case .high: String(localized: "High")
             }
         }
     }

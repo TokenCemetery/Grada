@@ -35,9 +35,10 @@ struct MonthSummaryView: View {
     }
 
     private var subtitle: String {
-        guard isCurrent else { return "Compared with \(previousName)" }
+        guard isCurrent else { return String(localized: "Compared with \(previousName)") }
         let days = calendar.component(.day, from: .now)
-        return "So far · \(days) \(days == 1 ? "day" : "days") · compared with \(previousName)"
+        return days == 1 ? String(localized: "So far · 1 day · compared with \(previousName)")
+            : String(localized: "So far · \(days) days · compared with \(previousName)")
     }
 
     private func row(_ row: MonthSummary.Row) -> some View {
@@ -64,26 +65,31 @@ struct MonthSummaryView: View {
     /// What the average is per.
     private func per(_ row: MonthSummary.Row) -> String {
         switch row.metric {
-        case .steps: "a day"
-        case .exercise: "a week · goal 150 min"
-        case .restingHeartRate: "average"
-        case .hrv: "overnight average"
-        case .sleep: "a night"
-        case .vo2Max: "average of \(row.days) \(row.days == 1 ? "reading" : "readings")"
+        case .steps: String(localized: "a day")
+        case .exercise: String(localized: "a week · goal 150 min")
+        case .restingHeartRate: String(localized: "average", comment: "Month summary: the value shown is an average")
+        case .hrv: String(localized: "overnight average")
+        case .sleep: String(localized: "a night")
+        case .vo2Max: row.days == 1 ? String(localized: "average of 1 reading")
+            : String(localized: "average of \(row.days) readings")
         }
     }
 
     private func change(_ row: MonthSummary.Row) -> String {
         if row.average == nil {
-            return "\(row.days) of \(row.metric.minimumDays) \(row.metric == .vo2Max ? "readings" : "days") needed"
+            let needed = row.metric.minimumDays
+            return row.metric == .vo2Max ? String(localized: "\(row.days) of \(needed) readings needed")
+                : String(localized: "\(row.days) of \(needed) days needed")
         }
-        guard let previous = row.previous else { return "Not enough data in \(previousName)" }
+        guard let previous = row.previous else { return String(localized: "Not enough data in \(previousName)") }
         switch row.change {
         case .unknown: return ""
-        case .steady: return "About the same"
+        case .steady: return String(localized: "About the same")
         case .changed(let difference):
             let arrow = difference > 0 ? "↑" : "↓"
-            return "\(arrow) \(value(abs(difference), row.metric, unit: false, fine: true)) from \(value(previous, row.metric, unit: false))"
+            let change = value(abs(difference), row.metric, unit: false, fine: true)
+            let from = value(previous, row.metric, unit: false)
+            return String(localized: "\(arrow) \(change) from \(from)")
         }
     }
 
@@ -101,9 +107,9 @@ struct MonthSummaryView: View {
         }
         return switch metric {
         case .steps: number(0)
-        case .exercise: number(0) + (unit ? " min" : "")
-        case .restingHeartRate: number(0) + (unit ? " bpm" : "")
-        case .hrv: number(0) + (unit ? " ms" : "")
+        case .exercise: unit ? String(localized: "\(number(0)) min") : number(0)
+        case .restingHeartRate: unit ? String(localized: "\(number(0)) bpm") : number(0)
+        case .hrv: unit ? String(localized: "\(number(0)) ms") : number(0)
         case .sleep: SnapshotBuilder.hoursMinutes(value)
         case .vo2Max: number(1)
         }

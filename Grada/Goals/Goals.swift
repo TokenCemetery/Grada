@@ -8,12 +8,12 @@ nonisolated enum GoalMetric: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .steps: "Steps"
-        case .floors: "Floors"
-        case .activeEnergy: "Active energy"
-        case .sleep: "Sleep"
-        case .intensityMinutes: "Intensity minutes"
-        case .workouts: "Workouts"
+        case .steps: String(localized: "Steps")
+        case .floors: String(localized: "Floors", comment: "Flights of stairs climbed")
+        case .activeEnergy: String(localized: "Active energy")
+        case .sleep: String(localized: "Sleep")
+        case .intensityMinutes: String(localized: "Intensity minutes")
+        case .workouts: String(localized: "Workouts")
         }
     }
 
@@ -46,10 +46,10 @@ nonisolated enum GoalMetric: String, CaseIterable, Identifiable {
     func formatted(_ value: Double) -> String {
         switch self {
         case .steps, .floors: value.formatted(.number.precision(.fractionLength(0)))
-        case .activeEnergy: "\(value.formatted(.number.precision(.fractionLength(0)))) kcal"
+        case .activeEnergy: String(localized: "\(value.formatted(.number.precision(.fractionLength(0)))) kcal")
         case .sleep: SnapshotBuilder.hoursMinutes(value)
-        case .intensityMinutes: "\(value.formatted(.number.precision(.fractionLength(0)))) min a week"
-        case .workouts: "\(value.formatted(.number.precision(.fractionLength(0)))) a week"
+        case .intensityMinutes: String(localized: "\(value.formatted(.number.precision(.fractionLength(0)))) min a week")
+        case .workouts: String(localized: "\(value.formatted(.number.precision(.fractionLength(0)))) a week", comment: "Workouts per week, e.g. 3 a week")
         }
     }
 
@@ -66,19 +66,19 @@ nonisolated enum GoalPreset: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .gentle: "Gentle"
-        case .balanced: "Balanced"
-        case .active: "Active"
-        case .athlete: "Athlete"
+        case .gentle: String(localized: "Gentle", comment: "Goal preset name")
+        case .balanced: String(localized: "Balanced", comment: "Goal preset name")
+        case .active: String(localized: "Active", comment: "Goal preset name, for people who exercise regularly")
+        case .athlete: String(localized: "Athlete", comment: "Goal preset name")
         }
     }
 
     var summary: String {
         switch self {
-        case .gentle: "Getting moving or recovering"
-        case .balanced: "General health"
-        case .active: "Regular exercise"
-        case .athlete: "Training for performance"
+        case .gentle: String(localized: "Getting moving or recovering")
+        case .balanced: String(localized: "General health")
+        case .active: String(localized: "Regular exercise")
+        case .athlete: String(localized: "Training for performance")
         }
     }
 
