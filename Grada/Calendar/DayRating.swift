@@ -1,9 +1,6 @@
 import SwiftUI
 
-/// How good a day was for one metric; drives the calendar's day colours.
-nonisolated enum DayRating: CaseIterable {
-    case good, fair, poor
-
+extension DayRating {
     var title: String {
         switch self {
         case .good: String(localized: "Good")
@@ -19,17 +16,6 @@ nonisolated enum DayRating: CaseIterable {
         case (.poor, false): .red
         case (.good, true): .blue
         case (.fair, true): .orange
-        case (.poor, true): .primary
-        }
-    }
-
-    /// A card value in this rating's color. Yellow text is unreadable on a light card, so fair is orange.
-    func text(colorBlind: Bool) -> Color {
-        switch (self, colorBlind) {
-        case (.good, false): .green
-        case (.fair, _): .orange
-        case (.poor, false): .red
-        case (.good, true): .blue
         case (.poor, true): .primary
         }
     }

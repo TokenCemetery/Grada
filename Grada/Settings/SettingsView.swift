@@ -119,6 +119,7 @@ private struct AccessibilityView: View {
             }
         }
         .navigationTitle("Accessibility")
+        .onChange(of: colorBlind) { WidgetPublisher.setColorBlind(colorBlind) }
     }
 }
 

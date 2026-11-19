@@ -66,7 +66,11 @@ struct GradaApp: App {
         Task { await importer.startBackgroundUpdates() }
         let source = StoredHealthData(container: container, sources: importer.liveSources)
         let notifier = ReportNotifier(source: source, context: container.mainContext)
-        importer.onRecentImport = { await notifier.update() }
+        let widgets = WidgetPublisher(source: source, context: container.mainContext)
+        importer.onRecentImport = {
+            await notifier.update()
+            await widgets.update()
+        }
         return (HomeModel(source: source, importer: importer), CalendarModel(source: source, importer: importer), source)
     }
 }

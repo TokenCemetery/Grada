@@ -45,6 +45,8 @@ Grada uses the data only to show you daily summaries, scores, calendars and tren
 
 Grada keeps a copy of daily summaries and workouts in the app's storage on your device, and your card layout, goals, journal and display settings beside it. If you enter a birth date or sex in Settings › Profile, for when Apple Health can't provide them, Grada keeps them in the app's settings on this device. With each day and workout it keeps the names Apple Health gives the apps and devices the data came from, such as "Oura" or "Apple Watch", to show you where your data came from.
 
+For its Home Screen and Lock Screen widgets, Grada also keeps the latest card values, such as your Recovery score or step count, in a file shared only between Grada and its widgets on this device. The file is replaced after each import and isn't synced.
+
 Grada never stores health data in iCloud: daily summaries and workouts stay on the device that imported them. Your card layout, goals and journal can sync between your devices through your private iCloud database. Data in that database belongs to your Apple Account, and only you can access it. The developer cannot read it. Apple stores it under the [Apple Privacy Policy](https://www.apple.com/legal/privacy/).
 
 Grada stores no data on any server run by the developer.

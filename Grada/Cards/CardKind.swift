@@ -35,8 +35,10 @@ nonisolated enum CardCategory: CaseIterable {
         }
     }
 
-    /// System colors already adapt to light and dark mode.
-    var color: Color {
+    var color: Color { tint.color }
+
+    /// Also colors the icon on the widgets.
+    var tint: CardTint {
         switch self {
         case .status: .green
         case .sleep: .indigo

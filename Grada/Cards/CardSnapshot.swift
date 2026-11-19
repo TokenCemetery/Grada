@@ -72,6 +72,22 @@ nonisolated struct CardSnapshot {
     static func noData(period: String) -> CardSnapshot {
         CardSnapshot(period: period, value: nil)
     }
+
+    /// A rating colors the value red, yellow or green; otherwise only scored cards color it by tone.
+    func valueStyle(for kind: CardKind) -> CardValueStyle {
+        if let rating { return .rated(rating) }
+        guard kind.isScore else { return .plain }
+        switch tone {
+        case .good: return .good
+        case .warning: return .warning
+        case .neutral: return .plain
+        }
+    }
+
+    /// The comparison line turns orange on a warning, except on scores, whose value already says it.
+    func comparisonWarns(for kind: CardKind) -> Bool {
+        tone == .warning && !kind.isScore
+    }
 }
 
 /// One day's workouts: minutes per sport, longest first.

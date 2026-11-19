@@ -19,7 +19,7 @@ struct CardView: View {
                         Text(kind.title).font(.subheadline.weight(.semibold))
                         Text(snapshot.period).font(.caption).foregroundStyle(.secondary)
                         if let comparison = snapshot.comparison {
-                            comparisonText(comparison, snapshot.tone).lineLimit(2)
+                            comparisonText(comparison, warns: snapshot.comparisonWarns(for: kind)).lineLimit(2)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -109,7 +109,7 @@ struct CardView: View {
         VStack(alignment: .leading, spacing: 2) {
             valueText(snapshot)
             if let comparison = snapshot.comparison {
-                comparisonText(comparison, snapshot.tone).lineLimit(1)
+                comparisonText(comparison, warns: snapshot.comparisonWarns(for: kind)).lineLimit(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -129,21 +129,14 @@ struct CardView: View {
         }
     }
 
-    private func comparisonText(_ comparison: String, _ tone: CardSnapshot.Tone) -> some View {
+    private func comparisonText(_ comparison: String, warns: Bool) -> some View {
         Text(comparison)
             .font(.caption)
-            .foregroundStyle(tone == .warning && !kind.isScore ? Color.orange : .secondary)
+            .foregroundStyle(warns ? Color.orange : .secondary)
     }
 
-    /// A rating colors the value red, yellow or green; otherwise only scored cards color it by tone.
     private func valueColor(_ snapshot: CardSnapshot) -> Color {
-        if let rating = snapshot.rating { return rating.text(colorBlind: colorBlind) }
-        guard kind.isScore else { return .primary }
-        switch snapshot.tone {
-        case .good: return .green
-        case .warning: return .orange
-        case .neutral: return .primary
-        }
+        snapshot.valueStyle(for: kind).color(colorBlind: colorBlind)
     }
 
     /// A rated day line takes the rating's color, so the line reads like the value above it.

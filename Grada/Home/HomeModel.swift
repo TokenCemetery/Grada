@@ -11,7 +11,7 @@ final class HomeModel {
 
     private let source: HealthDataSource
     /// The longest history any card reads (VO₂ max), so one fetch of stored rows serves every card (#121).
-    private let cardDays = 90
+    static let cardDays = 90
     private let logger = Logger(subsystem: "Grada", category: "HomeModel")
 
     init(source: HealthDataSource, importer: HealthImporter? = nil) {
@@ -42,7 +42,7 @@ final class HomeModel {
     /// Rebuilds the cards from data already imported.
     func reload(_ cards: [CardID], goals: GoalHistory) async {
         var builder: SnapshotBuilder
-        do { builder = SnapshotBuilder(source: try await source.withDaysLoaded(cardDays)) }
+        do { builder = SnapshotBuilder(source: try await source.withDaysLoaded(Self.cardDays)) }
         catch {
             // Each card then fetches for itself.
             logger.error("Loading stored days failed: \(error.localizedDescription)")
