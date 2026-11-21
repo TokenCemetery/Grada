@@ -1216,6 +1216,16 @@ struct PastDaySourceTests {
 struct CalendarTypeTests {
     private let calendar = Calendar.current
 
+    /// Switching type while a load runs shows the type switched to, whichever load finishes last (#171).
+    @Test func latestLoadWins() async {
+        let model = CalendarModel(source: SampleDataSource())
+        let first = Task { await model.load(.recovery, goals: GoalHistory()) }
+        await Task.yield()
+        await model.load(.training, goals: GoalHistory())
+        await first.value
+        #expect(model.loadedMetric == .training)
+    }
+
     @Test func savedMetricsMapToTheirType() {
         #expect(CalendarMetric(rawValue: "healthStatus") == .health)
         #expect(CalendarMetric(rawValue: "hrv") == .health)

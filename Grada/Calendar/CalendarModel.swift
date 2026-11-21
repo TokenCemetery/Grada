@@ -44,6 +44,8 @@ final class CalendarModel {
     private var loadedMonths = 6
     /// Months added each time the oldest loaded month scrolls into view.
     private let monthsPerStep = 6
+    /// Counts loads, so only the latest one's result is shown.
+    @ObservationIgnored private var loads = 0
 
     init(source: HealthDataSource, importer: HealthImporter? = nil, calendar: Calendar = .autoupdatingCurrent) {
         self.source = source
@@ -69,12 +71,14 @@ final class CalendarModel {
     }
 
     func load(_ metric: CalendarMetric, goals: GoalHistory) async {
+        loads += 1
+        let load = loads
         do {
-            let months = loadedMonths
-            let loaded = try await Self.read(metric, months: months, goals: goals, source: source, calendar: calendar,
+            let loaded = try await Self.read(metric, months: loadedMonths, goals: goals, source: source, calendar: calendar,
                                              baselineDays: baselineDays, fallbackDays: fallbackDays)
-            // A longer load started meanwhile; let it fill in instead.
-            guard months == loadedMonths else { return }
+            // A later load started meanwhile, for another type, more months or newer data; let it fill in instead.
+            // Reads don't all stop when cancelled, so a switch of type can't rely on cancellation (#171).
+            guard load == loads else { return }
             ratings = loaded.ratings
             showsCycle = loaded.showsCycle
             flowDays = Dictionary(loaded.flow.map { ($0.day, $0) }) { first, _ in first }
