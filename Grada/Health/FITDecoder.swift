@@ -27,10 +27,16 @@ nonisolated enum FITDecoder {
         let bytes = [UInt8](data)
         var messages: [FITMessage] = []
         var offset = 0
+        // Files can be chained; anything after the last one that isn't another file, such as padding, is left alone
+        // rather than failing the files already read.
         repeat {
             messages += try decodeFile(bytes, at: &offset)
-        } while offset < bytes.count
+        } while startsFile(bytes, at: offset)
         return messages
+    }
+
+    private static func startsFile(_ bytes: [UInt8], at offset: Int) -> Bool {
+        bytes.count - offset >= 12 && bytes[offset] >= 12 && bytes[(offset + 8)..<(offset + 12)].elementsEqual(".FIT".utf8)
     }
 
     private struct Definition {

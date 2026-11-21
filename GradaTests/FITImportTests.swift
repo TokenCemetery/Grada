@@ -159,6 +159,15 @@ struct FITImportTests {
         #expect(messages.map(\.timestamp) == [midnight, midnight + 5, midnight + 34])
     }
 
+    /// Padding after the last file doesn't discard what was read (#151); a second chained file is still read.
+    @Test func trailingBytesAfterTheLastFileAreIgnored() throws {
+        var writer = FITWriter()
+        writer.fileID()
+        let file = writer.bytes
+        #expect(try FITDecoder.decode(file + Data([0, 0, 0])).count == 1)
+        #expect(try FITDecoder.decode(file + file + Data(repeating: 0, count: 20)).count == 2)
+    }
+
     @Test func sameFileTwiceCountsOnce() async throws {
         let run = Self.activity(start: midnight)
         let result = try await read(["a.fit": run, "b.fit": run])
