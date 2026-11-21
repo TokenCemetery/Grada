@@ -1365,9 +1365,16 @@ struct GoalTests {
         let met = Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [50, 50, 50, 50, nil, nil, nil]),
                                     today: day(7), calendar: calendar)
         #expect(met.map(\.value) == [210])
-        let missed = Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [30, 30, 30, nil, nil, nil, nil]),
+        let missed = Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [30, 30, 30, 30, nil, nil, nil]),
                                        today: day(7), calendar: calendar)
         #expect(missed.map(\.value) == [190])
+    }
+
+    /// A week with too few measured days doesn't lower a weekly goal; it could be missing data (#157).
+    @Test func weeklyGoalIsNotLoweredFromAFewDays() {
+        let goals = history([GoalEntry(metric: .intensityMinutes, value: 200, effectiveFrom: day(0), reason: .preset)])
+        #expect(Goals.adjustments(.intensityMinutes, history: goals, daily: week(ending: 7, [20, nil, nil, nil, nil, nil, nil]),
+                                  today: day(7), calendar: calendar).isEmpty)
     }
 
     @Test func intensityNeverDropsBelowTheWHOMinimum() {

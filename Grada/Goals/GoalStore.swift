@@ -109,7 +109,8 @@ struct GoalStore {
             .floors: (dayStarts, try await source.daily(.floors, days: days).map(\.value)),
             .activeEnergy: (dayStarts, try await source.daily(.activeEnergy, days: days).map(\.value)),
             .intensityMinutes: (dayStarts, try await builder.intensityDays(days).map(\.value)),
-            .workouts: (dayStarts, dayStarts.map { workoutCounts[$0] ?? 0 }),
+            // No workout counts as 0 only on a day with step data; a day without any data isn't measured (#157).
+            .workouts: (dayStarts, steps.map { workoutCounts[$0.day] ?? ($0.value == nil ? nil : 0) }),
         ]
     }
 }

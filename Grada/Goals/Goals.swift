@@ -143,7 +143,8 @@ nonisolated struct GoalHistory: Equatable {
 
 /// How goals start and how they adjust every week.
 nonisolated enum Goals {
-    /// A daily goal needs this many measured days in the week to adjust, so missing data doesn't lower it.
+    /// A goal needs this many measured days in the week to adjust (a weekly one, to be lowered), so missing data
+    /// doesn't lower it.
     static let minimumMeasuredDays = 4
     /// Mondays left unprocessed longer ago than this are skipped instead of caught up.
     static let maximumCatchUpWeeks = 4
@@ -206,6 +207,8 @@ nonisolated enum Goals {
             guard !measured.isEmpty, let goal = history.value(metric, on: days.last!) else { return nil }
             let total = measured.reduce(0) { $0 + $1.1 }
             if total >= goal { return 1 }
+            // Days without data would read as a short week.
+            guard measured.count >= minimumMeasuredDays else { return nil }
             return total < 0.7 * goal ? -1 : nil
         }
         guard measured.count >= minimumMeasuredDays else { return nil }
