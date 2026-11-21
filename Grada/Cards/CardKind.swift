@@ -91,6 +91,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
     case heartRateRecovery
     case weight
     case bloodPressure
+    case mobility
     case last30Days
 
     var id: String { rawValue }
@@ -176,6 +177,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
         case .heartRateRecovery: String(localized: "Heart Rate Recovery")
         case .weight: String(localized: "Weight")
         case .bloodPressure: String(localized: "Blood Pressure")
+        case .mobility: String(localized: "Mobility")
         case .last30Days: String(localized: "Workouts Calendar")
         }
     }
@@ -216,6 +218,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
         case .heartRateRecovery: "arrow.down.heart"
         case .weight: "scalemass"
         case .bloodPressure: "heart.text.square"
+        case .mobility: "figure.walk.motion"
         case .last30Days: "calendar"
         }
     }
@@ -230,6 +233,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
              .heartRateRecovery: .training
         case .weight: .body
         case .bloodPressure: .heart
+        case .mobility: .activity
         case .last30Days: .history
         }
     }

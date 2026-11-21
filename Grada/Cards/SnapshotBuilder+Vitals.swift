@@ -273,6 +273,39 @@ nonisolated extension SnapshotBuilder {
     }
 }
 
+nonisolated extension SnapshotBuilder {
+    /// The average walking speed of the last 7 days and Apple's Walking Steadiness class from them (#136). Speed is
+    /// colored by Studenski's bands only from age 65, the ages they were found in. Without a speed in those 7 days,
+    /// the latest in 30 shows plain, with its date.
+    func mobility() async throws -> CardSnapshot {
+        let speeds = try await source.daily(.walkingSpeed, days: 30)
+        let recent = speeds.suffix(Mobility.recentDays).compactMap(\.value)
+        let period: String, speed: Double
+        var rating: DayRating?
+        if let average = Baseline.average(recent) {
+            period = String(localized: "Last 7 days")
+            speed = average
+            rating = try await source.age().flatMap { $0 >= Mobility.studiedFromAge ? Mobility.rating(metersPerSecond: average) : nil }
+        } else if let latest = speeds.last(where: { $0.value != nil }), let value = latest.value {
+            period = dayLabel(latest.day)
+            speed = value
+        } else {
+            return .noData(period: String(localized: "Latest"))
+        }
+        let steadiness = try await source.daily(.walkingSteadiness, days: Mobility.recentDays).last { $0.value != nil }?.value
+            .flatMap(Mobility.Steadiness.init(percent:))
+        return CardSnapshot(
+            period: period,
+            value: format(Mobility.speed(speed, usesMetric: usesMetric), 1),
+            unit: Mobility.speedUnit(usesMetric: usesMetric),
+            comparison: steadiness.map { String(localized: "Steadiness \($0.title) (Apple)", comment: "Apple's Walking Steadiness class, e.g. Steadiness OK (Apple)") },
+            tone: rating.map(Self.tone) ?? .neutral,
+            rating: rating,
+            chart: .line(speeds.map { $0.value.map { Mobility.speed($0, usesMetric: usesMetric) } }, normalRange: nil)
+        )
+    }
+}
+
 nonisolated extension QuantityMetric {
     var unit: String {
         switch self {
@@ -290,12 +323,16 @@ nonisolated extension QuantityMetric {
         case .bodyFat: "%"
         case .height: String(localized: "cm", comment: "Unit: centimeters")
         case .bloodPressureSystolic, .bloodPressureDiastolic: BloodPressure.unit
+        case .walkingSpeed: "m/s"
+        case .walkingStepLength: String(localized: "cm", comment: "Unit: centimeters")
+        case .walkingAsymmetry, .walkingSteadiness: "%"
         }
     }
 
     var decimals: Int {
         switch self {
-        case .respiratoryRate, .wristTemperature, .distance, .vo2Max, .bodyMass, .bodyFat, .leanBodyMass: 1
+        case .respiratoryRate, .wristTemperature, .distance, .vo2Max, .bodyMass, .bodyFat, .leanBodyMass, .walkingAsymmetry: 1
+        case .walkingSpeed: 2
         default: 0
         }
     }

@@ -50,6 +50,7 @@ nonisolated struct SnapshotBuilder {
         case .heartRateRecovery: try await heartRateRecovery()
         case .weight: try await weight()
         case .bloodPressure: try await bloodPressure()
+        case .mobility: try await mobility()
         case .last30Days: try await last30Days()
         }
     }

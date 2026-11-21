@@ -32,7 +32,7 @@ extension CardKind {
         switch self {
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity, .last30Days: .total
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max,
-             .heartRateRecovery, .weight, .bloodPressure: .vital
+             .heartRateRecovery, .weight, .bloodPressure, .mobility: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .lastWorkout, .weeklyTraining, .strain, .recoveryTime, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .healthStatus, .recovery, .resources, .healthAge, .hrvStatus: .score
@@ -55,6 +55,7 @@ extension CardKind {
         case .vo2Max, .racePredictor: .vo2Max
         case .weight: .bodyMass
         case .bloodPressure: .bloodPressureSystolic
+        case .mobility: .walkingSpeed
         default: nil
         }
     }
@@ -114,6 +115,7 @@ extension CardKind {
         case .lastWorkout, .weeklyTraining, .heartRateRecovery: [.workouts]
         case .weight: [.bodyMass, .bodyFat, .leanBodyMass, .height]
         case .bloodPressure: [.bloodPressureSystolic, .bloodPressureDiastolic]
+        case .mobility: [.walkingSpeed, .walkingSteadiness, .walkingStepLength, .walkingAsymmetry]
         case .recovery, .hrvStatus, .healthStatus: [.overnightHRV]
         default: quantityMetric.map { [DataKind($0)] } ?? []
         }
@@ -168,6 +170,8 @@ extension CardKind {
             String(localized: "Breaths per minute while asleep. It's very stable from night to night, so a rise above your normal is an early sign of illness or strain.")
         case .bloodPressure:
             String(localized: "Blood pressure from a cuff that saves its readings to Apple Health; Grada doesn't estimate it from anything else. A day with several readings shows their average, and a reading more than a week old shows without colour. The colours follow the American College of Cardiology and American Heart Association's 2017 categories: normal below 120/80 (green), elevated 120–129 over below 80, stage 1 hypertension 130–139 or 80–89 (both orange), and stage 2 from 140 or 90 (red); when the two numbers differ, the higher category counts. A diagnosis rests on the average of several readings taken on several occasions, measured the right way. Grada isn't a medical device, and only a clinician can diagnose high blood pressure.")
+        case .mobility:
+            String(localized: "How you walk in everyday life, measured by iPhone in your pocket: walking speed, step length and asymmetry (how much your steps differ between sides). In a pooled study of over 34,000 adults aged 65 and older, faster walking went with longer survival: 1.0 m/s (3.6 km/h) or faster meant longer than age and sex alone predict, about 0.8 m/s sat at the average, and below 0.6 m/s may mark a higher risk. From 65, the card's average speed over the last 7 days is coloured by those bands: green from 1.0, orange from 0.6, red below. They came from timed walks, not everyday walking, so read them as a fitness marker, not a diagnosis. Walking Steadiness and its classes (OK, Low, Very Low) are Apple's own measure of how steadily you walk, which Apple uses to flag a higher risk of falling.")
         case .wristTemperature:
             String(localized: "Your overnight wrist temperature compared with your baseline. Changes follow illness, alcohol, the menstrual cycle and room temperature.")
         case .steps:

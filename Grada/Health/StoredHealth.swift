@@ -35,6 +35,10 @@ nonisolated final class DaySummary {
     var height: Double?
     var bloodPressureSystolic: Double?
     var bloodPressureDiastolic: Double?
+    var walkingSpeed: Double?
+    var walkingStepLength: Double?
+    var walkingAsymmetry: Double?
+    var walkingSteadiness: Double?
     var standHours: Double?
 
     /// Seconds per sleep stage for the night that ended on this day.
@@ -99,6 +103,10 @@ nonisolated final class DaySummary {
         case .height: \.height
         case .bloodPressureSystolic: \.bloodPressureSystolic
         case .bloodPressureDiastolic: \.bloodPressureDiastolic
+        case .walkingSpeed: \.walkingSpeed
+        case .walkingStepLength: \.walkingStepLength
+        case .walkingAsymmetry: \.walkingAsymmetry
+        case .walkingSteadiness: \.walkingSteadiness
         }
     }
 }

@@ -110,6 +110,11 @@ struct TrendBuilder {
             let series = try await source.daily(.bodyMass, days: days)
             return make(series.map { DayValue(day: $0.day, value: $0.value.map { BodyMass.display($0, usesMetric: usesMetric) }) },
                         period, style: .line, unit: BodyMass.unit(usesMetric: usesMetric), format: .number(decimals: 1))
+        case .mobility:
+            let series = try await source.daily(.walkingSpeed, days: days)
+            return make(series.map { DayValue(day: $0.day, value: $0.value.map { Mobility.speed($0, usesMetric: usesMetric) }) },
+                        period, style: .line, unit: Mobility.speedUnit(usesMetric: usesMetric), format: .number(decimals: 1),
+                        title: String(localized: "Walking Speed"))
         case .bloodPressure:
             return make(try await source.daily(.bloodPressureSystolic, days: days), period, style: .line, unit: BloodPressure.unit,
                         format: .number(decimals: 0), title: String(localized: "Systolic", comment: "Blood pressure chart: the upper number"))
@@ -270,9 +275,10 @@ struct TrendBuilder {
 
     /// Charts a detail screen shows below its trend, each only with data: body fat, BMI and lean body mass for
     /// Weight (#132), training monotony and strain (#133) and effort against heart rate load (#134) for Strain,
-    /// diastolic for Blood Pressure (#135).
+    /// diastolic for Blood Pressure (#135), Walking Steadiness, step length and asymmetry for Mobility (#136).
     func extraTrends(for kind: CardKind, period: TrendPeriod) async throws -> [Trend] {
         if kind == .strain { return try await monotonyAndStrain(period) + effortAndHeartRateLoad(period) }
+        if kind == .mobility { return try await mobilityTrends(period) }
         if kind == .bloodPressure {
             let diastolic = try await source.daily(.bloodPressureDiastolic, days: period.days)
             guard diastolic.contains(where: { $0.value != nil }) else { return [] }
@@ -304,6 +310,25 @@ struct TrendBuilder {
             trends.append(make(lean.map { DayValue(day: $0.day, value: $0.value.map { BodyMass.display($0, usesMetric: usesMetric) }) },
                                period, style: .line, unit: BodyMass.unit(usesMetric: usesMetric), format: .number(decimals: 1),
                                title: String(localized: "Lean Body Mass")))
+        }
+        return trends
+    }
+
+    /// Walking Steadiness titled with Apple's class of the latest value, step length and asymmetry; each only with data.
+    private func mobilityTrends(_ period: TrendPeriod) async throws -> [Trend] {
+        var trends: [Trend] = []
+        let steadiness = try await source.daily(.walkingSteadiness, days: period.days)
+        if let latest = steadiness.last(where: { $0.value != nil })?.value {
+            let title = Mobility.Steadiness(percent: latest).map {
+                String(localized: "Walking Steadiness · \($0.title)", comment: "Chart title with Apple's class of the latest value, e.g. Walking Steadiness · OK")
+            } ?? String(localized: "Walking Steadiness")
+            trends.append(make(steadiness, period, style: .line, unit: "%", format: .number(decimals: 0), title: title))
+        }
+        for metric in [QuantityMetric.walkingStepLength, .walkingAsymmetry] {
+            let series = try await source.daily(metric, days: period.days)
+            guard series.contains(where: { $0.value != nil }) else { continue }
+            trends.append(make(series, period, style: .line, unit: metric.unit, format: .number(decimals: metric.decimals),
+                               title: DataKind(metric).title))
         }
         return trends
     }

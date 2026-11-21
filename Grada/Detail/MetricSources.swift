@@ -138,6 +138,12 @@ struct MetricSource: Hashable {
     static let whelton2018 = MetricSource("Whelton et al. 2018 (2017 ACC/AHA guideline) · Hypertension",
                                           "Blood pressure categories: normal, elevated, stage 1 and stage 2 hypertension",
                                           doi: "10.1161/HYP.0000000000000065")
+    static let studenski2011 = MetricSource("Studenski et al. 2011 · JAMA",
+                                            "Gait speed and survival in adults 65 and older: 1.0, 0.8 and 0.6 m/s",
+                                            doi: "10.1001/jama.2010.1923")
+    static let appleMobility2022 = MetricSource("Apple 2022 · Measuring Walking Quality Through iPhone Mobility Metrics",
+                                                "How iPhone measures walking speed, step length and asymmetry",
+                                                url: "https://www.apple.com/healthcare/docs/site/Measuring_Walking_Quality_Through_iPhone_Mobility_Metrics.pdf")
     static let who2000 = MetricSource("WHO 2000 · Technical Report Series 894",
                                       "BMI classes for adults: underweight, normal, pre-obese and obese",
                                       url: "https://pubmed.ncbi.nlm.nih.gov/11234459/")
@@ -170,6 +176,7 @@ extension CardKind {
         case .heartRateRecovery: [.cole1999, .watanabe2001]
         case .weight: [.who2000]
         case .bloodPressure: [.whelton2018]
+        case .mobility: [.studenski2011, .appleMobility2022]
         default: []
         }
     }

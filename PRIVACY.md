@@ -22,6 +22,7 @@ When you grant access, Grada reads these types from Apple Health:
 - Sleep: sleep sessions and sleep stages.
 - Mindfulness and daylight: mindful sessions and time in daylight, read on your device only to suggest the Meditation and Outdoor time journal tags. Grada doesn't store them.
 - Drinks and caffeine: the number of alcoholic drinks and the caffeine logged in Apple Health, read on your device only to suggest the Alcohol and Caffeine journal tags. Grada doesn't store them.
+- Mobility: walking speed, step length, walking asymmetry and Walking Steadiness, measured by iPhone.
 - Workouts: type, time, duration, energy, heart rate, distance (walking, running, cycling and swimming), elevation gain, effort rating (yours, or Apple's estimate, on iOS 18 and later), and the GPS route if the workout recorded one. Effort ratings are read on your device when shown; Grada doesn't store them. The route is read only to draw the workout's map on your device; Grada doesn't store or sync it.
 - Date of birth and biological sex, for scores that depend on age or sex, such as health age and VO2 max fitness zones.
 

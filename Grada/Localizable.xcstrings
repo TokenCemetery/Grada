@@ -13933,6 +13933,58 @@
         }
       }
     },
+    "Gait speed and survival in adults 65 and older: 1.0, 0.8 and 0.6 m/s" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gehgeschwindigkeit und Überleben bei Erwachsenen ab 65: 1,0, 0,8 und 0,6 m/s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocidad de la marcha y supervivencia en adultos de 65 años o más: 1,0, 0,8 y 0,6 m/s"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vitesse de marche et survie chez les adultes de 65 ans et plus : 1,0, 0,8 et 0,6 m/s"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "65 वर्ष और उससे अधिक उम्र के वयस्कों में चलने की गति और जीवनकाल: 1.0, 0.8 और 0.6 m/s"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocità del passo e sopravvivenza negli adulti dai 65 anni: 1,0, 0,8 e 0,6 m/s"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocidade da marcha e sobrevida em adultos com 65 anos ou mais: 1,0, 0,8 e 0,6 m/s"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скорость ходьбы и выживаемость у взрослых от 65 лет: 1,0, 0,8 и 0,6 м/с"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "65 岁及以上成人的步速与生存：1.0、0.8 和 0.6 米/秒"
+          }
+        }
+      }
+    },
     "Garmin Connect" : {
       "localizations" : {
         "de" : {
@@ -17060,6 +17112,58 @@
         }
       }
     },
+    "How iPhone measures walking speed, step length and asymmetry" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie das iPhone Gehgeschwindigkeit, Schrittlänge und Asymmetrie misst"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cómo mide el iPhone la velocidad, la longitud del paso y la asimetría al caminar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment l’iPhone mesure la vitesse de marche, la longueur du pas et l’asymétrie"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone चलने की गति, कदम की लंबाई और असमानता कैसे मापता है"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Come iPhone misura velocità, lunghezza del passo e asimmetria della camminata"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como o iPhone mede a velocidade de caminhada, o comprimento do passo e a assimetria"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Как iPhone измеряет скорость ходьбы, длину шага и асимметрию"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone 如何测量步行速度、步长和不对称性"
+          }
+        }
+      }
+    },
     "How much oxygen your blood carries. 95–100% is typical; brief dips during sleep are common." : {
       "localizations" : {
         "de" : {
@@ -17368,6 +17472,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你昨晚睡得如何：这一晚达到的良好睡眠指标所占比例，每项权重相同。其中四项来自美国国家睡眠基金会的专家共识：从入睡到醒来期间的睡眠时间至少占 85%，期间清醒不超过 20 分钟（65 岁起为 30 分钟），超过 5 分钟的觉醒最多一次（65 岁起为两次）。另外两项是满足你的睡眠需求的足够睡眠，以及睡眠规律指数高于成年人中最不规律的四分之一。专家们对将睡眠阶段作为良好睡眠的标志没有达成共识，因此不计分。所有指标达标为绿色，有一项未达标为黄色，两项或更多为红色。需要手表提供睡眠阶段，且最近 7 天中有 5 天有睡眠记录。"
+          }
+        }
+      }
+    },
+    "How you walk in everyday life, measured by iPhone in your pocket: walking speed, step length and asymmetry (how much your steps differ between sides). In a pooled study of over 34,000 adults aged 65 and older, faster walking went with longer survival: 1.0 m/s (3.6 km/h) or faster meant longer than age and sex alone predict, about 0.8 m/s sat at the average, and below 0.6 m/s may mark a higher risk. From 65, the card's average speed over the last 7 days is coloured by those bands: green from 1.0, orange from 0.6, red below. They came from timed walks, not everyday walking, so read them as a fitness marker, not a diagnosis. Walking Steadiness and its classes (OK, Low, Very Low) are Apple's own measure of how steadily you walk, which Apple uses to flag a higher risk of falling." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie du im Alltag gehst, gemessen vom iPhone in deiner Tasche: Gehgeschwindigkeit, Schrittlänge und Asymmetrie (wie stark sich deine Schritte zwischen den Seiten unterscheiden). In einer gepoolten Studie mit über 34.000 Erwachsenen ab 65 ging schnelleres Gehen mit längerem Überleben einher: 1,0 m/s (3,6 km/h) oder schneller bedeutete länger, als Alter und Geschlecht allein erwarten lassen, etwa 0,8 m/s lag beim Durchschnitt, und unter 0,6 m/s kann ein höheres Risiko anzeigen. Ab 65 wird die Durchschnittsgeschwindigkeit der letzten 7 Tage auf der Karte nach diesen Bereichen eingefärbt: grün ab 1,0, orange ab 0,6, rot darunter. Sie stammen aus gemessenen Gehstrecken, nicht aus dem Alltag, also lies sie als Fitnessmerkmal, nicht als Diagnose. Die Gehstabilität und ihre Klassen (OK, Niedrig, Sehr niedrig) sind Apples eigenes Maß dafür, wie sicher du gehst; Apple nutzt es, um ein höheres Sturzrisiko anzuzeigen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cómo caminas en tu día a día, medido por el iPhone en tu bolsillo: velocidad, longitud del paso y asimetría (cuánto difieren tus pasos entre un lado y otro). En un estudio combinado con más de 34.000 adultos de 65 años o más, caminar más rápido se asoció con una supervivencia más larga: 1,0 m/s (3,6 km/h) o más significó vivir más de lo que predicen solo la edad y el sexo, alrededor de 0,8 m/s quedaba en la media y por debajo de 0,6 m/s puede indicar un riesgo mayor. Desde los 65, la velocidad media de los últimos 7 días de la tarjeta se colorea con esas franjas: verde desde 1,0, naranja desde 0,6 y rojo por debajo. Proceden de caminatas cronometradas, no del día a día, así que tómalas como un indicador de forma física, no como un diagnóstico. La estabilidad al caminar y sus clases (Correcta, Baja, Muy baja) son la medida propia de Apple de lo estable que caminas, que Apple usa para señalar un mayor riesgo de caída."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre façon de marcher au quotidien, mesurée par l’iPhone dans votre poche : vitesse de marche, longueur du pas et asymétrie (l’écart entre vos pas d’un côté et de l’autre). Dans une étude regroupant plus de 34 000 adultes de 65 ans et plus, marcher plus vite allait de pair avec une survie plus longue : 1,0 m/s (3,6 km/h) ou plus signifiait vivre plus longtemps que ne le prédisent l’âge et le sexe seuls, environ 0,8 m/s se situait à la moyenne, et moins de 0,6 m/s peut signaler un risque plus élevé. À partir de 65 ans, la vitesse moyenne des 7 derniers jours sur la carte est colorée selon ces seuils : vert dès 1,0, orange dès 0,6, rouge en dessous. Ils viennent de marches chronométrées, pas de la marche au quotidien : voyez-les comme un indicateur de forme, pas comme un diagnostic. La stabilité de la marche et ses classes (OK, Faible, Très faible) sont la mesure propre à Apple de la stabilité de votre marche, qu’Apple utilise pour signaler un risque de chute plus élevé."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आप रोज़मर्रा में कैसे चलते हैं, जेब में रखे iPhone से मापा गया: चलने की गति, कदम की लंबाई और असमानता (दोनों तरफ़ के कदमों में कितना फ़र्क है)। 65 वर्ष और उससे अधिक उम्र के 34,000 से ज़्यादा वयस्कों के संयुक्त अध्ययन में तेज़ चलना लंबे जीवन से जुड़ा था: 1.0 m/s (3.6 km/h) या उससे तेज़ का मतलब उम्र और लिंग के अनुमान से लंबा जीवन था, लगभग 0.8 m/s औसत पर था, और 0.6 m/s से कम ज़्यादा जोखिम का संकेत हो सकता है। 65 की उम्र से कार्ड पर पिछले 7 दिनों की औसत गति इन्हीं सीमाओं से रंगी जाती है: 1.0 से हरा, 0.6 से नारंगी, उससे कम लाल। ये समय मापकर की गई सैर से आए हैं, रोज़मर्रा के चलने से नहीं, इसलिए इन्हें फ़िटनेस का संकेत मानें, निदान नहीं। चलने की स्थिरता और इसकी श्रेणियाँ (ठीक, कम, बहुत कम) Apple का अपना माप हैं कि आप कितनी स्थिरता से चलते हैं, जिसका इस्तेमाल Apple गिरने के ज़्यादा जोखिम का संकेत देने के लिए करता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Come cammini nella vita di tutti i giorni, misurato da iPhone in tasca: velocità, lunghezza del passo e asimmetria (quanto i passi differiscono tra i due lati). In uno studio combinato su oltre 34.000 adulti dai 65 anni in su, camminare più veloce si associava a una sopravvivenza più lunga: 1,0 m/s (3,6 km/h) o più significava vivere più di quanto prevedano età e sesso da soli, circa 0,8 m/s era nella media e sotto 0,6 m/s può indicare un rischio maggiore. Dai 65 anni la velocità media degli ultimi 7 giorni sulla scheda è colorata secondo queste fasce: verde da 1,0, arancione da 0,6, rosso sotto. Vengono da camminate cronometrate, non dalla vita quotidiana, quindi leggile come un indicatore di forma fisica, non come una diagnosi. La stabilità della camminata e le sue classi (OK, Bassa, Molto bassa) sono la misura di Apple di quanto cammini in modo stabile, che Apple usa per segnalare un rischio di caduta più alto."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como você caminha no dia a dia, medido pelo iPhone no bolso: velocidade, comprimento do passo e assimetria (quanto seus passos diferem entre os lados). Em um estudo combinado com mais de 34.000 adultos com 65 anos ou mais, caminhar mais rápido esteve ligado a uma sobrevida maior: 1,0 m/s (3,6 km/h) ou mais significou viver mais do que idade e sexo sozinhos preveem, cerca de 0,8 m/s ficava na média e abaixo de 0,6 m/s pode indicar um risco maior. A partir dos 65, a velocidade média dos últimos 7 dias no cartão é colorida por essas faixas: verde a partir de 1,0, laranja a partir de 0,6 e vermelho abaixo. Elas vêm de caminhadas cronometradas, não do dia a dia, então leia-as como um indicador de condicionamento, não como diagnóstico. A estabilidade ao caminhar e suas classes (OK, Baixa, Muito baixa) são a medida própria da Apple de quão estável é sua caminhada, que a Apple usa para sinalizar um risco maior de queda."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Как вы ходите в обычной жизни, по данным iPhone в кармане: скорость ходьбы, длина шага и асимметрия (насколько шаги различаются между сторонами). В объединённом исследовании более 34 000 взрослых от 65 лет более быстрая ходьба была связана с большей продолжительностью жизни: 1,0 м/с (3,6 км/ч) и быстрее означало жизнь дольше, чем предсказывают возраст и пол, около 0,8 м/с соответствовало средней, а ниже 0,6 м/с может указывать на повышенный риск. С 65 лет средняя скорость за последние 7 дней на карточке окрашивается по этим порогам: зелёный от 1,0, оранжевый от 0,6, красный ниже. Они получены на хронометрированной ходьбе, а не в обычной жизни, поэтому считайте их показателем физической формы, а не диагнозом. Устойчивость при ходьбе и её классы (Норма, Низкая, Очень низкая) — собственная оценка Apple того, насколько устойчиво вы ходите; Apple использует её, чтобы отмечать повышенный риск падения."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在日常生活中的步行情况，由口袋里的 iPhone 测量：步行速度、步长和不对称性（左右两侧步伐的差异）。在一项汇总了 34,000 多名 65 岁及以上成年人的研究中，走得更快与更长的生存期相关：1.0 米/秒（3.6 公里/小时）或更快意味着比仅凭年龄和性别预测的更长寿，约 0.8 米/秒处于平均水平，低于 0.6 米/秒可能意味着风险较高。从 65 岁起，卡片上最近 7 天的平均步速按这些区间着色：1.0 起为绿色，0.6 起为橙色，以下为红色。这些数值来自计时步行，而非日常行走，所以请把它们当作体能指标，而不是诊断。步行稳定性及其分级（正常、低、非常低）是 Apple 自己衡量你走路稳定程度的指标，Apple 用它来提示较高的跌倒风险。"
           }
         }
       }
@@ -20430,6 +20586,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "交替安排高强度日和轻松日"
+          }
+        }
+      }
+    },
+    "Mobility" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mobilität"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movilidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mobilité"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "गतिशीलता"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mobilità"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mobilidade"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подвижность"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行动能力"
           }
         }
       }
@@ -29163,6 +29371,59 @@
         }
       }
     },
+    "Steadiness %@ (Apple)" : {
+      "comment" : "Apple's Walking Steadiness class, e.g. Steadiness OK (Apple)",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stabilität %@ (Apple)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estabilidad %@ (Apple)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stabilité %@ (Apple)"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्थिरता %@ (Apple)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stabilità %@ (Apple)"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estabilidade %@ (Apple)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Устойчивость: %@ (Apple)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稳定性 %@（Apple）"
+          }
+        }
+      }
+    },
     "Steady" : {
       "localizations" : {
         "de" : {
@@ -33885,6 +34146,267 @@
         }
       }
     },
+    "Walking Asymmetry" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gehasymmetrie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asimetría al caminar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asymétrie de la marche"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चलने में असमानता"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asimmetria della camminata"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assimetria da caminhada"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Асимметрия ходьбы"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步行不对称性"
+          }
+        }
+      }
+    },
+    "Walking Speed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gehgeschwindigkeit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocidad al caminar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vitesse de marche"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चलने की गति"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocità della camminata"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocidade de caminhada"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скорость ходьбы"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步行速度"
+          }
+        }
+      }
+    },
+    "Walking Steadiness" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gehstabilität"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estabilidad al caminar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stabilité de la marche"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चलने की स्थिरता"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stabilità della camminata"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estabilidade ao caminhar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Устойчивость при ходьбе"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步行稳定性"
+          }
+        }
+      }
+    },
+    "Walking Steadiness · %@" : {
+      "comment" : "Chart title with Apple's class of the latest value, e.g. Walking Steadiness · OK",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gehstabilität · %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estabilidad al caminar · %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stabilité de la marche · %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चलने की स्थिरता · %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stabilità della camminata · %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estabilidade ao caminhar · %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Устойчивость при ходьбе · %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步行稳定性 · %@"
+          }
+        }
+      }
+    },
+    "Walking Step Length" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrittlänge"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Longitud del paso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Longueur du pas"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कदम की लंबाई"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lunghezza del passo"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comprimento do passo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Длина шага"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "步长"
+          }
+        }
+      }
+    },
     "Walking and Running Distance" : {
       "localizations" : {
         "de" : {
@@ -37138,6 +37660,59 @@
         }
       }
     },
+    "km/h" : {
+      "comment" : "Unit: kilometres per hour",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "km/h"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "km/h"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "km/h"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "km/h"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "km/h"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "km/h"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "км/ч"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公里/小时"
+          }
+        }
+      }
+    },
     "lb" : {
       "comment" : "Unit: pounds",
       "localizations" : {
@@ -37399,6 +37974,59 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "分钟"
+          }
+        }
+      }
+    },
+    "mph" : {
+      "comment" : "Unit: miles per hour",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mph"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mph"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mph"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mph"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mph"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mph"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "миль/ч"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "英里/小时"
           }
         }
       }
@@ -37713,6 +38341,183 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "略微超出范围"
+          }
+        }
+      }
+    },
+    "steadiness.low" : {
+      "comment" : "Apple Walking Steadiness class",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niedrig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baja"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faible"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कम"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bassa"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baixa"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Низкая"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "低"
+          }
+        }
+      }
+    },
+    "steadiness.ok" : {
+      "comment" : "Apple Walking Steadiness class",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correcta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठीक"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Норма"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正常"
+          }
+        }
+      }
+    },
+    "steadiness.veryLow" : {
+      "comment" : "Apple Walking Steadiness class",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sehr niedrig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Very Low"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muy baja"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Très faible"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बहुत कम"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Molto bassa"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muito baixa"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Очень низкая"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "非常低"
           }
         }
       }

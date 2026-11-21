@@ -14,6 +14,8 @@ nonisolated enum QuantityMetric: CaseIterable {
     case bodyMass, bodyFat, leanBodyMass, height
     /// Cuff readings (#135), millimetres of mercury, averaged per day.
     case bloodPressureSystolic, bloodPressureDiastolic
+    /// iPhone's mobility metrics (#136), averaged per day: m/s, centimeters, percent, percent.
+    case walkingSpeed, walkingStepLength, walkingAsymmetry, walkingSteadiness
 
     /// The other number of a blood pressure reading, which must come from the same app and day.
     var bloodPressurePartner: QuantityMetric? {
@@ -212,6 +214,7 @@ nonisolated enum DataKind: String, CaseIterable, Identifiable {
     case restingHeartRate, hrv, overnightHRV, oxygenSaturation, respiratoryRate, wristTemperature, vo2Max
     case bodyMass, bodyFat, leanBodyMass, height
     case bloodPressureSystolic, bloodPressureDiastolic
+    case walkingSpeed, walkingStepLength, walkingAsymmetry, walkingSteadiness
     case sleep
     case steps, activeEnergy, exerciseMinutes, distance, floors, standHours
     case workouts
@@ -237,6 +240,10 @@ nonisolated enum DataKind: String, CaseIterable, Identifiable {
         case .height: .height
         case .bloodPressureSystolic: .bloodPressureSystolic
         case .bloodPressureDiastolic: .bloodPressureDiastolic
+        case .walkingSpeed: .walkingSpeed
+        case .walkingStepLength: .walkingStepLength
+        case .walkingAsymmetry: .walkingAsymmetry
+        case .walkingSteadiness: .walkingSteadiness
         }
     }
 
@@ -255,6 +262,10 @@ nonisolated enum DataKind: String, CaseIterable, Identifiable {
         case .height: String(localized: "Height")
         case .bloodPressureSystolic: String(localized: "Systolic Blood Pressure")
         case .bloodPressureDiastolic: String(localized: "Diastolic Blood Pressure")
+        case .walkingSpeed: String(localized: "Walking Speed")
+        case .walkingStepLength: String(localized: "Walking Step Length")
+        case .walkingAsymmetry: String(localized: "Walking Asymmetry")
+        case .walkingSteadiness: String(localized: "Walking Steadiness")
         case .sleep: String(localized: "Sleep")
         case .steps: String(localized: "Steps")
         case .activeEnergy: String(localized: "Active Energy")

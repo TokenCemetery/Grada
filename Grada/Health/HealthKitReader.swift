@@ -61,7 +61,10 @@ final class HealthKitReader: HealthSource {
                                              HKQuantityType(.distanceSwimming), HKSeriesType.workoutRoute(),
                                              HKCategoryType(.mindfulSession), HKQuantityType(.timeInDaylight),
                                              HKQuantityType(.numberOfAlcoholicBeverages), HKQuantityType(.dietaryCaffeine),
-                                             HKQuantityType(.heartRateRecoveryOneMinute)] + Self.effortTypes)
+                                             HKQuantityType(.heartRateRecoveryOneMinute),
+                                             // iPhone writes walking metrics in many small batches through the day.
+                                             HKQuantityType(.walkingSpeed), HKQuantityType(.walkingStepLength),
+                                             HKQuantityType(.walkingAsymmetryPercentage)] + Self.effortTypes)
         for type in Self.readTypes where !unobserved.contains(type) {
             store.execute(HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
                 guard error == nil else { completion(); return }
@@ -646,6 +649,10 @@ extension QuantityMetric {
         case .height: .height
         case .bloodPressureSystolic: .bloodPressureSystolic
         case .bloodPressureDiastolic: .bloodPressureDiastolic
+        case .walkingSpeed: .walkingSpeed
+        case .walkingStepLength: .walkingStepLength
+        case .walkingAsymmetry: .walkingAsymmetryPercentage
+        case .walkingSteadiness: .appleWalkingSteadiness
         }
     }
 
@@ -664,6 +671,9 @@ extension QuantityMetric {
         case .bodyFat: quantity.doubleValue(for: .percent()) * 100
         case .height: quantity.doubleValue(for: .meterUnit(with: .centi))
         case .bloodPressureSystolic, .bloodPressureDiastolic: quantity.doubleValue(for: .millimeterOfMercury())
+        case .walkingSpeed: quantity.doubleValue(for: .meter().unitDivided(by: .second()))
+        case .walkingStepLength: quantity.doubleValue(for: .meterUnit(with: .centi))
+        case .walkingAsymmetry, .walkingSteadiness: quantity.doubleValue(for: .percent()) * 100
         }
     }
 }
