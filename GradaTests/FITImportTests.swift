@@ -93,6 +93,17 @@ struct FITImportTests {
         #expect(workout.origin == "Garmin (imported)")
     }
 
+    /// Without a start time, the start is the end less elapsed time, pauses included (#154).
+    @Test func missingStartTimeCountsBackByElapsedTime() async throws {
+        var writer = FITWriter()
+        writer.fileID()
+        let end = midnight.addingTimeInterval(8 * 3600)
+        writer.message(18, [(253, 4, FITWriter.time(end)), (7, 4, 3_600_000), (8, 4, 3_000_000), (5, 1, 1)])
+        let workout = try #require(try await read(["run.fit": writer.bytes]).workouts.first)
+        #expect(workout.start == end.addingTimeInterval(-3600))
+        #expect(workout.duration == 3000)
+    }
+
     @Test func sleepLevelsBecomeANight() async throws {
         let hour: TimeInterval = 3600
         let bed = midnight.addingTimeInterval(-hour)

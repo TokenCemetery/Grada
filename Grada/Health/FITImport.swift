@@ -170,7 +170,9 @@ nonisolated struct FITImport {
     private static func workout(_ session: FITMessage, device: String) -> WorkoutSummary? {
         guard let seconds = session.fields[8] ?? session.fields[7], seconds > 0 else { return nil }
         let duration = TimeInterval(seconds) / 1000
-        guard let start = session.date(2) ?? session.timestamp?.addingTimeInterval(-duration) else { return nil }
+        // The end time less elapsed time (7), which unlike timer time (8) includes pauses.
+        let elapsed = TimeInterval(session.fields[7] ?? seconds) / 1000
+        guard let start = session.date(2) ?? session.timestamp?.addingTimeInterval(-elapsed) else { return nil }
         let info = WorkoutNames.info(for: activityType(sport: session.fields[5], subSport: session.fields[6]))
         return WorkoutSummary(
             id: "fit-\(Int(start.timeIntervalSince(FITMessage.epoch)))",
