@@ -47,14 +47,17 @@ struct MonthSummaryTests {
         #expect(MonthSummary.standardDeviation([1]) == nil)
     }
 
-    /// Sample data covers every day up to today, so this month has one step value per day so far.
+    /// Sample data covers every day up to today, so this month has one step value per finished day so far: today's
+    /// partial count is left out (#163).
     @Test func sampleDataSplitsDaysByMonth() async throws {
         let calendar = Calendar.current
         let summary = try await MonthSummary.load(month: .now, source: SampleDataSource(), calendar: calendar)
         #expect(summary.month == calendar.dateInterval(of: .month, for: .now)?.start)
         #expect(summary.rows.map(\.metric) == MonthSummary.Metric.allCases)
         let steps = try #require(summary.rows.first { $0.metric == .steps })
-        #expect(steps.days == calendar.component(.day, from: .now))
+        #expect(steps.days == calendar.component(.day, from: .now) - 1)
+        let heartRate = try #require(summary.rows.first { $0.metric == .restingHeartRate })
+        #expect(heartRate.days == calendar.component(.day, from: .now))
         #expect(steps.previous != nil, "Last month is complete")
     }
 }

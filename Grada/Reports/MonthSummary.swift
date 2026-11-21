@@ -72,7 +72,8 @@ nonisolated struct MonthSummary: Equatable {
         return Row(metric: metric, average: average, previous: before, days: current.count, change: change)
     }
 
-    /// The summary of the month holding `day`, up to today, compared with the whole month before.
+    /// The summary of the month holding `day`, up to today (steps and exercise up to yesterday), compared with the
+    /// whole month before.
     static func load(month day: Date, source: HealthDataSource, calendar: Calendar, now: Date = .now) async throws -> MonthSummary {
         let month = calendar.dateInterval(of: .month, for: day)!
         let previous = calendar.dateInterval(of: .month, for: month.start.addingTimeInterval(-1))!
@@ -81,9 +82,11 @@ nonisolated struct MonthSummary: Equatable {
         guard days > 0 else { return MonthSummary(month: month.start, rows: []) }
 
         let daily = { (metric: QuantityMetric) in try await source.daily(metric, days: days).compactMap { day in day.value.map { (day.day, $0) } } }
+        // Today's steps and exercise are still adding up, so averaging them in would pull the month down.
+        let finished = { (metric: QuantityMetric) in try await daily(metric).filter { $0.0 < today } }
         let series: [Metric: [(Date, Double)]] = [
-            .steps: try await daily(.steps),
-            .exercise: try await daily(.exerciseMinutes),
+            .steps: try await finished(.steps),
+            .exercise: try await finished(.exerciseMinutes),
             .restingHeartRate: try await daily(.restingHeartRate),
             .hrv: try await source.overnight(days: days).compactMap { night in night.hrv.map { (night.wakeDay, $0) } },
             .sleep: try await source.sleepNights(days: days).filter { $0.asleep > 0 }.map { ($0.wakeDay, $0.asleep) },
