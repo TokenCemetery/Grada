@@ -22,8 +22,14 @@ enum ModelStores {
     static func makeContainer(in directory: URL = .applicationSupportDirectory) throws -> ModelContainer {
         let healthURL = directory.appending(path: "default.store")
         let appURL = directory.appending(path: "App.store")
-        // Read before either store opens: opening the health store drops the app tables from the shared file.
-        let moved = FileManager.default.fileExists(atPath: appURL.path) ? nil : try legacyAppData(at: healthURL)
+        // Opening the health store drops the app tables from the shared file, so they're read from a copy made
+        // first. The copy stays until the move is saved, so a launch that fails or quits in between tries again.
+        let copyURL = directory.appending(path: "AppMigration.store")
+        let files = FileManager.default
+        if !files.fileExists(atPath: appURL.path), files.fileExists(atPath: healthURL.path), !files.fileExists(atPath: copyURL.path) {
+            try copyStore(from: healthURL, to: copyURL)
+        }
+        let moved = try legacyAppData(at: copyURL)
 
         func open(cloudKit: Bool) throws -> ModelContainer {
             let app = ModelConfiguration("App", schema: Schema(appModels), url: appURL,
@@ -41,8 +47,24 @@ enum ModelStores {
         if let moved {
             moved.insert(into: container.mainContext)
             try container.mainContext.save()
+            removeStore(at: copyURL)
         }
         return container
+    }
+
+    /// A SQLite store is up to three files: the store, its write-ahead log and its shared memory.
+    private static func storeFiles(_ url: URL) -> [URL] {
+        ["", "-wal", "-shm"].map { url.deletingLastPathComponent().appending(path: url.lastPathComponent + $0) }
+    }
+
+    private static func copyStore(from source: URL, to destination: URL) throws {
+        for (from, to) in zip(storeFiles(source), storeFiles(destination)) where FileManager.default.fileExists(atPath: from.path) {
+            try FileManager.default.copyItem(at: from, to: to)
+        }
+    }
+
+    private static func removeStore(at url: URL) {
+        for file in storeFiles(url) { try? FileManager.default.removeItem(at: file) }
     }
 
     /// In memory, for tests and for a launch whose store can't be opened.
