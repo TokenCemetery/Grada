@@ -53,6 +53,11 @@ final class HealthImporter {
     private static func historyDoneKey(_ source: any HealthSource) -> String { "historyImportDone.\(source.id).v7" }
     /// Re-imported on every refresh: today, plus nights and late-syncing watches from the days before.
     static let recentDays = 3
+    /// The day each source's recent days were last imported through, so a refresh after days away also re-imports
+    /// the days in between, which may have synced late or never been imported.
+    private static func recentImportedKey(_ source: any HealthSource) -> String { "recentImportedThrough.\(source.id)" }
+    /// How far back a refresh after a long absence reaches, matching one history chunk.
+    static let maximumCatchUpDays = 366
 
     /// What cards read live, in merge order: the importing `sources`, then FIT files.
     var liveSources: [any LiveHealthSource] { sources + [fitFiles] }
@@ -174,13 +179,17 @@ final class HealthImporter {
     private func importRecentDays() async {
         await authorize()
         let today = calendar.startOfDay(for: .now)
-        let start = calendar.date(byAdding: .day, value: -(Self.recentDays - 1), to: today)!
+        let recentStart = calendar.date(byAdding: .day, value: -(Self.recentDays - 1), to: today)!
+        let earliestCatchUp = calendar.date(byAdding: .day, value: -(Self.maximumCatchUpDays - 1), to: today)!
         let end = calendar.date(byAdding: .day, value: 1, to: today)!
         for source in availableSources {
             if let last = lastRecentImport[source.id], Date.now.timeIntervalSince(last) < source.refreshInterval { continue }
+            let lastDay = (defaults.object(forKey: Self.recentImportedKey(source)) as? Date).map { calendar.startOfDay(for: $0) }
+            let start = max(earliestCatchUp, min(recentStart, lastDay ?? recentStart))
             do {
                 try await importDays(DateInterval(start: start, end: end), from: source)
                 lastRecentImport[source.id] = .now
+                defaults.set(today, forKey: Self.recentImportedKey(source))
             } catch {
                 logger.error("Recent import from \(source.id) failed: \(error.localizedDescription)")
             }
@@ -199,6 +208,7 @@ final class HealthImporter {
     func sourceDisconnected(_ source: any HealthSource) {
         defaults.removeObject(forKey: Self.importedFromKey(source))
         defaults.removeObject(forKey: Self.historyDoneKey(source))
+        defaults.removeObject(forKey: Self.recentImportedKey(source))
         lastRecentImport[source.id] = nil
     }
 

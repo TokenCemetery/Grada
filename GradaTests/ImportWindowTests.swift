@@ -32,6 +32,17 @@ struct ImportWindowTests {
         await importer.importHistoryIfNeeded()
         #expect(source.batches.first?.start == day(-10))
     }
+
+    /// Days between the last refresh and the recent window are re-imported too, as they may have synced late (#142).
+    @Test func refreshReachesBackToTheLastImportedDay() async {
+        await importer.importRecent()
+        #expect(source.batches.last?.start == day(-(HealthImporter.recentDays - 1)))
+
+        defaults.set(day(-10), forKey: "recentImportedThrough.\(source.id)")
+        await importer.importRecent()
+        #expect(source.batches.last?.start == day(-10))
+        #expect(defaults.object(forKey: "recentImportedThrough.\(source.id)") as? Date == today)
+    }
 }
 
 private final class ImportSource: HealthSource {
