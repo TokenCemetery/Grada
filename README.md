@@ -3,7 +3,7 @@
 Grada is an iPhone and iPad app that turns your Apple Health data into a daily summary: a home screen of health cards and a calendar that grades each day.
 
 - **Home:** cards for recovery, sleep, heart and vitals, activity, training and body. Add, remove and reorder them, and choose today or the last 7 days where both make sense.
-- **Calendar:** colors each day by a metric, with a sheet for that day's details.
+- **Calendar:** colors each day by Health or Recovery, marks Training days by sport, or shows your Cycle, with a sheet for that day's details.
 - **Widgets:** any single-value card, such as Recovery, Sleep Score, Resources or Training Readiness, on the Home Screen (small, medium) or Lock Screen (circular, rectangular). Touch and hold a widget, then Edit Widget to pick the card. A widget shows the same value and color as the card on Home, updates after each Apple Health import, and clears at midnight until the next one. The app writes the finished cards to a file in an App Group container on the device (`Shared/WidgetCards.swift`), and the widget reads only that file.
 - **Detail screens:** each metric's trend and breakdown, what it means, and the inputs it's based on. Some show today's recommendation with its reason: steps left to the goal as minutes of walking (or a congratulation once it's reached), a bedtime for your usual wake-up, or easing off when resting heart rate, HRV or training load is out of range.
 - **Goals and journal:** start from a goal preset that adjusts every week, and keep a daily journal of habits such as alcohol, caffeine, naps or travel.

@@ -115,7 +115,7 @@ private struct AccessibilityView: View {
             Section {
                 Toggle("Color-Blind Palette", isOn: $colorBlind)
             } footer: {
-                Text("Calendar days use blue, orange and dark instead of green, yellow and red.")
+                Text("Ratings on cards, widgets and Calendar days use blue, orange and dark instead of green, yellow and red.")
             }
         }
         .navigationTitle("Accessibility")

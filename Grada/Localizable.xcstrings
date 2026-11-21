@@ -10022,58 +10022,6 @@
         }
       }
     },
-    "Calendar days use blue, orange and dark instead of green, yellow and red." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kalendertage nutzen Blau, Orange und Dunkel statt Grün, Gelb und Rot."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los días del calendario usan azul, naranja y oscuro en lugar de verde, amarillo y rojo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les jours du calendrier utilisent le bleu, l’orange et le sombre au lieu du vert, du jaune et du rouge."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कैलेंडर के दिन हरे, पीले और लाल की जगह नीले, नारंगी और गहरे रंग में दिखते हैं।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I giorni del calendario usano blu, arancione e scuro al posto di verde, giallo e rosso."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Os dias do calendário usam azul, laranja e escuro em vez de verde, amarelo e vermelho."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Дни в календаре отмечены синим, оранжевым и тёмным вместо зелёного, жёлтого и красного."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日历中的日子使用蓝色、橙色和深色，代替绿色、黄色和红色。"
-          }
-        }
-      }
-    },
     "Calibrating" : {
       "localizations" : {
         "de" : {
@@ -26282,6 +26230,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "心率升高"
+          }
+        }
+      }
+    },
+    "Ratings on cards, widgets and Calendar days use blue, orange and dark instead of green, yellow and red." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewertungen auf Karten, Widgets und Kalendertagen nutzen Blau, Orange und Dunkel statt Grün, Gelb und Rot."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las valoraciones en tarjetas, widgets y días del calendario usan azul, naranja y oscuro en lugar de verde, amarillo y rojo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les évaluations des cartes, des widgets et des jours du calendrier utilisent le bleu, l’orange et le sombre au lieu du vert, du jaune et du rouge."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कार्ड, विजेट और कैलेंडर के दिनों की रेटिंग हरे, पीले और लाल की जगह नीले, नारंगी और गहरे रंग में दिखती हैं।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le valutazioni su schede, widget e giorni del calendario usano blu, arancione e scuro al posto di verde, giallo e rosso."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As avaliações em cartões, widgets e dias do calendário usam azul, laranja e escuro em vez de verde, amarelo e vermelho."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оценки на карточках, в виджетах и в днях календаря отмечены синим, оранжевым и тёмным вместо зелёного, жёлтого и красного."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "卡片、小组件和日历中的评分使用蓝色、橙色和深色，代替绿色、黄色和红色。"
           }
         }
       }

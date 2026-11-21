@@ -1,6 +1,6 @@
 # Grada Privacy Policy
 
-Effective November 17, 2026
+Effective November 21, 2026
 
 Grada is an iPhone app that summarizes your health data from Apple Health. This policy explains what data Grada uses, where it is kept, and the control you have over it.
 
