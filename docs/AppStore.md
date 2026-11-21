@@ -26,6 +26,10 @@ Add these to the App Store description, alongside the feature text:
 
 Screenshots and the icon must not show Garmin logos or Apple's Health app icon.
 
+## Screenshots
+
+Upload `docs/screenshots/iphone` for the 6.9" iPhone display and `docs/screenshots/ipad` for the 13" iPad display, in file order. `scripts/screenshots.sh` recreates them from the sample data.
+
 ## App Privacy (nutrition label)
 
 - **Data collection:** Data Not Collected. The developer receives nothing: there are no accounts, analytics, advertising or third-party code. Health data stays on the device. Garmin requests go straight from the device to Garmin with the user's own key.

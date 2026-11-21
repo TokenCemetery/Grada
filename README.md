@@ -1,6 +1,10 @@
 # Grada
 
-Grada, for iPhone and iPad, turns Apple Health data into daily health cards and a calendar that grades each day.
+**Your Health data as daily cards and a calendar that grades each day.**
+
+![Grada's Home, Calendar and Journal on iPhone](docs/screenshots/social-preview.png)
+
+Grada runs on iPhone and iPad and reads Apple Health.
 
 - **Home:** add, remove and reorder cards for recovery, sleep, heart and vitals, activity, training and body, showing today or the last 7 days where both apply.
 - **Calendar:** colors days by Health or Recovery, marks Training days by sport, or shows your Cycle, with a sheet per day.
@@ -55,6 +59,12 @@ Run the unit tests (use any iPhone simulator listed by `xcrun simctl list device
 
 ```bash
 xcodebuild test -project Grada.xcodeproj -scheme Grada -destination "platform=iOS Simulator,name=iPhone 15" -only-testing:GradaTests -testLanguage en -testRegion US CODE_SIGNING_ALLOWED=NO
+```
+
+To refresh the screenshots in `docs/screenshots` (App Store iPhone 6.9" and iPad 13" sizes, plus GitHub's social preview), run the script below. It creates its own simulators and captures the sample data in English.
+
+```bash
+scripts/screenshots.sh
 ```
 
 ## Roadmap
