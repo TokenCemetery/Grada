@@ -37,6 +37,8 @@ final class HealthKitReader: HealthSource {
             HKQuantityType(.dietaryCaffeine),
             // Workout screens and the Heart Rate Recovery card.
             HKQuantityType(.heartRateRecoveryOneMinute),
+            // The Cycle calendar and Journal's cycle day (#137).
+            HKCategoryType(.menstrualFlow),
         ] + effortTypes
 
     /// Workout effort ratings, the user's and Apple's estimate; Apple Health has them from iOS 18 (#134).
@@ -64,7 +66,7 @@ final class HealthKitReader: HealthSource {
                                              HKQuantityType(.heartRateRecoveryOneMinute),
                                              // iPhone writes walking metrics in many small batches through the day.
                                              HKQuantityType(.walkingSpeed), HKQuantityType(.walkingStepLength),
-                                             HKQuantityType(.walkingAsymmetryPercentage)] + Self.effortTypes)
+                                             HKQuantityType(.walkingAsymmetryPercentage), HKCategoryType(.menstrualFlow)] + Self.effortTypes)
         for type in Self.readTypes where !unobserved.contains(type) {
             store.execute(HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
                 guard error == nil else { completion(); return }
@@ -357,6 +359,23 @@ final class HealthKitReader: HealthSource {
             options: .cumulativeSum
         ).result(for: store)
         return statistics?.sumQuantity()?.doubleValue(for: unit)
+    }
+
+    /// Each day's heaviest logged flow in `interval`, and whether an app marked it as a cycle's start.
+    func menstrualFlow(during interval: DateInterval) async throws -> [FlowDay]? {
+        let samples = try await HKSampleQueryDescriptor(
+            predicates: [.categorySample(type: HKCategoryType(.menstrualFlow),
+                                         predicate: HKQuery.predicateForSamples(withStart: interval.start, end: interval.end))],
+            sortDescriptors: [SortDescriptor(\.startDate)]
+        ).result(for: store)
+        guard !samples.isEmpty else { return nil }
+        let byDay = Dictionary(grouping: samples) { calendar.startOfDay(for: $0.startDate) }
+        return byDay.keys.sorted().compactMap { day in
+            FlowDay.merge(day: day, samples: byDay[day]!.map { sample in
+                (sample.value, sample.metadata?[HKMetadataKeyMenstrualCycleStart] as? Bool == true,
+                 Self.originName(sample.sourceRevision.source, device: sample.device))
+            })
+        }
     }
 
     /// Sleep stages overlapping `interval`, oldest first, from the best source of each night.

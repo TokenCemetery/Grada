@@ -348,6 +348,8 @@ nonisolated protocol HealthDataSource {
     func heartRateRecovery(days: Int) async throws -> [DayValue]
     /// Effort ratings by workout ID, for the last `days` days' workouts that have one (#134).
     func workoutEfforts(days: Int) async throws -> [String: WorkoutEffort]
+    /// Days with menstrual flow logged in the last `days` days, oldest first (#137).
+    func menstrualFlow(days: Int) async throws -> [FlowDay]
     /// The most recent value of `metric` ever stored, e.g. height, which is rarely measured.
     func latest(_ metric: QuantityMetric) async throws -> Double?
 }
@@ -362,6 +364,7 @@ nonisolated extension HealthDataSource {
     func intake(_ intake: Intake, on day: Date) async throws -> Double? { nil }
     func heartRateRecovery(days: Int) async throws -> [DayValue] { [] }
     func workoutEfforts(days: Int) async throws -> [String: WorkoutEffort] { [:] }
+    func menstrualFlow(days: Int) async throws -> [FlowDay] { [] }
     func latest(_ metric: QuantityMetric) async throws -> Double? {
         try await daily(metric, days: 3650).last { $0.value != nil }?.value
     }

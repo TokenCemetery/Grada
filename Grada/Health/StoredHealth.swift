@@ -250,6 +250,16 @@ nonisolated struct StoredHealthData: HealthDataSource {
         return nil
     }
 
+    /// From the first source with any record of it, read live and never stored: cycle data stays in Apple Health (#137).
+    func menstrualFlow(days: Int) async throws -> [FlowDay] {
+        let start = lastDays(days).first!
+        let interval = DateInterval(start: start, end: calendar.date(byAdding: .day, value: days, to: start)!)
+        for source in sources {
+            if let flow = try await source.menstrualFlow(during: interval) { return flow }
+        }
+        return []
+    }
+
     /// Each sleep comes whole from the first source that has it, as nights do in `sleepNights(days:)`, so stages from
     /// different devices aren't mixed (#96). A sleep is a stretch of periods with no `SleepNight.separateSleepGap`;
     /// a later source's sleep that overlaps one already taken is the same sleep, so a nap doesn't hide a night.

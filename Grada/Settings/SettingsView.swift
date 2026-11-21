@@ -160,6 +160,13 @@ private struct DataSourceView: View {
                 } footer: {
                     Text("Read from Apple Health when Journal shows a day, to suggest tags. Grada doesn't store them.")
                 }
+                Section {
+                    Text("Menstrual Flow")
+                } header: {
+                    Text("Cycle")
+                } footer: {
+                    Text("Read from Apple Health when Calendar or Journal shows a day, and only with Female as your sex in Profile or Apple Health. Grada doesn't store it.")
+                }
                 Section {} footer: {
                     Text("When several apps record the same readings, Grada uses the one that recorded the most days in the last month, and one app per night for sleep. Apple Health combines totals such as steps by the order set in the Health app's Data Sources & Access.")
                 }

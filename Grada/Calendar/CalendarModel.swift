@@ -11,6 +11,16 @@ final class CalendarModel {
     private(set) var workoutDays: [Date: WorkoutDay] = [:]
     /// Start of each day with a workout → its workouts, for the Training day sheet.
     private var workoutsByDay: [Date: [WorkoutSummary]] = [:]
+    /// Cycle: each loaded day with flow logged, each day's cycle day, and each night's sleeping wrist temperature.
+    private(set) var flowDays: [Date: FlowDay] = [:]
+    private(set) var cycleDays: [Date: Int] = [:]
+    private(set) var wristTemperature: [Date: Double] = [:]
+    /// Whether the Cycle type shows: Female as the profile's sex.
+    private(set) var showsCycle = false
+    /// The type the last finished load was for, and whether a Cycle load found any period day in Apple Health,
+    /// including before the loaded months.
+    private(set) var loadedMetric: CalendarMetric?
+    private(set) var hasPeriods = false
     /// Start of the first month shown; nil until loaded.
     private(set) var firstMonth: Date?
     /// Start of the oldest month with data loaded. Older months show no data until they scroll into view.
@@ -41,6 +51,11 @@ final class CalendarModel {
         var start: Date
         var ratings: [Date: DayRating]
         var workouts: [WorkoutSummary]
+        var showsCycle: Bool
+        var flow: [FlowDay] = []
+        var cycleDays: [Date: Int] = [:]
+        var wristTemperature: [Date: Double] = [:]
+        var hasPeriods = false
     }
 
     func load(_ metric: CalendarMetric, goals: GoalHistory) async {
@@ -51,6 +66,12 @@ final class CalendarModel {
             // A longer load started meanwhile; let it fill in instead.
             guard months == loadedMonths else { return }
             ratings = loaded.ratings
+            showsCycle = loaded.showsCycle
+            flowDays = Dictionary(loaded.flow.map { ($0.day, $0) }) { first, _ in first }
+            cycleDays = loaded.cycleDays
+            wristTemperature = loaded.wristTemperature
+            hasPeriods = loaded.hasPeriods
+            loadedMetric = metric
             workoutDays = WorkoutDay.byDay(loaded.workouts, calendar: calendar)
             workoutsByDay = Dictionary(grouping: loaded.workouts) { calendar.startOfDay(for: $0.start) }
             firstMonth = calendar.dateInterval(of: .month, for: loaded.earliest)?.start
@@ -76,7 +97,26 @@ final class CalendarModel {
         let ratings = try await ratings(metric, days: days, goals: goals, source: source, calendar: calendar,
                                         baselineDays: baselineDays)
         let workouts = try await source.workouts(days: days)
-        return Loaded(earliest: earliest, start: start, ratings: ratings, workouts: workouts)
+        var loaded = Loaded(earliest: earliest, start: start, ratings: ratings, workouts: workouts,
+                            showsCycle: await Cycle.isShown(source: source))
+        // Read live each time and kept only in memory: cycle data isn't stored (#137).
+        if metric == .cycle, loaded.showsCycle {
+            let flow = try await source.menstrualFlow(days: days + Cycle.lookbackDays)
+            let starts = Cycle.starts(flow, calendar: calendar)
+            loaded.hasPeriods = flow.contains { $0.flow.isBleeding }
+            if !loaded.hasPeriods {
+                loaded.hasPeriods = try await source.menstrualFlow(days: Cycle.historyDays).contains { $0.flow.isBleeding }
+            }
+            loaded.flow = flow.filter { $0.day >= start }
+            for offset in 0..<days {
+                let day = calendar.date(byAdding: .day, value: offset, to: start)!
+                loaded.cycleDays[day] = Cycle.day(day, starts: starts, calendar: calendar)
+            }
+            for night in try await source.daily(.wristTemperature, days: days) {
+                if let value = night.value { loaded.wristTemperature[night.day] = value }
+            }
+        }
+        return loaded
     }
 
     /// Loads more history once `month`, the oldest loaded month or older, scrolls into view.
@@ -137,7 +177,7 @@ final class CalendarModel {
             return Dictionary(try await builder.recoveryDays(days).compactMap { day in
                 day.result.map { (day.day, $0.rating) }
             }, uniquingKeysWith: { first, _ in first })
-        case .training:
+        case .training, .cycle:
             return [:]
         }
     }

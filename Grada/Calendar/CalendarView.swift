@@ -1,3 +1,4 @@
+import Charts
 import SwiftData
 import SwiftUI
 
@@ -59,6 +60,10 @@ struct CalendarView: View {
         .onDisappear { selectedDay = nil }
         // A new type redraws the calendar; the sheet would hide it.
         .onChange(of: metric) { selectedDay = nil }
+        // A saved Cycle choice falls back once loading shows the profile's sex isn't Female.
+        .onChange(of: model.firstMonth != nil && !model.showsCycle, initial: true) { _, hidesCycle in
+            if hidesCycle, metric == .cycle { metric = .health }
+        }
         .task(id: metric) { await model.load(metric, goals: GoalHistory(goalChanges)) }
         .onChange(of: model.importer?.revision) {
             Task { await model.load(metric, goals: GoalHistory(goalChanges)) }
@@ -80,7 +85,7 @@ struct CalendarView: View {
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    ForEach(CalendarMetric.allCases) { option in
+                    ForEach(CalendarMetric.allCases.filter { $0 != .cycle || model.showsCycle }) { option in
                         Button(option.title) { metric = option }
                             .font(.subheadline)
                             .padding(.horizontal, 12)
@@ -105,8 +110,44 @@ struct CalendarView: View {
     private var legend: some View {
         if metric.isRated {
             ratingLegend
+        } else if metric == .cycle {
+            cycleLegend
         } else {
             sportLegend
+        }
+    }
+
+    /// Period days, the cycle day under each date, and the temperature line under each month. After a Cycle load
+    /// that found no period day at all, where to log one.
+    @ViewBuilder
+    private var cycleLegend: some View {
+        if model.loadedMetric == .cycle, model.showsCycle, !model.hasPeriods {
+            Text("Log your period in the Health app's Cycle Tracking, or in an app that saves to Apple Health, to see your cycle here.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } else {
+            HStack(spacing: 12) {
+                Label {
+                    Text(String(localized: "cycle.period", defaultValue: "Period", comment: "Menstrual period, logged without an amount of flow"))
+                } icon: {
+                    Circle().fill(CycleColors.period).frame(width: 10, height: 10)
+                }
+                Label {
+                    Text("Cycle day under the date")
+                } icon: {
+                    Text("12").font(.system(size: 8)).monospacedDigit()
+                }
+                Label {
+                    Text("Wrist temperature")
+                } icon: {
+                    Capsule().fill(CycleColors.temperature).frame(width: 10, height: 2)
+                }
+            }
+            .labelStyle(LegendLabelStyle())
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
         }
     }
 
@@ -218,7 +259,7 @@ private struct MonthView: View {
                 Text(month.formatted(.dateTime.month(.wide).year()))
                     .font(.headline)
                 Spacer()
-                if metric.isRated { counts } else { trainingTotals }
+                if metric.isRated { counts } else if metric == .training { trainingTotals }
             }
             // Plain rows, not a LazyVGrid: a lazy grid inside the calendar's LazyVStack left the
             // calendar blank on first open until something changed its layout.
@@ -234,13 +275,52 @@ private struct MonthView: View {
                     }
                 }
             }
+            if metric == .cycle { temperatureLine }
+        }
+    }
+
+    /// The month's sleeping wrist temperature, night by night, with period days marked; in °F where the locale
+    /// measures in US units, like the Wrist Temperature card.
+    @ViewBuilder
+    private var temperatureLine: some View {
+        let usesMetric = Locale.current.measurementSystem != .us
+        let unit = usesMetric ? "°C" : "°F"
+        let nights = days.compactMap { day in
+            model.wristTemperature[day].map { (day: day, value: usesMetric ? $0 : $0 * 1.8 + 32) }
+        }
+        if nights.count > 1 {
+            Chart {
+                ForEach(nights, id: \.day) { night in
+                    LineMark(x: .value("Day", night.day, unit: .day), y: .value(unit, night.value))
+                        .foregroundStyle(CycleColors.temperature)
+                    if model.flowDays[night.day]?.flow.isBleeding == true {
+                        PointMark(x: .value("Day", night.day, unit: .day), y: .value(unit, night.value))
+                            .foregroundStyle(CycleColors.period)
+                            .symbolSize(18)
+                    }
+                }
+            }
+            .chartXScale(domain: days.first!...days.last!)
+            .chartYScale(domain: .automatic(includesZero: false))
+            .chartXAxis(.hidden)
+            .chartYAxis { AxisMarks(values: .automatic(desiredCount: 2)) { AxisValueLabel() } }
+            .chartYAxisLabel(unit)
+            .frame(height: 44)
+            .accessibilityLabel("Wrist temperature this month")
         }
     }
 
     @ViewBuilder
     private func cell(_ day: Date) -> some View {
         Group {
-            if metric.isRated {
+            if metric == .cycle {
+                CycleDayCell(day: day,
+                             flow: model.flowDays[day]?.flow,
+                             cycleDay: model.cycleDays[day],
+                             isToday: day == today,
+                             isFuture: day > today,
+                             isSelected: day == selected)
+            } else if metric.isRated {
                 DayCell(day: day,
                         rating: model.ratings[day],
                         hasWorkout: model.workoutDays[day] != nil,
@@ -426,6 +506,70 @@ private struct TrainingDayCell: View {
     }
 }
 
+/// Cycle colours: a period day's fill, and the wrist temperature line.
+enum CycleColors {
+    static let period = Color.pink
+    static let temperature = Color.orange
+}
+
+/// A Cycle day: the date over its cycle day, on a pink circle for a period day, stronger for heavier flow.
+private struct CycleDayCell: View {
+    let day: Date
+    let flow: FlowDay.Flow?
+    let cycleDay: Int?
+    let isToday: Bool
+    let isFuture: Bool
+    let isSelected: Bool
+
+    private let size: CGFloat = 38
+    private var isPeriod: Bool { flow?.isBleeding == true }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("\(Calendar.current.component(.day, from: day))")
+                .font(.footnote.weight(isToday ? .bold : .regular))
+                .monospacedDigit()
+            Text(cycleDay.map { "\($0)" } ?? " ")
+                .font(.system(size: 8))
+                .monospacedDigit()
+                .opacity(0.8)
+        }
+        .foregroundStyle(isPeriod ? .white : isFuture ? .secondary : .primary)
+        .frame(width: size, height: size)
+        .background {
+            if isPeriod { Circle().fill(CycleColors.period.opacity(opacity)) }
+        }
+        .overlay {
+            if isToday {
+                Circle().strokeBorder(.primary, lineWidth: 2).padding(-4)
+            } else if isSelected {
+                Circle().strokeBorder(.primary, lineWidth: 1.5).padding(-3)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityAddTraits(isFuture ? [] : .isButton)
+    }
+
+    private var opacity: Double {
+        switch flow {
+        case .light: 0.55
+        case .medium, .unspecified: 0.8
+        default: 1
+        }
+    }
+
+    private var accessibilityText: String {
+        var parts = [day.formatted(date: .complete, time: .omitted)]
+        if let flow, flow.isBleeding { parts.append(flow.title) }
+        if let cycleDay { parts.append(String(localized: "Cycle day \(cycleDay)")) }
+        return parts.joined(separator: ", ")
+    }
+}
+
 /// The selected day's cards for the calendar type, as they looked at the end of that day.
 /// Fully expanded, this sheet is the day view.
 private struct DaySheet: View {
@@ -474,6 +618,7 @@ private struct DaySheet: View {
                     .padding(.top, 20)
                 let dayKey = DayKey.make(day, calendar: .current)
                 DayTagsView(entries: journalEntries.filter { $0.dayKey == dayKey })
+                if metric == .cycle { cycleSummary }
                 if metric == .training, isLoaded {
                     if workouts.isEmpty {
                         Text("Rest day").font(.subheadline).foregroundStyle(.secondary)
@@ -501,6 +646,26 @@ private struct DaySheet: View {
     }
 
     private var pastDay: Date? { Calendar.current.isDateInToday(day) ? nil : day }
+
+    /// The day's logged flow and the app that logged it, and its cycle day.
+    private var cycleSummary: some View {
+        let flow = model.flowDays[Calendar.current.startOfDay(for: day)]
+        let cycleDay = model.cycleDays[Calendar.current.startOfDay(for: day)]
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(flow?.flow.title ?? String(localized: "No period logged"))
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                if let cycleDay { Text("Cycle day \(cycleDay)").font(.subheadline).foregroundStyle(.secondary) }
+            }
+            if let origin = flow?.origin {
+                Text("Logged in \(origin)").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .padding()
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+    }
 
     /// Shows the loading state until this day's values arrive, never the previous day's.
     private func card(_ kind: CardKind) -> some View {

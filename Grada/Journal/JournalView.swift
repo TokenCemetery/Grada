@@ -21,6 +21,8 @@ struct JournalView: View {
     @State private var nights: [Date: [TagEffect.Metric: Double]]?
     /// Tags health data suggests for the shown day, and the day they're for.
     @State private var suggestions: (day: Date, items: [JournalSuggestion]) = (.distantPast, [])
+    /// The shown day's cycle day from periods logged in Apple Health, and the day it's for; read-only (#137).
+    @State private var cycleDay: (day: Date, number: Int?) = (.distantPast, nil)
     /// Suggestions the user dismissed, as "dayKey:tag".
     @AppStorage(SettingsKey.dismissedJournalSuggestions) private var dismissed = ""
 
@@ -43,6 +45,10 @@ struct JournalView: View {
             List {
                 Section {
                     DayPicker(day: $day, today: today, isSaved: !entries.isEmpty, saves: saves)
+                    if cycleDay.day == day, let number = cycleDay.number {
+                        Label("Cycle day \(number)", systemImage: "drop")
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Section {
                     VStack(spacing: 24) {
@@ -88,6 +94,11 @@ struct JournalView: View {
             }
             .task(id: homeModel.importer?.revision ?? 0) {
                 nights = try? await TagEffect.nights(source: healthSource)
+            }
+            .task(id: ReportKey(day: day, revision: homeModel.importer?.revision ?? 0)) {
+                let number = await Cycle.day(on: day, source: healthSource, calendar: calendar)
+                guard !Task.isCancelled else { return }
+                cycleDay = (day, number)
             }
             .task(id: SuggestionKey(day: day, revision: homeModel.importer?.revision ?? 0, alcoholDayBefore: alcoholDayBefore)) {
                 let items = (try? await JournalSuggestion.load(day: day, alcoholDayBefore: alcoholDayBefore,

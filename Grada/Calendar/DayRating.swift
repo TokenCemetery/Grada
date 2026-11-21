@@ -38,6 +38,9 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
     case recovery
     /// Workouts by sport; rest days aren't rated.
     case training
+    /// Logged periods and cycle days from Apple Health, with sleeping wrist temperature (#137). Only with Female as
+    /// the profile's sex.
+    case cycle
 
     var id: String { rawValue }
 
@@ -47,6 +50,7 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
         case "health", "healthStatus", "hrv", "restingHeartRate": self = .health
         case "recovery", "sleep": self = .recovery
         case "training", "steps": self = .training
+        case "cycle": self = .cycle
         default: return nil
         }
     }
@@ -56,18 +60,20 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
         case .health: String(localized: "Health")
         case .recovery: String(localized: "Recovery")
         case .training: String(localized: "Training")
+        case .cycle: String(localized: "Cycle", comment: "Calendar type: the menstrual cycle")
         }
     }
 
-    /// Health and Recovery colour days red, yellow or green; Training draws each day's sports.
-    var isRated: Bool { self != .training }
+    /// Health and Recovery colour days red, yellow or green; Training draws each day's sports, Cycle period days.
+    var isRated: Bool { self == .health || self == .recovery }
 
-    /// The day sheet's cards, in order. Training adds the day's workouts on top.
+    /// The day sheet's cards, in order. Training adds the day's workouts on top; Cycle shows only the day's flow and cycle day.
     var kinds: [CardKind] {
         switch self {
         case .health: [.healthStatus, .hrvStatus, .heartRate, .oxygenSaturation, .respiratoryRate, .wristTemperature]
         case .recovery: [.recovery, .resources, .sleepStages, .sleepNeed, .sleepConsistency]
         case .training: [.steps, .activeEnergy, .intensityMinutes, .distance, .weeklyTraining, .vo2Max]
+        case .cycle: []
         }
     }
 }
