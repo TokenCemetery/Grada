@@ -29,6 +29,6 @@ struct CycleInfoView: View {
     }
 
     static var estimateNote: String {
-        String(localized: "The range is your mean cycle length ± 1 standard deviation over your last \(Cycle.predictionCycles) complete cycles, from \(Cycle.minimumCycles) cycles; both are Grada's choices. A cycle over \(Cycle.maximumCycleDay) days counts as a missed log. A temperature rise needs nine nights in a row with the third high night at least \(Cycle.riseMargin.formatted()) °C above the six before, and ovulation is marked on the last night before it.")
+        String(localized: "The range is your mean cycle length ± 1 standard deviation over your last \(Cycle.predictionCycles) complete cycles, from \(Cycle.minimumCycles) cycles; both are Grada's choices. A cycle over \(Cycle.maximumCycleDay) days counts as a missed log. A temperature rise needs nine nights in a row with the third high night at least \(Cycle.riseMargin.formatted()) °C above the six before, and ovulation is marked on the last night before it. The rule was set for basal thermometer readings; applying it to sleeping wrist temperature is Grada's choice.")
     }
 }

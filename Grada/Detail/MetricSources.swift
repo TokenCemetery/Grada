@@ -208,7 +208,7 @@ extension CardKind {
         case .sleepScore:
             String(localized: "The indicators come from the studies above. Counting each the same is Grada's choice; the experts didn't weigh them.")
         case .recoveryTime:
-            String(localized: "The review grades intensity by physiological thresholds, not heart rate. Placing them at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices.")
+            String(localized: "The review grades intensity by physiological thresholds, not heart rate. Judging each workout by its average heart rate, placing the thresholds at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices.")
         case .sleepNeed:
             String(localized: "Your usual wake-up and time awake in bed are the medians of the last \(Bedtime.nights) nights, weekdays and weekends apart once each has \(Bedtime.minimumNights) nights. The window is Grada's choice; no study sets one.")
         case .restingHeartRate:
@@ -219,6 +219,8 @@ extension CardKind {
             String(localized: "BMI uses the latest height in Apple Health for every day, since adult height barely changes.")
         case .heartRateRecovery:
             String(localized: "Without Apple Watch's own measurement, taking the reading closest to one minute after the end, at most 15 seconds off, is Grada's choice.")
+        case .healthAge:
+            String(localized: "Sleep and exercise count by the categories the studies report, so crossing an edge such as 7 hours of sleep or 150 minutes of exercise a week changes the result in one step. The pooled sleep studies drew their lines differently; under 7 and over 8 hours is Grada's reading of their reference.")
         case .trainingReadiness:
             String(localized: "Garmin doesn't publish how it weighs these inputs and no study has tested a weighting, so each counts the same.")
         default: nil

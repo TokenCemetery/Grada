@@ -29941,6 +29941,58 @@
         }
       }
     },
+    "Sleep and exercise count by the categories the studies report, so crossing an edge such as 7 hours of sleep or 150 minutes of exercise a week changes the result in one step. The pooled sleep studies drew their lines differently; under 7 and over 8 hours is Grada's reading of their reference." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaf und Bewegung zählen nach den Kategorien, die die Studien angeben, daher ändert das Überschreiten einer Grenze wie 7 Stunden Schlaf oder 150 Minuten Bewegung pro Woche das Ergebnis in einem Schritt. Die zusammengefassten Schlafstudien zogen ihre Grenzen unterschiedlich; unter 7 und über 8 Stunden ist Gradas Lesart ihrer Referenz."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El sueño y el ejercicio cuentan por las categorías que dan los estudios, así que cruzar un límite como 7 horas de sueño o 150 minutos de ejercicio a la semana cambia el resultado de golpe. Los estudios de sueño agrupados trazaron sus límites de forma distinta; menos de 7 y más de 8 horas es la lectura que hace Grada de su referencia."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le sommeil et l’exercice comptent selon les catégories des études, donc franchir une limite comme 7 heures de sommeil ou 150 minutes d’exercice par semaine change le résultat d’un coup. Les études sur le sommeil regroupées ont tracé leurs limites différemment ; moins de 7 et plus de 8 heures est la lecture que fait Grada de leur référence."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नींद और व्यायाम अध्ययनों में दी गई श्रेणियों के हिसाब से गिने जाते हैं, इसलिए 7 घंटे की नींद या हफ़्ते में 150 मिनट व्यायाम जैसी किसी सीमा को पार करने से नतीजा एक ही बार में बदल जाता है। जोड़े गए नींद अध्ययनों ने अपनी सीमाएँ अलग-अलग तय कीं; 7 घंटे से कम और 8 घंटे से ज़्यादा उनके संदर्भ को Grada का पढ़ना है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonno ed esercizio contano per le categorie riportate dagli studi, quindi superare un limite come 7 ore di sonno o 150 minuti di esercizio a settimana cambia il risultato di colpo. Gli studi sul sonno raggruppati hanno tracciato i limiti in modo diverso; meno di 7 e più di 8 ore è la lettura di Grada del loro riferimento."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sono e exercício contam pelas categorias que os estudos relatam, então cruzar um limite como 7 horas de sono ou 150 minutos de exercício por semana muda o resultado de uma vez. Os estudos de sono reunidos traçaram seus limites de formas diferentes; menos de 7 e mais de 8 horas é a leitura do Grada da referência deles."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сон и нагрузка учитываются по категориям из исследований, поэтому переход через границу, например 7 часов сна или 150 минут нагрузки в неделю, меняет результат скачком. Объединённые исследования сна проводили границы по-разному; меньше 7 и больше 8 часов — так Grada понимает их референс."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "睡眠和运动按研究报告的类别计算，因此跨过某个界限（如睡眠 7 小时或每周运动 150 分钟）会让结果一下子改变。汇总的睡眠研究划线方式不同；少于 7 小时和多于 8 小时是 Grada 对其参照的理解。"
+          }
+        }
+      }
+    },
     "Sleep debt" : {
       "localizations" : {
         "de" : {
@@ -32602,106 +32654,106 @@
         }
       }
     },
-    "The range is your mean cycle length ± 1 standard deviation over your last %lld complete cycles, from %lld cycles; both are Grada's choices. A cycle over %lld days counts as a missed log. A temperature rise needs nine nights in a row with the third high night at least %@ °C above the six before, and ovulation is marked on the last night before it." : {
+    "The range is your mean cycle length ± 1 standard deviation over your last %lld complete cycles, from %lld cycles; both are Grada's choices. A cycle over %lld days counts as a missed log. A temperature rise needs nine nights in a row with the third high night at least %@ °C above the six before, and ovulation is marked on the last night before it. The rule was set for basal thermometer readings; applying it to sleeping wrist temperature is Grada's choice." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der Zeitraum ist deine mittlere Zykluslänge ± 1 Standardabweichung über deine letzten %1$lld vollständigen Zyklen, ab %2$lld Zyklen; beides wählt Grada. Ein Zyklus über %3$lld Tage gilt als fehlender Eintrag. Ein Temperaturanstieg braucht neun Nächte am Stück, wobei die dritte hohe Nacht mindestens %4$@ °C über den sechs davor liegt, und der Eisprung wird auf der letzten Nacht davor markiert."
+            "value" : "Der Zeitraum ist deine mittlere Zykluslänge ± 1 Standardabweichung über deine letzten %1$lld vollständigen Zyklen, ab %2$lld Zyklen; beides wählt Grada. Ein Zyklus über %3$lld Tage gilt als fehlender Eintrag. Ein Temperaturanstieg braucht neun Nächte am Stück, wobei die dritte hohe Nacht mindestens %4$@ °C über den sechs davor liegt, und der Eisprung wird auf der letzten Nacht davor markiert. Die Regel stammt aus Basalthermometer-Messungen; sie auf die Handgelenktemperatur im Schlaf anzuwenden, wählt Grada."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El rango es la duración media de tu ciclo ± 1 desviación estándar en tus últimos %1$lld ciclos completos, desde %2$lld ciclos; ambas son elecciones de Grada. Un ciclo de más de %3$lld días cuenta como un registro olvidado. Una subida de temperatura necesita nueve noches seguidas, con la tercera noche alta al menos %4$@ °C por encima de las seis anteriores, y la ovulación se marca en la última noche antes de ella."
+            "value" : "El rango es la duración media de tu ciclo ± 1 desviación estándar en tus últimos %1$lld ciclos completos, desde %2$lld ciclos; ambas son elecciones de Grada. Un ciclo de más de %3$lld días cuenta como un registro olvidado. Una subida de temperatura necesita nueve noches seguidas, con la tercera noche alta al menos %4$@ °C por encima de las seis anteriores, y la ovulación se marca en la última noche antes de ella. La regla se definió para mediciones con termómetro basal; aplicarla a la temperatura de la muñeca durante el sueño es una elección de Grada."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La plage est la durée moyenne de votre cycle ± 1 écart-type sur vos %1$lld derniers cycles complets, à partir de %2$lld cycles ; ces deux choix sont ceux de Grada. Un cycle de plus de %3$lld jours compte comme un oubli d’enregistrement. Une hausse de température demande neuf nuits d’affilée, la troisième nuit haute dépassant d’au moins %4$@ °C les six précédentes, et l’ovulation est marquée sur la dernière nuit avant elle."
+            "value" : "La plage est la durée moyenne de votre cycle ± 1 écart-type sur vos %1$lld derniers cycles complets, à partir de %2$lld cycles ; ces deux choix sont ceux de Grada. Un cycle de plus de %3$lld jours compte comme un oubli d’enregistrement. Une hausse de température demande neuf nuits d’affilée, la troisième nuit haute dépassant d’au moins %4$@ °C les six précédentes, et l’ovulation est marquée sur la dernière nuit avant elle. La règle a été établie pour des mesures au thermomètre basal ; l’appliquer à la température du poignet pendant le sommeil est un choix de Grada."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "सीमा आपके पिछले %1$lld पूरे चक्रों की औसत चक्र लंबाई ± 1 मानक विचलन है, %2$lld चक्रों से; दोनों Grada के चुनाव हैं। %3$lld दिनों से लंबा चक्र छूटी हुई एंट्री माना जाता है। तापमान वृद्धि के लिए लगातार नौ रातें चाहिए, जिनमें तीसरी ऊँची रात पिछली छह से कम से कम %4$@ °C ऊपर हो, और ओव्यूलेशन उससे पहले की आख़िरी रात पर चिह्नित होता है।"
+            "value" : "सीमा आपके पिछले %1$lld पूरे चक्रों की औसत चक्र लंबाई ± 1 मानक विचलन है, %2$lld चक्रों से; दोनों Grada के चुनाव हैं। %3$lld दिनों से लंबा चक्र छूटी हुई एंट्री माना जाता है। तापमान वृद्धि के लिए लगातार नौ रातें चाहिए, जिनमें तीसरी ऊँची रात पिछली छह से कम से कम %4$@ °C ऊपर हो, और ओव्यूलेशन उससे पहले की आख़िरी रात पर चिह्नित होता है। यह नियम बेसल थर्मामीटर की रीडिंग के लिए बना था; इसे नींद के दौरान कलाई के तापमान पर लागू करना Grada का चुनाव है।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’intervallo è la durata media del tuo ciclo ± 1 deviazione standard sugli ultimi %1$lld cicli completi, a partire da %2$lld cicli; entrambe sono scelte di Grada. Un ciclo oltre %3$lld giorni conta come una registrazione mancata. Un aumento di temperatura richiede nove notti di fila, con la terza notte alta almeno %4$@ °C sopra le sei precedenti, e l’ovulazione è segnata sull’ultima notte prima di esso."
+            "value" : "L’intervallo è la durata media del tuo ciclo ± 1 deviazione standard sugli ultimi %1$lld cicli completi, a partire da %2$lld cicli; entrambe sono scelte di Grada. Un ciclo oltre %3$lld giorni conta come una registrazione mancata. Un aumento di temperatura richiede nove notti di fila, con la terza notte alta almeno %4$@ °C sopra le sei precedenti, e l’ovulazione è segnata sull’ultima notte prima di esso. La regola è nata per le misurazioni con termometro basale; applicarla alla temperatura del polso durante il sonno è una scelta di Grada."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O intervalo é a duração média do seu ciclo ± 1 desvio padrão nos seus últimos %1$lld ciclos completos, a partir de %2$lld ciclos; ambas são escolhas do Grada. Um ciclo com mais de %3$lld dias conta como um registro esquecido. Um aumento de temperatura precisa de nove noites seguidas, com a terceira noite alta pelo menos %4$@ °C acima das seis anteriores, e a ovulação é marcada na última noite antes dele."
+            "value" : "O intervalo é a duração média do seu ciclo ± 1 desvio padrão nos seus últimos %1$lld ciclos completos, a partir de %2$lld ciclos; ambas são escolhas do Grada. Um ciclo com mais de %3$lld dias conta como um registro esquecido. Um aumento de temperatura precisa de nove noites seguidas, com a terceira noite alta pelo menos %4$@ °C acima das seis anteriores, e a ovulação é marcada na última noite antes dele. A regra foi definida para medições com termômetro basal; aplicá-la à temperatura do pulso durante o sono é uma escolha do Grada."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Диапазон — это средняя длина вашего цикла ± 1 стандартное отклонение за последние полные циклы (до %1$lld), начиная с %2$lld циклов; оба выбора сделала Grada. Цикл длиннее %3$lld дней считается пропущенной отметкой. Для подъёма температуры нужны девять ночей подряд, причём третья высокая ночь должна быть выше шести предыдущих минимум на %4$@ °C, а овуляция отмечается на последней ночи перед ним."
+            "value" : "Диапазон — это средняя длина вашего цикла ± 1 стандартное отклонение за последние полные циклы (до %1$lld), начиная с %2$lld циклов; оба выбора сделала Grada. Цикл длиннее %3$lld дней считается пропущенной отметкой. Для подъёма температуры нужны девять ночей подряд, причём третья высокая ночь должна быть выше шести предыдущих минимум на %4$@ °C, а овуляция отмечается на последней ночи перед ним. Правило создано для измерений базальным термометром; применять его к температуре запястья во сне решила Grada."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "范围是你最近 %1$lld 个完整周期的平均周期长度 ± 1 个标准差，至少需要 %2$lld 个周期；两者都是 Grada 的选择。超过 %3$lld 天的周期视为漏记。体温升高需要连续九晚的数据，且第三个高温夜至少比之前六晚高 %4$@ °C，排卵标记在升高前的最后一晚。"
+            "value" : "范围是你最近 %1$lld 个完整周期的平均周期长度 ± 1 个标准差，至少需要 %2$lld 个周期；两者都是 Grada 的选择。超过 %3$lld 天的周期视为漏记。体温升高需要连续九晚的数据，且第三个高温夜至少比之前六晚高 %4$@ °C，排卵标记在升高前的最后一晚。该规则是为基础体温计读数制定的；将其用于睡眠时的手腕温度是 Grada 的选择。"
           }
         }
       }
     },
-    "The review grades intensity by physiological thresholds, not heart rate. Placing them at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices." : {
+    "The review grades intensity by physiological thresholds, not heart rate. Judging each workout by its average heart rate, placing the thresholds at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Übersicht bewertet die Intensität nach physiologischen Schwellen, nicht nach Herzfrequenz. Sie bei 82 % und 88 % der maximalen Herzfrequenz anzusetzen (Seilers Zonen) und 36 Stunden für den Bereich von 24–48 Stunden zu nehmen, sind Entscheidungen von Grada."
+            "value" : "Die Übersicht bewertet die Intensität nach physiologischen Schwellen, nicht nach Herzfrequenz. Jedes Training nach seiner durchschnittlichen Herzfrequenz zu beurteilen, die Schwellen bei 82 % und 88 % der maximalen Herzfrequenz anzusetzen (Seilers Zonen) und 36 Stunden für den Bereich von 24–48 Stunden zu nehmen, sind Entscheidungen von Grada."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La revisión clasifica la intensidad por umbrales fisiológicos, no por frecuencia cardíaca. Situarlos en el 82% y el 88% de la frecuencia cardíaca máxima (zonas de Seiler) y tomar 36 horas para el rango de 24–48 horas son decisiones de Grada."
+            "value" : "La revisión clasifica la intensidad por umbrales fisiológicos, no por frecuencia cardíaca. Juzgar cada entrenamiento por su frecuencia cardíaca media, situar los umbrales en el 82% y el 88% de la frecuencia cardíaca máxima (zonas de Seiler) y tomar 36 horas para el rango de 24–48 horas son decisiones de Grada."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La revue note l’intensité par des seuils physiologiques, pas par la fréquence cardiaque. Les placer à 82 % et 88 % de la fréquence cardiaque max (zones de Seiler) et retenir 36 heures pour la fourchette de 24 à 48 heures sont des choix de Grada."
+            "value" : "La revue note l’intensité par des seuils physiologiques, pas par la fréquence cardiaque. Juger chaque séance par sa fréquence cardiaque moyenne, placer les seuils à 82 % et 88 % de la fréquence cardiaque max (zones de Seiler) et retenir 36 heures pour la fourchette de 24 à 48 heures sont des choix de Grada."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "समीक्षा इंटेंसिटी को हृदय गति से नहीं, शारीरिक सीमाओं से आँकती है। उन्हें अधिकतम हृदय गति के 82% और 88% (Seiler के ज़ोन) पर रखना और 24–48 घंटे की सीमा के लिए 36 घंटे लेना Grada के चुनाव हैं।"
+            "value" : "समीक्षा इंटेंसिटी को हृदय गति से नहीं, शारीरिक सीमाओं से आँकती है। हर वर्कआउट को उसकी औसत हृदय गति से आँकना, सीमाओं को अधिकतम हृदय गति के 82% और 88% (Seiler के ज़ोन) पर रखना और 24–48 घंटे की सीमा के लिए 36 घंटे लेना Grada के चुनाव हैं।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La rassegna classifica l’intensità in base alle soglie fisiologiche, non alla frequenza cardiaca. Fissarle all’82% e all’88% della frequenza cardiaca massima (zone di Seiler) e usare 36 ore per l’intervallo di 24–48 ore sono scelte di Grada."
+            "value" : "La rassegna classifica l’intensità in base alle soglie fisiologiche, non alla frequenza cardiaca. Valutare ogni allenamento in base alla sua frequenza cardiaca media, fissare le soglie all’82% e all’88% della frequenza cardiaca massima (zone di Seiler) e usare 36 ore per l’intervallo di 24–48 ore sono scelte di Grada."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A análise classifica a intensidade por limiares fisiológicos, não pela frequência cardíaca. Colocá-los em 82% e 88% da frequência cardíaca máxima (zonas de Seiler) e usar 36 horas para a faixa de 24–48 horas são escolhas do Grada."
+            "value" : "A análise classifica a intensidade por limiares fisiológicos, não pela frequência cardíaca. Avaliar cada treino pela sua frequência cardíaca média, colocar os limiares em 82% e 88% da frequência cardíaca máxima (zonas de Seiler) e usar 36 horas para a faixa de 24–48 horas são escolhas do Grada."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Обзор оценивает интенсивность по физиологическим порогам, а не по пульсу. Выбор границ на уровне 82% и 88% максимального пульса (зоны Зайлера) и 36 часов для диапазона 24–48 часов сделан Grada."
+            "value" : "Обзор оценивает интенсивность по физиологическим порогам, а не по пульсу. Оценка каждой тренировки по её среднему пульсу, выбор границ на уровне 82% и 88% максимального пульса (зоны Зайлера) и 36 часов для диапазона 24–48 часов сделаны Grada."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "该综述按生理阈值而非心率为强度分级。将阈值定在最大心率的 82% 和 88%（Seiler 区间），并取 36 小时作为 24–48 小时范围的值，是 Grada 的选择。"
+            "value" : "该综述按生理阈值而非心率为强度分级。按每次训练的平均心率判断强度，将阈值定在最大心率的 82% 和 88%（Seiler 区间），并取 36 小时作为 24–48 小时范围的值，是 Grada 的选择。"
           }
         }
       }
