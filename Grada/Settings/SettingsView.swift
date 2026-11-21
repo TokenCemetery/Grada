@@ -1,18 +1,8 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-enum Appearance: String, CaseIterable, Identifiable {
+enum Appearance: String {
     case system, light, dark
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .system: String(localized: "System", comment: "Appearance option that follows the device setting")
-        case .light: String(localized: "Light", comment: "Appearance option: light mode")
-        case .dark: String(localized: "Dark", comment: "Appearance option: dark mode")
-        }
-    }
 
     /// Nil follows the system setting.
     var colorScheme: ColorScheme? {
@@ -40,8 +30,7 @@ struct SettingsView: View {
                 Section {
                     NavigationLink { ProfileView() } label: { SettingsRow("Profile", icon: "person.fill", color: .blue) }
                     NavigationLink { GoalsView() } label: { SettingsRow("Goals", icon: "target", color: .green) }
-                    NavigationLink { ThemeView() } label: { SettingsRow("Theme", icon: "paintpalette.fill", color: .indigo) }
-                    NavigationLink { AccessibilityView() } label: { SettingsRow("Accessibility", icon: "accessibility", color: .cyan) }
+                    NavigationLink { AppearanceView() } label: { SettingsRow("Appearance", icon: "sun.max.fill", color: .indigo) }
                     NavigationLink { DataSourceView() } label: { SettingsRow("Data Source", icon: "heart.fill", color: .pink) }
                     NavigationLink { ImportView() } label: { SettingsRow("Import", icon: "square.and.arrow.down.fill", color: .orange) }
 #if DEBUG && targetEnvironment(simulator)
@@ -90,35 +79,43 @@ private struct SettingsRow: View {
     }
 }
 
-private struct ThemeView: View {
+/// Light/Dark sits behind a Match System toggle, like iOS Display & Brightness.
+private struct AppearanceView: View {
     @AppStorage(SettingsKey.appearance) private var appearance: Appearance = .system
-
-    var body: some View {
-        Form {
-            Section("Appearance") {
-                Picker("Appearance", selection: $appearance) {
-                    ForEach(Appearance.allCases) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-            }
-        }
-        .navigationTitle("Theme")
-    }
-}
-
-private struct AccessibilityView: View {
     @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var matchesSystem: Binding<Bool> {
+        Binding {
+            appearance == .system
+        } set: { matches in
+            // Start on the look already on screen, so turning the toggle off doesn't flip the app.
+            appearance = matches ? .system : (colorScheme == .dark ? .dark : .light)
+        }
+    }
 
     var body: some View {
         Form {
+            Section("Theme") {
+                Toggle("Match System", isOn: matchesSystem.animation())
+                if appearance != .system {
+                    Picker("Appearance", selection: $appearance) {
+                        Text("Light", comment: "Appearance option: light mode").tag(Appearance.light)
+                        Text("Dark", comment: "Appearance option: dark mode").tag(Appearance.dark)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
+            }
             Section {
                 Toggle("Color-Blind Palette", isOn: $colorBlind)
+            } header: {
+                Text("Accessibility")
             } footer: {
                 Text("Ratings on cards, widgets and Calendar days use blue, orange and dark instead of green, yellow and red.")
             }
         }
-        .navigationTitle("Accessibility")
+        .navigationTitle("Appearance")
         .onChange(of: colorBlind) { WidgetPublisher.setColorBlind(colorBlind) }
     }
 }

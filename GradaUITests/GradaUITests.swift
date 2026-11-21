@@ -92,6 +92,39 @@ final class GradaUITests: XCTestCase {
         XCTAssertEqual(app.state, .runningForeground)
     }
 
+    /// Light/Dark shows only once Match System is off (#180).
+    @MainActor
+    func testAppearanceSettings() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-SampleData", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        if app.navigationBars["Choose your goals"].waitForExistence(timeout: 5) {
+            app.staticTexts["Balanced"].tap()
+        }
+
+        app.tabBars.buttons["Settings"].tap()
+        app.buttons["Appearance"].tap()
+        let matchSystem = app.switches["Match System"]
+        XCTAssertTrue(matchSystem.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.switches["Color-Blind Palette"].exists)
+        // A run that stopped halfway can leave it off; start from the default.
+        if matchSystem.value as? String == "0" { matchSystem.switches.firstMatch.tap() }
+        XCTAssertFalse(app.buttons["Dark"].exists)
+        attachScreenshot("Appearance")
+
+        matchSystem.switches.firstMatch.tap()
+        let dark = app.buttons["Dark"]
+        XCTAssertTrue(dark.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Light"].exists)
+        dark.tap()
+        XCTAssertTrue(dark.isSelected)
+        attachScreenshot("Appearance dark")
+
+        // Leaves the simulator following the system again.
+        matchSystem.switches.firstMatch.tap()
+        XCTAssertTrue(dark.waitForNonExistence(timeout: 5))
+    }
+
     @MainActor
     private func attachScreenshot(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
