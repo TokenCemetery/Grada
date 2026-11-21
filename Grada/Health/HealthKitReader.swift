@@ -9,7 +9,7 @@ final class HealthKitReader: HealthSource {
     let store = HKHealthStore()
     /// Derived heart rate recovery by workout ID; see `heartRateRecovery(after:)`.
     private var recoveryCache: [String: Double] = [:]
-    private let calendar = Calendar.current
+    private let calendar = Calendar.autoupdatingCurrent
     private let logger = Logger(subsystem: "Grada", category: "HealthKitReader")
 
     nonisolated static let sourceID = "appleHealth"

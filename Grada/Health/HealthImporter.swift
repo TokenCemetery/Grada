@@ -32,7 +32,7 @@ final class HealthImporter {
     @ObservationIgnored private let fitFiles: FITFileSource
     @ObservationIgnored private let container: ModelContainer
     @ObservationIgnored private let writer: HealthStoreWriter
-    @ObservationIgnored private let calendar = Calendar.current
+    @ObservationIgnored private let calendar = Calendar.autoupdatingCurrent
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var authorization: Task<Void, Never>?
     @ObservationIgnored private var recentImport: Task<Void, Never>?

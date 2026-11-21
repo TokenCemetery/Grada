@@ -17,7 +17,7 @@ final class FITFileSource: LiveHealthSource {
 
     static let defaultTimelineURL = URL.applicationSupportDirectory.appending(path: "FIT sleep stages.json")
 
-    init(timelineURL: URL = defaultTimelineURL, calendar: Calendar = .current) {
+    init(timelineURL: URL = defaultTimelineURL, calendar: Calendar = .autoupdatingCurrent) {
         self.timelineURL = timelineURL
         self.calendar = calendar
     }

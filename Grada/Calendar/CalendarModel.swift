@@ -45,7 +45,7 @@ final class CalendarModel {
     /// Months added each time the oldest loaded month scrolls into view.
     private let monthsPerStep = 6
 
-    init(source: HealthDataSource, importer: HealthImporter? = nil, calendar: Calendar = .current) {
+    init(source: HealthDataSource, importer: HealthImporter? = nil, calendar: Calendar = .autoupdatingCurrent) {
         self.source = source
         self.importer = importer
         self.calendar = calendar

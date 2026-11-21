@@ -194,7 +194,7 @@ nonisolated struct StoredHealthData: HealthDataSource {
     let container: ModelContainer
     /// In order of preference. Stored data from sources not listed here comes after them.
     var sources: [any LiveHealthSource] = []
-    var calendar: Calendar = .current
+    var calendar: Calendar = .autoupdatingCurrent
     /// Where `EnteredProfile` is kept.
     var defaults: UserDefaults = .standard
     /// Rows from `loadedSince` on, set by `withDaysLoaded(_:)`; nil to fetch on each read. Fetching costs

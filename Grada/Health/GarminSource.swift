@@ -58,7 +58,7 @@ final class GarminSource: HealthSource {
     nonisolated static let maxHistoryYears = 10
 
     init(keyStore: any GarminKeyStoring = GarminKeyStore(), transport: GarminClient.Transport? = nil,
-         calendar: Calendar = .current, defaults: UserDefaults = .standard) {
+         calendar: Calendar = .autoupdatingCurrent, defaults: UserDefaults = .standard) {
         self.keyStore = keyStore
         self.calendar = calendar
         self.defaults = defaults
