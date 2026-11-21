@@ -124,10 +124,9 @@ struct JournalView: View {
         }
     }
 
-    /// Both reports' recommendations, each once: both take Strain's.
+    /// Both reports' recommendations, each once (both take Strain's), daily ones first.
     private var recommendations: [Recommendation] {
-        let all = (morning?.recommendations ?? []) + (evening?.recommendations ?? [])
-        return all.enumerated().filter { index, item in !all[..<index].contains(item) }.map(\.element)
+        Recommendations.dailyFirst((morning?.recommendations ?? []) + (evening?.recommendations ?? []))
     }
 
     private struct ReportKey: Equatable {

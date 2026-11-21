@@ -6,6 +6,8 @@ nonisolated struct Recommendation: Equatable {
     let symbol: String
     let text: String
     let reason: String
+    /// Place among the recommendations given every day: steps 0, bedtime 1. Nil for warnings that come and go.
+    var dailyOrder: Int?
 }
 
 /// A fixed set of rules, each turning one card's data into a recommendation, or nil when there's nothing to say.
@@ -24,7 +26,8 @@ nonisolated enum Recommendations {
                 text: String(localized: "Steps goal reached"),
                 reason: over >= 1
                     ? String(localized: "\(whole(today)) steps today, \(whole(over)) over your goal of \(whole(goal)).")
-                    : String(localized: "\(whole(today)) steps today, right on your goal.")
+                    : String(localized: "\(whole(today)) steps today, right on your goal."),
+                dailyOrder: 0
             )
         }
         let left = goal - today
@@ -32,7 +35,8 @@ nonisolated enum Recommendations {
         return Recommendation(
             symbol: "figure.walk",
             text: minutes == 1 ? String(localized: "Walk about 1 more minute") : String(localized: "Walk about \(minutes) more minutes"),
-            reason: String(localized: "\(whole(left)) steps to today's goal of \(whole(goal)). A brisk walk is about \(whole(stepsPerMinute)) steps a minute.")
+            reason: String(localized: "\(whole(left)) steps to today's goal of \(whole(goal)). A brisk walk is about \(whole(stepsPerMinute)) steps a minute."),
+            dailyOrder: 0
         )
     }
 
@@ -103,8 +107,16 @@ nonisolated enum Recommendations {
         return Recommendation(
             symbol: "bed.double",
             text: String(localized: "Go to bed by \(time(plan.bedtime))"),
-            reason: reason
+            reason: reason,
+            dailyOrder: 1
         )
+    }
+
+    /// Each recommendation once, daily ones first in their own order, so they keep their place as warnings come and go.
+    static func dailyFirst(_ items: [Recommendation]) -> [Recommendation] {
+        let unique = items.enumerated().filter { index, item in !items[..<index].contains(item) }.map(\.element)
+        let daily = unique.compactMap { item in item.dailyOrder.map { (order: $0, item: item) } }
+        return daily.sorted { $0.order < $1.order }.map(\.item) + unique.filter { $0.dailyOrder == nil }
     }
 
     private static func whole(_ value: Double) -> String {

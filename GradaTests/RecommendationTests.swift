@@ -15,6 +15,18 @@ struct RecommendationTests {
         #expect(Recommendations.steps(today: 12_000, goal: 10_000).reason.contains("over your goal"))
     }
 
+    @Test func dailyRecommendationsComeFirstStepsThenBedtimeAndOnce() throws {
+        let rest = try #require(Recommendations.restingHeartRate(62, normal: 52...58))
+        let load = try #require(Recommendations.load(ratio: 1.4))
+        let steps = Recommendations.steps(today: 8_420, goal: 10_000)
+        let wake = Date(timeIntervalSince1970: 1_800_000_000)
+        let bed = Recommendations.bedtime(Bedtime.Plan(bedtime: wake.addingTimeInterval(-8 * 3600), wake: wake,
+                                                       usualBedtime: wake.addingTimeInterval(-8 * 3600),
+                                                       awakeInBed: 0, weekend: nil), need: 8 * 3600)
+        // Morning's warnings, then the evening's bedtime, steps and Strain again, as the Journal combines them.
+        #expect(Recommendations.dailyFirst([rest, load, bed, steps, load]) == [steps, bed, rest, load])
+    }
+
     @Test func restingHeartRateAboveNormalRangeSuggestsRest() throws {
         let recommendation = try #require(Recommendations.restingHeartRate(62, normal: 52...58))
         #expect(recommendation.text == "Take it easy today")
