@@ -9583,7 +9583,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Grand"
+            "value" : "Grande"
           }
         },
         "hi" : {
@@ -33073,7 +33073,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quadrat"
+            "value" : "Quadratisch"
           }
         },
         "es" : {
@@ -33085,7 +33085,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Carré"
+            "value" : "Carrée"
           }
         },
         "hi" : {
@@ -33109,13 +33109,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Малая"
+            "value" : "Квадратная"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "小"
+            "value" : "方形"
           }
         }
       }
