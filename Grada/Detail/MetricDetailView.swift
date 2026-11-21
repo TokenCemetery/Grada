@@ -56,7 +56,7 @@ struct MetricDetailView: View {
                     DetailSection(title: String(localized: "Data from")) { OriginsView(origins: origins) }
                 }
                 if !kind.sources.isEmpty || kind.estimateNote != nil {
-                    DetailSection(title: String(localized: "Sources")) { SourcesView(kind: kind) }
+                    DetailSection(title: String(localized: "Sources")) { SourcesView(sources: kind.sources, estimateNote: kind.estimateNote) }
                 }
                 if !related.kinds.isEmpty {
                     DetailSection(title: related.title) {
@@ -163,12 +163,13 @@ struct DetailSection<Content: View>: View {
 }
 
 /// The studies behind a calculated metric, each opening its paper, then what Grada estimated itself.
-private struct SourcesView: View {
-    let kind: CardKind
+struct SourcesView: View {
+    let sources: [MetricSource]
+    let estimateNote: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ForEach(kind.sources, id: \.self) { source in
+            ForEach(sources, id: \.self) { source in
                 VStack(alignment: .leading, spacing: 2) {
                     if let url = source.url {
                         Link(destination: url) {
@@ -184,7 +185,7 @@ private struct SourcesView: View {
                     Text(source.supports).font(.caption).foregroundStyle(.secondary)
                 }
             }
-            if let note = kind.estimateNote {
+            if let note = estimateNote {
                 VStack(alignment: .leading, spacing: 2) {
                     Label("Grada's estimate", systemImage: "exclamationmark.triangle")
                         .font(.subheadline).foregroundStyle(.orange)

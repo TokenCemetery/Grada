@@ -37,8 +37,11 @@ final class HealthKitReader: HealthSource {
             HKQuantityType(.dietaryCaffeine),
             // Workout screens and the Heart Rate Recovery card.
             HKQuantityType(.heartRateRecoveryOneMinute),
-            // The Cycle calendar and Journal's cycle day (#137).
+            // The Cycle calendar and Journal's cycle day (#137), and ovulation evidence (#138).
             HKCategoryType(.menstrualFlow),
+            HKQuantityType(.basalBodyTemperature),
+            HKCategoryType(.ovulationTestResult),
+            HKCategoryType(.cervicalMucusQuality),
         ] + effortTypes
 
     /// Workout effort ratings, the user's and Apple's estimate; Apple Health has them from iOS 18 (#134).
@@ -66,7 +69,11 @@ final class HealthKitReader: HealthSource {
                                              HKQuantityType(.heartRateRecoveryOneMinute),
                                              // iPhone writes walking metrics in many small batches through the day.
                                              HKQuantityType(.walkingSpeed), HKQuantityType(.walkingStepLength),
-                                             HKQuantityType(.walkingAsymmetryPercentage), HKCategoryType(.menstrualFlow)] + Self.effortTypes)
+                                             HKQuantityType(.walkingAsymmetryPercentage),
+                                             // Cycle data is read live, never imported.
+                                             HKCategoryType(.menstrualFlow), HKQuantityType(.basalBodyTemperature),
+                                             HKCategoryType(.ovulationTestResult), HKCategoryType(.cervicalMucusQuality)]
+                                            + Self.effortTypes)
         for type in Self.readTypes where !unobserved.contains(type) {
             store.execute(HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
                 guard error == nil else { completion(); return }
@@ -376,6 +383,37 @@ final class HealthKitReader: HealthSource {
                  Self.originName(sample.sourceRevision.source, device: sample.device))
             })
         }
+    }
+
+    /// Each day's first basal body temperature, and every ovulation test and cervical mucus entry, in `interval`.
+    func cycleSigns(during interval: DateInterval) async throws -> [CycleSign]? {
+        let range = HKQuery.predicateForSamples(withStart: interval.start, end: interval.end)
+        let temperatures = try await HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: HKQuantityType(.basalBodyTemperature), predicate: range)],
+            sortDescriptors: [SortDescriptor(\.startDate)]
+        ).result(for: store)
+        let logged = try await HKSampleQueryDescriptor(
+            predicates: [.categorySample(type: HKCategoryType(.ovulationTestResult), predicate: range),
+                         .categorySample(type: HKCategoryType(.cervicalMucusQuality), predicate: range)],
+            sortDescriptors: [SortDescriptor(\.startDate)]
+        ).result(for: store)
+        var signs: [CycleSign] = []
+        var temperatureDays = Set<Date>()
+        for sample in temperatures {
+            let day = calendar.startOfDay(for: sample.startDate)
+            guard temperatureDays.insert(day).inserted else { continue }
+            signs.append(CycleSign(day: day, kind: .basalTemperature(sample.quantity.doubleValue(for: .degreeCelsius())),
+                                   origin: Self.originName(sample.sourceRevision.source, device: sample.device)))
+        }
+        for sample in logged {
+            let kind: CycleSign.Kind? = sample.categoryType == HKCategoryType(.ovulationTestResult)
+                ? CycleSign.OvulationTest(rawValue: sample.value).map { .ovulationTest($0) }
+                : CycleSign.CervicalMucus(rawValue: sample.value).map { .cervicalMucus($0) }
+            guard let kind else { continue }
+            signs.append(CycleSign(day: calendar.startOfDay(for: sample.startDate), kind: kind,
+                                   origin: Self.originName(sample.sourceRevision.source, device: sample.device)))
+        }
+        return signs.isEmpty ? nil : signs.sorted { $0.day < $1.day }
     }
 
     /// Sleep stages overlapping `interval`, oldest first, from the best source of each night.

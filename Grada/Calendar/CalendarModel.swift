@@ -15,6 +15,12 @@ final class CalendarModel {
     private(set) var flowDays: [Date: FlowDay] = [:]
     private(set) var cycleDays: [Date: Int] = [:]
     private(set) var wristTemperature: [Date: Double] = [:]
+    /// Cycle, from evidence only (#138): each loaded day's logged signs, each day ovulation is likely on, the next
+    /// period's likely range, and how many complete cycles are logged.
+    private(set) var signs: [Date: [CycleSign]] = [:]
+    private(set) var ovulationDays: [Date: Cycle.Ovulation] = [:]
+    private(set) var prediction: Cycle.Prediction?
+    private(set) var completeCycles = 0
     /// Whether the Cycle type shows: Female as the profile's sex.
     private(set) var showsCycle = false
     /// The type the last finished load was for, and whether a Cycle load found any period day in Apple Health,
@@ -56,6 +62,10 @@ final class CalendarModel {
         var cycleDays: [Date: Int] = [:]
         var wristTemperature: [Date: Double] = [:]
         var hasPeriods = false
+        var signs: [CycleSign] = []
+        var ovulations: [Cycle.Ovulation] = []
+        var prediction: Cycle.Prediction?
+        var completeCycles = 0
     }
 
     func load(_ metric: CalendarMetric, goals: GoalHistory) async {
@@ -71,6 +81,14 @@ final class CalendarModel {
             cycleDays = loaded.cycleDays
             wristTemperature = loaded.wristTemperature
             hasPeriods = loaded.hasPeriods
+            signs = Dictionary(grouping: loaded.signs, by: \.day)
+            // Only after the fact: a positive test yesterday marks today, not tomorrow.
+            let today = calendar.startOfDay(for: .now)
+            ovulationDays = Dictionary(loaded.ovulations.flatMap { ovulation in
+                ovulation.days.filter { $0 <= today }.map { ($0, ovulation) }
+            }) { first, _ in first }
+            prediction = loaded.prediction
+            completeCycles = loaded.completeCycles
             loadedMetric = metric
             workoutDays = WorkoutDay.byDay(loaded.workouts, calendar: calendar)
             workoutsByDay = Dictionary(grouping: loaded.workouts) { calendar.startOfDay(for: $0.start) }
@@ -101,8 +119,17 @@ final class CalendarModel {
                             showsCycle: await Cycle.isShown(source: source))
         // Read live each time and kept only in memory: cycle data isn't stored (#137).
         if metric == .cycle, loaded.showsCycle {
-            let flow = try await source.menstrualFlow(days: days + Cycle.lookbackDays)
+            let flow = try await source.menstrualFlow(days: max(days + Cycle.lookbackDays, Cycle.predictionDays))
             let starts = Cycle.starts(flow, calendar: calendar)
+            // A period running into the start of what was read looks like a start but may not be one.
+            let readStart = calendar.date(byAdding: .day, value: 1 - max(days + Cycle.lookbackDays, Cycle.predictionDays), to: today)!
+            var knownStarts = starts
+            if let first = starts.first, flow.first(where: { $0.day == first })?.isCycleStart != true,
+               calendar.dateComponents([.day], from: readStart, to: first).day! <= Cycle.gapDays {
+                knownStarts.removeFirst()
+            }
+            loaded.prediction = Cycle.prediction(starts: knownStarts, today: today, calendar: calendar)
+            loaded.completeCycles = Cycle.lengths(knownStarts, calendar: calendar).count
             loaded.hasPeriods = flow.contains { $0.flow.isBleeding }
             if !loaded.hasPeriods {
                 loaded.hasPeriods = try await source.menstrualFlow(days: Cycle.historyDays).contains { $0.flow.isBleeding }
@@ -112,9 +139,17 @@ final class CalendarModel {
                 let day = calendar.date(byAdding: .day, value: offset, to: start)!
                 loaded.cycleDays[day] = Cycle.day(day, starts: starts, calendar: calendar)
             }
-            for night in try await source.daily(.wristTemperature, days: days) {
-                if let value = night.value { loaded.wristTemperature[night.day] = value }
+            // Ovulation in the first shown cycle can rest on nights before the shown months.
+            var nights: [Date: Double] = [:]
+            for night in try await source.daily(.wristTemperature, days: days + Cycle.lookbackDays) {
+                if let value = night.value { nights[night.day] = value }
             }
+            let signs = try await source.cycleSigns(days: days + Cycle.lookbackDays)
+            let wristOrigin = try await source.origins()[.wristTemperature]?.max { $0.lastDay < $1.lastDay }?.name
+            loaded.ovulations = Cycle.ovulations(starts: starts, signs: signs, wristTemperature: nights,
+                                                 wristOrigin: wristOrigin, calendar: calendar)
+            loaded.signs = signs.filter { $0.day >= start }
+            loaded.wristTemperature = nights.filter { $0.key >= start }
         }
         return loaded
     }

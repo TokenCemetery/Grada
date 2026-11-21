@@ -11,6 +11,7 @@ struct CalendarView: View {
     @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var selectedDay: Date?
+    @State private var showsCycleInfo = false
 
     private var calendar: Calendar { .current }
     private var today: Date { calendar.startOfDay(for: .now) }
@@ -56,6 +57,7 @@ struct CalendarView: View {
                     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
             }
         }
+        .sheet(isPresented: $showsCycleInfo) { CycleInfoView() }
         // The tab bar stays tappable behind the sheet; without this the sheet follows the user to the next tab.
         .onDisappear { selectedDay = nil }
         // A new type redraws the calendar; the sheet would hide it.
@@ -126,21 +128,43 @@ struct CalendarView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         } else {
-            HStack(spacing: 12) {
-                Label {
-                    Text(String(localized: "cycle.period", defaultValue: "Period", comment: "Menstrual period, logged without an amount of flow"))
-                } icon: {
-                    Circle().fill(CycleColors.period).frame(width: 10, height: 10)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 12) {
+                    Label {
+                        Text(String(localized: "cycle.period", defaultValue: "Period", comment: "Menstrual period, logged without an amount of flow"))
+                    } icon: {
+                        Circle().fill(CycleColors.period).frame(width: 10, height: 10)
+                    }
+                    Label {
+                        Text("Likely next period")
+                    } icon: {
+                        Circle().strokeBorder(CycleColors.period, style: CycleColors.predictedStroke).frame(width: 10, height: 10)
+                    }
+                    Label {
+                        Text("Likely ovulation")
+                    } icon: {
+                        Circle().strokeBorder(CycleColors.ovulation, lineWidth: 2).frame(width: 10, height: 10)
+                    }
                 }
-                Label {
-                    Text("Cycle day under the date")
-                } icon: {
-                    Text("12").font(.system(size: 8)).monospacedDigit()
+                HStack(spacing: 12) {
+                    Label {
+                        Text("Cycle day under the date")
+                    } icon: {
+                        Text("12").font(.system(size: 8)).monospacedDigit()
+                    }
+                    Label {
+                        Text("Wrist temperature")
+                    } icon: {
+                        Capsule().fill(CycleColors.temperature).frame(width: 10, height: 2)
+                    }
                 }
-                Label {
-                    Text("Wrist temperature")
-                } icon: {
-                    Capsule().fill(CycleColors.temperature).frame(width: 10, height: 2)
+                if model.loadedMetric == .cycle {
+                    HStack(alignment: .firstTextBaseline) {
+                        predictionText
+                        Spacer()
+                        Button("About Cycle", systemImage: "info.circle") { showsCycleInfo = true }
+                            .labelStyle(.iconOnly)
+                    }
                 }
             }
             .labelStyle(LegendLabelStyle())
@@ -148,6 +172,18 @@ struct CalendarView: View {
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
+        }
+    }
+
+    /// The next period's likely range, or how many more complete cycles it needs.
+    @ViewBuilder
+    private var predictionText: some View {
+        if let prediction = model.prediction {
+            Text("Next period likely \((prediction.earliest..<prediction.latest).formatted(.interval.month(.abbreviated).day()))")
+                .lineLimit(2)
+        } else if model.completeCycles < Cycle.minimumCycles {
+            Text("A next-period range needs \(Cycle.minimumCycles) complete cycles; \(model.completeCycles) logged so far.")
+                .lineLimit(2)
         }
     }
 
@@ -317,6 +353,8 @@ private struct MonthView: View {
                 CycleDayCell(day: day,
                              flow: model.flowDays[day]?.flow,
                              cycleDay: model.cycleDays[day],
+                             isOvulation: model.ovulationDays[day] != nil,
+                             isPredicted: day >= today && model.prediction?.contains(day) == true,
                              isToday: day == today,
                              isFuture: day > today,
                              isSelected: day == selected)
@@ -506,17 +544,23 @@ private struct TrainingDayCell: View {
     }
 }
 
-/// Cycle colours: a period day's fill, and the wrist temperature line.
+/// Cycle colours: a period day's fill, a likely next period's dashed ring, likely ovulation's ring, and the wrist
+/// temperature line.
 enum CycleColors {
     static let period = Color.pink
+    static let ovulation = Color.indigo
     static let temperature = Color.orange
+    static let predictedStroke = StrokeStyle(lineWidth: 1.5, dash: [3, 2])
 }
 
-/// A Cycle day: the date over its cycle day, on a pink circle for a period day, stronger for heavier flow.
+/// A Cycle day: the date over its cycle day, on a pink circle for a period day, stronger for heavier flow. A ring
+/// marks likely ovulation, a dashed ring a likely next-period day.
 private struct CycleDayCell: View {
     let day: Date
     let flow: FlowDay.Flow?
     let cycleDay: Int?
+    let isOvulation: Bool
+    let isPredicted: Bool
     let isToday: Bool
     let isFuture: Bool
     let isSelected: Bool
@@ -537,7 +581,12 @@ private struct CycleDayCell: View {
         .foregroundStyle(isPeriod ? .white : isFuture ? .secondary : .primary)
         .frame(width: size, height: size)
         .background {
-            if isPeriod { Circle().fill(CycleColors.period.opacity(opacity)) }
+            if isPeriod {
+                Circle().fill(CycleColors.period.opacity(opacity))
+            } else if isPredicted {
+                Circle().strokeBorder(CycleColors.period, style: CycleColors.predictedStroke)
+            }
+            if isOvulation { Circle().strokeBorder(CycleColors.ovulation, lineWidth: 2) }
         }
         .overlay {
             if isToday {
@@ -566,6 +615,8 @@ private struct CycleDayCell: View {
         var parts = [day.formatted(date: .complete, time: .omitted)]
         if let flow, flow.isBleeding { parts.append(flow.title) }
         if let cycleDay { parts.append(String(localized: "Cycle day \(cycleDay)")) }
+        if isOvulation { parts.append(String(localized: "Likely ovulation")) }
+        if isPredicted { parts.append(String(localized: "Likely next period")) }
         return parts.joined(separator: ", ")
     }
 }
@@ -647,10 +698,12 @@ private struct DaySheet: View {
 
     private var pastDay: Date? { Calendar.current.isDateInToday(day) ? nil : day }
 
-    /// The day's logged flow and the app that logged it, and its cycle day.
+    /// The day's logged flow and the app that logged it, its cycle day, likely ovulation with its evidence, and the
+    /// other signs logged that day.
     private var cycleSummary: some View {
-        let flow = model.flowDays[Calendar.current.startOfDay(for: day)]
-        let cycleDay = model.cycleDays[Calendar.current.startOfDay(for: day)]
+        let start = Calendar.current.startOfDay(for: day)
+        let flow = model.flowDays[start]
+        let cycleDay = model.cycleDays[start]
         return VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(flow?.flow.title ?? String(localized: "No period logged"))
@@ -661,10 +714,39 @@ private struct DaySheet: View {
             if let origin = flow?.origin {
                 Text("Logged in \(origin)").font(.caption).foregroundStyle(.secondary)
             }
+            if let ovulation = model.ovulationDays[start] {
+                Divider()
+                Text("Likely ovulation").font(.subheadline.weight(.semibold))
+                Text(ovulation.evidence.title).font(.subheadline)
+                if let origin = ovulation.origin {
+                    Text("Logged in \(origin)").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            let signs = model.signs[start] ?? []
+            if !signs.isEmpty { Divider() }
+            ForEach(signs.indices, id: \.self) { index in
+                HStack(alignment: .firstTextBaseline) {
+                    Text(Self.title(of: signs[index].kind)).font(.subheadline)
+                    Spacer()
+                    if let origin = signs[index].origin { Text(origin).font(.caption).foregroundStyle(.secondary) }
+                }
+            }
         }
         .padding()
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
+    }
+
+    /// A logged sign and its value; temperatures in °F where the locale measures in US units.
+    private static func title(of kind: CycleSign.Kind) -> String {
+        switch kind {
+        case .basalTemperature(let celsius):
+            let usesMetric = Locale.current.measurementSystem != .us
+            let value = (usesMetric ? celsius : celsius * 1.8 + 32).formatted(.number.precision(.fractionLength(2)))
+            return String(localized: "Basal body temperature: \(value) \(usesMetric ? "°C" : "°F")")
+        case .ovulationTest(let result): return String(localized: "Ovulation test: \(result.title)")
+        case .cervicalMucus(let quality): return String(localized: "Cervical mucus: \(quality.title)")
+        }
     }
 
     /// Shows the loading state until this day's values arrive, never the previous day's.

@@ -38,6 +38,10 @@ nonisolated struct PastDaySource: HealthDataSource {
         try await base.menstrualFlow(days: days + daysAgo).filter { $0.day < dayEnd }
     }
 
+    func cycleSigns(days: Int) async throws -> [CycleSign] {
+        try await base.cycleSigns(days: days + daysAgo).filter { $0.day < dayEnd }
+    }
+
     /// Keyed by workout, so later workouts' ratings don't matter: callers look up the shown days' workouts.
     func workoutEfforts(days: Int) async throws -> [String: WorkoutEffort] {
         try await base.workoutEfforts(days: days + daysAgo)

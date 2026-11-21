@@ -6060,6 +6060,58 @@
         }
       }
     },
+    "A next-period range needs %lld complete cycles; %lld logged so far." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für den Zeitraum der nächsten Periode sind %1$lld vollständige Zyklen nötig; bisher eingetragen: %2$lld."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El rango de la próxima regla necesita %1$lld ciclos completos; registrados hasta ahora: %2$lld."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La plage des prochaines règles nécessite %1$lld cycles complets ; enregistrés jusqu’ici : %2$lld."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अगले पीरियड की सीमा के लिए %1$lld पूरे चक्र चाहिए; अब तक दर्ज: %2$lld।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’intervallo delle prossime mestruazioni richiede %1$lld cicli completi; registrati finora: %2$lld."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O intervalo da próxima menstruação precisa de %1$lld ciclos completos; registrados até agora: %2$lld."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для диапазона следующей менструации нужно полных циклов: %1$lld; отмечено пока: %2$lld."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预测下次经期范围需要 %1$lld 个完整周期；目前已记录 %2$lld 个。"
+          }
+        }
+      }
+    },
     "A trend for this card is coming in a later version." : {
       "localizations" : {
         "de" : {
@@ -6108,6 +6160,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此卡片的趋势将在后续版本中推出。"
+          }
+        }
+      }
+    },
+    "About Cycle" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über Zyklus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca de Ciclo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos de Cycle"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चक्र के बारे में"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informazioni su Ciclo"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sobre Ciclo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "О цикле"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关于周期"
           }
         }
       }
@@ -8563,6 +8667,162 @@
         }
       }
     },
+    "Basal Body Temperature" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basaltemperatur"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temperatura basal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Température basale"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बेसल बॉडी तापमान"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temperatura basale"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temperatura basal"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Базальная температура"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基础体温"
+          }
+        }
+      }
+    },
+    "Basal body temperature rise" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anstieg der Basaltemperatur"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subida de la temperatura basal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hausse de la température basale"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बेसल बॉडी तापमान में वृद्धि"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumento della temperatura basale"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumento da temperatura basal"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подъём базальной температуры"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基础体温升高"
+          }
+        }
+      }
+    },
+    "Basal body temperature: %@ %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Basaltemperatur: %@ %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temperatura basal: %@ %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Température basale : %@ %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बेसल बॉडी तापमान: %@ %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temperatura basale: %@ %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temperatura basal: %@ %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Базальная температура: %@ %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基础体温：%@ %@"
+          }
+        }
+      }
+    },
     "Base" : {
       "localizations" : {
         "de" : {
@@ -10074,6 +10334,110 @@
         }
       }
     },
+    "Cervical Mucus Quality" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zervixschleim-Beschaffenheit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calidad del moco cervical"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualité de la glaire cervicale"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सर्वाइकल म्यूकस की गुणवत्ता"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualità del muco cervicale"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualidade do muco cervical"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Качество цервикальной слизи"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "宫颈黏液质量"
+          }
+        }
+      }
+    },
+    "Cervical mucus: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zervixschleim: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moco cervical: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glaire cervicale : %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सर्वाइकल म्यूकस: %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muco cervicale: %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muco cervical: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цервикальная слизь: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "宫颈黏液：%@"
+          }
+        }
+      }
+    },
     "Changed by you on %@" : {
       "localizations" : {
         "de" : {
@@ -11218,6 +11582,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "日期下方为周期第几天"
+          }
+        }
+      }
+    },
+    "Cycle length varies within a person, so the next period is a range, not a date" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Zykluslänge schwankt bei jeder Person, daher ist die nächste Periode ein Zeitraum, kein Datum"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La duración del ciclo varía en cada persona, así que la próxima regla es un rango, no una fecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La durée du cycle varie chez une même personne : les prochaines règles sont une plage, pas une date"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एक ही व्यक्ति में चक्र की लंबाई बदलती है, इसलिए अगला पीरियड एक तारीख नहीं, एक सीमा है"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La durata del ciclo varia nella stessa persona, quindi le prossime mestruazioni sono un intervallo, non una data"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A duração do ciclo varia na mesma pessoa, então a próxima menstruação é um intervalo, não uma data"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Длина цикла у одного человека меняется, поэтому следующая менструация — диапазон, а не дата"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同一个人的周期长度会变化，所以下次经期是一个范围，而不是某一天"
           }
         }
       }
@@ -19756,6 +20172,110 @@
         }
       }
     },
+    "Likely next period" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voraussichtliche nächste Periode"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima regla probable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prochaines règles probables"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "संभावित अगला पीरियड"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prossime mestruazioni probabili"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima menstruação provável"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вероятная следующая менструация"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可能的下次经期"
+          }
+        }
+      }
+    },
+    "Likely ovulation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wahrscheinlicher Eisprung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovulación probable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovulation probable"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "संभावित ओव्यूलेशन"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovulazione probabile"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovulação provável"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вероятная овуляция"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可能排卵"
+          }
+        }
+      }
+    },
     "Load Focus" : {
       "localizations" : {
         "de" : {
@@ -22224,6 +22744,58 @@
         }
       }
     },
+    "Next period likely %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächste Periode voraussichtlich %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima regla probable: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prochaines règles probables : %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अगला पीरियड संभवतः %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prossime mestruazioni probabili: %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima menstruação provável: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Следующая менструация вероятна: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下次经期可能在 %@"
+          }
+        }
+      }
+    },
     "Night after: %@" : {
       "localizations" : {
         "de" : {
@@ -24463,6 +25035,162 @@
         }
       }
     },
+    "Ovulation Test Result" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovulationstest-Ergebnis"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resultado del test de ovulación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Résultat du test d’ovulation"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ओव्यूलेशन टेस्ट परिणाम"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Risultato del test di ovulazione"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resultado do teste de ovulação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Результат теста на овуляцию"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排卵测试结果"
+          }
+        }
+      }
+    },
+    "Ovulation followed the first rise in luteinizing hormone by 16–48 hours in 90% of cycles" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In 90 % der Zyklen folgte der Eisprung 16–48 Stunden nach dem ersten Anstieg des luteinisierenden Hormons"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En el 90 % de los ciclos, la ovulación llegó 16–48 horas después del primer aumento de la hormona luteinizante"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans 90 % des cycles, l’ovulation a suivi de 16 à 48 heures la première hausse de l’hormone lutéinisante"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "90% चक्रों में ओव्यूलेशन ल्यूटिनाइज़िंग हार्मोन की पहली वृद्धि के 16–48 घंटे बाद हुआ"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nel 90% dei cicli l’ovulazione è arrivata 16–48 ore dopo il primo aumento dell’ormone luteinizzante"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em 90% dos ciclos, a ovulação ocorreu 16–48 horas após o primeiro aumento do hormônio luteinizante"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В 90 % циклов овуляция наступала через 16–48 часов после первого подъёма лютеинизирующего гормона"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "90% 的周期中，排卵发生在黄体生成素首次升高后的 16–48 小时内"
+          }
+        }
+      }
+    },
+    "Ovulation test: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ovulationstest: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test de ovulación: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test d’ovulation : %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ओव्यूलेशन टेस्ट: %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test di ovulazione: %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teste de ovulação: %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тест на овуляцию: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排卵试纸：%@"
+          }
+        }
+      }
+    },
     "Pace" : {
       "localizations" : {
         "de" : {
@@ -24671,6 +25399,58 @@
         }
       }
     },
+    "Period days come from apps that log to Apple Health. With %lld complete cycles logged, the calendar shows when your next period is likely, as a range that widens the more your cycles vary. Ovulation is marked only from evidence: a positive LH test, after which ovulation is likely within 1–2 days, or a sustained rise in basal body or sleeping wrist temperature by the three-over-six rule. Cervical mucus is shown but never marks ovulation on its own. Grada doesn't predict a fertile window, and isn't for birth control or planning a pregnancy." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Periodentage stammen aus Apps, die in Apple Health speichern. Mit %lld eingetragenen vollständigen Zyklen zeigt der Kalender, wann deine nächste Periode wahrscheinlich ist – als Zeitraum, der umso breiter wird, je mehr deine Zyklen schwanken. Ein Eisprung wird nur anhand von Belegen markiert: ein positiver LH-Test, nach dem der Eisprung wahrscheinlich innerhalb von 1–2 Tagen folgt, oder ein anhaltender Anstieg der Basal- oder nächtlichen Handgelenktemperatur nach der Drei-über-sechs-Regel. Zervixschleim wird angezeigt, markiert aber nie allein einen Eisprung. Grada sagt kein fruchtbares Fenster voraus und ist nicht zur Verhütung oder Schwangerschaftsplanung gedacht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los días de regla vienen de apps que guardan en Salud. Con %lld ciclos completos registrados, el calendario muestra cuándo es probable tu próxima regla, como un rango que se amplía cuanto más varían tus ciclos. La ovulación solo se marca con pruebas: un test de LH positivo, tras el cual la ovulación es probable en 1–2 días, o una subida sostenida de la temperatura basal o de la muñeca durante el sueño según la regla de tres sobre seis. El moco cervical se muestra, pero nunca marca la ovulación por sí solo. Grada no predice una ventana fértil y no sirve para anticoncepción ni para planificar un embarazo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les jours de règles viennent d’apps qui enregistrent dans Santé. Avec %lld cycles complets enregistrés, le calendrier montre quand vos prochaines règles sont probables, sous forme de plage d’autant plus large que vos cycles varient. L’ovulation n’est marquée que sur preuve : un test LH positif, après lequel l’ovulation est probable dans les 1 à 2 jours, ou une hausse durable de la température basale ou du poignet pendant le sommeil selon la règle des trois au-dessus des six. La glaire cervicale est affichée mais ne marque jamais l’ovulation à elle seule. Grada ne prédit pas de fenêtre de fertilité et ne sert ni à la contraception ni à planifier une grossesse."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पीरियड के दिन उन ऐप्स से आते हैं जो Apple Health में सेव करते हैं। %lld पूरे चक्र दर्ज होने पर कैलेंडर दिखाता है कि आपका अगला पीरियड कब संभावित है, एक सीमा के रूप में जो आपके चक्र जितने ज़्यादा बदलते हैं उतनी चौड़ी होती है। ओव्यूलेशन सिर्फ़ प्रमाण से चिह्नित होता है: पॉज़िटिव LH टेस्ट, जिसके बाद 1–2 दिनों में ओव्यूलेशन संभावित है, या तीन-ऊपर-छह नियम के अनुसार बेसल बॉडी या नींद के दौरान कलाई के तापमान में लगातार वृद्धि। सर्वाइकल म्यूकस दिखाया जाता है, पर अकेले कभी ओव्यूलेशन चिह्नित नहीं करता। Grada फ़र्टाइल विंडो का अनुमान नहीं लगाता, और गर्भनिरोध या गर्भधारण की योजना के लिए नहीं है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I giorni di mestruazioni arrivano dalle app che salvano in Salute. Con %lld cicli completi registrati, il calendario mostra quando sono probabili le prossime mestruazioni, come un intervallo che si allarga quanto più i tuoi cicli variano. L’ovulazione è segnata solo in base a prove: un test LH positivo, dopo il quale l’ovulazione è probabile entro 1–2 giorni, o un aumento stabile della temperatura basale o del polso durante il sonno secondo la regola del tre sopra sei. Il muco cervicale è mostrato ma non segna mai da solo l’ovulazione. Grada non prevede una finestra fertile e non serve per la contraccezione né per pianificare una gravidanza."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os dias de menstruação vêm de apps que salvam no Saúde. Com %lld ciclos completos registrados, o calendário mostra quando sua próxima menstruação é provável, como um intervalo que se alarga quanto mais seus ciclos variam. A ovulação só é marcada com evidência: um teste de LH positivo, após o qual a ovulação é provável em 1–2 dias, ou um aumento sustentado da temperatura basal ou do pulso durante o sono pela regra de três sobre seis. O muco cervical é mostrado, mas nunca marca a ovulação sozinho. O Grada não prevê janela fértil e não serve para contracepção nem para planejar uma gravidez."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дни менструации берутся из приложений, которые сохраняют данные в «Здоровье». Когда отмечено полных циклов: %lld, календарь показывает, когда вероятна следующая менструация, — диапазоном, который тем шире, чем сильнее меняются ваши циклы. Овуляция отмечается только по признакам: положительный тест на ЛГ, после которого овуляция вероятна в течение 1–2 дней, или устойчивый подъём базальной температуры или температуры запястья во сне по правилу «три над шестью». Цервикальная слизь показывается, но сама по себе никогда не отмечает овуляцию. Grada не прогнозирует фертильное окно и не предназначена для контрацепции или планирования беременности."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "经期日来自会存入“健康”的 App。记录满 %lld 个完整周期后，日历会以范围显示下次经期可能的时间，周期越不规律，范围越宽。只有在有证据时才会标记排卵：LH 试纸阳性（之后 1–2 天内可能排卵），或按“三高于六”规则，基础体温或睡眠时手腕温度持续升高。宫颈黏液会显示，但不会单独标记排卵。Grada 不预测易孕期，也不能用于避孕或备孕。"
+          }
+        }
+      }
+    },
     "Personal API Key" : {
       "localizations" : {
         "de" : {
@@ -24875,6 +25655,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "睡眠较差"
+          }
+        }
+      }
+    },
+    "Positive LH test" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Positiver LH-Test"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test de LH positivo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test LH positif"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पॉज़िटिव LH टेस्ट"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test LH positivo"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teste de LH positivo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Положительный тест на ЛГ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LH 试纸阳性"
           }
         }
       }
@@ -25754,7 +26586,7 @@
         }
       }
     },
-    "Read from Apple Health when Calendar or Journal shows a day, and only with Female as your sex in Profile or Apple Health. Grada doesn't store it." : {
+    "Read from Apple Health when Calendar or Journal shows a day, and only with Female as your sex in Profile or Apple Health. Grada doesn't store them." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -25765,37 +26597,37 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Se lee de Salud cuando Calendario o Diario muestran un día, y solo con Mujer como sexo en Perfil o en Salud. Grada no la guarda."
+            "value" : "Se lee de Salud cuando Calendario o Diario muestran un día, y solo con Mujer como sexo en Perfil o en Salud. Grada no los guarda."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lu dans Santé quand Calendrier ou Journal affichent un jour, et seulement avec Femme comme sexe dans Profil ou dans Santé. Grada ne le conserve pas."
+            "value" : "Lu dans Santé quand Calendrier ou Journal affichent un jour, et seulement avec Femme comme sexe dans Profil ou dans Santé. Grada ne les conserve pas."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "कैलेंडर या जर्नल में कोई दिन दिखने पर Apple Health से पढ़ा जाता है, और सिर्फ़ तब जब प्रोफ़ाइल या Apple Health में आपका लिंग महिला हो। Grada इसे सेव नहीं करता।"
+            "value" : "कैलेंडर या जर्नल में कोई दिन दिखने पर Apple Health से पढ़ा जाता है, और सिर्फ़ तब जब प्रोफ़ाइल या Apple Health में आपका लिंग महिला हो। Grada इन्हें सेव नहीं करता।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Letto da Salute quando Calendario o Diario mostrano un giorno, e solo con Donna come sesso nel Profilo o in Salute. Grada non lo conserva."
+            "value" : "Letto da Salute quando Calendario o Diario mostrano un giorno, e solo con Donna come sesso nel Profilo o in Salute. Grada non li conserva."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lido do Saúde quando Calendário ou Diário mostram um dia, e só com Feminino como sexo no Perfil ou no Saúde. O Grada não o guarda."
+            "value" : "Lido do Saúde quando Calendário ou Diário mostram um dia, e só com Feminino como sexo no Perfil ou no Saúde. O Grada não os guarda."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Читается из «Здоровья», когда Календарь или Дневник показывают день, и только если в Профиле или в «Здоровье» указан женский пол. Grada это не сохраняет."
+            "value" : "Читается из «Здоровья», когда Календарь или Дневник показывают день, и только если в Профиле или в «Здоровье» указан женский пол. Grada их не сохраняет."
           }
         },
         "zh-Hans" : {
@@ -31770,6 +32602,58 @@
         }
       }
     },
+    "The range is your mean cycle length ± 1 standard deviation over your last %lld complete cycles, from %lld cycles; both are Grada's choices. A cycle over %lld days counts as a missed log. A temperature rise needs nine nights in a row with the third high night at least %@ °C above the six before, and ovulation is marked on the last night before it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Zeitraum ist deine mittlere Zykluslänge ± 1 Standardabweichung über deine letzten %1$lld vollständigen Zyklen, ab %2$lld Zyklen; beides wählt Grada. Ein Zyklus über %3$lld Tage gilt als fehlender Eintrag. Ein Temperaturanstieg braucht neun Nächte am Stück, wobei die dritte hohe Nacht mindestens %4$@ °C über den sechs davor liegt, und der Eisprung wird auf der letzten Nacht davor markiert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El rango es la duración media de tu ciclo ± 1 desviación estándar en tus últimos %1$lld ciclos completos, desde %2$lld ciclos; ambas son elecciones de Grada. Un ciclo de más de %3$lld días cuenta como un registro olvidado. Una subida de temperatura necesita nueve noches seguidas, con la tercera noche alta al menos %4$@ °C por encima de las seis anteriores, y la ovulación se marca en la última noche antes de ella."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La plage est la durée moyenne de votre cycle ± 1 écart-type sur vos %1$lld derniers cycles complets, à partir de %2$lld cycles ; ces deux choix sont ceux de Grada. Un cycle de plus de %3$lld jours compte comme un oubli d’enregistrement. Une hausse de température demande neuf nuits d’affilée, la troisième nuit haute dépassant d’au moins %4$@ °C les six précédentes, et l’ovulation est marquée sur la dernière nuit avant elle."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सीमा आपके पिछले %1$lld पूरे चक्रों की औसत चक्र लंबाई ± 1 मानक विचलन है, %2$lld चक्रों से; दोनों Grada के चुनाव हैं। %3$lld दिनों से लंबा चक्र छूटी हुई एंट्री माना जाता है। तापमान वृद्धि के लिए लगातार नौ रातें चाहिए, जिनमें तीसरी ऊँची रात पिछली छह से कम से कम %4$@ °C ऊपर हो, और ओव्यूलेशन उससे पहले की आख़िरी रात पर चिह्नित होता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’intervallo è la durata media del tuo ciclo ± 1 deviazione standard sugli ultimi %1$lld cicli completi, a partire da %2$lld cicli; entrambe sono scelte di Grada. Un ciclo oltre %3$lld giorni conta come una registrazione mancata. Un aumento di temperatura richiede nove notti di fila, con la terza notte alta almeno %4$@ °C sopra le sei precedenti, e l’ovulazione è segnata sull’ultima notte prima di esso."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O intervalo é a duração média do seu ciclo ± 1 desvio padrão nos seus últimos %1$lld ciclos completos, a partir de %2$lld ciclos; ambas são escolhas do Grada. Um ciclo com mais de %3$lld dias conta como um registro esquecido. Um aumento de temperatura precisa de nove noites seguidas, com a terceira noite alta pelo menos %4$@ °C acima das seis anteriores, e a ovulação é marcada na última noite antes dele."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Диапазон — это средняя длина вашего цикла ± 1 стандартное отклонение за последние полные циклы (до %1$lld), начиная с %2$lld циклов; оба выбора сделала Grada. Цикл длиннее %3$lld дней считается пропущенной отметкой. Для подъёма температуры нужны девять ночей подряд, причём третья высокая ночь должна быть выше шести предыдущих минимум на %4$@ °C, а овуляция отмечается на последней ночи перед ним."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "范围是你最近 %1$lld 个完整周期的平均周期长度 ± 1 个标准差，至少需要 %2$lld 个周期；两者都是 Grada 的选择。超过 %3$lld 天的周期视为漏记。体温升高需要连续九晚的数据，且第三个高温夜至少比之前六晚高 %4$@ °C，排卵标记在升高前的最后一晚。"
+          }
+        }
+      }
+    },
     "The review grades intensity by physiological thresholds, not heart rate. Placing them at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices." : {
       "localizations" : {
         "de" : {
@@ -31818,6 +32702,110 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "该综述按生理阈值而非心率为强度分级。将阈值定在最大心率的 82% 和 88%（Seiler 区间），并取 36 小时作为 24–48 小时范围的值，是 Grada 的选择。"
+          }
+        }
+      }
+    },
+    "The temperature rise after ovulation shows at the wrist" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Temperaturanstieg nach dem Eisprung ist am Handgelenk messbar"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La subida de temperatura tras la ovulación se aprecia en la muñeca"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La hausse de température après l’ovulation se voit au poignet"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ओव्यूलेशन के बाद तापमान की वृद्धि कलाई पर दिखती है"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’aumento di temperatura dopo l’ovulazione si vede al polso"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O aumento de temperatura após a ovulação aparece no pulso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подъём температуры после овуляции виден на запястье"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排卵后的体温升高在手腕上可见"
+          }
+        }
+      }
+    },
+    "The three-over-six rule for a sustained rise in temperature after ovulation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Drei-über-sechs-Regel für einen anhaltenden Temperaturanstieg nach dem Eisprung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La regla de tres sobre seis para una subida sostenida de la temperatura tras la ovulación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La règle des trois au-dessus des six pour une hausse durable de la température après l’ovulation"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ओव्यूलेशन के बाद तापमान में लगातार वृद्धि के लिए तीन-ऊपर-छह नियम"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La regola del tre sopra sei per un aumento stabile della temperatura dopo l’ovulazione"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A regra de três sobre seis para um aumento sustentado da temperatura após a ovulação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Правило «три над шестью» для устойчивого подъёма температуры после овуляции"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排卵后体温持续升高的“三高于六”规则"
           }
         }
       }
@@ -36334,6 +37322,58 @@
         }
       }
     },
+    "Wrist temperature rise" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anstieg der Handgelenktemperatur"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subida de la temperatura de la muñeca"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hausse de la température du poignet"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कलाई के तापमान में वृद्धि"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumento della temperatura del polso"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumento da temperatura do pulso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подъём температуры запястья"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手腕温度升高"
+          }
+        }
+      }
+    },
     "Wrist temperature this month" : {
       "localizations" : {
         "de" : {
@@ -38872,6 +39912,301 @@
         }
       }
     },
+    "mucus.creamy" : {
+      "comment" : "Cervical mucus quality",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cremig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creamy"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cremoso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crémeuse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "क्रीमी"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cremoso"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cremoso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кремообразная"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "乳状"
+          }
+        }
+      }
+    },
+    "mucus.dry" : {
+      "comment" : "Cervical mucus quality",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trocken"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dry"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seco"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sèche"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सूखा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secco"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seco"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сухая"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "干燥"
+          }
+        }
+      }
+    },
+    "mucus.eggWhite" : {
+      "comment" : "Cervical mucus quality",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie Eiweiß"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Egg white"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clara de huevo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blanc d’œuf"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अंडे की सफ़ेदी जैसा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albume d’uovo"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clara de ovo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Как яичный белок"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "蛋清状"
+          }
+        }
+      }
+    },
+    "mucus.sticky" : {
+      "comment" : "Cervical mucus quality",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klebrig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sticky"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegajoso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collante"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चिपचिपा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appiccicoso"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pegajoso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Липкая"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "黏稠"
+          }
+        }
+      }
+    },
+    "mucus.watery" : {
+      "comment" : "Cervical mucus quality",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wässrig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watery"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acuoso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aqueuse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पानी जैसा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acquoso"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquoso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Водянистая"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "水样"
+          }
+        }
+      }
+    },
     "no data" : {
       "localizations" : {
         "de" : {
@@ -39024,6 +40359,242 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "夜间平均"
+          }
+        }
+      }
+    },
+    "ovulationTest.estrogenSurge" : {
+      "comment" : "Ovulation test result",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Östrogenanstieg"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estrogen surge"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pico de estrógeno"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pic d’œstrogènes"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एस्ट्रोजन सर्ज"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Picco di estrogeni"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pico de estrogênio"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пик эстрогена"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "雌激素峰值"
+          }
+        }
+      }
+    },
+    "ovulationTest.indeterminate" : {
+      "comment" : "Ovulation test result",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unklar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indeterminate"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indeterminado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indéterminé"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अनिश्चित"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indeterminato"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indeterminado"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Неопределённый"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不确定"
+          }
+        }
+      }
+    },
+    "ovulationTest.lhSurge" : {
+      "comment" : "Ovulation test result: luteinizing hormone surge, i.e. positive",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LH-Anstieg"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LH surge"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pico de LH"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pic de LH"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LH सर्ज"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Picco di LH"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pico de LH"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пик ЛГ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LH 峰值"
+          }
+        }
+      }
+    },
+    "ovulationTest.negative" : {
+      "comment" : "Ovulation test result",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Negativ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Negative"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Negativo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Négatif"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नेगेटिव"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Negativo"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Negativo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отрицательный"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "阴性"
           }
         }
       }

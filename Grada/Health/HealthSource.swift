@@ -27,6 +27,9 @@ protocol LiveHealthSource: AnyObject {
     func effort(of workouts: [WorkoutSummary]) async throws -> [String: WorkoutEffort]
     /// Days with menstrual flow logged in `interval`, oldest first; nil without any record of it (#137).
     func menstrualFlow(during interval: DateInterval) async throws -> [FlowDay]?
+    /// Basal body temperatures, ovulation tests and cervical mucus logged in `interval`, oldest first; nil without
+    /// any record of them (#138).
+    func cycleSigns(during interval: DateInterval) async throws -> [CycleSign]?
 }
 
 extension LiveHealthSource {
@@ -42,6 +45,7 @@ extension LiveHealthSource {
     func heartRateRecovery(after workouts: [WorkoutSummary]) async throws -> [String: Double] { [:] }
     func effort(of workouts: [WorkoutSummary]) async throws -> [String: WorkoutEffort] { [:] }
     func menstrualFlow(during interval: DateInterval) async throws -> [FlowDay]? { nil }
+    func cycleSigns(during interval: DateInterval) async throws -> [CycleSign]? { nil }
 }
 
 /// Somewhere Grada imports health data from: Apple Health, or a direct connection to a device's service.

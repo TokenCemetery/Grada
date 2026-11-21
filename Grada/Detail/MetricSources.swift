@@ -150,6 +150,21 @@ struct MetricSource: Hashable {
     static let arem2015 = MetricSource("Arem et al. 2015 · JAMA Intern Med",
                                        "Mortality risk by weekly exercise",
                                        doi: "10.1001/jamainternmed.2015.0533")
+
+    // Menstrual cycle (#138)
+    static let bull2019 = MetricSource("Bull et al. 2019 · npj Digital Medicine",
+                                       "Cycle length varies within a person, so the next period is a range, not a date",
+                                       doi: "10.1038/s41746-019-0152-7")
+    static let marshall1968 = MetricSource("Marshall 1968 · The Lancet",
+                                           "The three-over-six rule for a sustained rise in temperature after ovulation",
+                                           doi: "10.1016/s0140-6736(68)92886-9")
+    static let who1980 = MetricSource("WHO Task Force 1980 · Am J Obstet Gynecol",
+                                      "Ovulation followed the first rise in luteinizing hormone by 16–48 hours in 90% of cycles",
+                                      url: "https://pubmed.ncbi.nlm.nih.gov/6775535/")
+    static let goodale2019 = MetricSource("Goodale et al. 2019 · J Med Internet Res",
+                                          "The temperature rise after ovulation shows at the wrist",
+                                          doi: "10.2196/13404")
+    static let cycle: [MetricSource] = [.bull2019, .marshall1968, .who1980, .goodale2019]
 }
 
 extension CardKind {
