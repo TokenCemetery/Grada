@@ -21667,55 +21667,54 @@
         }
       }
     },
-    "Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nA dashed circle is a tag Grada suggests from your health data: tap it to keep it.\n\nUnder Alcohol and Caffeine, the night after days you logged them is compared with other nights in the last %lld days. A change shows only when it's clearly bigger than how much your nights vary, each side needs %lld nights, and nights after Illness or Night shift are left out.\n\nTags are saved as you tap them." : {
-      "extractionState" : "stale",
+    "Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nA dashed circle is a tag Grada suggests from your health data: tap it to keep it.\n\nTags are saved as you tap them." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Halte fest, was am Tag passiert ist: Grada ordnet es der folgenden Nacht zu, Getränke am Abend gehören also zu dem Tag, an dem du sie hattest.\n\nEin gestrichelter Kreis ist ein Tag, den Grada anhand deiner Gesundheitsdaten vorschlägt: Tippe darauf, um ihn zu behalten.\n\nBei Alkohol und Koffein wird die Nacht nach Tagen, an denen du sie erfasst hast, mit anderen Nächten der letzten %lld Tage verglichen. Eine Veränderung wird nur angezeigt, wenn sie deutlich größer ist als die Schwankung deiner Nächte, jede Seite braucht %lld Nächte, und Nächte nach Krankheit oder Nachtschicht bleiben außen vor.\n\nTags werden beim Antippen gespeichert."
+            "value" : "Halte fest, was am Tag passiert ist: Grada ordnet es der folgenden Nacht zu, Getränke am Abend gehören also zu dem Tag, an dem du sie hattest.\n\nEin gestrichelter Kreis ist ein Tag, den Grada anhand deiner Gesundheitsdaten vorschlägt: Tippe darauf, um ihn zu behalten.\n\nTags werden beim Antippen gespeichert."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Anota lo que pasó durante el día: Grada lo vincula con la noche siguiente, así que las bebidas de la tarde van en el día en que las tomaste.\n\nUn círculo discontinuo es una etiqueta que Grada sugiere a partir de tus datos de salud: tócalo para conservarla.\n\nEn Alcohol y Cafeína, la noche posterior a los días en que los anotaste se compara con otras noches de los últimos %lld días. Un cambio solo aparece cuando es claramente mayor que lo que varían tus noches, cada lado necesita %lld noches, y las noches posteriores a Enfermedad o Turno de noche se dejan fuera.\n\nLas etiquetas se guardan al tocarlas."
+            "value" : "Anota lo que pasó durante el día: Grada lo vincula con la noche siguiente, así que las bebidas de la tarde van en el día en que las tomaste.\n\nUn círculo discontinuo es una etiqueta que Grada sugiere a partir de tus datos de salud: tócalo para conservarla.\n\nLas etiquetas se guardan al tocarlas."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Notez ce qui s’est passé pendant la journée : Grada le relie à la nuit suivante, donc les verres du soir vont sur le jour où vous les avez bus.\n\nUn cercle en pointillés est un tag que Grada suggère à partir de vos données de santé : touchez-le pour le garder.\n\nPour l’Alcool et la Caféine, la nuit qui suit les jours où vous les avez notés est comparée aux autres nuits des %lld derniers jours. Une variation n’apparaît que si elle dépasse nettement la variabilité de vos nuits, chaque côté exige %lld nuits, et les nuits après Maladie ou Travail de nuit sont exclues.\n\nLes tags sont enregistrés au fur et à mesure que vous les touchez."
+            "value" : "Notez ce qui s’est passé pendant la journée : Grada le relie à la nuit suivante, donc les verres du soir vont sur le jour où vous les avez bus.\n\nUn cercle en pointillés est un tag que Grada suggère à partir de vos données de santé : touchez-le pour le garder.\n\nLes tags sont enregistrés au fur et à mesure que vous les touchez."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "दिन में जो हुआ उसे दर्ज करें: Grada उसे अगली रात से जोड़ता है, इसलिए शाम की ड्रिंक उसी दिन पर जाती है जब आपने ली।\n\nबिंदीदार घेरा वह टैग है जो Grada आपके स्वास्थ्य डेटा से सुझाता है: उसे रखने के लिए टैप करें।\n\nशराब और कैफ़ीन के तहत, जिन दिनों आपने इन्हें दर्ज किया उनके बाद की रात की तुलना पिछले %lld दिनों की दूसरी रातों से की जाती है। बदलाव तभी दिखता है जब वह आपकी रातों के उतार-चढ़ाव से साफ़ तौर पर बड़ा हो, हर पक्ष को %lld रातें चाहिए, और बीमारी या नाइट शिफ़्ट के बाद की रातें छोड़ दी जाती हैं।\n\nटैग टैप करते ही सेव हो जाते हैं।"
+            "value" : "दिन में जो हुआ उसे दर्ज करें: Grada उसे अगली रात से जोड़ता है, इसलिए शाम की ड्रिंक उसी दिन पर जाती है जब आपने ली।\n\nबिंदीदार घेरा वह टैग है जो Grada आपके स्वास्थ्य डेटा से सुझाता है: उसे रखने के लिए टैप करें।\n\nटैग टैप करते ही सेव हो जाते हैं।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Registra cosa è successo durante la giornata: Grada lo collega alla notte successiva, quindi i drink serali vanno sul giorno in cui li hai bevuti.\n\nUn cerchio tratteggiato è un tag che Grada suggerisce in base ai tuoi dati di salute: toccalo per tenerlo.\n\nPer Alcol e Caffeina, la notte dopo i giorni in cui li hai registrati viene confrontata con le altre notti degli ultimi %lld giorni. Una variazione compare solo se è chiaramente maggiore di quanto variano le tue notti, ogni gruppo richiede %lld notti e le notti dopo Malattia o Turno di notte sono escluse.\n\nI tag vengono salvati man mano che li tocchi."
+            "value" : "Registra cosa è successo durante la giornata: Grada lo collega alla notte successiva, quindi i drink serali vanno sul giorno in cui li hai bevuti.\n\nUn cerchio tratteggiato è un tag che Grada suggerisce in base ai tuoi dati di salute: toccalo per tenerlo.\n\nI tag vengono salvati man mano che li tocchi."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Registre o que aconteceu durante o dia: o Grada o associa à noite seguinte, então as bebidas da noite vão no dia em que você as tomou.\n\nUm círculo tracejado é uma tag que o Grada sugere a partir dos seus dados de saúde: toque nele para mantê-la.\n\nEm Álcool e Cafeína, a noite depois dos dias em que você os registrou é comparada com as outras noites dos últimos %1$lld dias. Uma mudança só aparece quando é claramente maior que a variação das suas noites, cada lado precisa de %2$lld noites, e as noites após Doença ou Turno da noite ficam de fora.\n\nAs tags são salvas assim que você toca nelas."
+            "value" : "Registre o que aconteceu durante o dia: o Grada o associa à noite seguinte, então as bebidas da noite vão no dia em que você as tomou.\n\nUm círculo tracejado é uma tag que o Grada sugere a partir dos seus dados de saúde: toque nele para mantê-la.\n\nAs tags são salvas assim que você toca nelas."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отмечайте, что происходило в течение дня: Grada связывает это со следующей ночью, поэтому вечерние напитки отмечайте в тот день, когда они были.\n\nПунктирный круг — это тег, который Grada предлагает по вашим данным о здоровье: нажмите на него, чтобы оставить.\n\nДля «Алкоголя» и «Кофеина» ночь после дней, когда вы их отметили, сравнивается с другими ночами за последние %lld дней. Изменение показывается, только если оно явно больше обычного разброса ваших ночей, с каждой стороны нужно по %lld ночей, а ночи после «Болезни» и «Ночной смены» не учитываются.\n\nТеги сохраняются сразу при нажатии."
+            "value" : "Отмечайте, что происходило в течение дня: Grada связывает это со следующей ночью, поэтому вечерние напитки отмечайте в тот день, когда они были.\n\nПунктирный круг — это тег, который Grada предлагает по вашим данным о здоровье: нажмите на него, чтобы оставить.\n\nТеги сохраняются сразу при нажатии."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "记录这一天发生的事：Grada 会将其与之后的夜晚关联，因此晚间饮酒请记在你饮酒的那一天。\n\n虚线圆圈是 Grada 根据你的健康数据建议的标签：点按即可保留。\n\n在“酒精”和“咖啡因”下，会将你记录了这些的日子之后的夜晚，与最近 %lld 天内的其他夜晚进行比较。只有变化明显大于你各晚的波动幅度时才会显示，每一方都需要 %lld 晚，且“生病”或“上夜班”之后的夜晚不计入。\n\n标签在你点按时即自动保存。"
+            "value" : "记录这一天发生的事：Grada 会将其与之后的夜晚关联，因此晚间饮酒请记在你饮酒的那一天。\n\n虚线圆圈是 Grada 根据你的健康数据建议的标签：点按即可保留。\n\n标签在你点按时即自动保存。"
           }
         }
       }
@@ -37256,6 +37255,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不均衡"
+          }
+        }
+      }
+    },
+    "Under Alcohol and Caffeine, the night after days you logged them is compared with other nights in the last %lld days. A change shows only when it's clearly bigger than how much your nights vary, each side needs %lld nights, and nights after Illness or Night shift are left out." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei Alkohol und Koffein wird die Nacht nach Tagen, an denen du sie erfasst hast, mit anderen Nächten der letzten %lld Tage verglichen. Eine Veränderung wird nur angezeigt, wenn sie deutlich größer ist als die Schwankung deiner Nächte, jede Seite braucht %lld Nächte, und Nächte nach Krankheit oder Nachtschicht bleiben außen vor."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En Alcohol y Cafeína, la noche posterior a los días en que los anotaste se compara con otras noches de los últimos %lld días. Un cambio solo aparece cuando es claramente mayor que lo que varían tus noches, cada lado necesita %lld noches, y las noches posteriores a Enfermedad o Turno de noche se dejan fuera."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour l’Alcool et la Caféine, la nuit qui suit les jours où vous les avez notés est comparée aux autres nuits des %lld derniers jours. Une variation n’apparaît que si elle dépasse nettement la variabilité de vos nuits, chaque côté exige %lld nuits, et les nuits après Maladie ou Travail de nuit sont exclues."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शराब और कैफ़ीन के तहत, जिन दिनों आपने इन्हें दर्ज किया उनके बाद की रात की तुलना पिछले %lld दिनों की दूसरी रातों से की जाती है। बदलाव तभी दिखता है जब वह आपकी रातों के उतार-चढ़ाव से साफ़ तौर पर बड़ा हो, हर पक्ष को %lld रातें चाहिए, और बीमारी या नाइट शिफ़्ट के बाद की रातें छोड़ दी जाती हैं।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per Alcol e Caffeina, la notte dopo i giorni in cui li hai registrati viene confrontata con le altre notti degli ultimi %lld giorni. Una variazione compare solo se è chiaramente maggiore di quanto variano le tue notti, ogni gruppo richiede %lld notti e le notti dopo Malattia o Turno di notte sono escluse."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em Álcool e Cafeína, a noite depois dos dias em que você os registrou é comparada com as outras noites dos últimos %1$lld dias. Uma mudança só aparece quando é claramente maior que a variação das suas noites, cada lado precisa de %2$lld noites, e as noites após Doença ou Turno da noite ficam de fora."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для «Алкоголя» и «Кофеина» ночь после дней, когда вы их отметили, сравнивается с другими ночами за последние %lld дней. Изменение показывается, только если оно явно больше обычного разброса ваших ночей, с каждой стороны нужно по %lld ночей, а ночи после «Болезни» и «Ночной смены» не учитываются."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在“酒精”和“咖啡因”下，会将你记录了这些的日子之后的夜晚，与最近 %lld 天内的其他夜晚进行比较。只有变化明显大于你各晚的波动幅度时才会显示，每一方都需要 %lld 晚，且“生病”或“上夜班”之后的夜晚不计入。"
           }
         }
       }

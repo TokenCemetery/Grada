@@ -62,13 +62,20 @@ struct JournalView: View {
                     .listRowBackground(Color.clear)
                 } footer: {
                     // The tags' explanation sits just above them.
-                    Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nA dashed circle is a tag Grada suggests from your health data: tap it to keep it.\n\nUnder Alcohol and Caffeine, the night after days you logged them is compared with other nights in the last \(TagEffect.windowDays) days. A change shows only when it's clearly bigger than how much your nights vary, each side needs \(TagEffect.minimumNights) nights, and nights after Illness or Night shift are left out.\n\nTags are saved as you tap them.")
+                    Text("Log what happened during the day: Grada links it to the night after, so evening drinks go on the day you had them.\n\nA dashed circle is a tag Grada suggests from your health data: tap it to keep it.\n\nTags are saved as you tap them.")
                 }
                 let captions = effectCaptions
                 let suggested = shownSuggestions
                 ForEach(JournalTag.Group.allCases, id: \.self) { group in
-                    Section(group.title) {
+                    Section {
                         ForEach(group.tags) { row($0, caption: captions[$0], suggestion: suggested[$0]) }
+                    } header: {
+                        Text(group.title)
+                    } footer: {
+                        // Explains the captions on Alcohol and Caffeine, which are Lifestyle tags.
+                        if group == .lifestyle {
+                            Text("Under Alcohol and Caffeine, the night after days you logged them is compared with other nights in the last \(TagEffect.windowDays) days. A change shows only when it's clearly bigger than how much your nights vary, each side needs \(TagEffect.minimumNights) nights, and nights after Illness or Night shift are left out.")
+                        }
                     }
                 }
             }
