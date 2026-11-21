@@ -40,6 +40,15 @@ nonisolated enum Recommendations {
         )
     }
 
+    /// The morning's steps focus: the whole goal, before the day's walking starts.
+    static func stepsGoal(_ goal: Double) -> Recommendation {
+        Recommendation(
+            symbol: "figure.walk",
+            text: String(localized: "Reach \(whole(goal)) steps"),
+            reason: String(localized: "Your daily goal. A brisk walk is about \(whole(stepsPerMinute)) steps a minute.")
+        )
+    }
+
     /// Mishra et al. 2020 (Nat Biomed Eng 4:1208) saw resting heart rate rise above its personal baseline before
     /// symptoms in most of the infections they tracked; stress, alcohol and too little recovery raise it too.
     static func restingHeartRate(_ value: Double, normal: ClosedRange<Double>) -> Recommendation? {

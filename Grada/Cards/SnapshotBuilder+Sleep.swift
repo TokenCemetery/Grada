@@ -54,7 +54,7 @@ nonisolated extension SnapshotBuilder {
     /// Tonight's need, the debt from the last 14 nights, and each of the last 7 nights' shortfall.
     func sleepNeed() async throws -> CardSnapshot {
         guard let nights = try await sleepDebt(7) else { return .noData(period: tonightLabel) }
-        let need = goals.value(.sleep, on: calendar.startOfDay(for: now)) ?? SleepNeed.baseline
+        let need = tonightsNeed
         let owed = nights[nights.count - 1].debt
         let bedtime = isToday ? try await bedtimePlan(need: need) : nil
         return CardSnapshot(
@@ -66,6 +66,11 @@ nonisolated extension SnapshotBuilder {
             chart: .bars(nights.map { $0.shortfall / 3600 }),
             recommendation: bedtime.map { Recommendations.bedtime($0, need: need) }
         )
+    }
+
+    /// Tonight's sleep need: the user's own goal, else the baseline.
+    var tonightsNeed: TimeInterval {
+        goals.value(.sleep, on: calendar.startOfDay(for: now)) ?? SleepNeed.baseline
     }
 
     /// The bedtime for a wake-up on `wakeDay` (tomorrow by default), from the last `Bedtime.nights` nights.

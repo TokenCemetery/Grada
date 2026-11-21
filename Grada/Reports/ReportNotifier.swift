@@ -4,8 +4,8 @@ import os
 import SwiftData
 import UserNotifications
 
-/// Sends the morning and evening reports as local notifications. Runs after each import of new Health data,
-/// including in the background, so each pending notification carries the latest numbers.
+/// Sends the morning and evening reports and the afternoon check-in as local notifications. Runs after each
+/// import of new Health data, including in the background, so each pending notification carries the latest numbers.
 final class ReportNotifier {
     static let morningID = "morningReport"
     static let eveningID = "eveningReport"
@@ -56,7 +56,8 @@ final class ReportNotifier {
     func update() async {
         let morning = defaults.bool(forKey: SleepSchedule.morningReportKey)
         let evening = defaults.bool(forKey: SleepSchedule.eveningReportKey)
-        guard morning || evening else { return }
+        let checkIn = defaults.bool(forKey: SleepSchedule.checkInKey)
+        guard morning || evening || checkIn else { return }
         let calendar = Calendar.current
         let now = Date.now
         let today = calendar.startOfDay(for: now)
@@ -64,28 +65,41 @@ final class ReportNotifier {
         do {
             var builder = SnapshotBuilder(source: source)
             builder.goals = GoalHistory(try context.fetch(FetchDescriptor<GoalChange>()))
-            if morning {
-                let report = try await DailyReport.load(.morning, builder)
-                if report.hasData {
-                    let usual = try await builder.bedtimePlan(need: SleepNeed.baseline, wakeDay: today)?.wake
-                    let wake = SleepSchedule.wake(on: today, usual: usual, defaults: defaults, calendar: calendar)
-                    let scheduled = (defaults.object(forKey: Self.morningScheduledDayKey) as? Double)
-                        .map(Date.init(timeIntervalSince1970:))
-                    let action = Self.morningAction(now: now, wake: wake, today: today, scheduledDay: scheduled)
-                    if try await send(report, id: Self.morningID, action: action) {
-                        defaults.set(today.timeIntervalSince1970, forKey: Self.morningScheduledDayKey)
-                    }
+            // Loaded even when it isn't sent: it saves today's plan, which the check-in and the evening report follow.
+            let report = try await DailyReport.load(.morning, builder, defaults: defaults)
+            if morning, report.hasData {
+                let usual = try await builder.bedtimePlan(need: SleepNeed.baseline, wakeDay: today)?.wake
+                let wake = SleepSchedule.wake(on: today, usual: usual, defaults: defaults, calendar: calendar)
+                let scheduled = (defaults.object(forKey: Self.morningScheduledDayKey) as? Double)
+                    .map(Date.init(timeIntervalSince1970:))
+                let action = Self.morningAction(now: now, wake: wake, today: today, scheduledDay: scheduled)
+                if try await send(title: report.notificationTitle, body: report.notificationBody, id: Self.morningID, action: action) {
+                    defaults.set(today.timeIntervalSince1970, forKey: Self.morningScheduledDayKey)
                 }
             }
+            guard evening || checkIn else { return }
+            let usual = try await builder.bedtimePlan(need: SleepNeed.baseline, wakeDay: tomorrow)?.usualBedtime
+            let bedtime = SleepSchedule.bedtime(on: today, usual: usual, defaults: defaults, calendar: calendar)
             if evening {
-                let usual = try await builder.bedtimePlan(need: SleepNeed.baseline, wakeDay: tomorrow)?.usualBedtime
-                let bedtime = SleepSchedule.bedtime(on: today, usual: usual, defaults: defaults, calendar: calendar)
                 let action = Self.eveningAction(now: now, at: bedtime.addingTimeInterval(-SleepSchedule.windDown(defaults)))
                 if action == .skip {
                     // The time has passed, or moved earlier than now: nothing should still wait for tonight.
                     UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Self.eveningID])
                 } else {
-                    _ = try await send(try await DailyReport.load(.evening, builder), id: Self.eveningID, action: action)
+                    let report = try await DailyReport.load(.evening, builder, defaults: defaults, forNotification: true)
+                    _ = try await send(title: report.notificationTitle, body: report.notificationBody, id: Self.eveningID, action: action)
+                }
+            } else {
+                // Saves tonight's bedtime for tomorrow's follow-up, which the evening report does when it's sent.
+                _ = try await DailyReport.load(.evening, builder, defaults: defaults)
+            }
+            if checkIn {
+                // Rescheduled with each import, so a goal reached in the meantime withdraws it.
+                let action = Self.eveningAction(now: now, at: bedtime.addingTimeInterval(-CheckIn.beforeBedtime))
+                if action != .skip, let message = try await CheckIn.message(builder, defaults: defaults) {
+                    _ = try await send(title: message.title, body: message.body, id: CheckIn.id, action: action)
+                } else {
+                    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [CheckIn.id])
                 }
             }
         } catch {
@@ -94,7 +108,7 @@ final class ReportNotifier {
     }
 
     /// Adds or replaces the notification; false when `action` is to skip.
-    private func send(_ report: DailyReport, id: String, action: Action) async throws -> Bool {
+    private func send(title: String, body: String, id: String, action: Action) async throws -> Bool {
         let trigger: UNNotificationTrigger?
         switch action {
         case .skip: return false
@@ -103,8 +117,8 @@ final class ReportNotifier {
             trigger = UNTimeIntervalNotificationTrigger(timeInterval: Self.delay(until: date, now: .now), repeats: false)
         }
         let content = UNMutableNotificationContent()
-        content.title = report.kind.title
-        content.body = report.notificationBody
+        content.title = title
+        content.body = body
         content.sound = .default
         try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
         return true

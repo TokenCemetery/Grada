@@ -57,6 +57,12 @@ struct ReportCard: View {
                 let rows = kind.kinds.compactMap { card in
                     report.snapshots[card].flatMap { $0.value == nil ? nil : (card, $0) }
                 }
+                let plan = planBlocks(report)
+                ForEach(plan.indices, id: \.self) { index in
+                    if index > 0 { Divider().padding(.leading, 56) }
+                    plan[index]
+                }
+                if !plan.isEmpty, !rows.isEmpty { Divider() }
                 ForEach(rows.indices, id: \.self) { index in
                     if index > 0 { Divider().padding(.leading, 56) }
                     row(rows[index].0, rows[index].1)
@@ -71,6 +77,46 @@ struct ReportCard: View {
         } else {
             ProgressView().frame(maxWidth: .infinity).padding(16)
         }
+    }
+
+    /// Above the cards: the follow-up, the focus and the rest of the plan, each only when the report has it.
+    private func planBlocks(_ report: DailyReport) -> [AnyView] {
+        var blocks: [AnyView] = []
+        if !report.followUps.isEmpty {
+            blocks.append(AnyView(
+                Label {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(report.followUps, id: \.self) { Text($0) }
+                    }
+                } icon: {
+                    Image(systemName: kind == .morning ? "sun.max" : "moon.stars").foregroundStyle(.orange)
+                }
+                .font(.subheadline)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            ))
+        }
+        if let focus = report.focus {
+            blocks.append(AnyView(RecommendationRow(recommendation: focus,
+                                                    caption: kind == .morning ? String(localized: "Today's Focus") : String(localized: "Tonight"))))
+        }
+        if let training = report.training {
+            blocks.append(AnyView(RecommendationRow(recommendation: training, caption: String(localized: "Training"))))
+        }
+        for (text, symbol) in [(report.resourcesRecap, CardKind.resources.symbol), (report.tomorrow, "calendar")] {
+            guard let text else { continue }
+            blocks.append(AnyView(
+                Label {
+                    Text(text)
+                } icon: {
+                    Image(systemName: symbol).foregroundStyle(.secondary)
+                }
+                .font(.subheadline)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            ))
+        }
+        return blocks
     }
 
     /// One line each for the title, value and comparison, so rows are the same height in both columns.
@@ -152,10 +198,15 @@ struct RecommendationsView: View {
 
 private struct RecommendationRow: View {
     let recommendation: Recommendation
+    /// A small heading above the text, e.g. "Today's Focus".
+    var caption: String?
 
     var body: some View {
         Label {
             VStack(alignment: .leading, spacing: 2) {
+                if let caption {
+                    Text(caption).font(.caption.weight(.semibold)).foregroundStyle(.orange).textCase(.uppercase)
+                }
                 Text(recommendation.text).font(.subheadline.weight(.semibold))
                 Text(recommendation.reason).font(.caption).foregroundStyle(.secondary)
             }

@@ -11,6 +11,7 @@ struct SleepScheduleView: View {
     @AppStorage(SleepSchedule.windDownMinutesKey) private var windDownMinutes = SleepSchedule.defaultWindDownMinutes
     @AppStorage(SleepSchedule.morningReportKey) private var morningReport = false
     @AppStorage(SleepSchedule.eveningReportKey) private var eveningReport = false
+    @AppStorage(SleepSchedule.checkInKey) private var checkIn = false
     /// Nil while loading.
     @State private var usual: UsualTimes?
     @State private var notificationsDenied = false
@@ -40,6 +41,7 @@ struct SleepScheduleView: View {
             }
             Section {
                 Toggle("Morning Report", isOn: enabling($morningReport, id: ReportNotifier.morningID))
+                Toggle("Afternoon Check-In", isOn: enabling($checkIn, id: CheckIn.id))
                 Toggle("Evening Report", isOn: enabling($eveningReport, id: ReportNotifier.eveningID))
                 if eveningReport {
                     Picker("Before Bedtime", selection: $windDownMinutes) {
@@ -52,7 +54,7 @@ struct SleepScheduleView: View {
                 if notificationsDenied {
                     Text("Notifications are off for Grada. Turn them on in the Settings app › Notifications › Grada.")
                 } else {
-                    Text("The morning report comes once last night's sleep is in Apple Health, never before your wake-up. The evening report comes before your bedtime, with time to wind down; no study sets how long, so it's your choice. Both are always in Journal.")
+                    Text("The morning report comes once last night's sleep is in Apple Health, never before your wake-up. The afternoon check-in comes \(SnapshotBuilder.hoursMinutes(CheckIn.beforeBedtime)) before your bedtime, only when a goal is behind but still reachable today. The evening report comes before your bedtime, with time to wind down; no study sets how long, so it's your choice. Both reports are always in Journal.")
                 }
             }
         }

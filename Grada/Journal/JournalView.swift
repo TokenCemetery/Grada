@@ -124,9 +124,12 @@ struct JournalView: View {
         }
     }
 
-    /// Both reports' recommendations, each once (both take Strain's), daily ones first.
+    /// Both reports' recommendations, each once (both take Strain's), daily ones first. A report's focus shows in
+    /// the report itself, so it isn't listed again.
     private var recommendations: [Recommendation] {
-        Recommendations.dailyFirst((morning?.recommendations ?? []) + (evening?.recommendations ?? []))
+        let focuses = [morning?.focus, evening?.focus].compactMap { $0 }
+        return Recommendations.dailyFirst((morning?.recommendations ?? []) + (evening?.recommendations ?? []))
+            .filter { !focuses.contains($0) }
     }
 
     private struct ReportKey: Equatable {

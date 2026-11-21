@@ -893,58 +893,6 @@
         }
       }
     },
-    "%@ intensity min this week" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ Intensitätsmin. diese Woche"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ min de intensidad esta semana"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ min d’intensité cette semaine"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "इस सप्ताह %@ इंटेंसिटी मिनट"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ min di intensità questa settimana"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ min de intensidade nesta semana"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ мин интенсивности за неделю"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "本周强度分钟 %@"
-          }
-        }
-      }
-    },
     "%@ kcal" : {
       "comment" : "Energy in kilocalories",
       "localizations" : {
@@ -1471,6 +1419,122 @@
         }
       }
     },
+    "%@ of %@ intensity minutes in the last 7 days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ von %2$@ Intensitätsminuten in den letzten 7 Tagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ of %2$@ intensity minutes in the last 7 days."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ de %2$@ minutos de intensidad en los últimos 7 días."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur %2$@ minutes d’intensité au cours des 7 derniers jours."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले 7 दिनों में %2$@ में से %1$@ इंटेंसिटी मिनट।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ su %2$@ minuti di intensità negli ultimi 7 giorni."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ de %2$@ minutos de intensidade nos últimos 7 dias."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ из %2$@ минут интенсивности за последние 7 дней."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "近 7 天 %1$@ / %2$@ 强度分钟。"
+          }
+        }
+      }
+    },
+    "%@ of %@ steps today. Every bit counts; tomorrow's a fresh start." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ von %2$@ Schritten heute. Jeder Schritt zählt; morgen ist ein Neuanfang."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ of %2$@ steps today. Every bit counts; tomorrow's a fresh start."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ de %2$@ pasos hoy. Cada paso cuenta; mañana es un nuevo comienzo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ pas sur %2$@ aujourd’hui. Chaque pas compte ; demain est un nouveau départ."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज %2$@ में से %1$@ कदम। हर कदम मायने रखता है; कल नई शुरुआत है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ passi su %2$@ oggi. Ogni passo conta; domani si riparte."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ de %2$@ passos hoje. Cada passo conta; amanhã é um novo começo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ из %2$@ шагов сегодня. Каждый шаг важен; завтра начнём заново."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天走了 %1$@ / %2$@ 步。每一步都算数，明天重新开始。"
+          }
+        }
+      }
+    },
     "%@ of daytime sleep" : {
       "localizations" : {
         "de" : {
@@ -1575,54 +1639,106 @@
         }
       }
     },
-    "%@ steps" : {
+    "%@ steps short of your goal today. Tomorrow's another go." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ Schritte"
+            "value" : "Dir haben heute %@ Schritte zum Ziel gefehlt. Morgen ist ein neuer Versuch."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ pasos"
+            "value" : "Te faltaron %@ pasos para tu objetivo de hoy. Mañana será otra oportunidad."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ pas"
+            "value" : "Il a manqué %@ pas pour atteindre votre objectif aujourd’hui. Demain, on réessaie."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ कदम"
+            "value" : "आज लक्ष्य से %@ कदम कम रहे। कल फिर एक मौका है।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ passi"
+            "value" : "Oggi ti sono mancati %@ passi per l’obiettivo. Domani si riprova."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ passos"
+            "value" : "Faltaram %@ passos para a sua meta de hoje. Amanhã é uma nova chance."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ шагов"
+            "value" : "До цели на сегодня не хватило %@ шагов. Завтра будет новая попытка."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 步"
+            "value" : "今天离步数目标还差 %@ 步。明天再来一次。"
+          }
+        }
+      }
+    },
+    "%@ steps short yesterday. A short walk this morning makes today easier." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern haben dir %@ Schritte gefehlt. Ein kurzer Spaziergang heute Morgen macht den Tag leichter."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayer te faltaron %@ pasos. Un paseo corto esta mañana hará el día más fácil."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier, il a manqué %@ pas. Une courte marche ce matin rendra la journée plus facile."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल %@ कदम कम रह गए। आज सुबह थोड़ी सैर करने से दिन आसान हो जाएगा।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri ti sono mancati %@ passi. Una breve camminata stamattina rende la giornata più semplice."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontem faltaram %@ passos. Uma caminhada curta esta manhã deixa o dia de hoje mais fácil."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера не хватило %@ шагов. Короткая прогулка этим утром упростит сегодняшний день."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天还差 %@ 步。今早散个短步，今天会轻松些。"
           }
         }
       }
@@ -1679,6 +1795,64 @@
         }
       }
     },
+    "%@ steps to your goal: a %lld-minute walk gets you there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ Schritte bis zu deinem Ziel: Ein %2$lld-Minuten-Spaziergang bringt dich hin."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ steps to your goal: a %2$lld-minute walk gets you there."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ pasos para tu objetivo: un paseo de %2$lld min te lleva hasta allí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ pas jusqu’à votre objectif : une marche de %2$lld min vous y amène."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लक्ष्य तक %1$@ कदम: %2$lld मिनट की सैर आपको वहाँ पहुँचा देगी।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ passi al tuo obiettivo: una camminata di %2$lld min ti ci porta."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ passos até a meta: uma caminhada de %2$lld min leva você até lá."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До цели %1$@ шагов: %2$lld-минутная прогулка приведёт вас к ней."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "离目标还有 %1$@ 步：走 %2$lld 分钟就能到。"
+          }
+        }
+      }
+    },
     "%@ steps today, %@ over your goal of %@." : {
       "localizations" : {
         "de" : {
@@ -1727,6 +1901,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "今天走了 %1$@ 步，比 %3$@ 步的目标多 %2$@ 步。"
+          }
+        }
+      }
+    },
+    "%@ steps today, goal done. Nice!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Schritte heute, Ziel erreicht. Super!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ pasos hoy, objetivo cumplido. ¡Genial!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ pas aujourd’hui, objectif atteint. Bravo !"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज %@ कदम, लक्ष्य पूरा। बहुत बढ़िया!"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ passi oggi, obiettivo raggiunto. Bravo!"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ passos hoje, meta cumprida. Muito bem!"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ шагов сегодня, цель выполнена. Отлично!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天走了 %@ 步，目标达成。太棒了！"
           }
         }
       }
@@ -3469,6 +3695,64 @@
         }
       }
     },
+    "%lld of %@ workouts in the last 7 days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld von %2$@ Workouts in den letzten 7 Tagen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$@ workouts in the last 7 days."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$@ entrenamientos en los últimos 7 días."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld séances sur %2$@ au cours des 7 derniers jours."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले 7 दिनों में %2$@ में से %1$lld वर्कआउट।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld allenamenti su %2$@ negli ultimi 7 giorni."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$@ treinos nos últimos 7 dias."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld из %2$@ тренировок за последние 7 дней."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "近 7 天：%1$lld / %2$@ 次训练。"
+          }
+        }
+      }
+    },
     "%lld of %lld days needed" : {
       "localizations" : {
         "de" : {
@@ -4854,6 +5138,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "0%"
+          }
+        }
+      }
+    },
+    "1 of %@ workouts in the last 7 days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 von %@ Workouts in den letzten 7 Tagen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 de %@ entrenamientos en los últimos 7 días."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 séance sur %@ au cours des 7 derniers jours."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले 7 दिनों में %@ में से 1 वर्कआउट।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 allenamento su %@ negli ultimi 7 giorni."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 de %@ treinos nos últimos 7 dias."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 из %@ тренировок за последние 7 дней."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "近 7 天：1 / %@ 次训练。"
           }
         }
       }
@@ -6326,6 +6662,110 @@
         }
       }
     },
+    "A gentle day today" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute ein ruhiger Tag"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un día tranquilo hoy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une journée en douceur"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज का दिन आराम से"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una giornata tranquilla"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um dia tranquilo hoje"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодня спокойный день"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天轻松一点"
+          }
+        }
+      }
+    },
+    "A harder day than suggested. Tonight's sleep will help you bounce back." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein anstrengenderer Tag als vorgeschlagen. Der Schlaf heute Nacht hilft dir, dich zu erholen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un día más duro de lo sugerido. El sueño de esta noche te ayudará a recuperarte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une journée plus intense que prévu. Le sommeil de cette nuit vous aidera à récupérer."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज का दिन सुझाव से ज़्यादा कठिन रहा। आज रात की नींद आपको फिर से तरोताज़ा कर देगी।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una giornata più dura del previsto. Il sonno di stanotte ti aiuterà a recuperare."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um dia mais puxado do que o sugerido. O sono desta noite vai ajudar você a se recuperar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "День вышел тяжелее, чем предлагалось. Сон этой ночью поможет вам восстановиться."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天比建议的更辛苦。今晚好好睡一觉，就能恢复过来。"
+          }
+        }
+      }
+    },
     "A next-period range needs %lld complete cycles; %lld logged so far." : {
       "localizations" : {
         "de" : {
@@ -7784,6 +8224,110 @@
         }
       }
     },
+    "Afternoon check-in" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachmittags-Check-in"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repaso de la tarde"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Point de l’après-midi"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दोपहर का चेक-इन"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in del pomeriggio"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in da tarde"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дневной чек-ин"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "午后小结"
+          }
+        }
+      }
+    },
+    "Afternoon Check-In" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nachmittags-Check-in"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repaso de la tarde"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Point de l’après-midi"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दोपहर का चेक-इन"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in del pomeriggio"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in da tarde"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дневной чек-ин"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "午后小结"
+          }
+        }
+      }
+    },
     "Age" : {
       "localizations" : {
         "de" : {
@@ -8040,6 +8584,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "所有指标均达标"
+          }
+        }
+      }
+    },
+    "An easy day, as your body asked. Nicely done." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein ruhiger Tag, genau wie dein Körper es wollte. Gut gemacht!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un día tranquilo, como te pedía el cuerpo. Muy bien hecho."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une journée tranquille, comme votre corps le demandait. Bien joué !"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज का दिन आराम से बीता, जैसा आपके शरीर ने माँगा था। बहुत अच्छा!"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una giornata leggera, come chiedeva il tuo corpo. Ottimo lavoro!"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um dia leve, como o seu corpo pediu. Muito bem!"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спокойный день, как и просило ваше тело. Отлично!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按身体的需要过了轻松的一天。做得好！"
           }
         }
       }
@@ -9357,6 +9953,58 @@
         }
       }
     },
+    "Bed by %@ sets you up for tomorrow." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bis %@ im Bett zu sein, macht dich fit für morgen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acostarte antes de las %@ te prepara para mañana."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se coucher avant %@ vous prépare bien pour demain."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ तक सो जाना कल के लिए आपको तैयार करता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andare a letto entro le %@ ti prepara per domani."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dormir até %@ prepara você para amanhã."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Если лечь к %@, завтра вы будете в форме."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 %@ 前入睡，明天状态更好。"
+          }
+        }
+      }
+    },
     "Bedtime" : {
       "localizations" : {
         "de" : {
@@ -9405,6 +10053,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "就寝时间"
+          }
+        }
+      }
+    },
+    "Bedtime slipped to %@ last night. Tonight is a fresh chance." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern Nacht ging es erst um %@ ins Bett. Heute Nacht ist ein neuer Anlauf."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anoche te acostaste a las %@. Esta noche es una nueva oportunidad."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier soir, le coucher a glissé à %@. Cette nuit est une nouvelle chance."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल रात सोने का समय खिसककर %@ हो गया। आज रात फिर एक मौका है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri sera l’ora di andare a letto è slittata alle %@. Stasera si riparte."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O horário de dormir passou para %@ ontem à noite. Esta noite é uma nova chance."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера вы легли только в %@. Сегодняшняя ночь — новая возможность."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨晚 %@ 才就寝。今晚是新的机会。"
           }
         }
       }
@@ -13747,6 +14447,58 @@
         }
       }
     },
+    "Easy session, 30–40 minutes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lockere Einheit, 30–40 Minuten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión suave, 30–40 minutos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séance facile, 30–40 minutes"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हल्का सेशन, 30–40 मिनट"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessione leggera, 30–40 minuti"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessão leve, 30–40 minutos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Лёгкая тренировка, 30–40 минут"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轻松训练，30–40 分钟"
+          }
+        }
+      }
+    },
     "Edit" : {
       "localizations" : {
         "de" : {
@@ -14319,6 +15071,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一天结束时"
+          }
+        }
+      }
+    },
+    "Evening check-in" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abend-Check-in"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repaso de la noche"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Point du soir"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शाम का चेक-इन"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in serale"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-in da noite"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вечерний чек-ин"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "晚间小结"
           }
         }
       }
@@ -16457,6 +17261,58 @@
         }
       }
     },
+    "Good morning" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guten Morgen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buenos días"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bonjour"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सुप्रभात"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buongiorno"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bom dia"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доброе утро"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "早上好"
+          }
+        }
+      }
+    },
     "Grada can't read these from Apple Health, for example when your data comes from Garmin or FIT files. What you save is used instead and kept on this device." : {
       "localizations" : {
         "de" : {
@@ -16717,6 +17573,58 @@
         }
       }
     },
+    "Great start to the day" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toller Start in den Tag"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gran comienzo del día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Super début de journée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दिन की शानदार शुरुआत"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grande inizio di giornata"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ótimo começo de dia"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отличное начало дня"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "美好的一天开始了"
+          }
+        }
+      }
+    },
     "h" : {
       "comment" : "Unit: hours",
       "localizations" : {
@@ -16871,6 +17779,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "以 HRV 通常波动幅度的一半作为有意义的最小变化"
+          }
+        }
+      }
+    },
+    "Hard session, 45–60 minutes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harte Einheit, 45–60 Minuten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión intensa, 45–60 minutos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séance intense, 45–60 minutes"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कठिन सेशन, 45–60 मिनट"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessione intensa, 45–60 minuti"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessão intensa, 45–60 minutos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тяжёлая тренировка, 45–60 минут"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高强度训练，45–60 分钟"
           }
         }
       }
@@ -19591,6 +20551,58 @@
         }
       }
     },
+    "In bed by %@ last night. Nice early night." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern Nacht bis %@ im Bett. Schön früh!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anoche te acostaste antes de las %@. Una buena noche temprana."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au lit avant %@ hier soir. Belle nuit précoce."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल रात %@ तक सो गए। अच्छी जल्दी की नींद।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri a letto entro le %@. Un bel riposo anticipato."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Na cama até %@ ontem à noite. Ótima noite cedo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера вы легли к %@. Хорошо, что пораньше."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨晚 %@ 前就寝，早睡很棒。"
+          }
+        }
+      }
+    },
     "in range" : {
       "localizations" : {
         "de" : {
@@ -20107,6 +21119,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "日志建议"
+          }
+        }
+      }
+    },
+    "Just %@ steps to go. A %lld-minute walk this evening does it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur noch %1$@ Schritte. Ein %2$lld-Minuten-Spaziergang heute Abend reicht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Just %1$@ steps to go. A %2$lld-minute walk this evening does it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo faltan %1$@ pasos. Un paseo de %2$lld min esta tarde lo logra."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il ne reste que %1$@ pas. Une marche de %2$lld min ce soir suffit."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बस %1$@ कदम बाकी हैं। आज शाम %2$lld मिनट की सैर काफ़ी है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mancano solo %1$@ passi. Una camminata di %2$lld min stasera basta."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faltam só %1$@ passos. Uma caminhada de %2$lld min esta noite resolve."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Осталось всего %1$@ шагов. %2$lld-минутная прогулка вечером — и цель достигнута."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只差 %1$@ 步。今晚走 %2$lld 分钟就够了。"
           }
         }
       }
@@ -21192,6 +22262,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上次训练"
+          }
+        }
+      }
+    },
+    "Later night than planned (%@). An earlier night tonight will help you catch up." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Später ins Bett als geplant (%@). Eine frühere Nacht heute hilft dir beim Aufholen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noche más tardía de lo planeado (%@). Acostarte antes esta noche te ayudará a ponerte al día."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coucher plus tardif que prévu (%@). Se coucher plus tôt ce soir aidera à rattraper."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "योजना से देर रात हुई (%@)। आज रात जल्दी सोने से भरपाई हो जाएगी।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notte più tarda del previsto (%@). Andare a letto prima stasera ti aiuterà a recuperare."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma noite mais tarde do que o planejado (%@). Dormir mais cedo esta noite vai ajudar a compensar."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Легли позже, чем планировалось (%@). Ранний отбой сегодня поможет наверстать."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "比计划睡得晚（%@）。今晚早点睡就能补回来。"
           }
         }
       }
@@ -23338,6 +24460,58 @@
         }
       }
     },
+    "Moderate session, 40–60 minutes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moderate Einheit, 40–60 Minuten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión moderada, 40–60 minutos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séance modérée, 40–60 minutes"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "मध्यम सेशन, 40–60 मिनट"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessione moderata, 40–60 minuti"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessão moderada, 40–60 minutos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Умеренная тренировка, 40–60 минут"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中等强度训练，40–60 分钟"
+          }
+        }
+      }
+    },
     "Monotony above 2 as the warning sign, citing Foster" : {
       "localizations" : {
         "de" : {
@@ -24852,6 +26026,110 @@
         }
       }
     },
+    "Nice day" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schöner Tag"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buen día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belle journée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अच्छा दिन"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bella giornata"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belo dia"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Хороший день"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天不错"
+          }
+        }
+      }
+    },
+    "Nice work yesterday" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gut gemacht gestern"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buen trabajo ayer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beau travail hier"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल बढ़िया काम किया"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bel lavoro ieri"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bom trabalho ontem"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера всё отлично"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天做得不错"
+          }
+        }
+      }
+    },
     "Night after: %@" : {
       "localizations" : {
         "de" : {
@@ -25836,6 +27114,110 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "那晚没有睡眠记录。"
+          }
+        }
+      }
+    },
+    "No workout today, and that's fine. Tomorrow works too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute kein Workout, und das ist okay. Morgen geht auch."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoy sin entrenamiento, y está bien. Mañana también vale."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas d’entraînement aujourd’hui, et ce n’est pas grave. Demain, c’est bien aussi."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज वर्कआउट नहीं हुआ, और कोई बात नहीं। कल भी हो सकता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oggi niente allenamento, e va bene. Anche domani va benissimo."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoje sem treino, e tudo bem. Amanhã também serve."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодня без тренировки, и это нормально. Завтра тоже подойдёт."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天没有训练，没关系。明天也可以。"
+          }
+        }
+      }
+    },
+    "No workout yesterday, and that's okay. Today is a fresh chance." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern kein Workout, und das ist okay. Heute ist eine neue Chance."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayer sin entrenamiento, y no pasa nada. Hoy es una nueva oportunidad."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas d’entraînement hier, et ce n’est pas grave. Aujourd’hui est une nouvelle chance."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल वर्कआउट नहीं हुआ, कोई बात नहीं। आज फिर एक मौका है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri niente allenamento, e va bene. Oggi è una nuova occasione."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontem sem treino, e tudo bem. Hoje é uma nova chance."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера без тренировки, и это нормально. Сегодня новая возможность."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天没有训练，没关系。今天是新的机会。"
           }
         }
       }
@@ -28781,6 +30163,58 @@
         }
       }
     },
+    "Reach %@ steps" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreiche %@ Schritte"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llega a %@ pasos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atteignez %@ pas"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ कदम पूरे करें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raggiungi %@ passi"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chegue a %@ passos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пройдите %@ шагов"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "走满 %@ 步"
+          }
+        }
+      }
+    },
     "Read %lld files." : {
       "localizations" : {
         "de" : {
@@ -29706,58 +31140,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "恢复"
-          }
-        }
-      }
-    },
-    "Recovery %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erholung %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recuperación %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Récupération %@"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "रिकवरी %@"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recupero %@"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recuperação %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Восстановление %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "恢复 %@"
           }
         }
       }
@@ -32755,58 +34137,6 @@
         }
       }
     },
-    "Sleep Score %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schlafscore %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Puntuación de sueño %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score de sommeil %@"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "नींद स्कोर %@"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Punteggio del sonno %@"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pontuação de sono %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Оценка сна %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "睡眠评分 %@"
-          }
-        }
-      }
-    },
     "Sleep, recovery and readiness" : {
       "localizations" : {
         "de" : {
@@ -32907,58 +34237,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "睡眠心率"
-          }
-        }
-      }
-    },
-    "Slept %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ geschlafen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dormiste %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dormi %@"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ सोए"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dormito %@"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dormiu %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сон %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "睡了 %@"
           }
         }
       }
@@ -33924,6 +35202,58 @@
         }
       }
     },
+    "Steps goal done yesterday, %@ in total. Nice!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrittziel gestern erreicht, insgesamt %@. Super!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objetivo de pasos cumplido ayer, %@ en total. ¡Genial!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif de pas atteint hier, %@ au total. Bravo !"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल कदमों का लक्ष्य पूरा हुआ, कुल %@। बढ़िया!"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obiettivo passi raggiunto ieri, %@ in totale. Bravo!"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meta de passos cumprida ontem, %@ no total. Muito bem!"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цель по шагам вчера выполнена: всего %@. Отлично!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天步数目标达成，共 %@ 步。真棒！"
+          }
+        }
+      }
+    },
     "Steps goal reached" : {
       "localizations" : {
         "de" : {
@@ -33972,6 +35302,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已达成步数目标"
+          }
+        }
+      }
+    },
+    "Steps goal reached today. 👏" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrittziel heute erreicht. 👏"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objetivo de pasos alcanzado hoy. 👏"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif de pas atteint aujourd’hui. 👏"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज कदमों का लक्ष्य पूरा हुआ। 👏"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obiettivo passi raggiunto oggi. 👏"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meta de passos alcançada hoje. 👏"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цель по шагам на сегодня достигнута. 👏"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天步数目标已达成。👏"
           }
         }
       }
@@ -34080,6 +35462,110 @@
         }
       }
     },
+    "Still recovering from your last workout until %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du erholst dich noch bis %@ von deinem letzten Workout."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún te estás recuperando de tu último entrenamiento hasta %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous récupérez encore de votre dernière séance jusqu’à %@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले वर्कआउट से रिकवरी %@ तक जारी है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stai ancora recuperando dall’ultimo allenamento fino a %@."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda recuperando do último treino até %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы ещё восстанавливаетесь после последней тренировки до %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次训练后的恢复要持续到 %@。"
+          }
+        }
+      }
+    },
+    "Still time today" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute ist noch Zeit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún hay tiempo hoy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il est encore temps aujourd’hui"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज अभी समय है"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’è ancora tempo oggi"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda dá tempo hoje"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодня ещё есть время"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天还来得及"
+          }
+        }
+      }
+    },
     "Strain" : {
       "localizations" : {
         "de" : {
@@ -34128,58 +35614,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "负荷"
-          }
-        }
-      }
-    },
-    "Strain %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Belastung %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esfuerzo %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Effort %@"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "स्ट्रेन %@"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sforzo %@"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esforço %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Напряжение %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "负荷 %@"
           }
         }
       }
@@ -35281,54 +36715,54 @@
         }
       }
     },
-    "The morning report comes once last night's sleep is in Apple Health, never before your wake-up. The evening report comes before your bedtime, with time to wind down; no study sets how long, so it's your choice. Both are always in Journal." : {
+    "The morning report comes once last night's sleep is in Apple Health, never before your wake-up. The afternoon check-in comes %@ before your bedtime, only when a goal is behind but still reachable today. The evening report comes before your bedtime, with time to wind down; no study sets how long, so it's your choice. Both reports are always in Journal." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der Morgenbericht kommt, sobald der Schlaf der letzten Nacht in Apple Health ist, nie vor dem Aufwachen. Der Abendbericht kommt vor deiner Schlafenszeit, mit Zeit zum Runterkommen; keine Studie legt fest, wie lange, das ist also deine Wahl. Beide sind immer im Tagebuch."
+            "value" : "Der Morgenbericht kommt, sobald der Schlaf der letzten Nacht in Apple Health ist, nie vor deinem Aufwachen. Der Nachmittags-Check-in kommt %@ vor deiner Schlafenszeit, nur wenn ein Ziel im Rückstand, aber heute noch erreichbar ist. Der Abendbericht kommt vor deiner Schlafenszeit, mit Zeit zum Runterkommen; keine Studie legt fest, wie lange, also entscheidest du. Beide Berichte findest du immer im Tagebuch."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El informe de la mañana llega cuando el sueño de anoche está en la app Salud, nunca antes de que te despiertes. El informe de la noche llega antes de la hora de acostarte, con tiempo para relajarte; ningún estudio fija cuánto, así que lo eliges tú. Ambos están siempre en Diario."
+            "value" : "El informe de la mañana llega cuando el sueño de anoche ya está en la app Salud, nunca antes de que te despiertes. El repaso de la tarde llega %@ antes de tu hora de dormir, solo cuando un objetivo va retrasado pero aún se puede alcanzar hoy. El informe de la noche llega antes de tu hora de dormir, con tiempo para relajarte; ningún estudio fija cuánto tiempo, así que lo eliges tú. Ambos informes están siempre en Diario."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le bilan du matin arrive une fois le sommeil de la nuit dernière dans l’app Santé, jamais avant votre réveil. Le bilan du soir arrive avant l’heure du coucher, avec le temps de se détendre ; aucune étude n’en fixe la durée : c’est votre choix. Les deux restent toujours dans le Journal."
+            "value" : "Le bilan du matin arrive dès que le sommeil de la nuit dernière est dans l’app Santé, jamais avant votre réveil. Le point de l’après-midi arrive %@ avant votre heure du coucher, uniquement quand un objectif est en retard mais encore atteignable aujourd’hui. Le bilan du soir arrive avant votre heure du coucher, avec le temps de décompresser ; aucune étude n’en fixe la durée, c’est donc à vous de choisir. Les deux bilans sont toujours dans Journal."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "सुबह की रिपोर्ट तब आती है जब पिछली रात की नींद Apple Health में आ जाती है, आपके जागने से पहले कभी नहीं। शाम की रिपोर्ट आपके सोने के समय से पहले आती है, ताकि आराम करने का समय मिले; कोई अध्ययन अवधि तय नहीं करता, इसलिए यह आपकी पसंद है। दोनों हमेशा जर्नल में रहती हैं।"
+            "value" : "सुबह की रिपोर्ट तब आती है जब बीती रात की नींद Apple Health में आ जाती है, आपके उठने से पहले कभी नहीं। दोपहर का चेक-इन आपके सोने के समय से %@ पहले आता है, केवल तब जब कोई लक्ष्य पीछे हो लेकिन आज भी पूरा किया जा सकता हो। शाम की रिपोर्ट आपके सोने के समय से पहले आती है, ताकि आराम करने का समय मिले; कोई अध्ययन यह तय नहीं करता कि कितना, इसलिए यह आपकी पसंद है। दोनों रिपोर्ट हमेशा जर्नल में रहती हैं।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Il resoconto mattutino arriva quando il sonno della notte scorsa è nell’app Salute, mai prima del tuo risveglio. Il resoconto serale arriva prima di andare a dormire, con il tempo per rilassarti; nessuno studio stabilisce quanto, quindi decidi tu. Entrambi sono sempre nel Diario."
+            "value" : "Il resoconto mattutino arriva quando il sonno della notte scorsa è nell’app Salute, mai prima del tuo risveglio. Il check-in del pomeriggio arriva %@ prima di andare a dormire, solo quando un obiettivo è indietro ma ancora raggiungibile oggi. Il resoconto serale arriva prima di andare a dormire, con il tempo di rilassarti; nessuno studio stabilisce quanto, quindi scegli tu. Entrambi i resoconti sono sempre nel Diario."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O relatório da manhã chega quando o sono da última noite está no app Saúde, nunca antes de você acordar. O relatório da noite chega antes da sua hora de dormir, com tempo para relaxar; nenhum estudo define quanto tempo, então a escolha é sua. Ambos ficam sempre no Diário."
+            "value" : "O relatório da manhã chega quando o sono da noite passada já está no app Saúde, nunca antes de você acordar. O check-in da tarde chega %@ antes da sua hora de dormir, só quando uma meta está atrasada, mas ainda dá para alcançá-la hoje. O relatório da noite chega antes da sua hora de dormir, com tempo para relaxar; nenhum estudo define quanto tempo, então a escolha é sua. Os dois relatórios ficam sempre no Diário."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Утренний отчёт приходит, когда сон прошлой ночи появляется в приложении «Здоровье», и никогда не раньше вашего пробуждения. Вечерний отчёт приходит перед сном, с запасом времени, чтобы успокоиться; ни одно исследование не задаёт, сколько именно, так что это ваш выбор. Оба всегда есть в «Дневнике»."
+            "value" : "Утренний отчёт приходит, когда сон прошлой ночи появился в приложении «Здоровье», и никогда раньше вашего пробуждения. Дневной чек-ин приходит за %@ до времени сна, только если цель отстаёт, но сегодня ещё достижима. Вечерний отчёт приходит перед временем сна, чтобы осталось время расслабиться; ни одно исследование не задаёт, сколько именно, так что это ваш выбор. Оба отчёта всегда есть в «Дневнике»."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "晨间报告会在昨晚的睡眠进入“健康”App 后发出，绝不会早于你的起床时间。晚间报告会在你的就寝时间之前发出，留出放松的时间；没有研究规定具体多久，所以由你决定。两份报告始终都在“日志”中。"
+            "value" : "晨间报告会在昨晚的睡眠数据进入“健康”App 后送达，绝不会早于你起床。午后小结在就寝时间前 %@ 送达，仅当某个目标落后但今天仍可达成时才会出现。晚间报告在就寝时间之前送达，留出放松的时间；没有研究规定需要多久，所以由你决定。两份报告始终保存在“日志”中。"
           }
         }
       }
@@ -35745,6 +37179,162 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "主题"
+          }
+        }
+      }
+    },
+    "There's still time for today's session: %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für die heutige Einheit ist noch Zeit: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún hay tiempo para la sesión de hoy: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il est encore temps pour la séance du jour : %@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज के सेशन के लिए अभी समय है: %@।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’è ancora tempo per la sessione di oggi: %@."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda dá tempo para a sessão de hoje: %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ещё есть время для сегодняшней тренировки: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的训练还来得及：%@。"
+          }
+        }
+      }
+    },
+    "This week's load is %@× your 4-week average, so give it a few calmer days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Last dieser Woche beträgt %@× deines 4-Wochen-Durchschnitts, gönn dir also ein paar ruhigere Tage."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La carga de esta semana es %@× tu media de 4 semanas, así que dale unos días más tranquilos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La charge de cette semaine est de %@× votre moyenne sur 4 semaines : ménagez-vous quelques jours plus calmes."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस सप्ताह का लोड आपके 4 सप्ताह के औसत का %@× है, इसलिए कुछ दिन आराम से चलें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il carico di questa settimana è %@× la tua media di 4 settimane, quindi concediti qualche giorno più tranquillo."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A carga desta semana é %@× a sua média de 4 semanas, então vá com calma por alguns dias."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нагрузка этой недели — %@× от вашей средней за 4 недели, так что дайте себе пару спокойных дней."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本周负荷是 4 周平均值的 %@×，接下来几天放缓一些。"
+          }
+        }
+      }
+    },
+    "This week's load is %@× your 4-week average, so hold it steady." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Last dieser Woche beträgt %@× deines 4-Wochen-Durchschnitts, halte sie also stabil."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La carga de esta semana es %@× tu media de 4 semanas, así que mantenla estable."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La charge de cette semaine est de %@× votre moyenne sur 4 semaines : gardez-la stable."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस सप्ताह का लोड आपके 4 सप्ताह के औसत का %@× है, इसलिए इसे स्थिर बनाए रखें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il carico di questa settimana è %@× la tua media di 4 settimane, quindi mantienilo stabile."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A carga desta semana é %@× a sua média de 4 semanas, então mantenha-a estável."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нагрузка этой недели — %@× от вашей средней за 4 недели, так что держите её на этом уровне."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本周负荷是 4 周平均值的 %@×，保持这个节奏就好。"
           }
         }
       }
@@ -36218,6 +37808,58 @@
         }
       }
     },
+    "Time to wind down" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeit zum Runterkommen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora de relajarse"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’est l’heure de décompresser"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अब आराम करने का समय"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "È ora di rilassarsi"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora de relaxar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пора расслабиться"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该放松下来了"
+          }
+        }
+      }
+    },
     "Today" : {
       "localizations" : {
         "de" : {
@@ -36270,6 +37912,215 @@
         }
       }
     },
+    "Today turned out harder than planned. A good night's sleep is the best recovery now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Tag war anstrengender als geplant. Eine gute Nachtruhe ist jetzt die beste Erholung."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El día fue más duro de lo planeado. Una buena noche de sueño es la mejor recuperación ahora."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La journée a été plus intense que prévu. Une bonne nuit de sommeil est la meilleure récupération maintenant."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज का दिन योजना से ज़्यादा कठिन रहा। अब सबसे अच्छी रिकवरी एक अच्छी रात की नींद है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La giornata è stata più dura del previsto. Una buona notte di sonno è il miglior recupero adesso."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O dia foi mais puxado do que o planejado. Uma boa noite de sono é a melhor recuperação agora."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "День вышел тяжелее, чем планировалось. Теперь лучшее восстановление — хороший ночной сон."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天比计划的更辛苦。现在最好的恢复就是睡个好觉。"
+          }
+        }
+      }
+    },
+    "Today: %@." : {
+      "comment" : "Morning notification line with today's focus, e.g. Today: Easy session, 30–40 minutes.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoy: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aujourd’hui : %@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज: %@।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oggi: %@."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoje: %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодня: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天：%@。"
+          }
+        }
+      }
+    },
+    "Today's Focus" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fokus für heute"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enfoque de hoy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Priorité du jour"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज का फोकस"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus di oggi"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foco de hoje"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фокус дня"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日重点"
+          }
+        }
+      }
+    },
+    "Today's session is still ahead: %@. You've got this." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die heutige Einheit steht noch an: %@. Du schaffst das!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sesión de hoy aún está por delante: %@. ¡Tú puedes!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La séance du jour est encore à venir : %@. Vous allez y arriver !"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज का सेशन अभी बाकी है: %@। आप कर सकते हैं!"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sessione di oggi è ancora da fare: %@. Ce la puoi fare!"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A sessão de hoje ainda está por vir: %@. Você consegue!"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодняшняя тренировка ещё впереди: %@. У вас получится!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的训练还在前面：%@。你可以的！"
+          }
+        }
+      }
+    },
     "Today's training load: minutes with your heart rate in each zone (50–60%% of max counts 1 per minute, up to 90%% and above counting 5), Edwards' TRIMP, over the whole day, so workouts and busy days both count. The ratio compares your average daily load over the last 7 days with the last 28. In studies of athletes, injuries were least common at ratios of 0.8–1.3 (green) and most common from 1.5 (red); below 0.8 or between 1.3 and 1.5 is yellow. Those studies were of team sports and the link is debated, so read the ratio as how fast your load is changing. Needs 21 of the last 28 days with heart rate. Below the trend, training monotony is your average daily load over the last 7 days divided by how much it varied, and training strain is the week's total load times monotony (Foster). Athletes' illnesses mostly came after weeks of high strain, and monotony above 2 is the usual warning sign: the same load every day, without easy days to recover. Both need a load on all 7 days; today's week ends yesterday. With at least %lld workouts you rated for effort in Apple Health (iOS 18 and later) that have heart rate, two more charts compare those workouts' effort load, your rating times minutes (session RPE), with their heart rate load. Apple's own effort estimates are left out, as they come partly from heart rate. In one study (Foster et al. 2001) the two rose and fell together, so when effort load climbs while heart rate load doesn't, training felt harder than your heart rate shows." : {
       "localizations" : {
         "de" : {
@@ -36318,6 +38169,350 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "今日训练负荷：心率处于各区间的分钟数（最大心率的 50–60%% 每分钟计 1，到 90%% 及以上每分钟计 5），即 Edwards TRIMP，涵盖全天，因此训练和忙碌的日子都会计入。比值是将你最近 7 天的日均负荷与最近 28 天比较。在对运动员的研究中，比值为 0.8–1.3（绿色）时受伤最少，从 1.5 起（红色）最多；低于 0.8 或介于 1.3 与 1.5 之间为黄色。这些研究针对的是团队运动，且这种关联尚有争议，因此请将比值理解为你的负荷变化有多快。需要最近 28 天中有 21 天有心率数据。趋势图下方，训练单调性是你最近 7 天的日均负荷除以其波动程度，训练压力是一周总负荷乘以单调性（Foster）。运动员生病大多发生在高训练压力的几周之后，单调性高于 2 是常用的警示信号：每天负荷相同，没有用于恢复的轻松日。两者都需要 7 天都有负荷数据；今天的这一周截至昨天。如果“健康”中至少有 %lld 次你自己评过费力程度且有心率的体能训练（iOS 18 及更高版本），另外两张图会比较这些训练的费力负荷（你的评分乘以分钟数，即课程 RPE）与它们的心率负荷。Apple 自己的费力估算不计入，因为它部分来自心率。一项研究（Foster et al. 2001）中两者同升同降，所以当费力负荷上升而心率负荷没有时，训练的感觉比心率显示的更吃力。"
+          }
+        }
+      }
+    },
+    "Today's workout didn't fit in. Rest well, and tomorrow is another chance." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Workout heute hat nicht reingepasst. Ruh dich gut aus, morgen ist eine neue Chance."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoy no hubo hueco para el entrenamiento. Descansa bien; mañana habrá otra oportunidad."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’entraînement d’aujourd’hui n’a pas trouvé sa place. Reposez-vous bien, demain est une autre chance."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज वर्कआउट के लिए समय नहीं मिला। अच्छे से आराम करें, कल फिर मौका है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’allenamento di oggi non ha trovato spazio. Riposa bene, domani è un’altra occasione."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O treino de hoje não coube na agenda. Descanse bem; amanhã é outra chance."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодня на тренировку не нашлось времени. Хорошо отдохните, завтра будет новая возможность."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的训练没排上。好好休息，明天还有机会。"
+          }
+        }
+      }
+    },
+    "Tomorrow: your week still needs %@ intensity minutes. A good night tonight sets them up." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morgen: Deine Woche braucht noch %@ Intensitätsminuten. Eine gute Nacht heute bereitet dich darauf vor."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mañana: a tu semana aún le faltan %@ minutos de intensidad. Una buena noche hoy te prepara para lograrlos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demain : votre semaine a encore besoin de %@ minutes d’intensité. Une bonne nuit ce soir vous y prépare."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल: आपके सप्ताह को अभी %@ इंटेंसिटी मिनट और चाहिए। आज रात की अच्छी नींद इसके लिए तैयार करेगी।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domani: alla tua settimana servono ancora %@ minuti di intensità. Una buona notte stasera ti prepara."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amanhã: sua semana ainda precisa de %@ minutos de intensidade. Uma boa noite hoje prepara você para isso."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завтра: на этой неделе ещё нужно %@ минут интенсивности. Хороший сон сегодня вам в этом поможет."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明天：本周还需要 %@ 强度分钟。今晚睡好，明天更有把握。"
+          }
+        }
+      }
+    },
+    "Tomorrow: your week still needs %lld more workouts. A good night tonight sets them up." : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Morgen: Deine Woche braucht noch %lld Workout. Eine gute Nacht heute bereitet dich darauf vor."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Morgen: Deine Woche braucht noch %lld Workouts. Eine gute Nacht heute bereitet dich darauf vor."
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Mañana: a tu semana aún le falta %lld entrenamiento más. Una buena noche hoy te prepara para lograrlo."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Mañana: a tu semana aún le faltan %lld entrenamientos más. Una buena noche hoy te prepara para lograrlos."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Demain : votre semaine a encore besoin de %lld séance de plus. Une bonne nuit ce soir vous y prépare."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Demain : votre semaine a encore besoin de %lld séances de plus. Une bonne nuit ce soir vous y prépare."
+                }
+              }
+            }
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल: आपके सप्ताह को अभी %lld और वर्कआउट चाहिए। आज रात की अच्छी नींद इसके लिए तैयार करेगी।"
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Domani: alla tua settimana serve ancora %lld allenamento. Una buona notte stasera ti prepara."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Domani: alla tua settimana servono ancora %lld allenamenti. Una buona notte stasera ti prepara."
+                }
+              }
+            }
+          }
+        },
+        "pt" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Amanhã: sua semana ainda precisa de mais %lld treino. Uma boa noite hoje prepara você para isso."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Amanhã: sua semana ainda precisa de mais %lld treinos. Uma boa noite hoje prepara você para isso."
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Завтра: на этой неделе нужны ещё %lld тренировки. Хороший сон сегодня вам в этом поможет."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Завтра: на этой неделе нужно ещё %lld тренировок. Хороший сон сегодня вам в этом поможет."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Завтра: на этой неделе нужна ещё %lld тренировка. Хороший сон сегодня вам в этом поможет."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Завтра: на этой неделе нужно ещё %lld тренировок. Хороший сон сегодня вам в этом поможет."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明天：本周还需要再训练 %lld 次。今晚睡好，明天更有把握。"
+          }
+        }
+      }
+    },
+    "Tomorrow: your week still needs 1 more workout. A good night tonight sets it up." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morgen: Deine Woche braucht noch 1 Workout. Eine gute Nacht heute bereitet dich darauf vor."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mañana: a tu semana aún le falta 1 entrenamiento más. Una buena noche hoy te prepara para lograrlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demain : votre semaine a encore besoin de 1 séance de plus. Une bonne nuit ce soir vous y prépare."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल: आपके सप्ताह को अभी 1 और वर्कआउट चाहिए। आज रात की अच्छी नींद इसके लिए तैयार करेगी।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domani: alla tua settimana serve ancora 1 allenamento. Una buona notte stasera ti prepara."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amanhã: sua semana ainda precisa de mais 1 treino. Uma boa noite hoje prepara você para isso."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завтра: на этой неделе нужна ещё 1 тренировка. Хороший сон сегодня вам в этом поможет."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明天：本周还需要再训练 1 次。今晚睡好，明天更有把握。"
+          }
+        }
+      }
+    },
+    "Tomorrow: your week's training goals are met, so it can be whatever feels right." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morgen: Die Trainingsziele deiner Woche sind erreicht, es darf also sein, wonach dir ist."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mañana: los objetivos de entrenamiento de tu semana están cumplidos, así que puede ser lo que te apetezca."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demain : les objectifs d’entraînement de votre semaine sont atteints, vous pouvez donc faire ce qui vous convient."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल: इस सप्ताह के ट्रेनिंग लक्ष्य पूरे हो चुके हैं, इसलिए कल जो ठीक लगे वही करें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domani: gli obiettivi di allenamento della settimana sono raggiunti, quindi può essere come preferisci."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amanhã: as metas de treino da sua semana estão cumpridas, então pode ser como você preferir."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завтра: цели тренировок на этой неделе выполнены, так что можно делать всё, что по душе."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明天：本周的训练目标已完成，想怎么过都可以。"
           }
         }
       }
@@ -37047,6 +39242,110 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "训练准备度"
+          }
+        }
+      }
+    },
+    "Training readiness is high. %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Trainingsbereitschaft ist hoch. %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La preparación para entrenar es alta. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La disponibilité à l’entraînement est élevée. %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ट्रेनिंग रेडीनेस ऊँची है। %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La prontezza all’allenamento è alta. %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A prontidão para treinar está alta. %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готовность к тренировке высокая. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练准备度很高。%@"
+          }
+        }
+      }
+    },
+    "Training readiness is low (%@)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Trainingsbereitschaft ist niedrig (%@)."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La preparación para entrenar es baja (%@)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La disponibilité à l’entraînement est faible (%@)."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ट्रेनिंग रेडीनेस कम है (%@)।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La prontezza all’allenamento è bassa (%@)."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A prontidão para treinar está baixa (%@)."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готовность к тренировке низкая (%@)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练准备度偏低（%@）。"
           }
         }
       }
@@ -39739,6 +42038,58 @@
         }
       }
     },
+    "Well done today" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gut gemacht heute"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bien hecho hoy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bravo pour aujourd’hui"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज बहुत अच्छा किया"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ben fatto oggi"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muito bem hoje"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодня отлично"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天做得好"
+          }
+        }
+      }
+    },
     "well out of range" : {
       "localizations" : {
         "de" : {
@@ -39791,6 +42142,116 @@
         }
       }
     },
+    "What drained you today: %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das hat dich heute Kraft gekostet: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que te quitó energía hoy: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui a puisé dans votre énergie aujourd’hui : %@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज आपकी ऊर्जा किसने घटाई: %@।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cosa ti ha consumato energia oggi: %@."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que drenou sua energia hoje: %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Что истощало вас сегодня: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天消耗你能量的是：%@。"
+          }
+        }
+      }
+    },
+    "What drained you today: %@. What recharged you: %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das hat dich heute Kraft gekostet: %1$@. Das hat dich aufgeladen: %2$@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "What drained you today: %1$@. What recharged you: %2$@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que te quitó energía hoy: %1$@. Lo que te recargó: %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui a puisé dans votre énergie aujourd’hui : %1$@. Ce qui vous a redonné de l’énergie : %2$@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज आपकी ऊर्जा किसने घटाई: %1$@। किसने बढ़ाई: %2$@।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cosa ti ha consumato energia oggi: %1$@. Cosa ti ha ricaricato: %2$@."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que drenou sua energia hoje: %1$@. O que recarregou: %2$@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Что истощало вас сегодня: %1$@. Что восстанавливало: %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天消耗你能量的是：%1$@。为你补充能量的是：%2$@。"
+          }
+        }
+      }
+    },
     "What it means" : {
       "localizations" : {
         "de" : {
@@ -39839,6 +42300,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "含义"
+          }
+        }
+      }
+    },
+    "What recharged you today: %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das hat dich heute aufgeladen: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que te recargó hoy: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui vous a redonné de l’énergie aujourd’hui : %@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज आपकी ऊर्जा किसने बढ़ाई: %@।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cosa ti ha ricaricato oggi: %@."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que recarregou sua energia hoje: %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Что восстанавливало вас сегодня: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天为你补充能量的是：%@。"
           }
         }
       }
@@ -40417,6 +42930,110 @@
         }
       }
     },
+    "Workout done today. 💪 You've earned a good rest tonight." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout heute geschafft. 💪 Du hast dir eine erholsame Nacht verdient."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento hecho hoy. 💪 Te has ganado un buen descanso esta noche."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séance faite aujourd’hui. 💪 Vous avez mérité une bonne nuit de repos."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज का वर्कआउट पूरा हुआ। 💪 आज रात अच्छे आराम के हक़दार हैं आप।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allenamento fatto oggi. 💪 Meriti un buon riposo stanotte."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino feito hoje. 💪 Você merece um bom descanso esta noite."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тренировка сегодня сделана. 💪 Вы заслужили хороший отдых этой ночью."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的训练完成了。💪 今晚好好休息，这是你应得的。"
+          }
+        }
+      }
+    },
+    "Workout done yesterday. Well done!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern Workout geschafft. Gut gemacht!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento hecho ayer. ¡Bien hecho!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séance faite hier. Bien joué !"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल वर्कआउट पूरा हुआ। शाबाश!"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allenamento fatto ieri. Ben fatto!"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino feito ontem. Muito bem!"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера тренировка сделана. Отличная работа!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天完成了训练。做得好！"
+          }
+        }
+      }
+    },
     "Workout time" : {
       "localizations" : {
         "de" : {
@@ -40990,6 +43607,272 @@
         }
       }
     },
+    "Yesterday ended at %@ of %@ steps. An early walk today gets you ahead." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern endete bei %1$@ von %2$@ Schritten. Ein früher Spaziergang heute bringt dich voran."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Yesterday ended at %1$@ of %2$@ steps. An early walk today gets you ahead."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayer terminó en %1$@ de %2$@ pasos. Un paseo temprano hoy te pone al día."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier s’est terminé à %1$@ pas sur %2$@. Une marche matinale aujourd’hui vous remet en avance."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल %2$@ में से %1$@ कदम पर दिन खत्म हुआ। आज जल्दी सैर करने से आप आगे निकल जाएँगे।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri si è chiuso a %1$@ passi su %2$@. Una camminata mattutina oggi ti mette in vantaggio."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontem terminou em %1$@ de %2$@ passos. Uma caminhada cedo hoje coloca você na frente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера день закончился на %1$@ из %2$@ шагов. Ранняя прогулка сегодня поможет вырваться вперёд."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天最终走了 %1$@ / %2$@ 步。今天早点散步就能赶上。"
+          }
+        }
+      }
+    },
+    "Yesterday stayed easy. Good call." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern blieb ruhig. Gute Entscheidung."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayer fue un día tranquilo. Buena decisión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier est resté tranquille. Bon choix."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल का दिन आराम से बीता। अच्छा फ़ैसला।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri è rimasto leggero. Buona scelta."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontem foi tranquilo. Boa escolha."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера вы не перегружались. Хорошее решение."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天保持轻松，决定很明智。"
+          }
+        }
+      }
+    },
+    "Yesterday turned out harder than planned. No worries, just listen to your body today." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern war es anstrengender als geplant. Keine Sorge, hör heute einfach auf deinen Körper."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayer fue más duro de lo planeado. Sin preocupaciones, hoy simplemente escucha a tu cuerpo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier a été plus intense que prévu. Pas de souci, écoutez simplement votre corps aujourd’hui."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल का दिन योजना से ज़्यादा कठिन रहा। चिंता न करें, आज बस अपने शरीर की सुनें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri è stato più duro del previsto. Nessun problema, oggi ascolta semplicemente il tuo corpo."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontem foi mais puxado do que o planejado. Sem problema, hoje é só ouvir o seu corpo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера вышло тяжелее, чем планировалось. Ничего страшного, сегодня просто прислушивайтесь к своему телу."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天比计划的更辛苦。别担心，今天多听听身体的声音。"
+          }
+        }
+      }
+    },
+    "Yesterday was harder than suggested. Today's plan takes it into account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern war anstrengender als vorgeschlagen. Der heutige Plan berücksichtigt das."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayer fue más duro de lo sugerido. El plan de hoy lo tiene en cuenta."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier a été plus intense que suggéré. Le plan du jour en tient compte."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल सुझाव से ज़्यादा कठिन रहा। आज की योजना में इसका ध्यान रखा गया है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri è stato più duro di quanto suggerito. Il piano di oggi ne tiene conto."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontem foi mais puxado do que o sugerido. O plano de hoje leva isso em conta."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера было тяжелее, чем предлагалось. План на сегодня это учитывает."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天比建议的更辛苦。今天的计划已经考虑了这一点。"
+          }
+        }
+      }
+    },
+    "Yesterday's workout didn't happen. Today's plan has you covered." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Workout gestern ist ausgefallen. Der heutige Plan fängt das auf."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El entrenamiento de ayer no se dio. El plan de hoy te cubre."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’entraînement d’hier n’a pas eu lieu. Le plan du jour s’en charge."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल का वर्कआउट नहीं हो पाया। आज की योजना में इसका इंतज़ाम है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’allenamento di ieri non c’è stato. Il piano di oggi ti copre."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O treino de ontem não aconteceu. O plano de hoje cuida disso."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчерашняя тренировка не состоялась. План на сегодня это учитывает."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天的训练没有进行。今天的计划已经帮你安排好了。"
+          }
+        }
+      }
+    },
     "Yoga" : {
       "comment" : "Workout type name",
       "localizations" : {
@@ -41039,6 +43922,318 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "瑜伽"
+          }
+        }
+      }
+    },
+    "You got today's workout in. Great job!" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast heute dein Workout geschafft. Tolle Arbeit!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoy has hecho tu entrenamiento. ¡Gran trabajo!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez fait votre séance du jour. Excellent travail !"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज का वर्कआउट हो गया। शानदार काम!"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai fatto l’allenamento di oggi. Ottimo lavoro!"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você fez o treino de hoje. Ótimo trabalho!"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тренировка на сегодня выполнена. Отличная работа!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的训练完成了。干得漂亮！"
+          }
+        }
+      }
+    },
+    "You got your workout in yesterday. Nice work! 💪" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast gestern dein Workout geschafft. Gute Arbeit! 💪"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayer hiciste tu entrenamiento. ¡Buen trabajo! 💪"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez fait votre séance hier. Beau travail ! 💪"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल आपने वर्कआउट कर लिया। बढ़िया काम! 💪"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri hai fatto il tuo allenamento. Bel lavoro! 💪"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você treinou ontem. Bom trabalho! 💪"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера вы потренировались. Отличная работа! 💪"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天你完成了训练。干得不错！💪"
+          }
+        }
+      }
+    },
+    "You kept it easy today, just as planned." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast es heute ruhig angehen lassen, genau wie geplant."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoy lo llevaste con calma, tal como estaba planeado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez gardé un rythme tranquille aujourd’hui, comme prévu."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज आपने योजना के अनुसार इसे आसान रखा।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oggi hai mantenuto un ritmo tranquillo, proprio come previsto."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você pegou leve hoje, exatamente como planejado."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодня вы не перенапрягались, как и планировалось."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天按计划保持了轻松。"
+          }
+        }
+      }
+    },
+    "You kept yesterday easy, just what your body asked for." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast es gestern ruhig angehen lassen, genau das, was dein Körper wollte."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayer lo llevaste con calma, justo lo que tu cuerpo pedía."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez gardé un rythme tranquille hier, exactement ce que votre corps demandait."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल आपने इसे आसान रखा, ठीक वैसे ही जैसा आपके शरीर ने माँगा था।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri hai mantenuto un ritmo tranquillo, proprio ciò che chiedeva il tuo corpo."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você pegou leve ontem, exatamente o que o seu corpo pediu."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера вы не перенапрягались, именно этого и просило ваше тело."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天你保持了轻松，正是身体所需要的。"
+          }
+        }
+      }
+    },
+    "You reached %@ steps yesterday. 👏" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast gestern %@ Schritte erreicht. 👏"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayer llegaste a %@ pasos. 👏"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez atteint %@ pas hier. 👏"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कल आपने %@ कदम पूरे किए। 👏"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieri hai raggiunto %@ passi. 👏"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você chegou a %@ passos ontem. 👏"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вчера вы прошли %@ шагов. 👏"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天你走了 %@ 步。👏"
+          }
+        }
+      }
+    },
+    "You were in bed by %@, right on plan. 🌙" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du warst bis %@ im Bett, genau nach Plan. 🌙"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estabas en la cama a las %@, justo según lo previsto. 🌙"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous étiez au lit avant %@, pile selon le plan. 🌙"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आप %@ तक सो गए, बिल्कुल योजना के अनुसार। 🌙"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eri a letto entro le %@, esattamente come previsto. 🌙"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você estava na cama até %@, exatamente como planejado. 🌙"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы легли к %@, точно по плану. 🌙"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在 %@ 前就寝了，完全按计划。🌙"
           }
         }
       }
@@ -41195,6 +44390,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的就寝和起床时间，以及晨间和晚间报告通知。"
+          }
+        }
+      }
+    },
+    "Your daily goal. A brisk walk is about %@ steps a minute." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Tagesziel. Zügiges Gehen sind etwa %@ Schritte pro Minute."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu objetivo diario. Caminar a paso ligero son unos %@ pasos por minuto."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre objectif quotidien. Une marche rapide, c’est environ %@ pas par minute."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपका दैनिक लक्ष्य। तेज़ चाल लगभग %@ कदम प्रति मिनट होती है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo obiettivo giornaliero. Una camminata veloce è di circa %@ passi al minuto."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua meta diária. Uma caminhada rápida é cerca de %@ passos por minuto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваша дневная цель. Быстрая ходьба — около %@ шагов в минуту."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的每日目标。快走大约每分钟 %@ 步。"
           }
         }
       }
@@ -41459,6 +44706,58 @@
         }
       }
     },
+    "Your plan for today" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Plan für heute"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu plan para hoy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre plan du jour"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आज के लिए आपकी योजना"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo piano per oggi"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu plano para hoje"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш план на сегодня"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你今天的计划"
+          }
+        }
+      }
+    },
     "Your rating" : {
       "comment" : "Whose the workout effort rating is: the user's own",
       "localizations" : {
@@ -41560,6 +44859,110 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你最近的活动"
+          }
+        }
+      }
+    },
+    "Your report is ready in Journal." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Bericht ist im Tagebuch bereit."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu informe está listo en Diario."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre bilan est prêt dans Journal."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपकी रिपोर्ट जर्नल में तैयार है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo resoconto è pronto nel Diario."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu relatório está pronto no Diário."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш отчёт готов в «Дневнике»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的报告已在“日志”中准备好。"
+          }
+        }
+      }
+    },
+    "Your sleep score shows it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Schlafscore zeigt es."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu puntuación de sueño lo refleja."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre score de sommeil le montre."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपका नींद स्कोर यह दिखाता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo punteggio sonno lo conferma."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua pontuação de sono mostra isso."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Это видно по вашей оценке сна."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的睡眠评分也印证了这一点。"
           }
         }
       }
@@ -41716,6 +45119,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你清醒时（训练之外）按强度划分的时间，依据心率占其储备（最大减静息）的比例，采用美国运动医学会的区间：极轻低于 30%，轻度 30–39%，中等 40–59%，高强度 60% 及以上。大数字是轻度或更高强度的时间；训练则计入强度分钟。"
+          }
+        }
+      }
+    },
+    "Your week's training goals are met, so today's session is a bonus." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Trainingsziele deiner Woche sind erreicht, die heutige Einheit ist also ein Bonus."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los objetivos de entrenamiento de tu semana están cumplidos, así que la sesión de hoy es un extra."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les objectifs d’entraînement de votre semaine sont atteints, la séance d’aujourd’hui est donc un bonus."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस सप्ताह के ट्रेनिंग लक्ष्य पूरे हो चुके हैं, इसलिए आज का सेशन बोनस है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gli obiettivi di allenamento della settimana sono raggiunti, quindi la sessione di oggi è un bonus."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As metas de treino da sua semana estão cumpridas, então a sessão de hoje é um bônus."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Цели тренировок на этой неделе выполнены, так что сегодняшняя тренировка — бонус."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本周的训练目标已完成，今天的训练算是额外加分。"
           }
         }
       }
@@ -41977,6 +45432,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "区间 %1$lld，%2$@，%3$lld%%"
+          }
+        }
+      }
+    },
+    "A comfortable session keeps you moving." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine angenehme Einheit hält dich in Bewegung."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una sesión cómoda te mantiene en movimiento."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une séance confortable vous garde en mouvement."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एक आरामदायक सेशन आपको सक्रिय रखता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una sessione confortevole ti tiene in movimento."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma sessão confortável mantém você em movimento."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Комфортная тренировка поддерживает движение."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "舒适的训练能让你保持活力。"
           }
         }
       }

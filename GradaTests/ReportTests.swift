@@ -60,34 +60,57 @@ struct ReportTests {
         #expect(defaults.object(forKey: ReportNotifier.morningScheduledDayKey) == nil)
     }
 
-    @Test func morningSummaryLeavesOutCalibratingScores() {
-        var report = DailyReport(kind: .morning, hasData: true)
-        report.snapshots[.sleepDuration] = CardSnapshot(period: "Last night", value: "7h 20m")
-        report.snapshots[.sleepScore] = CardSnapshot(period: "Last night", value: "Calibrating")
-        report.snapshots[.recovery] = CardSnapshot(period: "Today", value: "Good")
-        report.snapshots[.healthStatus] = CardSnapshot(period: "Last night", value: "All in range")
-        #expect(report.summary == "Slept 7h 20m · Recovery Good · All in range")
+    @Test func morningNotificationFollowsUpThenGivesTodaysFocus() {
+        var report = DailyReport(kind: .morning, hasData: true, day: today, calendar: calendar)
+        report.followUps = ["You reached 8,000 steps yesterday. 👏", "In bed by 22:40 last night. Nice early night."]
+        report.focus = TrainingPlan.recommendation(.easy, reason: "")
+        #expect(report.notificationBody == "You reached 8,000 steps yesterday. 👏\nToday: Easy session, 30–40 minutes.",
+                "One follow-up, then the focus: no line of numbers")
+        report.focusOutcome = .followed
+        #expect(["Nice work yesterday", "Great start to the day"].contains(report.notificationTitle))
+        report.bodyWarning = true
+        #expect(["Take it easy today", "A gentle day today"].contains(report.notificationTitle), "A body warning comes first")
     }
 
-    @Test func eveningBodyHasTotalsThenTwoRecommendations() {
-        var report = DailyReport(kind: .evening, hasData: true)
-        report.snapshots[.steps] = CardSnapshot(period: "Today", value: "8,420")
-        report.snapshots[.intensityMinutes] = CardSnapshot(period: "Last 7 days", value: "95")
-        report.recommendations = [Recommendation(symbol: "lightbulb", text: "Walk about 16 more minutes", reason: ""),
-                                  Recommendation(symbol: "lightbulb", text: "Go to bed by 22:55", reason: ""),
-                                  Recommendation(symbol: "lightbulb", text: "Hold your load steady", reason: "")]
-        #expect(report.notificationBody == "8,420 steps · 95 intensity min this week\nWalk about 16 more minutes\nGo to bed by 22:55")
+    @Test func eveningNotificationEndsWithTonightsBedtime() {
+        var report = DailyReport(kind: .evening, hasData: true, day: today, calendar: calendar)
+        #expect(report.notificationBody == "Your report is ready in Journal.", "Never an empty notification")
+        report.followUps = ["Steps goal reached today. 👏"]
+        report.bedtime = today.addingTimeInterval(22 * 3600 + 45 * 60)
+        let body = report.notificationBody
+        #expect(body.hasPrefix("Steps goal reached today. 👏\nBed by "))
+        #expect(body.hasSuffix(" sets you up for tomorrow."))
     }
 
     @MainActor
     @Test func sampleDataHasBothReports() async throws {
+        let defaults = try freshDefaults()
         let builder = SnapshotBuilder(source: SampleDataSource())
-        let morning = try await DailyReport.load(.morning, builder)
+        let morning = try await DailyReport.load(.morning, builder, defaults: defaults)
         #expect(morning.hasData)
         #expect(morning.snapshots[.sleepDuration]?.value != nil)
-        let evening = try await DailyReport.load(.evening, builder)
+        #expect(morning.focus != nil, "Today's focus")
+        // As for the notification, so the follow-up doesn't depend on the time of day the test runs.
+        let evening = try await DailyReport.load(.evening, builder, defaults: defaults, forNotification: true)
         #expect(evening.snapshots[.steps]?.value != nil)
         #expect(evening.recommendations.contains { $0.text.hasPrefix("Go to bed by") }, "Sleep Need gives tonight's bedtime")
+        #expect(evening.focus?.text.hasPrefix("Go to bed by") == true, "Tonight's bedtime is the evening's focus")
+        #expect(evening.followUps.count == 1, "The evening checks in on this morning's focus")
+        #expect(evening.tomorrow != nil)
+        let saved = try #require(DayPlanStore.plan(for: Calendar.current.startOfDay(for: .now), defaults: defaults, calendar: .current))
+        #expect(saved.focus != nil && saved.training != nil && saved.bedtime != nil, "Saved for tomorrow's follow-up")
+    }
+
+    @MainActor
+    @Test func morningFollowsUpOnYesterdaysPlan() async throws {
+        let defaults = try freshDefaults()
+        let calendar = Calendar.current
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: .now))!
+        DayPlanStore.saveMorning(DayPlan(focus: .steps, training: .easy, stepsGoal: 1), for: yesterday,
+                                 defaults: defaults, calendar: calendar)
+        let morning = try await DailyReport.load(.morning, SnapshotBuilder(source: SampleDataSource()), defaults: defaults)
+        #expect(morning.focusOutcome == .followed, "Sample data walks more than 1 step a day")
+        #expect(morning.followUps.first?.lowercased().contains("steps") == true, "The focus comes first")
     }
 
     @Test func wakeUpPrefersOwnTimeThenUsualThenDefault() throws {
