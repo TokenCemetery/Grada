@@ -397,7 +397,11 @@ struct TrendBuilder {
         let values = daily.compactMap(\.value)
         var points = daily
         if period.isWeekly {
-            points = weeks(daily).map { week in
+            var buckets = weeks(daily)
+            // The period's start cuts its oldest week short, and a total of a few days would chart as a false dip.
+            // The current week stays: it's the week so far.
+            if weeklyTotals, let first = buckets.first, first.points.count < 7, buckets.count > 1 { buckets.removeFirst() }
+            points = buckets.map { week in
                 let weekValues = week.points.compactMap(\.value)
                 let value = weeklyTotals ? weekValues.reduce(0, +) : Baseline.average(weekValues)
                 return TrendPoint(date: week.start, value: weekValues.isEmpty ? nil : value)

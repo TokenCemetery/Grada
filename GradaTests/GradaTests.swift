@@ -1261,6 +1261,13 @@ struct TrendBuilderTests {
         #expect(trend.normalRange != nil)
     }
 
+    /// A weekly total starts with the first whole week, so the period's cut-off week doesn't chart as a dip (#162).
+    @Test func weeklyTotalsStartWithAWholeWeek() async throws {
+        let trend = try #require(try await TrendBuilder(source: SampleDataSource()).trend(for: .intensityMinutes, period: .year))
+        let firstDay = calendar.date(byAdding: .day, value: -(TrendPeriod.year.days - 1), to: today)!
+        #expect(try #require(trend.points.first).date >= firstDay)
+    }
+
     @Test func pastDayTrendsEndOnThatDay() async throws {
         let day = calendar.date(byAdding: .day, value: -10, to: today)!
         let source = PastDaySource.asOf(day, base: SampleDataSource(), calendar: calendar)
