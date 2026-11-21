@@ -45,15 +45,36 @@ struct ImportWindowTests {
         #expect(source.batches.last?.start == day(-10))
         #expect(defaults.object(forKey: "recentImportedThrough.\(source.id)") as? Date == today)
     }
+
+    /// At launch there's no window for a permission sheet, so background updates wait until the app asked on
+    /// screen (#177).
+    @Test func backgroundUpdatesWaitForThePermissionSheet() async {
+        source.needsSheet = true
+        await importer.startBackgroundUpdates()
+        #expect(source.authorizations == 0)
+        #expect(!source.observing)
+
+        source.needsSheet = false
+        await importer.startBackgroundUpdates()
+        #expect(source.authorizations == 1)
+        #expect(source.observing)
+    }
 }
 
 private final class ImportSource: HealthSource {
     let id = "importTest"
     var earliest: Date?
+    var needsSheet = false
     private(set) var batches: [DateInterval] = []
+    private(set) var authorizations = 0
+    private(set) var observing = false
     var name: String { id }
     var isAvailable: Bool { true }
-    func requestAuthorization() async throws {}
+    func requestAuthorization() async throws { authorizations += 1 }
+    func needsAuthorizationSheet() async -> Bool { needsSheet }
+    func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws {
+        observing = true
+    }
     func earliestSampleDate() async throws -> Date? { earliest }
     func batch(for days: DateInterval) async throws -> HealthBatch {
         batches.append(days)

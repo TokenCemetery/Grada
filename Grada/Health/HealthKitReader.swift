@@ -51,8 +51,17 @@ final class HealthKitReader: HealthSource {
     }
 
     func requestAuthorization() async throws {
-        let characteristics = [HKCharacteristicType(.dateOfBirth), HKCharacteristicType(.biologicalSex)]
-        try await store.requestAuthorization(toShare: [], read: Set(Self.readTypes as [HKObjectType] + characteristics))
+        try await store.requestAuthorization(toShare: [], read: Self.authorizedTypes)
+    }
+
+    /// True while any read type hasn't been asked for yet, e.g. after an update adds one. Unknown counts as needing
+    /// the sheet, so it's left to the on-screen path.
+    func needsAuthorizationSheet() async -> Bool {
+        (try? await store.statusForAuthorizationRequest(toShare: [], read: Self.authorizedTypes)) != .unnecessary
+    }
+
+    private static var authorizedTypes: Set<HKObjectType> {
+        Set(readTypes as [HKObjectType] + [HKCharacteristicType(.dateOfBirth), HKCharacteristicType(.biologicalSex)])
     }
 
     /// Calls `onChange` whenever Apple Health gets new data for any read type, even while the app is

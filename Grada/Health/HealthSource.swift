@@ -60,6 +60,8 @@ protocol HealthSource: LiveHealthSource {
     /// Shortest time between imports of recent days, for sources that charge a network call per import.
     var refreshInterval: TimeInterval { get }
     func requestAuthorization() async throws
+    /// Whether `requestAuthorization()` would show a permission sheet, which needs the app on screen.
+    func needsAuthorizationSheet() async -> Bool
     /// Date of the oldest data the source can import.
     func earliestSampleDate() async throws -> Date?
     /// Everything the store keeps for `days` (start of day ..< start of day).
@@ -70,6 +72,7 @@ protocol HealthSource: LiveHealthSource {
 
 extension HealthSource {
     var refreshInterval: TimeInterval { 0 }
+    func needsAuthorizationSheet() async -> Bool { false }
 
     /// Sources without change notifications are refreshed when the app asks for recent data.
     func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws {}

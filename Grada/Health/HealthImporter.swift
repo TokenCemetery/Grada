@@ -142,6 +142,11 @@ final class HealthImporter {
     /// Re-imports the last few days whenever a source gets new data, including in the background.
     func startBackgroundUpdates() async {
         guard !availableSources.isEmpty, !didStartBackgroundUpdates else { return }
+        // Called at launch, before any window exists, and iOS may launch the app in the background. A permission sheet
+        // asked for then can't show: it times out, and the retry's sheet can't present over the stuck one (#177).
+        // `RootView` asks once the app is on screen, then calls this again.
+        for source in availableSources where await source.needsAuthorizationSheet() { return }
+        guard !didStartBackgroundUpdates else { return }
         didStartBackgroundUpdates = true
         await authorize()
         for source in availableSources {

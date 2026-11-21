@@ -134,6 +134,8 @@ struct RootView: View {
     private func authorizeAndImport() async {
         await homeModel.importer?.authorize()
         isAuthorized = true
+        // Skipped at launch while the permission sheet was still due.
+        await homeModel.importer?.startBackgroundUpdates()
         await homeModel.importer?.importHistoryIfNeeded()
     }
 }
