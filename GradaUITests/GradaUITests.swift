@@ -12,7 +12,11 @@ final class GradaUITests: XCTestCase {
         app.launchArguments = ["-SampleData"]
         app.launch()
 
-        // First launch on this simulator asks for starting goals.
+        // First launch on this simulator asks for starting cards, then goals.
+        if app.navigationBars["Choose your cards"].waitForExistence(timeout: 5) {
+            attachScreenshot("Card setup")
+            app.staticTexts["Health"].tap()
+        }
         if app.navigationBars["Choose your goals"].waitForExistence(timeout: 5) {
             attachScreenshot("Goal setup")
             app.staticTexts["Balanced"].tap()
@@ -85,6 +89,10 @@ final class GradaUITests: XCTestCase {
             let ok = app.buttons["OK"]
             if ok.waitForExistence(timeout: 10) { ok.tap() }
         }
+        if app.navigationBars["Choose your cards"].waitForExistence(timeout: 10) {
+            attachScreenshot("Card setup")
+            app.staticTexts["Health"].tap()
+        }
         if app.navigationBars["Choose your goals"].waitForExistence(timeout: 10) {
             attachScreenshot("Goal setup")
             app.staticTexts["Balanced"].tap()
@@ -108,6 +116,9 @@ final class GradaUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-SampleData", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
+        if app.navigationBars["Choose your cards"].waitForExistence(timeout: 5) {
+            app.staticTexts["Health"].tap()
+        }
         if app.navigationBars["Choose your goals"].waitForExistence(timeout: 5) {
             app.staticTexts["Balanced"].tap()
         }

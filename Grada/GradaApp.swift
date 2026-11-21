@@ -92,11 +92,16 @@ struct RootView: View {
     @Environment(HomeModel.self) private var homeModel
     @Environment(\.scenePhase) private var scenePhase
     @Query private var goalChanges: [GoalChange]
+    @Query private var homeCards: [HomeCard]
+    @AppStorage(SettingsKey.didSeedHomeCards) private var didSeedHomeCards = false
     @State private var tab = Tab.home
-    /// Goal setup waits until the Apple Health permission screen is answered.
+    /// Onboarding waits until the Apple Health permission screen is answered.
     @State private var isAuthorized = false
 
     private enum Tab { case home, calendar, journal, settings }
+
+    /// Only on a fresh install: someone who removed every card keeps an empty Home.
+    private var choosesCards: Bool { !didSeedHomeCards && homeCards.isEmpty }
 
     var body: some View {
         TabView(selection: $tab) {
@@ -122,8 +127,12 @@ struct RootView: View {
             tab = .calendar
         })
         .preferredColorScheme(appearance.colorScheme)
-        .sheet(isPresented: Binding(get: { isAuthorized && goalChanges.isEmpty }, set: { _ in })) {
-            GoalSetupView()
+        .sheet(isPresented: Binding(get: { isAuthorized && (choosesCards || goalChanges.isEmpty) }, set: { _ in })) {
+            OnboardingView(choosesCards: choosesCards, choosesGoals: goalChanges.isEmpty)
+        }
+        // Cards that iCloud brings from another device count as chosen.
+        .onChange(of: homeCards.isEmpty, initial: true) { _, isEmpty in
+            if !isEmpty { didSeedHomeCards = true }
         }
         // On every return too: asks again if the permission sheet timed out in the background (#128).
         .onChange(of: scenePhase, initial: true) { _, phase in

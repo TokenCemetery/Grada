@@ -1,35 +1,31 @@
 import SwiftData
 import SwiftUI
 
-/// Shown once, after Apple Health access: picks the starting goals.
+/// Shown once in onboarding: picks the starting goals. Saving them closes the sheet.
 struct GoalSetupView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.healthSource) private var healthSource
     @Environment(HomeModel.self) private var homeModel
-    @Environment(\.dismiss) private var dismiss
     /// The last 7 days per metric; nil until loaded or with less than a week of history.
     @State private var lastWeek: [GoalMetric: [Double?]]?
 
     private var store: GoalStore { GoalStore(context: modelContext, source: healthSource) }
 
     var body: some View {
-        NavigationStack {
-            List {
-                if let lastWeek {
-                    option(title: String(localized: "From your last 7 days"), summary: String(localized: "Your recent activity"),
-                           goals: Goals.fromLastWeek(lastWeek, fallback: .balanced), reason: .lastWeek)
-                }
-                ForEach(GoalPreset.allCases) { preset in
-                    option(title: preset.title, summary: preset.summary, goals: preset.goals, reason: .preset)
-                }
-                Section {
-                } footer: {
-                    Text("Goals adjust every Monday from your progress, and sleep follows your Sleep need. Change them any time in Settings › Goals.")
-                }
+        List {
+            if let lastWeek {
+                option(title: String(localized: "From your last 7 days"), summary: String(localized: "Your recent activity"),
+                       goals: Goals.fromLastWeek(lastWeek, fallback: .balanced), reason: .lastWeek)
             }
-            .navigationTitle("Choose your goals")
+            ForEach(GoalPreset.allCases) { preset in
+                option(title: preset.title, summary: preset.summary, goals: preset.goals, reason: .preset)
+            }
+            Section {
+            } footer: {
+                Text("Goals adjust every Monday from your progress, and sleep follows your Sleep need. Change them any time in Settings › Goals.")
+            }
         }
-        .interactiveDismissDisabled()
+        .navigationTitle("Choose your goals")
         // History imports in the background, so check again as data arrives.
         .task(id: homeModel.importer?.revision) { lastWeek = try? await store.lastWeek() }
     }
@@ -38,7 +34,6 @@ struct GoalSetupView: View {
         Section {
             Button {
                 store.start(with: goals, reason: reason)
-                dismiss()
             } label: {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(title).font(.headline)

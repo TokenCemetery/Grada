@@ -19,19 +19,31 @@ struct HomeLayoutTests {
         #expect(rows == [.cards([.sleepStages]), .cards([.restingHeartRate, .hrv]), .cards([.steps]), .cards([.lastWorkout]), .cards([.activeEnergy])])
     }
 
-    @Test func defaultSetLayout() {
-        #expect(kinds(HomeLayout.rows(for: CardKind.defaultSet)) == [
+    /// A wide card fills a row alone in 2 columns and takes two of 3 beside a square, so no row is left short.
+    @Test(arguments: CardPersona.allCases, [2, 3])
+    func personaFillsEveryRow(persona: CardPersona, columns: Int) {
+        for row in HomeLayout.rows(for: persona.cards, columns: columns) {
+            guard case .cards(let cards) = row else {
+                Issue.record("\(persona) has a big card, which fills rows differently")
+                continue
+            }
+            let squares = cards.count { $0.size == .square }
+            let wides = cards.count - squares
+            #expect(squares + 2 * wides == columns, "\(persona) in \(columns) columns: \(cards.map(\.kind))")
+        }
+    }
+
+    @Test func healthPersonaLayout() {
+        #expect(kinds(HomeLayout.rows(for: CardPersona.health.cards)) == [
             .cards([.recovery, .resources]), .cards([.strain, .steps]), .cards([.sleepStages]),
-            .cards([.sleepScore, .sleepConsistency]), .cards([.sleepNeed, .exerciseMinutes]), .cards([.lastWorkout]),
-            .cards([.hrvStatus, .oxygenSaturation]), .cards([.respiratoryRate]),
+            .cards([.sleepScore, .sleepNeed]), .cards([.lastWorkout]), .cards([.exerciseMinutes, .hrvStatus]),
         ])
     }
 
     @Test func threeColumnsPutAWideCardBesideTheNextSquare() {
-        #expect(kinds(HomeLayout.rows(for: CardKind.defaultSet, columns: 3)) == [
+        #expect(kinds(HomeLayout.rows(for: CardPersona.health.cards, columns: 3)) == [
             .cards([.recovery, .resources, .strain]), .cards([.steps, .sleepStages]),
-            .cards([.sleepScore, .sleepConsistency, .sleepNeed]), .cards([.exerciseMinutes, .lastWorkout]),
-            .cards([.hrvStatus, .oxygenSaturation, .respiratoryRate]),
+            .cards([.sleepScore, .sleepNeed, .exerciseMinutes]), .cards([.lastWorkout, .hrvStatus]),
         ])
     }
 

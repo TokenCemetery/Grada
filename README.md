@@ -6,7 +6,7 @@
 
 Grada runs on iPhone and iPad and reads Apple Health.
 
-- **Home:** add, remove and reorder cards for recovery, sleep, heart and vitals, activity, training and body, showing today or the last 7 days where both apply.
+- **Home:** starts with the cards for Health, Recovery or Training, picked on first launch; then add, remove and reorder cards for recovery, sleep, heart and vitals, activity, training and body, showing today or the last 7 days where both apply.
 - **Calendar:** colors days by Health or Recovery, marks Training days by sport, or shows your Cycle, with a sheet per day.
 - **Widgets:** any single-value card, such as Recovery or Training Readiness, on the Home Screen (small, medium) or Lock Screen (circular, rectangular); pick it via touch and hold › Edit Widget. It matches the Home card's value and color, updates after each Apple Health import, and clears at midnight until the next. The widget reads only the finished cards the app writes to an on-device App Group file (`Shared/WidgetCards.swift`).
 - **Detail screens:** each metric's trend, breakdown, meaning and inputs. Some add today's advice and why: steps left to the goal as walking minutes (or congratulations once reached), a bedtime for your usual wake-up, or easing off when resting heart rate, HRV or training load is out of range.

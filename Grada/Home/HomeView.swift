@@ -9,7 +9,6 @@ struct HomeView: View {
     @Query(sort: \HomeCard.position) private var cards: [HomeCard]
     @Query private var goalChanges: [GoalChange]
     @Environment(\.healthSource) private var healthSource
-    @AppStorage(SettingsKey.didSeedHomeCards) private var didSeedHomeCards = false
     @AppStorage(EnteredProfile.birthDateKey) private var enteredBirthDate: Double = 0
     @AppStorage(EnteredProfile.sexKey) private var enteredSex = ""
     @State private var isCustomizing = false
@@ -48,7 +47,6 @@ struct HomeView: View {
             }
         }
         .task {
-            seedDefaultCardsIfNeeded()
             // Data already imported first: the refresh imports before it builds cards, which can take minutes on launch
             // while the history imports or the permission sheet waits, and Health Status has no other way in (#178).
             await model.reload([healthStatus] + cardIDs, goals: goals)
@@ -86,17 +84,7 @@ struct HomeView: View {
         await model.refresh([healthStatus] + cardIDs, goals: store.history())
     }
 
-    private func seedDefaultCardsIfNeeded() {
-        guard !didSeedHomeCards else { return }
-        if cards.isEmpty {
-            for (position, card) in CardKind.defaultSet.enumerated() {
-                modelContext.insert(HomeCard(card, position: position))
-            }
-        }
-        didSeedHomeCards = true
-    }
-
-    /// A second device seeds the default cards before iCloud delivers the existing ones,
+    /// A second device can pick its starting cards before iCloud delivers the existing ones,
     /// so the same card can arrive twice. Keep the first of each kind and variant.
     private func removeDuplicateCards() {
         var seen = Set<CardID>()
