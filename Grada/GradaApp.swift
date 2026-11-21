@@ -46,6 +46,16 @@ struct GradaApp: App {
         }
     }
 
+    /// How far imports got, which must describe the store they went into. An in-memory store starts empty on every
+    /// launch, so its progress does too; saved progress would skip the history it no longer has, and progress saved
+    /// against it would skip history the disk store never got.
+    private static func importProgressDefaults(container: ModelContainer) -> UserDefaults {
+        guard container.configurations.allSatisfy(\.isStoredInMemoryOnly) else { return .standard }
+        let suite = "Grada.inMemoryImport"
+        UserDefaults.standard.removePersistentDomain(forName: suite)
+        return UserDefaults(suiteName: suite) ?? .standard
+    }
+
     /// Unit tests run inside the app. Skipping iCloud and HealthKit setup there keeps CI from
     /// stalling on the main actor for minutes before the tests can start.
     private static var isTestHost: Bool {
@@ -61,7 +71,8 @@ struct GradaApp: App {
 #endif
         let reader = HealthKitReader()
         // Apple Health first: Garmin direct fills what its Apple Health sync leaves out, such as overnight HRV.
-        let importer = HealthImporter(sources: [reader, GarminSource()], fitFiles: FITFileSource(), container: container)
+        let importer = HealthImporter(sources: [reader, GarminSource()], fitFiles: FITFileSource(), container: container,
+                                      defaults: importProgressDefaults(container: container))
         // Started here, not from a view: iOS may relaunch the app in the background with no UI.
         Task { await importer.startBackgroundUpdates() }
         let source = StoredHealthData(container: container, sources: importer.liveSources)
