@@ -283,6 +283,9 @@ final class GarminSource: HealthSource {
                 "start": "\(activities.count)", "limit": "\(Self.activityPage)",
             ])
             let page = try data.map { try JSONDecoder().decode([GarminData.Activity].self, from: $0) } ?? []
+            // A page with nothing new means Garmin ignored `start`; asking again would loop forever.
+            let known = Set(activities.compactMap(\.activityId))
+            guard page.contains(where: { $0.activityId.map { !known.contains($0) } ?? true }) else { return activities }
             activities += page
             if page.count < Self.activityPage { return activities }
         }

@@ -296,6 +296,27 @@ struct GarminTests {
         #expect(garmin.lastSync != nil)
     }
 
+    /// A server that ignores `start` and keeps sending the same full page must not page forever (#153).
+    @Test func repeatedActivityPageEndsPaging() async throws {
+        let fake = FakeGarmin()
+        fake.answer = { request in
+            if request.httpMethod == "POST" { return (200, self.jwt) }
+            let path = request.url!.path
+            if path.contains("dailysummaries") { return (200, #"{"data": []}"#) }
+            if path.contains("activities") {
+                let page = (0..<GarminSource.activityPage).map { #"{"activityId": \#($0), "startTimeGMT": "2026-10-01 07:00:00", "duration": 60}"# }
+                return (200, "[\(page.joined(separator: ","))]")
+            }
+            return (204, "")
+        }
+        let (garmin, store) = try source(fake)
+        defer { store.delete() }
+
+        let batch = try await garmin.batch(for: DateInterval(start: day("2026-09-20"), end: day("2026-11-01")))
+        #expect(fake.requests.compactMap(\.url?.path).filter { $0.contains("activities") }.count == 2)
+        #expect(batch.workouts.count == GarminSource.activityPage)
+    }
+
     @Test func dailyHeartRateIsAveragedPerFiveMinutes() throws {
         let start = day("2026-11-01").timeIntervalSince1970 * 1000
         let json = """
