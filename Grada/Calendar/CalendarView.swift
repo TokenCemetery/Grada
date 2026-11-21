@@ -95,6 +95,7 @@ struct CalendarView: View {
                             .foregroundStyle(option == metric ? Color.accentColor : .primary)
                             .background(option == metric ? Color.accentColor.opacity(0.15) : Color(.secondarySystemGroupedBackground),
                                         in: Capsule())
+                            .accessibilityAddTraits(option == metric ? .isSelected : [])
                     }
                 }
                 .padding(.horizontal)
