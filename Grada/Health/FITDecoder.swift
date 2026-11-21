@@ -93,7 +93,9 @@ nonisolated enum FITDecoder {
                 var fields: [(number: Int, size: Int, baseType: UInt8)] = []
                 for _ in 0..<fixed[4] {
                     let field = Array(try read(3))
-                    fields.append((Int(field[0]), Int(field[1]), field[2]))
+                    // A zero-size field holds nothing; keeping it would let a crafted file loop over hundreds of them
+                    // for every one-byte message.
+                    if field[1] > 0 { fields.append((Int(field[0]), Int(field[1]), field[2])) }
                 }
                 var developerSize = 0
                 if header & 0x20 != 0 {
@@ -104,7 +106,8 @@ nonisolated enum FITDecoder {
                 guard let definition = definitions[Int(header & 0x0F)] else { throw FITError.undefinedMessage }
                 let message = try readData(definition, read)
                 if let timestamp = message.fields[253] { lastTimestamp = timestamp }
-                messages.append(message)
+                // Nothing to read from a message with no valid fields, and skipping it bounds memory to the file size.
+                if !message.fields.isEmpty { messages.append(message) }
             }
         }
         offset = end + 2

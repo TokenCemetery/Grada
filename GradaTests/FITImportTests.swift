@@ -168,6 +168,16 @@ struct FITImportTests {
         #expect(try FITDecoder.decode(file + file + Data(repeating: 0, count: 20)).count == 2)
     }
 
+    /// Zero-size fields and empty messages are dropped, so a crafted file can't multiply into far more messages
+    /// than it has bytes (#152).
+    @Test func emptyMessagesAreDropped() throws {
+        var writer = FITWriter()
+        writer.define(local: 0, number: 20, fields: Array(repeating: (0, 0), count: 255))
+        for _ in 0..<100 { writer.data(local: 0, sizes: [], values: []) }
+        writer.fileID()
+        #expect(try FITDecoder.decode(writer.bytes).map(\.number) == [0])
+    }
+
     @Test func sameFileTwiceCountsOnce() async throws {
         let run = Self.activity(start: midnight)
         let result = try await read(["a.fit": run, "b.fit": run])
