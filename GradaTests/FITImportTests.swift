@@ -189,6 +189,13 @@ struct FITImportTests {
         #expect(try FITDecoder.decode(writer.bytes).map(\.number) == [0])
     }
 
+    /// macOS `._` stubs in a copied folder are skipped, not listed as unreadable (#155).
+    @Test func hiddenFilesInAFolderAreSkipped() async throws {
+        let result = try await read(["run.fit": Self.activity(start: midnight), "._run.fit": Data([0, 5, 22, 7])])
+        #expect(result.filesRead == 1)
+        #expect(result.failures.isEmpty)
+    }
+
     @Test func sameFileTwiceCountsOnce() async throws {
         let run = Self.activity(start: midnight)
         let result = try await read(["a.fit": run, "b.fit": run])

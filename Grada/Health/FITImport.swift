@@ -46,7 +46,8 @@ nonisolated struct FITImport {
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
             if (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
-                let files = FileManager.default.enumerator(at: url, includingPropertiesForKeys: nil)?
+                // Hidden files include the `._` stubs macOS leaves in copied folders, which aren't FIT files.
+                let files = FileManager.default.enumerator(at: url, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)?
                     .compactMap { $0 as? URL } ?? []
                 for file in files.sorted(by: { $0.path < $1.path }) {
                     switch file.pathExtension.lowercased() {
