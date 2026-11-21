@@ -40,7 +40,7 @@ struct BodyMassTests {
         var builder = SnapshotBuilder(source: SampleDataSource())
         builder.usesMetric = true
         let snapshot = try await builder.snapshot(for: .weight)
-        let weight = try #require(snapshot.value.flatMap { Double($0) })
+        let weight = try #require(snapshot.value.flatMap { try? Double($0, format: .number) })
         #expect((73...75).contains(weight))
         #expect(snapshot.unit == "kg")
         // Sample data has a height of 178 cm.
@@ -51,7 +51,7 @@ struct BodyMassTests {
         #expect(snapshot.rating == nil, "Weight isn't rated")
 
         builder.usesMetric = false
-        let pounds = try #require(try await builder.snapshot(for: .weight).value.flatMap { Double($0) })
+        let pounds = try #require(try await builder.snapshot(for: .weight).value.flatMap { try? Double($0, format: .number) })
         #expect(abs(pounds - weight * BodyMass.poundsPerKilogram) < 0.2)
     }
 

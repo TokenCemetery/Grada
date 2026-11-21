@@ -61,7 +61,7 @@ struct MobilityTests {
         var builder = SnapshotBuilder(source: AgedStored(base: StoredHealthData(container: container)))
         builder.usesMetric = true
         let snapshot = try await builder.snapshot(for: .mobility)
-        #expect(snapshot.value == "1.8")
+        #expect(snapshot.value == 1.8.formatted(.number.precision(.fractionLength(1))))
         #expect(snapshot.period != "Last 7 days")
         #expect(snapshot.rating == nil)
         #expect(snapshot.comparison == nil)

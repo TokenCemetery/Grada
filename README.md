@@ -51,7 +51,7 @@ Requires Xcode 27.2 or later. The app runs on iOS 17 or later.
 
 To skip Apple Health entirely, add the `-SampleData` launch argument to the scheme (Debug builds only). The app then uses built-in sample data.
 
-Run the unit tests (use any iPhone simulator listed by `xcrun simctl list devices available`). The tests check English text, so the command pins the language whatever the simulator is set to:
+Run the unit tests (use any iPhone simulator listed by `xcrun simctl list devices available`). The tests check English text, so the shared `Grada` scheme runs them in English whatever the simulator's language. This applies to ⌘U in Xcode too. The command also pins the region, so the results match CI:
 
 ```bash
 xcodebuild test -project Grada.xcodeproj -scheme Grada -destination "platform=iOS Simulator,name=iPhone 15" -only-testing:GradaTests -testLanguage en -testRegion US CODE_SIGNING_ALLOWED=NO

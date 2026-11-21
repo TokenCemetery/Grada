@@ -1624,13 +1624,13 @@ struct WorkoutDetailTests {
         let metric = DistanceUnits(symbol: "figure.pool.swim", isUS: false)
         #expect(metric.splitMeters == 100)
         #expect(metric.splitName == "100 m")
-        #expect(metric.distance(1500) == "1,500 m")
+        #expect(metric.distance(1500) == "\(1500.formatted()) m")
         #expect(metric.paceOrSpeed(meters: 1000, seconds: 1200).value == "2:00 /100m")
         #expect(metric.pace(meters: 100, seconds: 110) == "1:50")
 
         let us = DistanceUnits(symbol: "figure.pool.swim", isUS: true)
         #expect(us.splitName == "100 yd")
-        #expect(us.distance(914.4) == "1,000 yd")
+        #expect(us.distance(914.4) == "\(1000.formatted()) yd")
         #expect(us.paceOrSpeed(meters: 914.4, seconds: 1200).value == "2:00 /100yd")
     }
 
