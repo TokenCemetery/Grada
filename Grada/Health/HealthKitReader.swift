@@ -478,7 +478,9 @@ final class HealthKitReader: HealthSource {
     /// Workouts that started in `days`, newest first. A workout several apps wrote is kept once.
     func workouts(in days: DateInterval) async throws -> [WorkoutSummary] {
         let descriptor = HKSampleQueryDescriptor(
-            predicates: [.workout(HKQuery.predicateForSamples(withStart: days.start, end: days.end))],
+            // Strict start, as the store matches saved workouts by start: one crossing the window's start would
+            // otherwise be saved again on every import.
+            predicates: [.workout(HKQuery.predicateForSamples(withStart: days.start, end: days.end, options: .strictStartDate))],
             sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)]
         )
         let workouts = try await descriptor.result(for: store).map { workout in
