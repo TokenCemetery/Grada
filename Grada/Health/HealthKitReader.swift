@@ -462,11 +462,14 @@ final class HealthKitReader: HealthSource {
     }
 
     func highestHeartRate(days: Int) async throws -> Double? {
-        let start = calendar.date(byAdding: .day, value: -days, to: .now)!
+        try await highestHeartRate(in: DateInterval(start: calendar.date(byAdding: .day, value: -days, to: .now)!, end: .now))
+    }
+
+    func highestHeartRate(in interval: DateInterval) async throws -> Double? {
         let descriptor = HKStatisticsQueryDescriptor(
             predicate: .quantitySample(
                 type: HKQuantityType(.heartRate),
-                predicate: HKQuery.predicateForSamples(withStart: start, end: .now)
+                predicate: HKQuery.predicateForSamples(withStart: interval.start, end: interval.end)
             ),
             options: .discreteMax
         )

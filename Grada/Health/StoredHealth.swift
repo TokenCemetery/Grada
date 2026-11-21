@@ -321,6 +321,14 @@ nonisolated struct StoredHealthData: HealthDataSource {
         return nil
     }
 
+    func highestHeartRate(days: Int, before end: Date) async throws -> Double? {
+        let interval = DateInterval(start: calendar.date(byAdding: .day, value: -days, to: end)!, end: end)
+        for source in sources {
+            if let highest = try await source.highestHeartRate(in: interval) { return highest }
+        }
+        return nil
+    }
+
     func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
         // Blood pressure only from a source with both numbers that day, so a pair isn't mixed between sources (#135).
         if let partner = metric.bloodPressurePartner {

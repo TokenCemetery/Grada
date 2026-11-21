@@ -319,6 +319,8 @@ nonisolated protocol HealthDataSource {
     func biologicalSex() async throws -> BiologicalSex?
     /// Highest heart rate recorded in the last `days` days.
     func highestHeartRate(days: Int) async throws -> Double?
+    /// Highest heart rate recorded in the `days` days before `end`.
+    func highestHeartRate(days: Int, before end: Date) async throws -> Double?
     /// One value per day for the `days` days ending today, oldest first.
     func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue]
     func standHours(days: Int) async throws -> [DayValue]
@@ -358,6 +360,8 @@ nonisolated protocol HealthDataSource {
 
 nonisolated extension HealthDataSource {
     func earliestDay() async throws -> Date? { nil }
+    /// Sources whose data ends today can't tell later readings apart, so they answer for the last `days` days.
+    func highestHeartRate(days: Int, before end: Date) async throws -> Double? { try await highestHeartRate(days: days) }
     func hourly(_ metric: QuantityMetric, on day: Date) async throws -> [TimedValue] { [] }
     func origins() async throws -> [DataKind: [DataOrigin]] { [:] }
     @concurrent func withDaysLoaded(_ days: Int) async throws -> HealthDataSource { self }

@@ -63,8 +63,13 @@ nonisolated struct PastDaySource: HealthDataSource {
         try await base.hourly(metric, on: day)
     }
 
+    /// Up to the shown day only: a maximum set later would change the day's zones after the fact.
     func highestHeartRate(days: Int) async throws -> Double? {
-        try await base.highestHeartRate(days: days + daysAgo)
+        try await base.highestHeartRate(days: days, before: dayEnd)
+    }
+
+    func highestHeartRate(days: Int, before end: Date) async throws -> Double? {
+        try await base.highestHeartRate(days: days, before: min(end, dayEnd))
     }
 
     func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {

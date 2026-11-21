@@ -15,6 +15,8 @@ protocol LiveHealthSource: AnyObject {
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue]
     func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail
     func highestHeartRate(days: Int) async throws -> Double?
+    /// Highest heart rate recorded in `interval`, for a past day that mustn't see later readings.
+    func highestHeartRate(in interval: DateInterval) async throws -> Double?
     func age() -> Int?
     func biologicalSex() -> BiologicalSex?
     /// Seconds of `activity` in `interval`; nil without any record of it.
@@ -38,6 +40,7 @@ extension LiveHealthSource {
     func hourly(_ metric: QuantityMetric, in interval: DateInterval) async throws -> [TimedValue] { [] }
     func workoutDetail(_ summary: WorkoutSummary) async throws -> WorkoutDetail { WorkoutDetail() }
     func highestHeartRate(days: Int) async throws -> Double? { nil }
+    func highestHeartRate(in interval: DateInterval) async throws -> Double? { nil }
     func age() -> Int? { nil }
     func biologicalSex() -> BiologicalSex? { nil }
     func time(in activity: TimedActivity, during interval: DateInterval) async throws -> TimeInterval? { nil }

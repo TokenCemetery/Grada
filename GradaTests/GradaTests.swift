@@ -1154,6 +1154,17 @@ struct DayRatingTests {
 }
 
 @MainActor
+/// Records the intervals its highest heart rate is asked for.
+private final class HighestHeartRateSource: LiveHealthSource {
+    let id = HealthKitReader.sourceID
+    private(set) var asked: [DateInterval] = []
+    func highestHeartRate(in interval: DateInterval) async throws -> Double? {
+        asked.append(interval)
+        return 190
+    }
+}
+
+@MainActor
 struct PastDaySourceTests {
     @Test func seriesEndOnThePastDay() async throws {
         let calendar = Calendar.current
@@ -1166,6 +1177,18 @@ struct PastDaySourceTests {
         #expect(steps.last?.day == threeDaysAgo)
         #expect(try await source.sleepNights(days: 8).allSatisfy { $0.wakeDay <= threeDaysAgo })
         #expect(try await source.workouts(days: 30).allSatisfy { $0.start < calendar.date(byAdding: .day, value: 1, to: threeDaysAgo)! })
+    }
+
+    /// A past day's highest heart rate is read only up to that day, so a later maximum can't change its zones (#170).
+    @Test func highestHeartRateEndsOnThePastDay() async throws {
+        let calendar = Calendar.current
+        let dayEnd = calendar.date(byAdding: .day, value: -2, to: calendar.startOfDay(for: .now))!
+        let live = HighestHeartRateSource()
+        let stored = StoredHealthData(container: try ModelStores.makeInMemoryContainer(), sources: [live])
+        let source = PastDaySource(base: stored, daysAgo: 3, dayEnd: dayEnd)
+        #expect(try await source.highestHeartRate(days: 365) == 190)
+        #expect(live.asked.last?.end == dayEnd)
+        #expect(live.asked.last?.start == calendar.date(byAdding: .day, value: -365, to: dayEnd))
     }
 
     @Test func pastDayCardsDontSayToday() async throws {
