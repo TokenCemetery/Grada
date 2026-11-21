@@ -1,3 +1,4 @@
+import Combine
 import SwiftData
 import SwiftUI
 
@@ -108,6 +109,11 @@ struct JournalView: View {
             }
             // A tapped report notification opens today's.
             .onChange(of: NotificationRouter.shared.journalRequests) { day = today }
+            // Posted at midnight, or on wake if the phone slept through it. Left on the day that was today, the view
+            // would log the new day's tags on yesterday (#160).
+            .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: RunLoop.main)) { _ in
+                if day == calendar.date(byAdding: .day, value: -1, to: today) { day = today }
+            }
         }
     }
 
