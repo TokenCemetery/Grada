@@ -77,12 +77,14 @@ struct GoalStore {
     /// Saves automatic changes for every Monday since the last one. Returns true if anything changed.
     @discardableResult
     func adjustIfNeeded() async throws -> Bool {
-        let history = history()
-        guard !history.isEmpty else { return false }
+        guard !history().isEmpty else { return false }
         // The oldest boundary caught up is `maximumCatchUpWeeks` before today and judges the 7 days before it; the
         // series ends today, so it needs one day more than whole weeks.
         let days = (Goals.maximumCatchUpWeeks + 1) * 7 + 1
         let values = try await dailyValues(days: days)
+        // Read after the wait, with no suspension before saving, so a call that overlapped this one and saved first
+        // isn't repeated (#159).
+        let history = history()
         var changed = false
         for metric in GoalMetric.allCases {
             let daily = values[metric].map { series in
