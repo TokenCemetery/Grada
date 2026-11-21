@@ -25,6 +25,10 @@ nonisolated struct PastDaySource: HealthDataSource {
         try await base.intake(intake, on: day)
     }
 
+    func heartRateRecovery(days: Int) async throws -> [DayValue] {
+        Array(try await base.heartRateRecovery(days: days + daysAgo).dropLast(daysAgo))
+    }
+
     func age() async throws -> Int? {
         try await base.age()
     }

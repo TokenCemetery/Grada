@@ -120,6 +120,12 @@ struct MetricSource: Hashable {
     static let tudorLocke2018 = MetricSource("Tudor-Locke et al. 2018 · Br J Sports Med",
                                              "Walking at 100 steps a minute is moderate intensity",
                                              doi: "10.1136/bjsports-2017-097628")
+    static let cole1999 = MetricSource("Cole et al. 1999 · N Engl J Med",
+                                       "Heart rate recovery of 12 bpm or less in the first minute, during a cool-down walk, predicted mortality",
+                                       doi: "10.1056/NEJM199910283411804")
+    static let watanabe2001 = MetricSource("Watanabe et al. 2001 · Circulation",
+                                           "Without a cool-down the cut-off was 18 bpm; recovery still predicted mortality",
+                                           doi: "10.1161/circ.104.16.1911")
     static let arem2015 = MetricSource("Arem et al. 2015 · JAMA Intern Med",
                                        "Mortality risk by weekly exercise",
                                        doi: "10.1001/jamainternmed.2015.0533")
@@ -146,6 +152,7 @@ extension CardKind {
         case .loadFocus: [.seiler2010, .seilerKjerland2006, .sylta2014, .tanaka2001]
         case .vo2Max: [.kaminsky2015]
         case .racePredictor: [.danielsGilbert1979]
+        case .heartRateRecovery: [.cole1999, .watanabe2001]
         default: []
         }
     }
@@ -167,6 +174,8 @@ extension CardKind {
             String(localized: "Your usual wake-up and time awake in bed are the medians of the last \(Bedtime.nights) nights, weekdays and weekends apart once each has \(Bedtime.minimumNights) nights. The window is Grada's choice; no study sets one.")
         case .restingHeartRate:
             String(localized: "Studies show resting heart rate rising, not a cutoff. Suggesting rest whenever it's above your normal range (30-day average ± 2 standard deviations) is Grada's rule.")
+        case .heartRateRecovery:
+            String(localized: "Without Apple Watch's own measurement, taking the reading closest to one minute after the end, at most 15 seconds off, is Grada's choice.")
         case .trainingReadiness:
             String(localized: "Garmin doesn't publish how it weighs these inputs and no study has tested a weighting, so each counts the same.")
         default: nil

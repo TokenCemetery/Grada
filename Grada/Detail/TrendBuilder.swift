@@ -106,6 +106,9 @@ struct TrendBuilder {
             let series = try await source.daily(.vo2Max, days: days)
             return make(series, period, style: .line, unit: QuantityMetric.vo2Max.unit, format: .number(decimals: 1),
                         title: kind == .racePredictor ? String(localized: "VO₂ Max") : nil)
+        case .heartRateRecovery:
+            return make(try await source.heartRateRecovery(days: days), period, style: .line,
+                        unit: QuantityMetric.restingHeartRate.unit, format: .number(decimals: 0))
         case .sleepDuration, .sleepStages:
             return try await sleep(period)
         case .sleepNeed:

@@ -15,7 +15,7 @@ Grada is an iPhone app that summarizes your health data from Apple Health. This 
 
 When you grant access, Grada reads these types from Apple Health:
 
-- Heart: heart rate, resting heart rate and heart rate variability.
+- Heart: heart rate, resting heart rate, heart rate variability and heart rate recovery after workouts.
 - Breathing and body: blood oxygen, respiratory rate, wrist temperature during sleep, and VO2 max.
 - Activity: steps, active energy, exercise minutes, walking and running distance, flights climbed, and stand hours.
 - Sleep: sleep sessions and sleep stages.

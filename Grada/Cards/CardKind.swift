@@ -85,6 +85,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
     case heartRate, restingHeartRate, hrv, hrvStatus, oxygenSaturation, respiratoryRate, wristTemperature
     case steps, activeEnergy, exerciseMinutes, intensityMinutes, distance, floors, standHours, dayIntensity
     case lastWorkout, weeklyTraining, strain, recoveryTime, vo2Max, racePredictor, trainingReadiness, loadFocus
+    case heartRateRecovery
     case last30Days
 
     var id: String { rawValue }
@@ -167,6 +168,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
         case .strain: String(localized: "Strain")
         case .recoveryTime: String(localized: "Recovery Time")
         case .vo2Max: String(localized: "VO₂ Max")
+        case .heartRateRecovery: String(localized: "Heart Rate Recovery")
         case .last30Days: String(localized: "Workouts Calendar")
         }
     }
@@ -204,6 +206,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
         case .strain: "bolt.horizontal.circle"
         case .recoveryTime: "timer"
         case .vo2Max: "bolt.heart"
+        case .heartRateRecovery: "arrow.down.heart"
         case .last30Days: "calendar"
         }
     }
@@ -214,7 +217,8 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .heartRate, .restingHeartRate, .hrv, .hrvStatus, .oxygenSaturation, .respiratoryRate, .wristTemperature: .heart
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity: .activity
-        case .lastWorkout, .weeklyTraining, .strain, .recoveryTime, .vo2Max, .racePredictor, .trainingReadiness, .loadFocus: .training
+        case .lastWorkout, .weeklyTraining, .strain, .recoveryTime, .vo2Max, .racePredictor, .trainingReadiness, .loadFocus,
+             .heartRateRecovery: .training
         case .last30Days: .history
         }
     }

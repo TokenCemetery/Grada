@@ -5,7 +5,7 @@ import Foundation
 /// rate per day, and hourly values (one day), the profile and max heart rate from the first source with any,
 /// the profile falling back to `EnteredProfile`; each sleep's periods from the first source with that
 /// sleep; workout detail from the workout's own source, with heart rate over its time when that source has none;
-/// activity time and intake from the first source with any.
+/// activity time and intake from the first source with any; heart rate recovery from each workout's own source.
 protocol LiveHealthSource: AnyObject {
     /// Stored with every value from this source, so it must never change once shipped.
     nonisolated var id: String { get }
@@ -20,6 +20,8 @@ protocol LiveHealthSource: AnyObject {
     func time(in activity: TimedActivity, during interval: DateInterval) async throws -> TimeInterval?
     /// Total `intake` in `interval`: drinks, or milligrams of caffeine; nil without any record of it.
     func intake(_ intake: Intake, during interval: DateInterval) async throws -> Double?
+    /// Heart rate recovery in bpm by workout ID, for those of `workouts` that have one (#131).
+    func heartRateRecovery(after workouts: [WorkoutSummary]) async throws -> [String: Double]
 }
 
 extension LiveHealthSource {
@@ -32,6 +34,7 @@ extension LiveHealthSource {
     func biologicalSex() -> BiologicalSex? { nil }
     func time(in activity: TimedActivity, during interval: DateInterval) async throws -> TimeInterval? { nil }
     func intake(_ intake: Intake, during interval: DateInterval) async throws -> Double? { nil }
+    func heartRateRecovery(after workouts: [WorkoutSummary]) async throws -> [String: Double] { [:] }
 }
 
 /// Somewhere Grada imports health data from: Apple Health, or a direct connection to a device's service.

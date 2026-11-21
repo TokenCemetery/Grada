@@ -192,6 +192,13 @@ nonisolated struct SampleDataSource: HealthDataSource {
         }
     }
 
+    /// 20–27 bpm after each day's last workout.
+    func heartRateRecovery(days: Int) async throws -> [DayValue] {
+        let workouts = try await workouts(days: days)
+        let values = Dictionary(uniqueKeysWithValues: workouts.map { ($0.id, Double(20 + $0.id.utf8.reduce(0) { $0 + Int($1) } % 8)) })
+        return HeartRateRecovery.byDay(values, workouts: workouts, days: lastDays(days), calendar: calendar)
+    }
+
     /// Two cups of coffee a day, and two drinks on Saturdays.
     func intake(_ intake: Intake, on day: Date) async throws -> Double? {
         switch intake {

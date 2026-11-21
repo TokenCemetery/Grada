@@ -31,7 +31,8 @@ extension CardKind {
     var family: DetailFamily {
         switch self {
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity, .last30Days: .total
-        case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max: .vital
+        case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max,
+             .heartRateRecovery: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .lastWorkout, .weeklyTraining, .strain, .recoveryTime, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .healthStatus, .recovery, .resources, .healthAge, .hrvStatus: .score
@@ -107,7 +108,7 @@ extension CardKind {
         case .heartRate: []
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: [.sleep]
         case .standHours: [.standHours]
-        case .lastWorkout, .weeklyTraining: [.workouts]
+        case .lastWorkout, .weeklyTraining, .heartRateRecovery: [.workouts]
         case .recovery, .hrvStatus, .healthStatus: [.overnightHRV]
         default: quantityMetric.map { [DataKind($0)] } ?? []
         }
@@ -188,6 +189,8 @@ extension CardKind {
             String(localized: "The most oxygen your body can use during hard exercise, a key measure of cardio fitness. It changes slowly over weeks of training. The zones compare it with lab-measured VO₂ max of adults your age and sex in the US FRIEND registry: Poor below the bottom quarter, Fair up to the middle, Good from the middle, Excellent from the top quarter and Superior from the top tenth.")
         case .racePredictor:
             String(localized: "Race times your current VO₂ max points to, assuming you've trained for the distance.")
+        case .heartRateRecovery:
+            String(localized: "How far your heart rate falls in the first minute after a workout ends, from Apple Watch's own measurement or, without one, from the peak in the workout's last minute to the reading a minute after it ends. A faster fall means your heart's rest-and-recover system switches back on quickly, a sign of fitness. In a large study of adults after a treadmill test, a fall of 12 bpm or less while walking slowly was linked with higher mortality, so those workouts show orange. It's a fitness marker, not a diagnosis: stopping and standing still makes the fall bigger, and so does an easy finish.")
         case .trainingReadiness:
             String(localized: "Whether today suits hard training, from the same inputs Garmin uses, each checked against the threshold its own card uses: last night's Sleep Score (off when red), Recovery Time (off while it's still counting down), HRV Status (off when not Balanced), the acute:chronic load ratio from Strain (off above 1.3, where studies saw injuries rise), and your last 3 nights against your Sleep Need. Garmin also uses all-day stress, which needs beat-to-beat heart rate variability that iPhone doesn't record, so it's left out. Garmin doesn't publish how it weighs these and no study has tested a weighting, so each counts the same. High: nothing off. Moderate: one off. Low: two or more; favour easy training. Needs at least 3 inputs.")
         case .loadFocus:

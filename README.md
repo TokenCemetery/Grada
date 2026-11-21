@@ -33,6 +33,7 @@ Every calculated metric rests on published research, not invented formulas. Each
 - **Sleep Score:** the National Sleep Foundation's sleep quality consensus.
 - **Strain:** Edwards' training load and the acute:chronic workload ratio.
 - **Health Age:** published mortality risks for VO₂ max, resting heart rate, steps, sleep and exercise.
+- **Heart Rate Recovery:** how far heart rate falls in the minute after a workout, from Apple Watch's own measurement or the heart rate around the workout's end, shown on the workout screen and as a card with a 90-day trend. A fall of 12 bpm or less is marked, Cole et al.'s cut-off, as a fitness marker rather than a diagnosis.
 
 Resources (an all-day energy estimate) has no published method behind it and says so.
 

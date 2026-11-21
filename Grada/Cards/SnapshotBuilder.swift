@@ -47,6 +47,7 @@ nonisolated struct SnapshotBuilder {
         case .strain: try await strain()
         case .recoveryTime: try await recoveryTime()
         case .vo2Max: try await vo2Max()
+        case .heartRateRecovery: try await heartRateRecovery()
         case .last30Days: try await last30Days()
         }
     }

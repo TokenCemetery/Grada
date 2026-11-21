@@ -198,6 +198,27 @@ nonisolated extension SnapshotBuilder {
     }
 }
 
+nonisolated extension SnapshotBuilder {
+    /// The latest workout's one-minute heart rate recovery in the last `HeartRateRecovery.cardDays` days, marked when
+    /// it's at or below Cole's cut-off (#131).
+    func heartRateRecovery() async throws -> CardSnapshot {
+        let readings = try await source.heartRateRecovery(days: HeartRateRecovery.cardDays).filter { $0.value != nil }
+        guard let latest = readings.last, let value = latest.value else { return .noData(period: String(localized: "Latest")) }
+        let points = readings.suffix(7).map(\.value)
+        let slow = value <= HeartRateRecovery.slowCutOff
+        return CardSnapshot(
+            period: dayLabel(latest.day),
+            value: format(value, 0),
+            unit: QuantityMetric.restingHeartRate.unit,
+            comparison: slow ? String(localized: "Slow: \(Int(HeartRateRecovery.slowCutOff)) bpm or less")
+                : String(localized: "Above \(Int(HeartRateRecovery.slowCutOff)) bpm"),
+            tone: slow ? .warning : .neutral,
+            rating: HeartRateRecovery.rating(value),
+            chart: .line(Array(repeating: nil, count: 7 - points.count) + points, normalRange: nil)
+        )
+    }
+}
+
 nonisolated extension QuantityMetric {
     var unit: String {
         switch self {

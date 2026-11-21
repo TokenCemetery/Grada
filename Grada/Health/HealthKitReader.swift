@@ -7,6 +7,8 @@ import os
 /// through their own Apple Health sync.
 final class HealthKitReader: HealthSource {
     let store = HKHealthStore()
+    /// Derived heart rate recovery by workout ID; see `heartRateRecovery(after:)`.
+    private var recoveryCache: [String: Double] = [:]
     private let calendar = Calendar.current
     private let logger = Logger(subsystem: "Grada", category: "HealthKitReader")
 
@@ -33,6 +35,8 @@ final class HealthKitReader: HealthSource {
             HKQuantityType(.timeInDaylight),
             HKQuantityType(.numberOfAlcoholicBeverages),
             HKQuantityType(.dietaryCaffeine),
+            // Workout screens and the Heart Rate Recovery card.
+            HKQuantityType(.heartRateRecoveryOneMinute),
         ]
 
     func requestAuthorization() async throws {
@@ -50,7 +54,8 @@ final class HealthKitReader: HealthSource {
         let unobserved: Set<HKSampleType> = [HKQuantityType(.heartRate), HKQuantityType(.distanceCycling),
                                              HKQuantityType(.distanceSwimming), HKSeriesType.workoutRoute(),
                                              HKCategoryType(.mindfulSession), HKQuantityType(.timeInDaylight),
-                                             HKQuantityType(.numberOfAlcoholicBeverages), HKQuantityType(.dietaryCaffeine)]
+                                             HKQuantityType(.numberOfAlcoholicBeverages), HKQuantityType(.dietaryCaffeine),
+                                             HKQuantityType(.heartRateRecoveryOneMinute)]
         for type in Self.readTypes where !unobserved.contains(type) {
             store.execute(HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
                 guard error == nil else { completion(); return }
@@ -446,8 +451,56 @@ final class HealthKitReader: HealthSource {
             distance: distance,
             distanceTrack: track,
             elevationGain: (workout.metadata?[HKMetadataKeyElevationAscended] as? HKQuantity)?.doubleValue(for: .meter()),
-            route: route
+            route: route,
+            heartRateRecovery: try await heartRateRecovery(after: [summary])[summary.id]
         )
+    }
+
+    /// Apple's own one-minute recovery first; otherwise derived from the heart rate readings around each workout's end,
+    /// unless another workout starts in that minute. Derived values are cached by workout: once found they don't change.
+    func heartRateRecovery(after workouts: [WorkoutSummary]) async throws -> [String: Double] {
+        guard let first = workouts.map(\.start).min(), let lastStart = workouts.map(\.start).max() else { return [:] }
+        // Every workout in Apple Health around them, from any app: their real ends (a paused workout's duration
+        // leaves the pause out, so start + duration falls inside it) and the starts of workouts that follow.
+        let recorded = try await HKSampleQueryDescriptor(
+            predicates: [.workout(HKQuery.predicateForSamples(withStart: first, end: lastStart.addingTimeInterval(24 * 3600)))],
+            sortDescriptors: []
+        ).result(for: store)
+        let ends = Dictionary(recorded.map { ($0.uuid.uuidString, $0.endDate) }) { first, _ in first }
+        let targets = workouts.map { (id: $0.id, end: ends[$0.id] ?? $0.start.addingTimeInterval($0.duration)) }
+        let lastEnd = targets.map(\.end).max()!
+        let samples = try await HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: HKQuantityType(.heartRateRecoveryOneMinute),
+                                         predicate: HKQuery.predicateForSamples(withStart: first, end: lastEnd.addingTimeInterval(HeartRateRecovery.sampleWindow)))],
+            sortDescriptors: [SortDescriptor(\.startDate)]
+        ).result(for: store).map { TimedValue(date: $0.startDate, value: $0.quantity.doubleValue(for: Self.bpm)) }
+        var values = HeartRateRecovery.match(samples, to: targets)
+        let starts = recorded.map(\.startDate)
+        let missing = targets.filter { values[$0.id] == nil && !HeartRateRecovery.isFollowed(end: $0.end, byStarts: starts) }
+        for target in missing { values[target.id] = recoveryCache[target.id] }
+        let store = store
+        // One small query per workout, run together; a workout whose read fails just has no value.
+        let derived = await withTaskGroup(of: (String, Double?).self) { group in
+            for target in missing where values[target.id] == nil {
+                group.addTask { (target.id, try? await Self.derivedRecovery(end: target.end, store: store)) }
+            }
+            var found: [String: Double] = [:]
+            for await (id, value) in group { found[id] = value }
+            return found
+        }
+        recoveryCache.merge(derived) { _, new in new }
+        values.merge(derived) { _, new in new }
+        return values
+    }
+
+    private nonisolated static func derivedRecovery(end: Date, store: HKHealthStore) async throws -> Double? {
+        let around = HKQuery.predicateForSamples(withStart: end.addingTimeInterval(-60),
+                                                 end: end.addingTimeInterval(HeartRateRecovery.readingWindow))
+        let readings = try await HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: HKQuantityType(.heartRate), predicate: around)],
+            sortDescriptors: [SortDescriptor(\.startDate)]
+        ).result(for: store).map { TimedValue(date: $0.startDate, value: $0.quantity.doubleValue(for: .count().unitDivided(by: .minute()))) }
+        return HeartRateRecovery.derived(readings, end: end)
     }
 
     /// Distance so far through the workout. Prefers the samples recorded with the workout; when a phone

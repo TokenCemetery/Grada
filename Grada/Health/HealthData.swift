@@ -112,6 +112,8 @@ nonisolated struct WorkoutDetail: Equatable {
     var elevationGain: Double?
     /// The GPS route, if the workout recorded one.
     var route: [RoutePoint] = []
+    /// How far heart rate fell in the minute after the workout, in bpm (#131).
+    var heartRateRecovery: Double?
 }
 
 nonisolated struct RoutePoint: Equatable {
@@ -288,6 +290,8 @@ nonisolated protocol HealthDataSource {
     func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval?
     /// The day's total of `intake`: drinks, or milligrams of caffeine; nil without any record of it.
     func intake(_ intake: Intake, on day: Date) async throws -> Double?
+    /// Heart rate recovery after each of the last `days` days' last workout with one, oldest first (#131).
+    func heartRateRecovery(days: Int) async throws -> [DayValue]
 }
 
 nonisolated extension HealthDataSource {
@@ -298,6 +302,7 @@ nonisolated extension HealthDataSource {
     @MainActor func providesProfile() -> (age: Bool, sex: Bool) { (false, false) }
     func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval? { nil }
     func intake(_ intake: Intake, on day: Date) async throws -> Double? { nil }
+    func heartRateRecovery(days: Int) async throws -> [DayValue] { [] }
 
     /// Without workout samples, the 5-minute heart rate during the workout.
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {

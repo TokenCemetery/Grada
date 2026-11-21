@@ -13,6 +13,7 @@ struct WorkoutDetailView: View {
     let workout: WorkoutSummary
     @Environment(\.healthSource) private var source
     @State private var detail: WorkoutDetail?
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
     @State private var maxHeartRate: Double?
     @State private var loaded = false
 
@@ -93,11 +94,19 @@ struct WorkoutDetailView: View {
         if let average = workout.averageHeartRate { items.append((String(localized: "Avg Heart Rate"), String(localized: "\(average.formatted(whole)) bpm", comment: "Heart rate in beats per minute"))) }
         if let highest = detail?.maxHeartRate { items.append((String(localized: "Max Heart Rate"), String(localized: "\(highest.formatted(whole)) bpm", comment: "Heart rate in beats per minute"))) }
         if let climb = detail?.elevationGain { items.append((String(localized: "Elevation Gain"), units.elevation(climb))) }
+        // Colored like the Heart Rate Recovery card: orange at or below Cole's cut-off (#131).
+        var colors: [String: Color] = [:]
+        if let recovery = detail?.heartRateRecovery {
+            let label = String(localized: "HR Recovery", comment: "Heart rate fall in the minute after the workout")
+            items.append((label, String(localized: "\(recovery.formatted(whole)) bpm", comment: "Heart rate in beats per minute")))
+            colors[label] = HeartRateRecovery.rating(recovery).text(colorBlind: colorBlind)
+        }
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .leading), count: 3), alignment: .leading, spacing: 12) {
             ForEach(items, id: \.label) { item in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.label).font(.caption).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
                     Text(item.value).font(.headline).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
+                        .foregroundStyle(colors[item.label] ?? .primary)
                 }
                 .accessibilityElement(children: .combine)
             }

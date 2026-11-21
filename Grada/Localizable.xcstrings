@@ -6005,6 +6005,58 @@
         }
       }
     },
+    "Above %lld bpm" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über %lld bpm"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más de %lld ppm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus de %lld bpm"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld bpm से अधिक"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oltre %lld bpm"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acima de %lld bpm"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Больше %lld уд/мин"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "超过 %lld 次/分"
+          }
+        }
+      }
+    },
     "Above your normal range" : {
       "localizations" : {
         "de" : {
@@ -13923,6 +13975,59 @@
         }
       }
     },
+    "HR Recovery" : {
+      "comment" : "Heart rate fall in the minute after the workout",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HF-Erholung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recup. FC"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récup. FC"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HR रिकवरी"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recupero FC"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recup. FC"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Восстановление"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "心率恢复"
+          }
+        }
+      }
+    },
     "HRV" : {
       "localizations" : {
         "de" : {
@@ -14602,6 +14707,58 @@
         }
       }
     },
+    "Heart Rate Recovery" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herzfrequenz-Erholung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperación de la frecuencia cardiaca"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récupération cardiaque"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हृदय गति रिकवरी"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recupero della frequenza cardiaca"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperação da frequência cardíaca"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Восстановление пульса"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "心率恢复"
+          }
+        }
+      }
+    },
     "Heart Rate Variability" : {
       "localizations" : {
         "de" : {
@@ -14858,6 +15015,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "训练期间的心率"
+          }
+        }
+      }
+    },
+    "Heart rate recovery of 12 bpm or less in the first minute, during a cool-down walk, predicted mortality" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Herzfrequenz-Erholung von 12 bpm oder weniger in der ersten Minute, beim langsamen Auslaufen, sagte Sterblichkeit voraus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una recuperación de 12 ppm o menos en el primer minuto, caminando para enfriar, predijo la mortalidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une récupération de 12 bpm ou moins en première minute, en marchant pour récupérer, prédisait la mortalité"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठंडा होने के लिए धीरे चलते हुए पहले मिनट में 12 bpm या कम की रिकवरी से मृत्यु दर का अनुमान लगा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un recupero di 12 bpm o meno nel primo minuto, camminando per defaticare, prediceva la mortalità"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma recuperação de 12 bpm ou menos no primeiro minuto, caminhando para desaquecer, previu a mortalidade"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Восстановление пульса на 12 уд/мин или меньше за первую минуту при медленной ходьбе после нагрузки предсказывало смертность"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放松慢走时第一分钟心率恢复 12 次/分或更少可预测死亡率"
           }
         }
       }
@@ -15483,6 +15692,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在近期训练之后，你心脏的休息与恢复系统恢复正常所需的小时数。一项关于运动后心率变异性的研究综述（Stanley、Peake 和 Buchheit，2013）发现，轻松运动后 24 小时内恢复，阈值强度运动后 24–48 小时恢复，高强度运动后至少 48 小时恢复；训练时长的影响较小。每次训练按其平均心率计算：轻松为低于最大心率的 82%（24 小时），阈值为从 82% 起（36 小时，即其范围的中间值），高强度为从 88% 起（48 小时）。没有心率的训练按轻松计算。你的夜间 HRV 和静息心率可直接衡量这种恢复：如果你醒来时仍在恢复中，且今早的恢复状态不是良好，则恢复会持续到明天早晨。体能越好恢复越快，因此请将这些小时数仅作参考。"
+          }
+        }
+      }
+    },
+    "How far your heart rate falls in the first minute after a workout ends, from Apple Watch's own measurement or, without one, from the peak in the workout's last minute to the reading a minute after it ends. A faster fall means your heart's rest-and-recover system switches back on quickly, a sign of fitness. In a large study of adults after a treadmill test, a fall of 12 bpm or less while walking slowly was linked with higher mortality, so those workouts show orange. It's a fitness marker, not a diagnosis: stopping and standing still makes the fall bigger, and so does an easy finish." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie stark deine Herzfrequenz in der ersten Minute nach dem Ende eines Trainings sinkt, aus der eigenen Messung der Apple Watch oder, ohne sie, vom Höchstwert in der letzten Trainingsminute bis zum Messwert eine Minute nach dem Ende. Ein schnellerer Abfall bedeutet, dass das Ruhe- und Erholungssystem deines Herzens schnell wieder anspringt, ein Zeichen von Fitness. In einer großen Studie mit Erwachsenen nach einem Laufbandtest ging ein Abfall von 12 bpm oder weniger beim langsamen Gehen mit höherer Sterblichkeit einher, daher erscheinen solche Trainings orange. Es ist ein Fitnessmarker, keine Diagnose: Stehenbleiben macht den Abfall größer, ein lockerer Ausklang ebenso."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuánto baja tu frecuencia cardiaca en el primer minuto tras terminar un entrenamiento, según la medición del propio Apple Watch o, sin ella, desde el máximo del último minuto del entrenamiento hasta la lectura un minuto después del final. Una bajada más rápida significa que el sistema de reposo y recuperación de tu corazón se reactiva pronto, una señal de forma física. En un gran estudio de adultos tras una prueba en cinta, una bajada de 12 ppm o menos caminando despacio se asoció con mayor mortalidad, así que esos entrenamientos se muestran en naranja. Es un indicador de forma física, no un diagnóstico: pararse y quedarse quieto hace la bajada mayor, igual que un final suave."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De combien votre fréquence cardiaque baisse dans la première minute après la fin d’un entraînement, selon la mesure de l’Apple Watch ou, à défaut, du pic de la dernière minute de l’entraînement à la mesure une minute après la fin. Une baisse plus rapide signifie que le système de repos et de récupération de votre cœur se réactive vite, signe de bonne forme. Dans une grande étude d’adultes après un test sur tapis, une baisse de 12 bpm ou moins en marchant lentement était liée à une mortalité plus élevée ; ces entraînements s’affichent donc en orange. C’est un indicateur de forme, pas un diagnostic : s’arrêter et rester immobile augmente la baisse, tout comme une fin facile."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "वर्कआउट खत्म होने के बाद पहले मिनट में आपकी हृदय गति कितनी गिरती है, Apple Watch के अपने माप से या, उसके बिना, वर्कआउट के आखिरी मिनट के शिखर से खत्म होने के एक मिनट बाद की रीडिंग तक। तेज़ गिरावट का मतलब है कि आपके दिल का आराम और रिकवरी तंत्र जल्दी फिर से सक्रिय होता है, जो फ़िटनेस का संकेत है। ट्रेडमिल टेस्ट के बाद वयस्कों के एक बड़े अध्ययन में धीरे चलते हुए 12 bpm या कम की गिरावट अधिक मृत्यु दर से जुड़ी थी, इसलिए ऐसे वर्कआउट नारंगी दिखते हैं। यह फ़िटनेस का संकेतक है, निदान नहीं: रुककर खड़े रहने से गिरावट बड़ी होती है, और हल्के अंत से भी।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quanto scende la frequenza cardiaca nel primo minuto dopo la fine di un allenamento, dalla misura dell’Apple Watch o, in sua assenza, dal picco dell’ultimo minuto dell’allenamento al valore un minuto dopo la fine. Un calo più rapido significa che il sistema di riposo e recupero del cuore si riattiva in fretta, un segno di forma fisica. In un ampio studio su adulti dopo un test sul tapis roulant, un calo di 12 bpm o meno camminando lentamente era associato a una mortalità più alta, quindi quegli allenamenti appaiono in arancione. È un indicatore di forma, non una diagnosi: fermarsi e restare in piedi rende il calo più grande, così come un finale leggero."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quanto sua frequência cardíaca cai no primeiro minuto após o fim de um treino, pela medição do próprio Apple Watch ou, sem ela, do pico no último minuto do treino até a leitura um minuto após o fim. Uma queda mais rápida significa que o sistema de repouso e recuperação do seu coração volta a agir logo, um sinal de condicionamento. Em um grande estudo com adultos após um teste em esteira, uma queda de 12 bpm ou menos caminhando devagar foi associada a maior mortalidade, por isso esses treinos aparecem em laranja. É um indicador de condicionamento, não um diagnóstico: parar e ficar em pé aumenta a queda, assim como um final leve."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Насколько падает пульс за первую минуту после окончания тренировки: по собственному измерению Apple Watch или, без него, от пика за последнюю минуту тренировки до значения через минуту после окончания. Более быстрое падение значит, что система отдыха и восстановления сердца быстро включается снова, — признак тренированности. В большом исследовании взрослых после теста на беговой дорожке падение на 12 уд/мин или меньше при медленной ходьбе было связано с более высокой смертностью, поэтому такие тренировки отмечены оранжевым. Это показатель тренированности, а не диагноз: если остановиться и стоять, падение больше, как и после лёгкого окончания."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锻炼结束后第一分钟内心率下降了多少：来自 Apple Watch 自身的测量；没有该测量时，取锻炼最后一分钟的峰值与结束一分钟后的读数之差。下降越快，说明心脏的休息与恢复系统越快重新启动，是体能好的标志。一项针对成年人跑步机测试后的大型研究发现，慢走时下降 12 次/分或更少与较高的死亡率相关，因此这类锻炼显示为橙色。这是体能指标，而非诊断：停下站着会让下降更大，轻松收尾也一样。"
           }
         }
       }
@@ -26649,6 +26910,58 @@
         }
       }
     },
+    "Slow: %lld bpm or less" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langsam: %lld bpm oder weniger"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lenta: %lld ppm o menos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lente : %lld bpm ou moins"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "धीमी: %lld bpm या कम"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lento: %lld bpm o meno"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lenta: %lld bpm ou menos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Медленно: %lld уд/мин или меньше"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "较慢：%lld 次/分或更少"
+          }
+        }
+      }
+    },
     "So far · %lld days · compared with %@" : {
       "localizations" : {
         "de" : {
@@ -32042,6 +32355,110 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在阈值内"
+          }
+        }
+      }
+    },
+    "Without Apple Watch's own measurement, taking the reading closest to one minute after the end, at most 15 seconds off, is Grada's choice." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne die eigene Messung der Apple Watch den Messwert zu nehmen, der einer Minute nach dem Ende am nächsten liegt, höchstens 15 Sekunden daneben, ist Gradas Wahl."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin la medición del propio Apple Watch, tomar la lectura más cercana a un minuto después del final, con 15 segundos de margen como máximo, es una elección de Grada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans la mesure de l’Apple Watch, prendre la valeur la plus proche d’une minute après la fin, à 15 secondes au plus, est un choix de Grada."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Watch के अपने माप के बिना, खत्म होने के एक मिनट बाद के सबसे पास की रीडिंग लेना, अधिकतम 15 सेकंड के अंतर के साथ, Grada का चुनाव है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senza la misura dell’Apple Watch, prendere il valore più vicino a un minuto dopo la fine, con al massimo 15 secondi di scarto, è una scelta di Grada."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem a medição do próprio Apple Watch, usar a leitura mais próxima de um minuto após o fim, com no máximo 15 segundos de diferença, é uma escolha do Grada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без собственного измерения Apple Watch брать значение, ближайшее к минуте после окончания, с отклонением не более 15 секунд, — выбор Grada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有 Apple Watch 自身测量时，取最接近结束后一分钟、偏差不超过 15 秒的读数，是 Grada 的选择。"
+          }
+        }
+      }
+    },
+    "Without a cool-down the cut-off was 18 bpm; recovery still predicted mortality" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Auslaufen lag der Grenzwert bei 18 bpm; die Erholung sagte weiterhin Sterblichkeit voraus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin enfriamiento el umbral fue de 18 ppm; la recuperación siguió prediciendo la mortalidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans retour au calme, le seuil était de 18 bpm ; la récupération prédisait toujours la mortalité"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ठंडा होने के बिना सीमा 18 bpm थी; रिकवरी से फिर भी मृत्यु दर का अनुमान लगा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senza defaticamento la soglia era 18 bpm; il recupero prediceva comunque la mortalità"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem desaquecimento o limite foi de 18 bpm; a recuperação ainda previu a mortalidade"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без заминки порог был 18 уд/мин; восстановление всё равно предсказывало смертность"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无放松阶段时阈值为 18 次/分；心率恢复仍可预测死亡率"
           }
         }
       }
