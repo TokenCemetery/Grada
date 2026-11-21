@@ -6,8 +6,12 @@ struct CustomizeView: View {
     @Environment(HomeModel.self) private var model
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \HomeCard.position) private var cards: [HomeCard]
+    @Query(sort: \HomeCard.position) private var saved: [HomeCard]
     @Query private var goalChanges: [GoalChange]
+
+    /// Saved cards this version knows. Retired kinds, and kinds from a newer version, have no row, so they're left
+    /// out of the list and the offsets moving and deleting use (#167).
+    private var cards: [HomeCard] { saved.filter { $0.cardID != nil } }
 
     var body: some View {
         let onHome = Set(cards.compactMap(\.cardID))
@@ -63,7 +67,7 @@ struct CustomizeView: View {
 
     private func add(_ card: CardID) {
         withAnimation {
-            modelContext.insert(HomeCard(card, position: (cards.last?.position ?? -1) + 1))
+            modelContext.insert(HomeCard(card, position: (saved.last?.position ?? -1) + 1))
         }
     }
 
