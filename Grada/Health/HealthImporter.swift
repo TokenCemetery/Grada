@@ -112,12 +112,16 @@ final class HealthImporter {
 
     private func importHistory(of source: any HealthSource, progress: (Double) -> Void) async {
         do {
-            let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: .now))!
+            let today = calendar.startOfDay(for: .now)
+            let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+            // The recent days are left to `importRecent`: a year-long read can take minutes, and saving it would
+            // overwrite anything newer a refresh saved for those days meanwhile.
+            let recentStart = calendar.date(byAdding: .day, value: -(Self.recentDays - 1), to: today)!
             // Nothing readable also means access was denied or not yet granted, so it's asked again next launch rather
             // than marked done; otherwise allowing access later in Settings would never bring in the history.
             guard let earliestSample = try await source.earliestSampleDate() else { return }
             let earliest = calendar.startOfDay(for: earliestSample)
-            var end = (defaults.object(forKey: Self.importedFromKey(source)) as? Date) ?? tomorrow
+            var end = (defaults.object(forKey: Self.importedFromKey(source)) as? Date) ?? recentStart
             let total = max(tomorrow.timeIntervalSince(earliest), 1)
 
             while end > earliest {

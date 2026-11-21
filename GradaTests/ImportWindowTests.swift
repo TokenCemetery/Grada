@@ -31,6 +31,8 @@ struct ImportWindowTests {
         source.earliest = day(-10)
         await importer.importHistoryIfNeeded()
         #expect(source.batches.first?.start == day(-10))
+        // Recent days belong to the refresh, so a slow history read can't overwrite newer data for them (#143).
+        #expect(source.batches.first?.end == day(-(HealthImporter.recentDays - 1)))
     }
 
     /// Days between the last refresh and the recent window are re-imported too, as they may have synced late (#142).
