@@ -57,17 +57,9 @@ Run the unit tests (use any iPhone simulator listed by `xcrun simctl list device
 xcodebuild test -project Grada.xcodeproj -scheme Grada -destination "platform=iOS Simulator,name=iPhone 15" -only-testing:GradaTests -testLanguage en -testRegion US CODE_SIGNING_ALLOWED=NO
 ```
 
-## Release plan
+## Roadmap
 
-Each version is a [GitHub milestone](https://github.com/TokenCemetery/Grada/milestones).
-
-| Version | Theme | Scope | Status |
-|---|---|---|---|
-| v1 | Foundation | Apple Health import, iCloud sync, home cards, calendar, metric detail | Built; iCloud sync waits on a paid developer team ([#20](https://github.com/TokenCemetery/Grada/issues/20)) |
-| v2 | Personal | Goals, journal, intensity minutes, HRV status, Health Age | Built |
-| v3 | Guidance | Morning and evening reports, recommendations, monthly summary | Built |
-| v4 | Scores | Sleep score, training readiness, strain and training load, recovery time | Built |
-| v5 | Energy | Resources energy card | Built; a stress card was declined because there's no published way to measure stress from iPhone data |
+[docs/ROADMAP.md](docs/ROADMAP.md) lists what each release shipped and what was declined.
 
 ## License
 
