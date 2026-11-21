@@ -74,6 +74,7 @@ struct BloodPressureTests {
     }
 
     /// The first source in order has only systolic that day, so both numbers come from the next one.
+    @MainActor
     @Test func aDaysPairComesFromOneSource() async throws {
         let store = try store([(0, ["first": (150, nil), "second": (118, 76)])])
         let data = StoredHealthData(container: store, sources: [RankSource(id: "first"), RankSource(id: "second")])

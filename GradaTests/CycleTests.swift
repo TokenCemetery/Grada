@@ -50,6 +50,7 @@ struct CycleTests {
     }
 
     /// Read live from the first source with any record, and never from the store.
+    @MainActor
     @Test func storedDataReadsFlowLiveFromTheFirstSourceWithAny() async throws {
         let container = try ModelContainer(for: DaySummary.self, WorkoutRecord.self,
                                            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
@@ -180,6 +181,7 @@ struct CycleTests {
         #expect(CycleSign.CervicalMucus(rawValue: HKCategoryValueCervicalMucusQuality.dry.rawValue) == .dry)
     }
 
+    @MainActor
     @Test func signsReadLiveAndStopAtThePastDay() async throws {
         let container = try ModelContainer(for: DaySummary.self, WorkoutRecord.self,
                                            configurations: ModelConfiguration(isStoredInMemoryOnly: true))

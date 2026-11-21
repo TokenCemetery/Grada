@@ -108,6 +108,7 @@ struct HeartRateRecoveryTests {
         #expect(series.last?.day == threeDaysAgo)
     }
 
+    @MainActor
     @Test func storedWorkoutsAskTheirOwnSource() async throws {
         let container = try ModelContainer(for: DaySummary.self, WorkoutRecord.self,
                                            configurations: ModelConfiguration(isStoredInMemoryOnly: true))

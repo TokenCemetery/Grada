@@ -62,6 +62,7 @@ struct BodyMassTests {
         #expect(snapshot.comparison?.hasSuffix("kg in 30 days") == true)
     }
 
+    @MainActor
     @Test func detailAddsBodyFatBMIAndLeanMass() async throws {
         var builder = TrendBuilder(source: SampleDataSource())
         builder.usesMetric = true
@@ -92,6 +93,7 @@ struct BodyMassTests {
         #expect(try await StoredHealthData(container: container).latest(.bodyMass) == nil)
     }
 
+    @MainActor
     @Test func latestHeightOnADayFollowsTheSourceOrder() async throws {
         let container = try ModelContainer(for: DaySummary.self, WorkoutRecord.self,
                                            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
