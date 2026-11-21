@@ -3,9 +3,10 @@ import Foundation
 /// How a journal tag changes the night after: the nights after days with the tag against nights after days
 /// without it, from the user's own data (#103).
 ///
-/// A difference counts only when it's more than twice its standard error (Welch), so a 95% interval for it
-/// leaves out zero. With night-to-night HRV varying 10–20%, a few nights can't separate a one-drink effect,
-/// and this keeps such noise from reading as an effect.
+/// A difference counts only when a 95% interval for it leaves out zero: Welch's t-test, using Student's t for
+/// Welch's degrees of freedom rather than 2, which is too lenient with 5 nights a side. With night-to-night HRV
+/// varying 10–20%, a few nights can't separate a one-drink effect, and this keeps such noise from reading as an
+/// effect.
 nonisolated struct TagEffect: Equatable {
     enum Metric: CaseIterable {
         case hrv, sleepingHeartRate, sleep, rem, deep, awake
@@ -67,9 +68,29 @@ nonisolated struct TagEffect: Equatable {
                        change: .notEnough)
         }
         let difference = with - without
-        let standardError = (taggedSD * taggedSD / Double(tagged.count) + untaggedSD * untaggedSD / Double(untagged.count)).squareRoot()
+        let taggedVariance = taggedSD * taggedSD / Double(tagged.count)
+        let untaggedVariance = untaggedSD * untaggedSD / Double(untagged.count)
+        let standardError = (taggedVariance + untaggedVariance).squareRoot()
+        // Welch–Satterthwaite degrees of freedom.
+        let degrees = pow(taggedVariance + untaggedVariance, 2)
+            / (pow(taggedVariance, 2) / Double(tagged.count - 1) + pow(untaggedVariance, 2) / Double(untagged.count - 1))
         return Row(metric: metric, with: with, without: without, nightsWith: tagged.count, nightsWithout: untagged.count,
-                   change: abs(difference) > 2 * standardError ? .changed(difference) : .withinVariation)
+                   change: abs(difference) > criticalT(degrees) * standardError ? .changed(difference) : .withinVariation)
+    }
+
+    /// Student's t two-sided 95% critical values for 1 to 30 degrees of freedom.
+    private static let tTable: [Double] = [12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228,
+                                           2.201, 2.179, 2.160, 2.145, 2.131, 2.120, 2.110, 2.101, 2.093, 2.086,
+                                           2.080, 2.074, 2.069, 2.064, 2.060, 2.056, 2.052, 2.048, 2.045, 2.042]
+
+    /// The two-sided 95% critical value of Student's t. Fractional degrees round down, the stricter side; past 30
+    /// the first Cornish–Fisher term on the normal 1.96 is within 0.002.
+    static func criticalT(_ degrees: Double) -> Double {
+        guard degrees.isFinite else { return 1.96 }
+        let whole = max(1, Int(degrees))
+        if whole <= tTable.count { return tTable[whole - 1] }
+        let z = 1.959964
+        return z + (z * z * z + z) / (4 * Double(whole))
     }
 
     /// Each compared tag's rows. `logged` holds each day key's tags; `nights` holds each night's values by the

@@ -25,6 +25,14 @@ struct TagEffectTests {
         #expect(row.change == .withinVariation)
     }
 
+    /// With 5 nights a side, twice the standard error isn't enough: Student's t for Welch's 8 degrees is 2.306 (#161).
+    @Test func fewNightsNeedStudentsT() {
+        let row = TagEffect.row(.hrv, with: [10, 11, 12, 13, 14].map { $0 + 2.2 }, without: [10, 11, 12, 13, 14])
+        #expect(row.change == .withinVariation)
+        #expect(TagEffect.criticalT(8) == 2.306)
+        #expect(abs(TagEffect.criticalT(1_000) - 1.962) < 0.001)
+    }
+
     @Test func tooFewNightsShowNothing() {
         let row = TagEffect.row(.hrv, with: values(40, swing: 2, count: 4), without: values(55, swing: 2, count: 40))
         #expect(row.with == nil && row.without == nil)
