@@ -312,6 +312,11 @@ private struct ProfileView: View {
     @AppStorage(EnteredProfile.sexKey) private var savedSex = ""
     @State private var birthDate = Date.now
     @State private var sex = ""
+    /// Whether the user picked a birth date: with none saved, the picker starts at a placeholder that mustn't be
+    /// saved as theirs (#169).
+    @State private var pickedBirthDate = false
+    /// Set once the entries are filled in, so coming back to the app doesn't reset unsaved ones.
+    @State private var entriesLoaded = false
 
     var body: some View {
         Form {
@@ -335,6 +340,8 @@ private struct ProfileView: View {
     private func load() async {
         profile = await model.loadProfile()
         provided = model.sourcesProvideProfile()
+        guard !entriesLoaded else { return }
+        entriesLoaded = true
         birthDate = savedBirthDate != 0 ? Date(timeIntervalSince1970: savedBirthDate)
             : Calendar.current.date(byAdding: .year, value: -30, to: .now)!
         sex = savedSex
@@ -342,11 +349,13 @@ private struct ProfileView: View {
 
     /// Only the values Apple Health doesn't provide; nothing is kept until Save.
     private func entrySection(_ provided: (age: Bool, sex: Bool)) -> some View {
-        let changed = (!provided.age && birthDate.timeIntervalSince1970 != savedBirthDate)
-            || (!provided.sex && sex != savedSex)
+        let birthDateChanged = !provided.age
+            && (savedBirthDate == 0 ? pickedBirthDate : birthDate.timeIntervalSince1970 != savedBirthDate)
+        let sexChanged = !provided.sex && sex != savedSex
         return Section {
             if !provided.age {
-                DatePicker("Birth Date", selection: $birthDate, in: ...Date.now, displayedComponents: .date)
+                DatePicker("Birth Date", selection: Binding { birthDate } set: { birthDate = $0; pickedBirthDate = true },
+                           in: ...Date.now, displayedComponents: .date)
             }
             if !provided.sex {
                 Picker("Sex", selection: $sex) {
@@ -356,11 +365,11 @@ private struct ProfileView: View {
                 }
             }
             Button("Save") {
-                if !provided.age { savedBirthDate = birthDate.timeIntervalSince1970 }
-                if !provided.sex { savedSex = sex }
+                if birthDateChanged { savedBirthDate = birthDate.timeIntervalSince1970 }
+                if sexChanged { savedSex = sex }
                 Task { profile = await model.loadProfile() }
             }
-            .disabled(!changed)
+            .disabled(!birthDateChanged && !sexChanged)
         } header: {
             Text("Not in Apple Health")
         } footer: {
