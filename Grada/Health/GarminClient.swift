@@ -99,6 +99,8 @@ final class GarminClient {
             case 200: return data
             case 204: return nil
             case 401 where attempt == 0: token = nil
+            // A data endpoint's 403 refuses that kind of data, not the key: a new key wouldn't help.
+            case 403: throw Failure.http(403)
             default: try fail(response.statusCode)
             }
         }

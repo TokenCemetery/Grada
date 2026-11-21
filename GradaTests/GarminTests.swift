@@ -128,6 +128,15 @@ struct GarminTests {
         await #expect(throws: GarminClient.Failure.noKey) { try await client(FakeGarmin(), key: nil).verify() }
     }
 
+    /// Only the token endpoint judges the key; a data endpoint's 403 must not ask for a new key (#149).
+    @Test func forbiddenDataIsNotARejectedKey() async {
+        let fake = FakeGarmin()
+        fake.answer = { $0.httpMethod == "POST" ? (200, self.jwt) : (403, "") }
+        await #expect(throws: GarminClient.Failure.http(403)) { try await client(fake).get("/hrv-service/hrv/daily/2025-01-01/2025-01-28") }
+        fake.answer = { _ in (403, "") }
+        await #expect(throws: GarminClient.Failure.keyRejected) { try await client(fake).verify() }
+    }
+
     @Test func rateLimitPausesCalls() async {
         let fake = FakeGarmin()
         fake.answer = { $0.httpMethod == "POST" ? (200, self.jwt) : (429, "") }
