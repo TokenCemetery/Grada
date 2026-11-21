@@ -21,6 +21,10 @@ nonisolated struct PastDaySource: HealthDataSource {
         try await base.time(in: activity, on: day)
     }
 
+    func intake(_ intake: Intake, on day: Date) async throws -> Double? {
+        try await base.intake(intake, on: day)
+    }
+
     func age() async throws -> Int? {
         try await base.age()
     }

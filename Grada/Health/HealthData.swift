@@ -28,6 +28,14 @@ nonisolated enum TimedActivity {
     case daylight
 }
 
+/// What Apple Health records someone drank on a day, read live for journal suggestions (#130).
+nonisolated enum Intake {
+    /// Alcoholic drinks, as logged in a drink-tracking or nutrition app.
+    case alcoholicDrinks
+    /// Caffeine in milligrams.
+    case caffeine
+}
+
 nonisolated enum SleepStage: String, CaseIterable, Codable {
     case awake, rem, core, deep
 }
@@ -278,6 +286,8 @@ nonisolated protocol HealthDataSource {
     @concurrent func withDaysLoaded(_ days: Int) async throws -> HealthDataSource
     /// Seconds of `activity` on `day`; nil without any record of it.
     func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval?
+    /// The day's total of `intake`: drinks, or milligrams of caffeine; nil without any record of it.
+    func intake(_ intake: Intake, on day: Date) async throws -> Double?
 }
 
 nonisolated extension HealthDataSource {
@@ -287,6 +297,7 @@ nonisolated extension HealthDataSource {
     @concurrent func withDaysLoaded(_ days: Int) async throws -> HealthDataSource { self }
     @MainActor func providesProfile() -> (age: Bool, sex: Bool) { (false, false) }
     func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval? { nil }
+    func intake(_ intake: Intake, on day: Date) async throws -> Double? { nil }
 
     /// Without workout samples, the 5-minute heart rate during the workout.
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {

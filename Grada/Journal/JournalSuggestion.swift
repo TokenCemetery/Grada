@@ -75,6 +75,27 @@ nonisolated struct JournalSuggestion: Equatable {
         return JournalSuggestion(tag: .outdoorTime, reason: String(localized: "\(SnapshotBuilder.hoursMinutes(time)) in daylight"))
     }
 
+    /// Drinks logged in Apple Health, rounded to whole drinks within the tag's range (#130).
+    static func alcohol(_ drinks: Double?) -> JournalSuggestion? {
+        guard let drinks, drinks > 0, let amount = JournalTag.alcohol.amount else { return nil }
+        let count = min(max(drinks.rounded(), amount.range.lowerBound), amount.range.upperBound)
+        return JournalSuggestion(tag: .alcohol, reason: String(localized: "\(amount.formatted(count)) logged in Apple Health"),
+                                 amount: count)
+    }
+
+    /// Milligrams in an 8 fl oz (237 g) cup of brewed coffee: 40 mg per 100 g in USDA FoodData Central's
+    /// brewed coffee (SR Legacy), about 95 mg a cup.
+    static let caffeinePerCup = 95.0
+
+    /// Caffeine logged in Apple Health as cups of brewed coffee, at least one, so a cola still counts (#130).
+    static func caffeine(_ milligrams: Double?) -> JournalSuggestion? {
+        guard let milligrams, milligrams > 0, let amount = JournalTag.caffeine.amount else { return nil }
+        let cups = min(max((milligrams / caffeinePerCup).rounded(), amount.range.lowerBound), amount.range.upperBound)
+        let reason = String(localized: "\(Int(milligrams.rounded())) mg of caffeine, about \(amount.formatted(cups)) of coffee at \(Int(caffeinePerCup)) mg each (USDA)",
+                            comment: "e.g. 190 mg of caffeine, about 2 cups of coffee at 95 mg each (USDA)")
+        return JournalSuggestion(tag: .caffeine, reason: reason, amount: cups)
+    }
+
     /// The suggestions for `day`. `alcoholDayBefore` is whether Alcohol is logged on the day before, whose night
     /// ended this morning.
     static func load(day: Date, alcoholDayBefore: Bool, source: HealthDataSource,
@@ -97,6 +118,8 @@ nonisolated struct JournalSuggestion: Equatable {
             nap(periods, day: day, calendar: calendar),
             meditation(try await source.time(in: .mindfulness, on: day)),
             outdoorTime(try await source.time(in: .daylight, on: day)),
+            alcohol(try await source.intake(.alcoholicDrinks, on: day)),
+            caffeine(try await source.intake(.caffeine, on: day)),
         ]
         return suggestions.compactMap { $0 }
     }

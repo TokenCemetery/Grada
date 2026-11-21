@@ -79,5 +79,24 @@ struct JournalSuggestionTests {
                                                            calendar: calendar)
         #expect(suggestions.contains { $0.tag == .outdoorTime })
         #expect(!suggestions.contains { $0.tag == .nap }, "Sample nights have no daytime sleep")
+        #expect(suggestions.first { $0.tag == .caffeine }?.amount == 2)
+    }
+
+    @Test func alcoholSuggestsTheLoggedDrinks() {
+        #expect(JournalSuggestion.alcohol(nil) == nil)
+        #expect(JournalSuggestion.alcohol(0) == nil)
+        #expect(JournalSuggestion.alcohol(2)?.amount == 2)
+        #expect(JournalSuggestion.alcohol(2)?.reason == "2 drinks logged in Apple Health")
+        #expect(JournalSuggestion.alcohol(0.4)?.amount == 1, "Part of a drink still counts")
+        #expect(JournalSuggestion.alcohol(35)?.amount == 20, "The tag's largest amount")
+    }
+
+    @Test func caffeineBecomesCupsOfBrewedCoffee() {
+        #expect(JournalSuggestion.caffeine(nil) == nil)
+        #expect(JournalSuggestion.caffeine(0) == nil)
+        #expect(JournalSuggestion.caffeine(190)?.amount == 2)
+        #expect(JournalSuggestion.caffeine(190)?.reason == "190 mg of caffeine, about 2 cups of coffee at 95 mg each (USDA)")
+        #expect(JournalSuggestion.caffeine(34)?.amount == 1, "A can of cola still counts")
+        #expect(JournalSuggestion.caffeine(2_000)?.amount == 10, "The tag's largest amount")
     }
 }

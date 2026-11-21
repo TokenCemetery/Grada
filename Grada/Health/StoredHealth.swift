@@ -220,6 +220,16 @@ nonisolated struct StoredHealthData: HealthDataSource {
         return nil
     }
 
+    /// From the first source with any record of it that day; read live, since only journal suggestions use it.
+    func intake(_ intake: Intake, on day: Date) async throws -> Double? {
+        let start = calendar.startOfDay(for: day)
+        let interval = DateInterval(start: start, end: calendar.date(byAdding: .day, value: 1, to: start)!)
+        for source in sources {
+            if let amount = try await source.intake(intake, during: interval) { return amount }
+        }
+        return nil
+    }
+
     /// Each sleep comes whole from the first source that has it, as nights do in `sleepNights(days:)`, so stages from
     /// different devices aren't mixed (#96). A sleep is a stretch of periods with no `SleepNight.separateSleepGap`;
     /// a later source's sleep that overlaps one already taken is the same sleep, so a nap doesn't hide a night.

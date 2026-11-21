@@ -28,9 +28,11 @@ final class HealthKitReader: HealthSource {
             HKQuantityType(.distanceCycling),
             HKQuantityType(.distanceSwimming),
             HKSeriesType.workoutRoute(),
-            // Journal suggestions: Meditation and Outdoor time.
+            // Journal suggestions: Meditation, Outdoor time, Alcohol and Caffeine.
             HKCategoryType(.mindfulSession),
             HKQuantityType(.timeInDaylight),
+            HKQuantityType(.numberOfAlcoholicBeverages),
+            HKQuantityType(.dietaryCaffeine),
         ]
 
     func requestAuthorization() async throws {
@@ -44,10 +46,11 @@ final class HealthKitReader: HealthSource {
     func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws {
         // Heart rate is sampled every few minutes; its changes come with the daily metrics anyway. Workout
         // screen data (ride and swim distance, routes) is read live and arrives with its workout.
-        // Mindful sessions and daylight are read live for the Journal and aren't imported either.
+        // Mindful sessions, daylight, drinks and caffeine are read live for the Journal and aren't imported either.
         let unobserved: Set<HKSampleType> = [HKQuantityType(.heartRate), HKQuantityType(.distanceCycling),
                                              HKQuantityType(.distanceSwimming), HKSeriesType.workoutRoute(),
-                                             HKCategoryType(.mindfulSession), HKQuantityType(.timeInDaylight)]
+                                             HKCategoryType(.mindfulSession), HKQuantityType(.timeInDaylight),
+                                             HKQuantityType(.numberOfAlcoholicBeverages), HKQuantityType(.dietaryCaffeine)]
         for type in Self.readTypes where !unobserved.contains(type) {
             store.execute(HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
                 guard error == nil else { completion(); return }
@@ -307,6 +310,18 @@ final class HealthKitReader: HealthSource {
             ).result(for: store)
             return statistics?.sumQuantity().map { $0.doubleValue(for: .minute()) * 60 }
         }
+    }
+
+    func intake(_ intake: Intake, during interval: DateInterval) async throws -> Double? {
+        let (type, unit): (HKQuantityType, HKUnit) = switch intake {
+        case .alcoholicDrinks: (HKQuantityType(.numberOfAlcoholicBeverages), .count())
+        case .caffeine: (HKQuantityType(.dietaryCaffeine), .gramUnit(with: .milli))
+        }
+        let statistics = try await HKStatisticsQueryDescriptor(
+            predicate: .quantitySample(type: type, predicate: HKQuery.predicateForSamples(withStart: interval.start, end: interval.end)),
+            options: .cumulativeSum
+        ).result(for: store)
+        return statistics?.sumQuantity()?.doubleValue(for: unit)
     }
 
     /// Sleep stages overlapping `interval`, oldest first, from the best source of each night.

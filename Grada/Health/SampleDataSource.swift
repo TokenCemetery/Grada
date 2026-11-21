@@ -192,6 +192,14 @@ nonisolated struct SampleDataSource: HealthDataSource {
         }
     }
 
+    /// Two cups of coffee a day, and two drinks on Saturdays.
+    func intake(_ intake: Intake, on day: Date) async throws -> Double? {
+        switch intake {
+        case .caffeine: 190
+        case .alcoholicDrinks: calendar.component(.weekday, from: day) == 7 ? 2 : nil
+        }
+    }
+
     func age() async throws -> Int? { 35 }
     func biologicalSex() async throws -> BiologicalSex? { .male }
 

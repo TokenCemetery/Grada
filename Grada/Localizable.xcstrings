@@ -579,6 +579,59 @@
         }
       }
     },
+    "%@ logged in Apple Health" : {
+      "comment" : "Journal suggestion reason, e.g. 2 drinks logged in Apple Health",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ in Apple Health erfasst"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ registradas en Apple Health"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ enregistrées dans Apple Health"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health में %@ दर्ज"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ registrati in Apple Health"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ registradas no Apple Health"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ записано в Apple Health"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health 中记录了 %@"
+          }
+        }
+      }
+    },
     "%@ mi" : {
       "comment" : "Distance in miles",
       "localizations" : {
@@ -3040,6 +3093,59 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 米"
+          }
+        }
+      }
+    },
+    "%lld mg of caffeine, about %@ of coffee at %lld mg each (USDA)" : {
+      "comment" : "e.g. 190 mg of caffeine, about 2 cups of coffee at 95 mg each (USDA)",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld mg Koffein, etwa %2$@ Kaffee zu je %3$lld mg (USDA)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld mg de cafeína, unas %2$@ de café de %3$lld mg cada una (USDA)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld mg de caféine, environ %2$@ de café à %3$lld mg chacune (USDA)"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld mg कैफ़ीन, लगभग %2$@ कॉफ़ी, हर एक में %3$lld mg (USDA)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld mg di caffeina, circa %2$@ di caffè da %3$lld mg ciascuna (USDA)"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld mg de cafeína, cerca de %2$@ de café com %3$lld mg cada (USDA)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld мг кофеина, примерно %2$@ кофе по %3$lld мг (USDA)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 毫克咖啡因，约合 %2$@咖啡，每杯 %3$lld 毫克（USDA）"
           }
         }
       }
@@ -7040,6 +7146,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "酒精"
+          }
+        }
+      }
+    },
+    "Alcoholic Beverages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alkoholische Getränke"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bebidas alcohólicas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boissons alcoolisées"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "मादक पेय"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bevande alcoliche"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bebidas alcoólicas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Алкогольные напитки"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "酒精饮料"
           }
         }
       }
@@ -16421,6 +16579,58 @@
         }
       }
     },
+    "Journal Suggestions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tagebuch-Vorschläge"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sugerencias del diario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggestions du journal"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जर्नल सुझाव"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggerimenti del diario"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sugestões do diário"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подсказки дневника"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日志建议"
+          }
+        }
+      }
+    },
     "Keep training easy" : {
       "localizations" : {
         "de" : {
@@ -18335,6 +18545,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "英里"
+          }
+        }
+      }
+    },
+    "Mindful Minutes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Achtsamkeitsminuten"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutos de atención plena"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes de pleine conscience"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "माइंडफ़ुल मिनट"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minuti di consapevolezza"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutos de atenção plena"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Минуты осознанности"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正念分钟数"
           }
         }
       }
@@ -22872,6 +23134,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已读取 1 个文件。"
+          }
+        }
+      }
+    },
+    "Read from Apple Health when Journal shows a day, to suggest tags. Grada doesn't store them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werden aus Apple Health gelesen, wenn das Tagebuch einen Tag zeigt, um Tags vorzuschlagen. Grada speichert sie nicht."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se leen de Apple Health cuando el diario muestra un día, para sugerir etiquetas. Grada no los guarda."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lues dans Apple Health quand le journal affiche un jour, pour suggérer des tags. Grada ne les conserve pas."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जब जर्नल कोई दिन दिखाता है, तब टैग सुझाने के लिए Apple Health से पढ़े जाते हैं। Grada इन्हें सहेजता नहीं है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letti da Apple Health quando il diario mostra un giorno, per suggerire tag. Grada non li conserva."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lidos do Apple Health quando o diário mostra um dia, para sugerir tags. O Grada não os guarda."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Читаются из Apple Health, когда дневник показывает день, чтобы подсказать теги. Grada их не хранит."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日志显示某一天时从 Apple Health 读取，用于建议标签。Grada 不会存储这些数据。"
           }
         }
       }
@@ -28833,6 +29147,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在今晨结束的这一夜里的睡眠时间。深度睡眠让身体得到修复，REM 有助于记忆和情绪。大多数成年人需要 7–9 小时。"
+          }
+        }
+      }
+    },
+    "Time in Daylight" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeit im Tageslicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiempo a la luz del día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temps à la lumière du jour"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दिन के उजाले में समय"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo alla luce del giorno"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tempo à luz do dia"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Время при дневном свете"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日照时间"
           }
         }
       }
