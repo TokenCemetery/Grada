@@ -115,9 +115,12 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
     }
 
     /// What a fresh install shows under Health Status: WHOOP's Recovery and Strain, Garmin's Body Battery
-    /// (Resources) and Steps, then last night's sleep and the latest workout.
-    static let defaultSet: [CardID] = [CardKind.recovery, .resources, .strain, .steps, .sleepStages, .lastWorkout]
-        .map { CardID(kind: $0, variant: $0.defaultVariant) }
+    /// (Resources) and Steps, then last night's sleep in detail, exercise and the latest workout, then the
+    /// overnight vitals.
+    static let defaultSet: [CardID] = [
+        CardKind.recovery, .resources, .strain, .steps, .sleepStages, .sleepScore, .sleepConsistency, .sleepNeed,
+        .exerciseMinutes, .lastWorkout, .hrvStatus, .oxygenSaturation, .respiratoryRate,
+    ].map { CardID(kind: $0, variant: $0.defaultVariant) }
 
     /// Cards where today and the last 7 days answer different questions offer both; the rest only Current.
     var variants: [CardVariant] {
