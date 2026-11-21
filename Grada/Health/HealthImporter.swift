@@ -33,7 +33,7 @@ final class HealthImporter {
     @ObservationIgnored private let container: ModelContainer
     @ObservationIgnored private let writer: HealthStoreWriter
     @ObservationIgnored private let calendar = Calendar.current
-    @ObservationIgnored private let defaults = UserDefaults.standard
+    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var authorization: Task<Void, Never>?
     @ObservationIgnored private var recentImport: Task<Void, Never>?
     @ObservationIgnored private var recentImportPending = false
@@ -57,8 +57,9 @@ final class HealthImporter {
     /// What cards read live, in merge order: the importing `sources`, then FIT files.
     var liveSources: [any LiveHealthSource] { sources + [fitFiles] }
 
-    init(sources: [any HealthSource], fitFiles: FITFileSource, container: ModelContainer) {
+    init(sources: [any HealthSource], fitFiles: FITFileSource, container: ModelContainer, defaults: UserDefaults = .standard) {
         self.sources = sources
+        self.defaults = defaults
         self.fitFiles = fitFiles
         self.container = container
         writer = HealthStoreWriter(modelContainer: container)
@@ -107,10 +108,9 @@ final class HealthImporter {
     private func importHistory(of source: any HealthSource, progress: (Double) -> Void) async {
         do {
             let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: .now))!
-            guard let earliestSample = try await source.earliestSampleDate() else {
-                defaults.set(true, forKey: Self.historyDoneKey(source))
-                return
-            }
+            // Nothing readable also means access was denied or not yet granted, so it's asked again next launch rather
+            // than marked done; otherwise allowing access later in Settings would never bring in the history.
+            guard let earliestSample = try await source.earliestSampleDate() else { return }
             let earliest = calendar.startOfDay(for: earliestSample)
             var end = (defaults.object(forKey: Self.importedFromKey(source)) as? Date) ?? tomorrow
             let total = max(tomorrow.timeIntervalSince(earliest), 1)
