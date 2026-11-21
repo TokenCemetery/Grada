@@ -13,6 +13,10 @@ final class HomeModel {
     /// The longest history any card reads (VO₂ max), so one fetch of stored rows serves every card (#121).
     static let cardDays = 90
     private let logger = Logger(subsystem: "Grada", category: "HomeModel")
+    /// The latest reload that asked for each card. Reloads overlap (imports, goals, the profile, pull to refresh),
+    /// and one that started earlier, with older data or goals, can finish later (#168).
+    @ObservationIgnored private var latestReload: [CardID: Int] = [:]
+    @ObservationIgnored private var reloads = 0
 
     init(source: HealthDataSource, importer: HealthImporter? = nil) {
         self.source = source
@@ -41,6 +45,9 @@ final class HomeModel {
 
     /// Rebuilds the cards from data already imported.
     func reload(_ cards: [CardID], goals: GoalHistory) async {
+        reloads += 1
+        let reload = reloads
+        for card in cards { latestReload[card] = reload }
         var builder: SnapshotBuilder
         do { builder = SnapshotBuilder(source: try await source.withDaysLoaded(Self.cardDays)) }
         catch {
@@ -56,7 +63,7 @@ final class HomeModel {
                     catch { return (card, .failure(error)) }
                 }
             }
-            for await (card, result) in group {
+            for await (card, result) in group where latestReload[card] == reload {
                 switch result {
                 case .success(let snapshot):
                     snapshots[card] = snapshot

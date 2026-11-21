@@ -38,6 +38,22 @@ struct HomeModelTests {
         #expect(withGoal != nil)
         #expect(withGoal?.comparison != model.snapshots[CardID(kind: .steps)]?.comparison)
     }
+
+    /// A reload that started first but finishes last doesn't overwrite the newer one's snapshot (#168).
+    @Test func laterReloadWins() async {
+        let steps = CardID(kind: .steps)
+        let today = Calendar.current.startOfDay(for: .now)
+        let goals = GoalHistory([GoalEntry(metric: .steps, value: 9_000, effectiveFrom: today, reason: .edit)])
+        let model = HomeModel(source: SampleDataSource())
+        let first = Task { await model.reload([steps], goals: goals) }
+        await Task.yield()
+        await model.reload([steps], goals: GoalHistory())
+        await first.value
+
+        let expected = HomeModel(source: SampleDataSource())
+        await expected.reload([steps], goals: GoalHistory())
+        #expect(model.snapshots[steps]?.comparison == expected.snapshots[steps]?.comparison)
+    }
 }
 
 @MainActor
