@@ -1,6 +1,6 @@
 import SwiftUI
 
-extension DayRating {
+nonisolated extension DayRating {
     var title: String {
         switch self {
         case .good: String(localized: "Good")

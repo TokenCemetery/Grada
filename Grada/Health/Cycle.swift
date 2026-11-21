@@ -139,7 +139,7 @@ nonisolated struct CycleSign: Equatable {
     let origin: String?
 }
 
-extension Cycle {
+nonisolated extension Cycle {
     /// Complete cycles a next-period range needs. Grada's choice: fewer give no usable spread.
     static let minimumCycles = 3
     /// The most recent complete cycles the range averages.

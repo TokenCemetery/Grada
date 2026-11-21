@@ -10,7 +10,7 @@ final class WidgetPublisher {
 
     private let source: HealthDataSource
     private let context: ModelContext
-    private static let logger = Logger(subsystem: "Grada", category: "Widgets")
+    private nonisolated static let logger = Logger(subsystem: "Grada", category: "Widgets")
 
     init(source: HealthDataSource, context: ModelContext) {
         self.source = source

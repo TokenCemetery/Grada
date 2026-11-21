@@ -192,7 +192,7 @@ final class HealthKitReader: HealthSource {
                 type: HKQuantityType(metric.identifier),
                 predicate: HKQuery.predicateForSamples(withStart: start, end: end)
             ),
-            options: [metric.usesLatestReading ? .discreteMostRecent : .discreteAverage, .separateBySource],
+            options: [metric.usesLatestReading ? .mostRecent : .discreteAverage, .separateBySource],
             anchorDate: start,
             intervalComponents: DateComponents(day: 1)
         )

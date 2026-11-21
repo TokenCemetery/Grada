@@ -125,6 +125,6 @@ nonisolated struct JournalSuggestion: Equatable {
     }
 }
 
-private extension String {
+private nonisolated extension String {
     var capitalizedFirst: String { prefix(1).uppercased() + dropFirst() }
 }
