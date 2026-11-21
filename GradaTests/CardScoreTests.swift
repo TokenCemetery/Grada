@@ -460,3 +460,12 @@ private struct StableDailySource: HealthDataSource {
     func biologicalSex() async throws -> BiologicalSex? { try await base.biologicalSex() }
     func highestHeartRate(days: Int) async throws -> Double? { try await base.highestHeartRate(days: days) }
 }
+
+struct VitalGaugeTests {
+    /// Respiratory rate's gauge keeps its decimal, so its green band matches the range its rating uses (#165).
+    @Test func gaugeUsesTheMetricsPrecision() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .respiratoryRate)
+        guard case .range(_, _, _, _, let decimals) = snapshot.chart else { Issue.record("Expected a range gauge"); return }
+        #expect(decimals == QuantityMetric.respiratoryRate.decimals)
+    }
+}

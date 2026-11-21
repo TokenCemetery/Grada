@@ -96,7 +96,7 @@ nonisolated extension SnapshotBuilder {
             rating: range.map { DayRatings.range(latest, normal: $0, higherIsBetter: higherIsBetter) },
             chart: variant == .week
                 ? .line(series.suffix(7).map(\.value), normalRange: range)
-                : range.map { .range(value: latest, normalRange: $0, higherIsBetter: higherIsBetter, decimals: 0) } ?? .none,
+                : range.map { .range(value: latest, normalRange: $0, higherIsBetter: higherIsBetter, decimals: metric.decimals) } ?? .none,
             recommendation: metric == .restingHeartRate && isTodays
                 ? range.flatMap { Recommendations.restingHeartRate(latest, normal: $0) } : nil
         )
