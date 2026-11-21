@@ -53,8 +53,10 @@ struct CustomizeView: View {
                 Button("Done") { dismiss() }.fontWeight(.semibold)
             }
             .task {
-                // Find out which gallery cards have data, for the "No data yet" labels.
-                await model.refresh(CardID.gallery.filter { model.snapshots[$0] == nil }, goals: GoalHistory(goalChanges))
+                // Find out which gallery cards have data, for the "No data yet" labels. From data already imported:
+                // Home imports on its own refreshes.
+                let missing = CardID.gallery.filter { model.snapshots[$0] == nil }
+                if !missing.isEmpty { await model.reload(missing, goals: GoalHistory(goalChanges)) }
             }
         }
     }
