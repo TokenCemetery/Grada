@@ -126,6 +126,9 @@ struct MetricSource: Hashable {
     static let watanabe2001 = MetricSource("Watanabe et al. 2001 · Circulation",
                                            "Without a cool-down the cut-off was 18 bpm; recovery still predicted mortality",
                                            doi: "10.1161/circ.104.16.1911")
+    static let who2000 = MetricSource("WHO 2000 · Technical Report Series 894",
+                                      "BMI classes for adults: underweight, normal, pre-obese and obese",
+                                      url: "https://pubmed.ncbi.nlm.nih.gov/11234459/")
     static let arem2015 = MetricSource("Arem et al. 2015 · JAMA Intern Med",
                                        "Mortality risk by weekly exercise",
                                        doi: "10.1001/jamainternmed.2015.0533")
@@ -153,6 +156,7 @@ extension CardKind {
         case .vo2Max: [.kaminsky2015]
         case .racePredictor: [.danielsGilbert1979]
         case .heartRateRecovery: [.cole1999, .watanabe2001]
+        case .weight: [.who2000]
         default: []
         }
     }
@@ -174,6 +178,8 @@ extension CardKind {
             String(localized: "Your usual wake-up and time awake in bed are the medians of the last \(Bedtime.nights) nights, weekdays and weekends apart once each has \(Bedtime.minimumNights) nights. The window is Grada's choice; no study sets one.")
         case .restingHeartRate:
             String(localized: "Studies show resting heart rate rising, not a cutoff. Suggesting rest whenever it's above your normal range (30-day average ± 2 standard deviations) is Grada's rule.")
+        case .weight:
+            String(localized: "BMI uses the latest height in Apple Health for every day, since adult height barely changes.")
         case .heartRateRecovery:
             String(localized: "Without Apple Watch's own measurement, taking the reading closest to one minute after the end, at most 15 seconds off, is Grada's choice.")
         case .trainingReadiness:

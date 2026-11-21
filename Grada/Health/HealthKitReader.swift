@@ -79,6 +79,9 @@ final class HealthKitReader: HealthSource {
             try await earliest(.quantitySample(type: HKQuantityType(.heartRate))),
             try await earliest(.categorySample(type: HKCategoryType(.sleepAnalysis))),
             try await earliest(.workout()),
+            // Height is often entered once, years before anything else was recorded.
+            try await earliest(.quantitySample(type: HKQuantityType(.height))),
+            try await earliest(.quantitySample(type: HKQuantityType(.bodyMass))),
         ]
         return dates.compactMap { $0 }.min()
     }
@@ -130,8 +133,8 @@ final class HealthKitReader: HealthSource {
         return (values, origins)
     }
 
-    /// Daily averages of a reading, from the app with the most days of it lately; other apps fill only
-    /// the days it missed. Averaging apps together would blend devices that measure differently.
+    /// Daily averages of a reading (the day's last one for body measurements), from the app with the most days of it
+    /// lately; other apps fill only the days it missed. Averaging apps together would blend devices that measure differently.
     private func readings(_ metric: QuantityMetric, in days: DateInterval) async throws -> ([DayValue], [Date: [String]]) {
         let start = min(days.start, calendar.date(byAdding: .day, value: -SourceMerge.coverageDays, to: days.end)!)
         let descriptor = HKStatisticsCollectionQueryDescriptor(
@@ -139,7 +142,7 @@ final class HealthKitReader: HealthSource {
                 type: HKQuantityType(metric.identifier),
                 predicate: HKQuery.predicateForSamples(withStart: start, end: days.end)
             ),
-            options: [.discreteAverage, .separateBySource],
+            options: [metric.usesLatestReading ? .discreteMostRecent : .discreteAverage, .separateBySource],
             anchorDate: start,
             intervalComponents: DateComponents(day: 1)
         )
@@ -148,8 +151,9 @@ final class HealthKitReader: HealthSource {
         var names: [String: String] = [:]
         collection.enumerateStatistics(from: start, to: days.end) { statistics, _ in
             for source in statistics.sources ?? [] {
-                if let average = statistics.averageQuantity(for: source) {
-                    bySource[source.bundleIdentifier, default: []].append(DayValue(day: statistics.startDate, value: metric.convert(average)))
+                let reading = metric.usesLatestReading ? statistics.mostRecentQuantity(for: source) : statistics.averageQuantity(for: source)
+                if let reading {
+                    bySource[source.bundleIdentifier, default: []].append(DayValue(day: statistics.startDate, value: metric.convert(reading)))
                     names[source.bundleIdentifier] = Self.originName(source, device: nil)
                 }
             }
@@ -585,6 +589,10 @@ extension QuantityMetric {
         case .distance: .distanceWalkingRunning
         case .floors: .flightsClimbed
         case .vo2Max: .vo2Max
+        case .bodyMass: .bodyMass
+        case .bodyFat: .bodyFatPercentage
+        case .leanBodyMass: .leanBodyMass
+        case .height: .height
         }
     }
 
@@ -599,6 +607,9 @@ extension QuantityMetric {
         case .exerciseMinutes: quantity.doubleValue(for: .minute())
         case .distance: quantity.doubleValue(for: .meterUnit(with: .kilo))
         case .vo2Max: quantity.doubleValue(for: HKUnit(from: "ml/kg*min"))
+        case .bodyMass, .leanBodyMass: quantity.doubleValue(for: .gramUnit(with: .kilo))
+        case .bodyFat: quantity.doubleValue(for: .percent()) * 100
+        case .height: quantity.doubleValue(for: .meterUnit(with: .centi))
         }
     }
 }

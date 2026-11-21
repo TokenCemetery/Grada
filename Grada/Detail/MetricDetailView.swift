@@ -12,6 +12,7 @@ struct MetricDetailView: View {
     @State private var snapshot: CardSnapshot?
     @State private var trend: Trend?
     @State private var trendLoaded = false
+    @State private var extraTrends: [Trend] = []
     @State private var breakdown: Breakdown?
     @State private var origins: [(kind: DataKind, origins: [DataOrigin])] = []
 
@@ -36,6 +37,15 @@ struct MetricDetailView: View {
                     }
                 }
                 trendSection
+                ForEach(Array(extraTrends.enumerated()), id: \.offset) { _, extra in
+                    DetailSection(title: extra.title ?? String(localized: "Trend")) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            TrendChart(trend: extra, period: period, color: color, highlighted: route.day.map { _ in day })
+                                .frame(height: 160)
+                            TrendStats(trend: extra, period: period)
+                        }
+                    }
+                }
                 if let breakdown {
                     DetailSection(title: breakdown.title) { BreakdownView(breakdown: breakdown, color: color) }
                 }
@@ -106,6 +116,7 @@ struct MetricDetailView: View {
             var trendBuilder = TrendBuilder(source: source, calendar: calendar)
             trendBuilder.goals = GoalHistory(goalChanges)
             trend = try? await trendBuilder.trend(for: kind, period: period)
+            extraTrends = (try? await trendBuilder.extraTrends(for: kind, period: period)) ?? []
             trendLoaded = true
             breakdown = try? await Breakdown.load(for: kind, day: day, period: period, source: source, calendar: calendar,
                                                   goals: GoalHistory(goalChanges))

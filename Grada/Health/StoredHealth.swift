@@ -29,6 +29,10 @@ nonisolated final class DaySummary {
     var distance: Double?
     var floors: Double?
     var vo2Max: Double?
+    var bodyMass: Double?
+    var bodyFat: Double?
+    var leanBodyMass: Double?
+    var height: Double?
     var standHours: Double?
 
     /// Seconds per sleep stage for the night that ended on this day.
@@ -87,6 +91,10 @@ nonisolated final class DaySummary {
         case .distance: \.distance
         case .floors: \.floors
         case .vo2Max: \.vo2Max
+        case .bodyMass: \.bodyMass
+        case .bodyFat: \.bodyFat
+        case .leanBodyMass: \.leanBodyMass
+        case .height: \.height
         }
     }
 }
@@ -311,6 +319,26 @@ nonisolated struct StoredHealthData: HealthDataSource {
 
     func workouts(days: Int) async throws -> [WorkoutSummary] {
         try workouts(since: lastDays(days).first!)
+    }
+
+    /// The value on the newest day that has one; on that day the first source in order wins, as for daily values.
+    /// Fetches only the days that have one.
+    func latest(_ metric: QuantityMetric) async throws -> Double? {
+        let predicate: Predicate<DaySummary>
+        switch metric {
+        case .height: predicate = #Predicate { $0.height != nil }
+        case .bodyMass: predicate = #Predicate { $0.bodyMass != nil }
+        default: return try await daily(metric, days: 3650).last { $0.value != nil }?.value
+        }
+        let context = ModelContext(container)
+        var newest = FetchDescriptor<DaySummary>(predicate: predicate, sortBy: [SortDescriptor(\.day, order: .reverse)])
+        newest.fetchLimit = 1
+        guard let key = try context.fetch(newest).first?.dayKey else { return nil }
+        // By day key, not instant: the same day stored in another time zone starts at a different instant (#118).
+        let sameDay = try context.fetch(FetchDescriptor<DaySummary>(predicate: #Predicate { $0.dayKey == key }))
+            .filter { $0.value(for: metric) != nil }
+        let rank = rank(Set(sameDay.map(\.source)))
+        return sameDay.min { rank[$0.source]! < rank[$1.source]! }?.value(for: metric)
     }
 
     /// Read live from each workout's own source, like the rest of a workout's detail.

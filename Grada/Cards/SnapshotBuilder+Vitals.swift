@@ -219,6 +219,35 @@ nonisolated extension SnapshotBuilder {
     }
 }
 
+nonisolated extension SnapshotBuilder {
+    /// The latest weight in the last 30 days, with its BMI and WHO class when Apple Health has a height; otherwise
+    /// the change since the first weighing in them. The chart shows the 30 days either way (#132).
+    func weight() async throws -> CardSnapshot {
+        let series = try await source.daily(.bodyMass, days: 30)
+        guard let latest = series.last(where: { $0.value != nil }), let kilograms = latest.value else {
+            return .noData(period: String(localized: "Latest"))
+        }
+        let unit = BodyMass.unit(usesMetric: usesMetric)
+        let shown = { (kilograms: Double) in BodyMass.display(kilograms, usesMetric: usesMetric) }
+        var comparison: String?
+        if let height = try await source.latest(.height) {
+            let bmi = BodyMass.bmi(kilograms: kilograms, centimeters: height)
+            comparison = String(localized: "BMI \(format(bmi, 1)) · \(BodyMass.BMIClass(bmi).title)",
+                                comment: "Body mass index and its WHO class, e.g. BMI 23.4 · Normal")
+        } else if let first = series.first(where: { $0.value != nil }), first.day < latest.day, let start = first.value {
+            comparison = String(localized: "\(format(shown(kilograms) - shown(start), 1, signed: true)) \(unit) in 30 days",
+                                comment: "Weight change, e.g. −0.8 kg in 30 days")
+        }
+        return CardSnapshot(
+            period: dayLabel(latest.day),
+            value: format(shown(kilograms), 1),
+            unit: unit,
+            comparison: comparison,
+            chart: .line(series.map { $0.value.map(shown) }, normalRange: nil)
+        )
+    }
+}
+
 nonisolated extension QuantityMetric {
     var unit: String {
         switch self {
@@ -232,12 +261,15 @@ nonisolated extension QuantityMetric {
         case .exerciseMinutes: String(localized: "min", comment: "Unit: minutes")
         case .distance: String(localized: "km", comment: "Unit: kilometers")
         case .vo2Max: "ml/kg·min"
+        case .bodyMass, .leanBodyMass: String(localized: "kg", comment: "Unit: kilograms")
+        case .bodyFat: "%"
+        case .height: String(localized: "cm", comment: "Unit: centimeters")
         }
     }
 
     var decimals: Int {
         switch self {
-        case .respiratoryRate, .wristTemperature, .distance, .vo2Max: 1
+        case .respiratoryRate, .wristTemperature, .distance, .vo2Max, .bodyMass, .bodyFat, .leanBodyMass: 1
         default: 0
         }
     }

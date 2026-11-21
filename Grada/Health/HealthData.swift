@@ -10,6 +10,16 @@ nonisolated struct DayValue: Equatable {
 nonisolated enum QuantityMetric: CaseIterable {
     case restingHeartRate, hrv, oxygenSaturation, respiratoryRate, wristTemperature
     case steps, activeEnergy, exerciseMinutes, distance, floors, vo2Max
+    /// From smart scales or entered by hand (#132): kilograms, percent, kilograms, centimeters.
+    case bodyMass, bodyFat, leanBodyMass, height
+
+    /// Body measurements keep the day's last reading, as a scale shows it, rather than averaging weighings.
+    var usesLatestReading: Bool {
+        switch self {
+        case .bodyMass, .bodyFat, .leanBodyMass, .height: true
+        default: false
+        }
+    }
 
     /// Summed per day (steps) vs averaged per day (heart rate).
     var isCumulative: Bool {
@@ -181,6 +191,7 @@ nonisolated struct OvernightVitals: Equatable {
 /// Raw values are stored with each day, so they must never change.
 nonisolated enum DataKind: String, CaseIterable, Identifiable {
     case restingHeartRate, hrv, overnightHRV, oxygenSaturation, respiratoryRate, wristTemperature, vo2Max
+    case bodyMass, bodyFat, leanBodyMass, height
     case sleep
     case steps, activeEnergy, exerciseMinutes, distance, floors, standHours
     case workouts
@@ -200,6 +211,10 @@ nonisolated enum DataKind: String, CaseIterable, Identifiable {
         case .distance: .distance
         case .floors: .floors
         case .vo2Max: .vo2Max
+        case .bodyMass: .bodyMass
+        case .bodyFat: .bodyFat
+        case .leanBodyMass: .leanBodyMass
+        case .height: .height
         }
     }
 
@@ -212,6 +227,10 @@ nonisolated enum DataKind: String, CaseIterable, Identifiable {
         case .respiratoryRate: String(localized: "Respiratory Rate")
         case .wristTemperature: String(localized: "Wrist Temperature")
         case .vo2Max: String(localized: "VO₂ Max")
+        case .bodyMass: String(localized: "Weight")
+        case .bodyFat: String(localized: "Body Fat Percentage")
+        case .leanBodyMass: String(localized: "Lean Body Mass")
+        case .height: String(localized: "Height")
         case .sleep: String(localized: "Sleep")
         case .steps: String(localized: "Steps")
         case .activeEnergy: String(localized: "Active Energy")
@@ -292,6 +311,8 @@ nonisolated protocol HealthDataSource {
     func intake(_ intake: Intake, on day: Date) async throws -> Double?
     /// Heart rate recovery after each of the last `days` days' last workout with one, oldest first (#131).
     func heartRateRecovery(days: Int) async throws -> [DayValue]
+    /// The most recent value of `metric` ever stored, e.g. height, which is rarely measured.
+    func latest(_ metric: QuantityMetric) async throws -> Double?
 }
 
 nonisolated extension HealthDataSource {
@@ -303,6 +324,9 @@ nonisolated extension HealthDataSource {
     func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval? { nil }
     func intake(_ intake: Intake, on day: Date) async throws -> Double? { nil }
     func heartRateRecovery(days: Int) async throws -> [DayValue] { [] }
+    func latest(_ metric: QuantityMetric) async throws -> Double? {
+        try await daily(metric, days: 3650).last { $0.value != nil }?.value
+    }
 
     /// Without workout samples, the 5-minute heart rate during the workout.
     func workoutDetail(_ workout: WorkoutSummary) async throws -> WorkoutDetail {

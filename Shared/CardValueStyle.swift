@@ -36,7 +36,7 @@ nonisolated enum CardValueStyle: Codable, Hashable {
 
 /// A card category's icon color. System colors already adapt to light and dark mode.
 nonisolated enum CardTint: String, Codable {
-    case green, indigo, red, orange, teal
+    case green, indigo, red, orange, teal, purple
 
     var color: Color {
         switch self {
@@ -45,6 +45,7 @@ nonisolated enum CardTint: String, Codable {
         case .red: .red
         case .orange: .orange
         case .teal: .teal
+        case .purple: .purple
         }
     }
 }

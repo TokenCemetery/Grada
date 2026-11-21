@@ -10,7 +10,7 @@ nonisolated enum CardSize {
 }
 
 nonisolated enum CardCategory: CaseIterable {
-    case status, sleep, heart, activity, training, history
+    case status, sleep, heart, activity, training, body, history
 
     var title: String {
         switch self {
@@ -19,6 +19,7 @@ nonisolated enum CardCategory: CaseIterable {
         case .heart: String(localized: "Heart and vitals")
         case .activity: String(localized: "Activity")
         case .training: String(localized: "Training")
+        case .body: String(localized: "Body", comment: "Card category: weight and body composition")
         case .history: String(localized: "History")
         }
     }
@@ -31,6 +32,7 @@ nonisolated enum CardCategory: CaseIterable {
         case .heart: String(localized: "Add heart and vitals")
         case .activity: String(localized: "Add activity")
         case .training: String(localized: "Add training")
+        case .body: String(localized: "Add body", comment: "Customize section: cards about weight and body composition")
         case .history: String(localized: "Add history")
         }
     }
@@ -45,6 +47,7 @@ nonisolated enum CardCategory: CaseIterable {
         case .heart: .red
         case .activity: .green
         case .training: .orange
+        case .body: .purple
         case .history: .teal
         }
     }
@@ -86,6 +89,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
     case steps, activeEnergy, exerciseMinutes, intensityMinutes, distance, floors, standHours, dayIntensity
     case lastWorkout, weeklyTraining, strain, recoveryTime, vo2Max, racePredictor, trainingReadiness, loadFocus
     case heartRateRecovery
+    case weight
     case last30Days
 
     var id: String { rawValue }
@@ -169,6 +173,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
         case .recoveryTime: String(localized: "Recovery Time")
         case .vo2Max: String(localized: "VO₂ Max")
         case .heartRateRecovery: String(localized: "Heart Rate Recovery")
+        case .weight: String(localized: "Weight")
         case .last30Days: String(localized: "Workouts Calendar")
         }
     }
@@ -207,6 +212,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
         case .recoveryTime: "timer"
         case .vo2Max: "bolt.heart"
         case .heartRateRecovery: "arrow.down.heart"
+        case .weight: "scalemass"
         case .last30Days: "calendar"
         }
     }
@@ -219,6 +225,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity: .activity
         case .lastWorkout, .weeklyTraining, .strain, .recoveryTime, .vo2Max, .racePredictor, .trainingReadiness, .loadFocus,
              .heartRateRecovery: .training
+        case .weight: .body
         case .last30Days: .history
         }
     }
@@ -254,6 +261,7 @@ nonisolated enum CardKind: String, CaseIterable, Identifiable {
         case .sleep: String(localized: "Wear a watch to bed or track sleep in a sleep app.")
         case .activity: String(localized: "Recorded by your iPhone or watch.")
         case .training, .history: String(localized: "Record a workout on your watch or in a fitness app.")
+        case .body: String(localized: "Weigh yourself on a smart scale that syncs to Apple Health, or add your weight in the Health app.")
         case .status: String(localized: "Needs heart rate and overnight vitals from Apple Watch or a compatible watch.")
         }
     }

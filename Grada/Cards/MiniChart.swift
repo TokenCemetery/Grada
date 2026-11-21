@@ -30,7 +30,12 @@ struct MiniChart: View {
             VStack(spacing: 2) {
                 AreaLine(values: values, normalRange: normalRange, color: color)
                     .frame(height: Self.plotHeight)
-                WeekdayLabels()
+                // Weekdays only label a week; longer lines say how many days they cover.
+                if values.count == 7 {
+                    WeekdayLabels()
+                } else {
+                    Text("Last \(values.count) days").font(.caption2).foregroundStyle(.secondary)
+                }
             }
         case .progress(let value, let goal, let isAverage):
             GoalBar(share: goal > 0 ? value / goal : 0, isAverage: isAverage, color: color)

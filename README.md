@@ -2,7 +2,7 @@
 
 Grada is an iPhone and iPad app that turns your Apple Health data into a daily summary: a home screen of health cards and a calendar that grades each day.
 
-- **Home:** cards for recovery, sleep, heart and vitals, activity and training. Add, remove and reorder them, and choose today or the last 7 days where both make sense.
+- **Home:** cards for recovery, sleep, heart and vitals, activity, training and body. Add, remove and reorder them, and choose today or the last 7 days where both make sense.
 - **Calendar:** colors each day by a metric, with a sheet for that day's details.
 - **Widgets:** any single-value card, such as Recovery, Sleep Score, Resources or Training Readiness, on the Home Screen (small, medium) or Lock Screen (circular, rectangular). Touch and hold a widget, then Edit Widget to pick the card. A widget shows the same value and color as the card on Home, updates after each Apple Health import, and clears at midnight until the next one. The app writes the finished cards to a file in an App Group container on the device (`Shared/WidgetCards.swift`), and the widget reads only that file.
 - **Detail screens:** each metric's trend and breakdown, what it means, and the inputs it's based on. Some show today's recommendation with its reason: steps left to the goal as minutes of walking (or a congratulation once it's reached), a bedtime for your usual wake-up, or easing off when resting heart rate, HRV or training load is out of range.
@@ -33,6 +33,7 @@ Every calculated metric rests on published research, not invented formulas. Each
 - **Sleep Score:** the National Sleep Foundation's sleep quality consensus.
 - **Strain:** Edwards' training load and the acute:chronic workload ratio.
 - **Health Age:** published mortality risks for VO₂ max, resting heart rate, steps, sleep and exercise.
+- **Weight:** the latest weight with its body mass index (BMI) and WHO adult class, and the 30-day trend, in kilograms or pounds; the detail screen adds body fat, lean body mass and BMI over time, and says BMI doesn't tell fat from muscle.
 - **Heart Rate Recovery:** how far heart rate falls in the minute after a workout, from Apple Watch's own measurement or the heart rate around the workout's end, shown on the workout screen and as a card with a 90-day trend. A fall of 12 bpm or less is marked, Cole et al.'s cut-off, as a fitness marker rather than a diagnosis.
 
 Resources (an all-day energy estimate) has no published method behind it and says so.

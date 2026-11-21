@@ -105,6 +105,59 @@
         }
       }
     },
+    "%@ %@ in 30 days" : {
+      "comment" : "Weight change, e.g. −0.8 kg in 30 days",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ in 30 Tagen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ en 30 días"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ en 30 jours"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 दिनों में %1$@ %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ in 30 giorni"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ em 30 dias"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$@ за 30 дней"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 天内 %1$@ %2$@"
+          }
+        }
+      }
+    },
     "%@ (imported)" : {
       "localizations" : {
         "de" : {
@@ -6474,6 +6527,59 @@
         }
       }
     },
+    "Add body" : {
+      "comment" : "Customize section: cards about weight and body composition",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körper hinzufügen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir cuerpo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter corps"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शरीर जोड़ें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi corpo"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar corpo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить: тело"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加身体"
+          }
+        }
+      }
+    },
     "Add heart and vitals" : {
       "localizations" : {
         "de" : {
@@ -8088,6 +8194,163 @@
         }
       }
     },
+    "BMI %@ · %@" : {
+      "comment" : "Body mass index and its WHO class, e.g. BMI 23.4 · Normal",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMI %1$@ · %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IMC %1$@ · %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IMC %1$@ · %2$@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMI %1$@ · %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IMC %1$@ · %2$@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IMC %1$@ · %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ИМТ %1$@ · %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMI %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "BMI classes for adults: underweight, normal, pre-obese and obese" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMI-Klassen für Erwachsene: Untergewicht, normal, Präadipositas und Adipositas"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clases de IMC para adultos: bajo peso, normal, preobesidad y obesidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classes d’IMC pour adultes : insuffisance pondérale, normal, pré-obésité et obésité"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "वयस्कों के लिए BMI वर्ग: कम वज़न, सामान्य, प्री-ओबीस और मोटापा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classi di IMC per adulti: sottopeso, normale, pre-obesità e obesità"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classes de IMC para adultos: baixo peso, normal, pré-obesidade e obesidade"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Классы ИМТ для взрослых: дефицит массы, норма, предожирение и ожирение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "成人 BMI 分类：体重过低、正常、肥胖前期和肥胖"
+          }
+        }
+      }
+    },
+    "BMI uses the latest height in Apple Health for every day, since adult height barely changes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der BMI verwendet für jeden Tag die neueste Größe aus Apple Health, da sich die Größe Erwachsener kaum ändert."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El IMC usa la altura más reciente de Apple Health para cada día, ya que la altura de un adulto apenas cambia."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’IMC utilise la taille la plus récente d’Apple Health pour chaque jour, car la taille d’un adulte change à peine."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMI हर दिन के लिए Apple Health में सबसे नई लंबाई लेता है, क्योंकि वयस्कों की लंबाई लगभग नहीं बदलती।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’IMC usa l’altezza più recente in Apple Health per ogni giorno, perché l’altezza di un adulto cambia appena."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O IMC usa a altura mais recente do Apple Health para cada dia, já que a altura de um adulto quase não muda."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ИМТ использует для каждого дня последний рост из Apple Health: рост взрослого почти не меняется."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BMI 每天都使用 Apple Health 中最新的身高，因为成年人的身高几乎不变。"
+          }
+        }
+      }
+    },
     "Balanced" : {
       "comment" : "Goal preset name",
       "localizations" : {
@@ -8606,6 +8869,164 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "血氧"
+          }
+        }
+      }
+    },
+    "Body" : {
+      "comment" : "Card category: weight and body composition",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körper"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuerpo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corps"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शरीर"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corpo"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corpo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тело"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身体"
+          }
+        }
+      }
+    },
+    "Body Fat Percentage" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Körperfettanteil"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Porcentaje de grasa corporal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masse grasse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "शरीर में वसा प्रतिशत"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Percentuale di grasso corporeo"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Percentual de gordura corporal"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Процент жира"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体脂率"
+          }
+        }
+      }
+    },
+    "Body Mass Index · %@" : {
+      "comment" : "BMI chart title with the WHO class of the latest value, e.g. Body Mass Index · Normal",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body-Mass-Index · %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Índice de masa corporal · %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indice de masse corporelle · %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बॉडी मास इंडेक्स · %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indice di massa corporea · %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Índice de massa corporal · %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Индекс массы тела · %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身体质量指数 · %@"
           }
         }
       }
@@ -15123,6 +15544,58 @@
         }
       }
     },
+    "Height" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altura"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taille"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लंबाई"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altezza"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altura"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Рост"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身高"
+          }
+        }
+      }
+    },
     "High" : {
       "localizations" : {
         "de" : {
@@ -17813,6 +18286,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最新"
+          }
+        }
+      }
+    },
+    "Lean Body Mass" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fettfreie Masse"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masa corporal magra"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masse maigre"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लीन बॉडी मास"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Massa magra"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Massa magra"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Безжировая масса"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "去脂体重"
           }
         }
       }
@@ -21745,6 +22270,59 @@
         }
       }
     },
+    "Obese" : {
+      "comment" : "WHO BMI class",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adipositas"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obesidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obésité"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "मोटापा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obesità"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obesidade"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ожирение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "肥胖"
+          }
+        }
+      }
+    },
     "On Home" : {
       "localizations" : {
         "de" : {
@@ -22573,6 +23151,59 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "睡眠较差"
+          }
+        }
+      }
+    },
+    "Pre-obese" : {
+      "comment" : "WHO BMI class",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Präadipositas"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preobesidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pré-obésité"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्री-ओबीस"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-obesità"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pré-obesidade"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Предожирение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "肥胖前期"
           }
         }
       }
@@ -30504,6 +31135,59 @@
         }
       }
     },
+    "Underweight" : {
+      "comment" : "WHO BMI class",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untergewicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bajo peso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Insuffisance pondérale"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कम वज़न"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sottopeso"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baixo peso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дефицит массы"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体重过低"
+          }
+        }
+      }
+    },
     "Until %@" : {
       "localizations" : {
         "de" : {
@@ -32042,6 +32726,110 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "周末"
+          }
+        }
+      }
+    },
+    "Weigh yourself on a smart scale that syncs to Apple Health, or add your weight in the Health app." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiege dich mit einer smarten Waage, die mit Apple Health synchronisiert, oder trage dein Gewicht in der Health-App ein."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pésate en una báscula inteligente que se sincronice con Apple Health o añade tu peso en la app Salud."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesez-vous sur une balance connectée synchronisée avec Apple Health, ou ajoutez votre poids dans l’app Santé."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health से सिंक होने वाले स्मार्ट स्केल पर वज़न करें, या Health ऐप में अपना वज़न जोड़ें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesati con una bilancia smart che si sincronizza con Apple Health, oppure aggiungi il peso nell’app Salute."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pese-se em uma balança inteligente que sincronize com o Apple Health ou adicione seu peso no app Saúde."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Взвесьтесь на умных весах, синхронизируемых с Apple Health, или добавьте вес в приложении «Здоровье»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用可同步到 Apple Health 的智能体重秤称重，或在“健康”App 中添加体重。"
+          }
+        }
+      }
+    },
+    "Weight" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gewicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poids"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "वज़न"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peso"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вес"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体重"
           }
         }
       }
@@ -33610,6 +34398,58 @@
         }
       }
     },
+    "Your weight from a smart scale or the Health app, with body fat, lean body mass and body mass index (BMI) from the same scale and your height. BMI is your weight in kilograms divided by your height in metres squared. The World Health Organization's classes for adults: underweight below 18.5, normal 18.5–24.9, pre-obese 25–29.9 and obese from 30. BMI doesn't tell fat from muscle, so muscular people can read as pre-obese, and it doesn't apply to children or during pregnancy. Weight moves by a kilogram or more from day to day with water and food, so watch the trend rather than single weighings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Gewicht von einer smarten Waage oder aus der Health-App, mit Körperfett, fettfreier Masse und Body-Mass-Index (BMI) von derselben Waage und deiner Größe. Der BMI ist dein Gewicht in Kilogramm geteilt durch das Quadrat deiner Größe in Metern. Die Klassen der Weltgesundheitsorganisation für Erwachsene: Untergewicht unter 18,5, normal 18,5–24,9, Präadipositas 25–29,9 und Adipositas ab 30. Der BMI unterscheidet nicht zwischen Fett und Muskeln, daher können muskulöse Menschen als präadipös gelten, und er gilt nicht für Kinder oder in der Schwangerschaft. Das Gewicht schwankt durch Wasser und Essen um ein Kilogramm oder mehr von Tag zu Tag, achte also auf den Verlauf statt auf einzelne Messungen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu peso de una báscula inteligente o de la app Salud, con grasa corporal, masa magra e índice de masa corporal (IMC) de la misma báscula y tu altura. El IMC es tu peso en kilogramos dividido por tu altura en metros al cuadrado. Las clases de la Organización Mundial de la Salud para adultos: bajo peso por debajo de 18,5, normal 18,5–24,9, preobesidad 25–29,9 y obesidad desde 30. El IMC no distingue grasa de músculo, así que las personas musculosas pueden salir con preobesidad, y no se aplica a niños ni durante el embarazo. El peso varía un kilo o más de un día a otro por el agua y la comida, así que fíjate en la tendencia y no en pesajes sueltos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre poids depuis une balance connectée ou l’app Santé, avec la masse grasse, la masse maigre et l’indice de masse corporelle (IMC) de la même balance et votre taille. L’IMC est votre poids en kilogrammes divisé par le carré de votre taille en mètres. Les classes de l’Organisation mondiale de la santé pour les adultes : insuffisance pondérale sous 18,5, normal 18,5–24,9, pré-obésité 25–29,9 et obésité à partir de 30. L’IMC ne distingue pas la graisse du muscle : une personne musclée peut apparaître en pré-obésité, et il ne s’applique ni aux enfants ni pendant la grossesse. Le poids varie d’un kilo ou plus d’un jour à l’autre avec l’eau et les repas : suivez la tendance plutôt que les pesées isolées."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "स्मार्ट स्केल या Health ऐप से आपका वज़न, उसी स्केल से शरीर में वसा, लीन बॉडी मास और आपकी लंबाई से बॉडी मास इंडेक्स (BMI) के साथ। BMI आपके किलोग्राम में वज़न को मीटर में लंबाई के वर्ग से भाग देने पर मिलता है। वयस्कों के लिए विश्व स्वास्थ्य संगठन के वर्ग: 18.5 से कम कम वज़न, 18.5–24.9 सामान्य, 25–29.9 प्री-ओबीस और 30 से मोटापा। BMI वसा और मांसपेशी में अंतर नहीं करता, इसलिए मांसल लोग प्री-ओबीस दिख सकते हैं, और यह बच्चों या गर्भावस्था पर लागू नहीं होता। पानी और भोजन से वज़न दिन-प्रतिदिन एक किलोग्राम या अधिक बदलता है, इसलिए अलग-अलग माप के बजाय रुझान देखें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo peso da una bilancia smart o dall’app Salute, con grasso corporeo, massa magra e indice di massa corporea (IMC) dalla stessa bilancia e dalla tua altezza. L’IMC è il peso in chilogrammi diviso per il quadrato dell’altezza in metri. Le classi dell’Organizzazione mondiale della sanità per gli adulti: sottopeso sotto 18,5, normale 18,5–24,9, pre-obesità 25–29,9 e obesità da 30. L’IMC non distingue il grasso dai muscoli, quindi le persone muscolose possono risultare in pre-obesità, e non vale per i bambini né in gravidanza. Il peso varia di un chilo o più da un giorno all’altro con acqua e cibo, quindi guarda l’andamento più che le singole pesate."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu peso de uma balança inteligente ou do app Saúde, com gordura corporal, massa magra e índice de massa corporal (IMC) da mesma balança e da sua altura. O IMC é o seu peso em quilogramas dividido pela altura em metros ao quadrado. As classes da Organização Mundial da Saúde para adultos: baixo peso abaixo de 18,5, normal 18,5–24,9, pré-obesidade 25–29,9 e obesidade a partir de 30. O IMC não diferencia gordura de músculo, então pessoas musculosas podem aparecer com pré-obesidade, e ele não se aplica a crianças nem na gravidez. O peso varia um quilo ou mais de um dia para o outro com água e comida, então observe a tendência, não pesagens isoladas."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш вес с умных весов или из приложения «Здоровье», а также процент жира, безжировая масса с тех же весов и индекс массы тела (ИМТ) по вашему росту. ИМТ — это вес в килограммах, делённый на квадрат роста в метрах. Классы Всемирной организации здравоохранения для взрослых: дефицит массы ниже 18,5, норма 18,5–24,9, предожирение 25–29,9 и ожирение от 30. ИМТ не отличает жир от мышц, поэтому у мускулистых людей может получиться предожирение, и он не применяется к детям и во время беременности. Вес меняется на килограмм и больше изо дня в день из-за воды и еды, поэтому смотрите на тренд, а не на отдельные взвешивания."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来自智能体重秤或“健康”App 的体重，以及同一体重秤的体脂、去脂体重和根据身高计算的身体质量指数（BMI）。BMI 是体重（千克）除以身高（米）的平方。世界卫生组织的成人分类：低于 18.5 为体重过低，18.5–24.9 为正常，25–29.9 为肥胖前期，30 及以上为肥胖。BMI 不区分脂肪和肌肉，肌肉发达的人可能被归为肥胖前期，也不适用于儿童和孕期。体重会因水分和饮食每天变化一千克或更多，因此请关注趋势，而非单次称重。"
+          }
+        }
+      }
+    },
     "Your workouts over the last 30 days." : {
       "localizations" : {
         "de" : {
@@ -34350,6 +35190,59 @@
         }
       }
     },
+    "cm" : {
+      "comment" : "Unit: centimeters",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cm"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cm"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cm"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cm"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cm"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "см"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "厘米"
+          }
+        }
+      }
+    },
     "h" : {
       "comment" : "Unit: hours",
       "localizations" : {
@@ -34567,6 +35460,59 @@
         }
       }
     },
+    "kg" : {
+      "comment" : "Unit: kilograms",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kg"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kg"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kg"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kg"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kg"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kg"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "кг"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公斤"
+          }
+        }
+      }
+    },
     "km" : {
       "comment" : "Unit: kilometers",
       "localizations" : {
@@ -34616,6 +35562,59 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "公里"
+          }
+        }
+      }
+    },
+    "lb" : {
+      "comment" : "Unit: pounds",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lb"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lb"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lb"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lb"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lb"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lb"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "фнт"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "磅"
           }
         }
       }

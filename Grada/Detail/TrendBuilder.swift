@@ -106,6 +106,10 @@ struct TrendBuilder {
             let series = try await source.daily(.vo2Max, days: days)
             return make(series, period, style: .line, unit: QuantityMetric.vo2Max.unit, format: .number(decimals: 1),
                         title: kind == .racePredictor ? String(localized: "VO₂ Max") : nil)
+        case .weight:
+            let series = try await source.daily(.bodyMass, days: days)
+            return make(series.map { DayValue(day: $0.day, value: $0.value.map { BodyMass.display($0, usesMetric: usesMetric) }) },
+                        period, style: .line, unit: BodyMass.unit(usesMetric: usesMetric), format: .number(decimals: 1))
         case .heartRateRecovery:
             return make(try await source.heartRateRecovery(days: days), period, style: .line,
                         unit: QuantityMetric.restingHeartRate.unit, format: .number(decimals: 0))
@@ -259,6 +263,38 @@ struct TrendBuilder {
             return DayValue(day: days[index], value: measured > 0 ? Double(inRange) : nil)
         }
         return make(counts, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Vitals in range"))
+    }
+
+    /// Charts a detail screen shows below its trend, each only with data: body fat, BMI and lean body mass for
+    /// Weight (#132).
+    func extraTrends(for kind: CardKind, period: TrendPeriod) async throws -> [Trend] {
+        guard kind == .weight else { return [] }
+        let days = period.days
+        var trends: [Trend] = []
+        let fat = try await source.daily(.bodyFat, days: days)
+        if fat.contains(where: { $0.value != nil }) {
+            trends.append(make(fat, period, style: .line, unit: "%", format: .number(decimals: 1),
+                               title: String(localized: "Body Fat Percentage")))
+        }
+        if let height = try await source.latest(.height) {
+            let bmi = try await source.daily(.bodyMass, days: days)
+                .map { DayValue(day: $0.day, value: $0.value.map { BodyMass.bmi(kilograms: $0, centimeters: height) }) }
+            if bmi.contains(where: { $0.value != nil }) {
+                let latest = bmi.last { $0.value != nil }!.value!
+                var trend = make(bmi, period, style: .line, unit: "", format: .number(decimals: 1),
+                                 title: String(localized: "Body Mass Index · \(BodyMass.BMIClass(latest).title)",
+                                               comment: "BMI chart title with the WHO class of the latest value, e.g. Body Mass Index · Normal"))
+                trend.normalRange = BodyMass.normalBMI
+                trends.append(trend)
+            }
+        }
+        let lean = try await source.daily(.leanBodyMass, days: days)
+        if lean.contains(where: { $0.value != nil }) {
+            trends.append(make(lean.map { DayValue(day: $0.day, value: $0.value.map { BodyMass.display($0, usesMetric: usesMetric) }) },
+                               period, style: .line, unit: BodyMass.unit(usesMetric: usesMetric), format: .number(decimals: 1),
+                               title: String(localized: "Lean Body Mass")))
+        }
+        return trends
     }
 
     // MARK: - Helpers

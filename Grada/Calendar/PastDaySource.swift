@@ -25,6 +25,11 @@ nonisolated struct PastDaySource: HealthDataSource {
         try await base.intake(intake, on: day)
     }
 
+    /// Height and the like change too slowly for the shown day to matter.
+    func latest(_ metric: QuantityMetric) async throws -> Double? {
+        try await base.latest(metric)
+    }
+
     func heartRateRecovery(days: Int) async throws -> [DayValue] {
         Array(try await base.heartRateRecovery(days: days + daysAgo).dropLast(daysAgo))
     }

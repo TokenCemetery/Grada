@@ -19,10 +19,21 @@ nonisolated struct SampleDataSource: HealthDataSource {
         case .distance: (6.5, 2)
         case .floors: (9, 4)
         case .vo2Max: (47, 0.4)
+        case .bodyMass: (74, 0.4)
+        case .bodyFat: (18, 0.4)
+        case .leanBodyMass: (60.5, 0.3)
+        case .height: (178, 0)
+        }
+        // VO₂ max is only measured every few days, weight every other morning, body fat weekly, height once a month.
+        let every = switch metric {
+        case .vo2Max: 5
+        case .bodyMass: 2
+        case .bodyFat, .leanBodyMass: 7
+        case .height: 30
+        default: 1
         }
         return lastDays(days).enumerated().map { index, day in
-            // VO₂ max is only measured every few days.
-            if metric == .vo2Max, index % 5 != 0 { return DayValue(day: day, value: nil) }
+            if (days - 1 - index) % every != 0 { return DayValue(day: day, value: nil) }
             var value = base + spread * random.nextSigned()
             // Today is still in progress for daily totals.
             if metric.isCumulative, index == days - 1 { value *= 0.7 }

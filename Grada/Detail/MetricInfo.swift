@@ -32,7 +32,7 @@ extension CardKind {
         switch self {
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity, .last30Days: .total
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max,
-             .heartRateRecovery: .vital
+             .heartRateRecovery, .weight: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .lastWorkout, .weeklyTraining, .strain, .recoveryTime, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .healthStatus, .recovery, .resources, .healthAge, .hrvStatus: .score
@@ -53,6 +53,7 @@ extension CardKind {
         case .respiratoryRate: .respiratoryRate
         case .wristTemperature: .wristTemperature
         case .vo2Max, .racePredictor: .vo2Max
+        case .weight: .bodyMass
         default: nil
         }
     }
@@ -63,6 +64,7 @@ extension CardKind {
         case .heart: .health
         case .sleep: .recovery
         case .activity, .training, .history: .training
+        case .body: .health
         case .status: self == .recovery || self == .resources ? .recovery : .health
         }
     }
@@ -109,6 +111,7 @@ extension CardKind {
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency: [.sleep]
         case .standHours: [.standHours]
         case .lastWorkout, .weeklyTraining, .heartRateRecovery: [.workouts]
+        case .weight: [.bodyMass, .bodyFat, .leanBodyMass, .height]
         case .recovery, .hrvStatus, .healthStatus: [.overnightHRV]
         default: quantityMetric.map { [DataKind($0)] } ?? []
         }
@@ -197,6 +200,8 @@ extension CardKind {
             String(localized: "How your workout time over the last 4 weeks splits by intensity, from heart rate as a share of your max: low below 82%, threshold from 82% and high from 88%, the boundaries between the first and second ventilatory thresholds in Seiler's zones. Studies of successful endurance athletes found about 80% of their training at low intensity and most of the rest at high intensity, so green means at least 80% low. Counted by heart rate time rather than sessions, the low share is higher still: elite skiers spent 96% of their training time at low intensity, though 87% of their sessions were low. Too little low-intensity work, often from making every session moderately hard, shows yellow.")
         case .last30Days:
             String(localized: "Your workouts over the last 30 days.")
+        case .weight:
+            String(localized: "Your weight from a smart scale or the Health app, with body fat, lean body mass and body mass index (BMI) from the same scale and your height. BMI is your weight in kilograms divided by your height in metres squared. The World Health Organization's classes for adults: underweight below 18.5, normal 18.5–24.9, pre-obese 25–29.9 and obese from 30. BMI doesn't tell fat from muscle, so muscular people can read as pre-obese, and it doesn't apply to children or during pregnancy. Weight moves by a kilogram or more from day to day with water and food, so watch the trend rather than single weighings.")
         }
     }
 }
