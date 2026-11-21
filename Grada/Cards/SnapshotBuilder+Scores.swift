@@ -222,7 +222,8 @@ nonisolated extension SnapshotBuilder {
                 dailySteps: Baseline.average(steps[range].compactMap { $0 }),
                 restingHeartRate: Baseline.average(resting[range].compactMap { $0 }),
                 vo2Max: vo2Max[range].compactMap { $0 }.last,
-                exerciseMinutesPerWeek: minutes.isEmpty ? nil : minutes.reduce(0, +) / (Double(window) / 7)
+                // Per day with data, like the other inputs: days the watch wasn't worn aren't days without exercise.
+                exerciseMinutesPerWeek: Baseline.average(minutes).map { $0 * 7 }
             ))
         }
     }

@@ -776,6 +776,25 @@ struct IntensityMinutesTests {
     }
 }
 
+/// Sample data with exercise minutes on every third day only, as if the watch was worn a third of the time.
+private struct SparseExerciseSource: HealthDataSource {
+    let base = SampleDataSource()
+    func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
+        let series = try await base.daily(metric, days: days)
+        guard metric == .exerciseMinutes else { return series }
+        return series.enumerated().map { DayValue(day: $0.element.day, value: $0.offset.isMultiple(of: 3) ? 30 : nil) }
+    }
+    func sleepNights(days: Int) async throws -> [SleepNight] { try await base.sleepNights(days: days) }
+    func standHours(days: Int) async throws -> [DayValue] { try await base.standHours(days: days) }
+    func overnight(days: Int) async throws -> [OvernightVitals] { try await base.overnight(days: days) }
+    func workouts(days: Int) async throws -> [WorkoutSummary] { try await base.workouts(days: days) }
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] { try await base.heartRate(in: interval) }
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { try await base.sleepPeriods(in: interval) }
+    func age() async throws -> Int? { try await base.age() }
+    func biologicalSex() async throws -> BiologicalSex? { try await base.biologicalSex() }
+    func highestHeartRate(days: Int) async throws -> Double? { try await base.highestHeartRate(days: days) }
+}
+
 /// Sample data (resting about 54) with no age and a highest heart rate of 70, too close to resting to set zones.
 private struct LowMaxSource: HealthDataSource {
     let base = SampleDataSource()
@@ -1071,6 +1090,12 @@ struct SleepConsistencyTests {
 
 @MainActor
 struct HealthAgeTests {
+    /// Exercise per week comes from the days with data, not all 30: 30 minutes on each worn day is 210 a week (#173).
+    @Test func exerciseCountsOnlyDaysWithData() async throws {
+        let inputs = try await SnapshotBuilder(source: SparseExerciseSource()).healthAgeInputs(age: 40, count: 1)
+        #expect(inputs.last?.input.exerciseMinutesPerWeek == 210)
+    }
+
     @Test func fitHabitsLowerHealthAge() async throws {
         let fit = HealthAge.Input(age: 40, sex: .male, sleepHours: 7.5, dailySteps: 11_000, restingHeartRate: 50,
                                   vo2Max: 50, exerciseMinutesPerWeek: 250)
