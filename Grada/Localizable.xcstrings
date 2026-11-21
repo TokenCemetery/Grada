@@ -11277,7 +11277,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nach Zeit gezählt waren 9 % des Trainings von Elite-Skiläufern niedrig intensiv"
+            "value" : "Nach Zeit gezählt waren 96 % des Trainings von Elite-Skiläufern niedrig intensiv"
           }
         },
         "es" : {
@@ -15396,7 +15396,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ziele werden jeden Montag angepasst: um  % nach oben nach einer Woche, in der du sie erreicht hast, um  % nach unten nach einer Woche, in der du sie verfehlt hast. Ein von dir geändertes Ziel bleibt eine Woche bestehen und wird dann von deinem Wert aus angepasst."
+            "value" : "Ziele werden jeden Montag angepasst: um 5 % nach oben nach einer Woche, in der du sie erreicht hast, um 5 % nach unten nach einer Woche, in der du sie verfehlt hast. Ein von dir geändertes Ziel bleibt eine Woche bestehen und wird dann von deinem Wert aus angepasst."
           }
         },
         "es" : {
@@ -17638,7 +17638,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stunden, bis das Ruhe- und Erholungssystem deines Herzens nach deinen letzten Workouts wieder im Normalbereich ist. Eine Übersicht von Studien zur Herzfrequenzvariabilität nach Belastung (Stanley, Peake und Buchheit 2013) fand, dass sie sich nach leichtem Training innerhalb von 24 Stunden erholt, nach Schwellenbelastung in 24–48 Stunden und nach harter Belastung in mindestens 48 Stunden; die Dauer der Einheit spielte eine geringere Rolle. Jedes Workout zählt nach seiner durchschnittlichen Herzfrequenz: leicht unter 8 % deiner maximalen Herzfrequenz (24 Stunden), Schwelle ab 8 % (36 Stunden, die Mitte des Bereichs) und hart ab 8 % (48 Stunden). Workouts ohne Herzfrequenz zählen als leicht. Deine nächtliche HRV und dein Ruhepuls messen diese Erholung direkt: Wenn du noch erholungsbedürftig aufgewacht bist und die Erholung von heute Morgen nicht Gut ist, dauert die Erholung bis morgen früh. Fittere Menschen erholen sich schneller, verstehe die Stunden daher als Richtwert."
+            "value" : "Stunden, bis das Ruhe- und Erholungssystem deines Herzens nach deinen letzten Workouts wieder im Normalbereich ist. Eine Übersicht von Studien zur Herzfrequenzvariabilität nach Belastung (Stanley, Peake und Buchheit 2013) fand, dass sie sich nach leichtem Training innerhalb von 24 Stunden erholt, nach Schwellenbelastung in 24–48 Stunden und nach harter Belastung in mindestens 48 Stunden; die Dauer der Einheit spielte eine geringere Rolle. Jedes Workout zählt nach seiner durchschnittlichen Herzfrequenz: leicht unter 82 % deiner maximalen Herzfrequenz (24 Stunden), Schwelle ab 82 % (36 Stunden, die Mitte des Bereichs) und hart ab 88 % (48 Stunden). Workouts ohne Herzfrequenz zählen als leicht. Deine nächtliche HRV und dein Ruhepuls messen diese Erholung direkt: Wenn du noch erholungsbedürftig aufgewacht bist und die Erholung von heute Morgen nicht Gut ist, dauert die Erholung bis morgen früh. Fittere Menschen erholen sich schneller, verstehe die Stunden daher als Richtwert."
           }
         },
         "es" : {
@@ -17794,7 +17794,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie viel Sauerstoff dein Blut transportiert. 95–10 % sind typisch; kurze Abfälle im Schlaf sind häufig."
+            "value" : "Wie viel Sauerstoff dein Blut transportiert. 95–100 % sind typisch; kurze Abfälle im Schlaf sind häufig."
           }
         },
         "es" : {
@@ -18054,7 +18054,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie gut du letzte Nacht geschlafen hast: der Anteil der Schlafqualitäts-Indikatoren, die die Nacht erfüllt hat, jeder mit gleichem Gewicht. Vier stammen aus dem Expertenkonsens der National Sleep Foundation: mindestens 8 % der Zeit zwischen Einschlafen und Aufwachen geschlafen, höchstens 20 Minuten Wachzeit dazwischen (30 ab 65 Jahren) und höchstens ein Aufwachen von mehr als 5 Minuten (zwei ab 65 Jahren). Die anderen beiden sind genug Schlaf für deinen Schlafbedarf und ein Schlafregelmäßigkeitsindex über dem unregelmäßigsten Viertel der Erwachsenen. Die Experten fanden keine Einigkeit darüber, dass Schlafphasen ein Zeichen für guten Schlaf sind, daher werden sie nicht bewertet. Grün bei allen erfüllten Indikatoren, Gelb bei einem verfehlten, Rot bei zwei oder mehr. Benötigt Schlafphasen von deiner Uhr und Schlafaufzeichnungen an 5 der letzten 7 Tage."
+            "value" : "Wie gut du letzte Nacht geschlafen hast: der Anteil der Schlafqualitäts-Indikatoren, die die Nacht erfüllt hat, jeder mit gleichem Gewicht. Vier stammen aus dem Expertenkonsens der National Sleep Foundation: mindestens 85 % der Zeit zwischen Einschlafen und Aufwachen geschlafen, höchstens 20 Minuten Wachzeit dazwischen (30 ab 65 Jahren) und höchstens ein Aufwachen von mehr als 5 Minuten (zwei ab 65 Jahren). Die anderen beiden sind genug Schlaf für deinen Schlafbedarf und ein Schlafregelmäßigkeitsindex über dem unregelmäßigsten Viertel der Erwachsenen. Die Experten fanden keine Einigkeit darüber, dass Schlafphasen ein Zeichen für guten Schlaf sind, daher werden sie nicht bewertet. Grün bei allen erfüllten Indikatoren, Gelb bei einem verfehlten, Rot bei zwei oder mehr. Benötigt Schlafphasen von deiner Uhr und Schlafaufzeichnungen an 5 der letzten 7 Tage."
           }
         },
         "es" : {
@@ -18158,7 +18158,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie sich deine Workout-Zeit der letzten 4 Wochen nach Intensität verteilt, anhand der Herzfrequenz als Anteil deines Maximums: niedrig unter 8 %, Schwelle ab 8 % und hoch ab 8 %, die Grenzen zwischen der ersten und zweiten ventilatorischen Schwelle in Seilers Zonen. Studien an erfolgreichen Ausdauersportlern fanden etwa 8 % ihres Trainings bei niedriger Intensität und den Großteil des Rests bei hoher Intensität, daher ist Grün mindestens 8 % niedrig. Nach Herzfrequenzzeit statt nach Einheiten gezählt, ist der niedrige Anteil noch höher: Elite-Skiläufer verbrachten 9 % ihrer Trainingszeit bei niedriger Intensität, obwohl 8 % ihrer Einheiten niedrig waren. Zu wenig niedrig intensives Training, oft weil jede Einheit mäßig hart gemacht wird, zeigt Gelb."
+            "value" : "Wie sich deine Workout-Zeit der letzten 4 Wochen nach Intensität verteilt, anhand der Herzfrequenz als Anteil deines Maximums: niedrig unter 82 %, Schwelle ab 82 % und hoch ab 88 %, die Grenzen zwischen der ersten und zweiten ventilatorischen Schwelle in Seilers Zonen. Studien an erfolgreichen Ausdauersportlern fanden etwa 80 % ihres Trainings bei niedriger Intensität und den Großteil des Rests bei hoher Intensität, daher ist Grün mindestens 80 % niedrig. Nach Herzfrequenzzeit statt nach Einheiten gezählt, ist der niedrige Anteil noch höher: Elite-Skiläufer verbrachten 96 % ihrer Trainingszeit bei niedriger Intensität, obwohl 87 % ihrer Einheiten niedrig waren. Zu wenig niedrig intensives Training, oft weil jede Einheit mäßig hart gemacht wird, zeigt Gelb."
           }
         },
         "es" : {
@@ -21480,7 +21480,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Minuten der letzten 7 Tage mit einer Herzfrequenz bei 40–5 % der Reserve (mäßig) oder darüber (intensiv, doppelt gezählt). Die WHO empfiehlt mindestens 150 mäßig intensive oder 75 intensive Minuten pro Woche, daher zählt eine intensive Minute doppelt. Tage ohne Herzfrequenz verwenden stattdessen Trainingsminuten."
+            "value" : "Minuten der letzten 7 Tage mit einer Herzfrequenz bei 40–59 % der Reserve (mäßig) oder darüber (intensiv, doppelt gezählt). Die WHO empfiehlt mindestens 150 mäßig intensive oder 75 intensive Minuten pro Woche, daher zählt eine intensive Minute doppelt. Tage ohne Herzfrequenz verwenden stattdessen Trainingsminuten."
           }
         },
         "es" : {
@@ -32659,7 +32659,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Übersicht bewertet die Intensität nach physiologischen Schwellen, nicht nach Herzfrequenz. Sie bei 8 % und 8 % der maximalen Herzfrequenz anzusetzen (Seilers Zonen) und 36 Stunden für den Bereich von 24–48 Stunden zu nehmen, sind Entscheidungen von Grada."
+            "value" : "Die Übersicht bewertet die Intensität nach physiologischen Schwellen, nicht nach Herzfrequenz. Sie bei 82 % und 88 % der maximalen Herzfrequenz anzusetzen (Seilers Zonen) und 36 Stunden für den Bereich von 24–48 Stunden zu nehmen, sind Entscheidungen von Grada."
           }
         },
         "es" : {
@@ -32919,7 +32919,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Drei Intensitätszonen bei 8 % und 8 % der maximalen Herzfrequenz; etwa 8 % des Trainings leicht"
+            "value" : "Drei Intensitätszonen bei 82 % und 88 % der maximalen Herzfrequenz; etwa 80 % des Trainings leicht"
           }
         },
         "es" : {
@@ -33388,7 +33388,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Trainingslast von heute: Minuten mit deiner Herzfrequenz in jeder Zone (50–6 %% der maximalen zählen 1 pro Minute, bis zu 9 %% und mehr mit 5), Edwards-TRIMP, über den ganzen Tag, sodass Workouts und aktive Tage beide zählen. Das Verhältnis vergleicht deine durchschnittliche Tageslast der letzten 7 Tage mit den letzten 28. In Studien an Sportlern waren Verletzungen bei Verhältnissen von 0,8–1,3 am seltensten (grün) und ab 1,5 am häufigsten (rot); unter 0,8 oder zwischen 1,3 und 1,5 ist gelb. Diese Studien betrafen Mannschaftssportarten und der Zusammenhang ist umstritten, lies das Verhältnis also als Maß dafür, wie schnell sich deine Last ändert. Benötigt 21 der letzten 28 Tage mit Herzfrequenz. Unter dem Verlauf ist die Trainingsmonotonie deine durchschnittliche Tageslast der letzten 7 Tage geteilt durch ihre Schwankung, und die Trainingsbeanspruchung die Gesamtlast der Woche mal Monotonie (Foster). Krankheiten von Sportlern folgten meist auf Wochen hoher Beanspruchung, und eine Monotonie über 2 gilt als übliches Warnzeichen: jeden Tag dieselbe Last, ohne leichte Tage zur Erholung. Beide brauchen an allen 7 Tagen eine Last; die Woche von heute endet gestern. Mit mindestens %lld von dir in Apple Health nach Anstrengung bewerteten Trainings mit Herzfrequenz (ab iOS 18) vergleichen zwei weitere Diagramme die Anstrengungslast dieser Trainings, deine Bewertung mal Minuten (Session-RPE), mit ihrer Herzfrequenzlast. Apples eigene Schätzungen bleiben außen vor, da sie teils auf der Herzfrequenz beruhen. In einer Studie (Foster et al. 2001) stiegen und fielen beide gemeinsam; steigt die Anstrengungslast, die Herzfrequenzlast aber nicht, fühlte sich das Training härter an, als deine Herzfrequenz zeigt."
+            "value" : "Die Trainingslast von heute: Minuten mit deiner Herzfrequenz in jeder Zone (50–60 %% der maximalen zählen 1 pro Minute, bis zu 90 %% und mehr mit 5), Edwards-TRIMP, über den ganzen Tag, sodass Workouts und aktive Tage beide zählen. Das Verhältnis vergleicht deine durchschnittliche Tageslast der letzten 7 Tage mit den letzten 28. In Studien an Sportlern waren Verletzungen bei Verhältnissen von 0,8–1,3 am seltensten (grün) und ab 1,5 am häufigsten (rot); unter 0,8 oder zwischen 1,3 und 1,5 ist gelb. Diese Studien betrafen Mannschaftssportarten und der Zusammenhang ist umstritten, lies das Verhältnis also als Maß dafür, wie schnell sich deine Last ändert. Benötigt 21 der letzten 28 Tage mit Herzfrequenz. Unter dem Verlauf ist die Trainingsmonotonie deine durchschnittliche Tageslast der letzten 7 Tage geteilt durch ihre Schwankung, und die Trainingsbeanspruchung die Gesamtlast der Woche mal Monotonie (Foster). Krankheiten von Sportlern folgten meist auf Wochen hoher Beanspruchung, und eine Monotonie über 2 gilt als übliches Warnzeichen: jeden Tag dieselbe Last, ohne leichte Tage zur Erholung. Beide brauchen an allen 7 Tagen eine Last; die Woche von heute endet gestern. Mit mindestens %lld von dir in Apple Health nach Anstrengung bewerteten Trainings mit Herzfrequenz (ab iOS 18) vergleichen zwei weitere Diagramme die Anstrengungslast dieser Trainings, deine Bewertung mal Minuten (Session-RPE), mit ihrer Herzfrequenzlast. Apples eigene Schätzungen bleiben außen vor, da sie teils auf der Herzfrequenz beruhen. In einer Studie (Foster et al. 2001) stiegen und fielen beide gemeinsam; steigt die Anstrengungslast, die Herzfrequenzlast aber nicht, fühlte sich das Training härter an, als deine Herzfrequenz zeigt."
           }
         },
         "es" : {
@@ -38214,7 +38214,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deine Wachzeit außerhalb von Workouts nach Anstrengung, aus der Herzfrequenz als Anteil ihrer Reserve (Maximum minus Ruhe), in den Bereichen des American College of Sports Medicine: sehr leicht unter 3 %, leicht 30–3 %, mäßig 40–5 %, intensiv ab 6 %. Die große Zahl ist die Zeit bei leichter oder höherer Anstrengung; Workouts zählen stattdessen in den Intensitätsminuten."
+            "value" : "Deine Wachzeit außerhalb von Workouts nach Anstrengung, aus der Herzfrequenz als Anteil ihrer Reserve (Maximum minus Ruhe), in den Bereichen des American College of Sports Medicine: sehr leicht unter 30 %, leicht 30–39 %, mäßig 40–59 %, intensiv ab 60 %. Die große Zahl ist die Zeit bei leichter oder höherer Anstrengung; Workouts zählen stattdessen in den Intensitätsminuten."
           }
         },
         "es" : {
