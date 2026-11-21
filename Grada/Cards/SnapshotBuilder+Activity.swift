@@ -81,8 +81,11 @@ nonisolated extension SnapshotBuilder {
         let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
                                                   highestRecorded: try await source.highestHeartRate(days: 365))
 
+        // A highest heart rate barely above resting (little history and no age) would count easy walking as
+        // vigorous; the same guard as Day Intensity's, falling back to Apple's exercise minutes (#172).
+        let usable = restingHeartRate.flatMap { resting in maxHeartRate.map { $0 > resting + 20 } } ?? false
         return days.indices.map { index in
-            if let values = byDay[days[index]], let restingHeartRate, let maxHeartRate {
+            if usable, let values = byDay[days[index]], let restingHeartRate, let maxHeartRate {
                 return DayValue(day: days[index], value: IntensityMinutes.total(
                     heartRate: values, restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate))
             }

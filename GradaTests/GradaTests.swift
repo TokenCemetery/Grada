@@ -767,6 +767,28 @@ struct IntensityMinutesTests {
         let comparison = try #require(snapshot.comparison)
         #expect(comparison.hasSuffix("of 150") || comparison == "Goal reached", "\(comparison)")
     }
+
+    /// A highest recorded heart rate barely above resting isn't used as max; Apple's exercise minutes are (#172).
+    @Test func tooLowMaxHeartRateFallsBackToExerciseMinutes() async throws {
+        let source = LowMaxSource()
+        let minutes = try await SnapshotBuilder(source: source).intensityDays(7).map(\.value)
+        #expect(minutes == (try await source.daily(.exerciseMinutes, days: 7)).map(\.value))
+    }
+}
+
+/// Sample data (resting about 54) with no age and a highest heart rate of 70, too close to resting to set zones.
+private struct LowMaxSource: HealthDataSource {
+    let base = SampleDataSource()
+    func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] { try await base.daily(metric, days: days) }
+    func sleepNights(days: Int) async throws -> [SleepNight] { try await base.sleepNights(days: days) }
+    func standHours(days: Int) async throws -> [DayValue] { try await base.standHours(days: days) }
+    func overnight(days: Int) async throws -> [OvernightVitals] { try await base.overnight(days: days) }
+    func workouts(days: Int) async throws -> [WorkoutSummary] { try await base.workouts(days: days) }
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] { try await base.heartRate(in: interval) }
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { try await base.sleepPeriods(in: interval) }
+    func age() async throws -> Int? { nil }
+    func biologicalSex() async throws -> BiologicalSex? { try await base.biologicalSex() }
+    func highestHeartRate(days: Int) async throws -> Double? { 70 }
 }
 
 struct HRVStatusTests {
