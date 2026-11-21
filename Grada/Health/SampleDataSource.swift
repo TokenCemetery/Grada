@@ -23,10 +23,14 @@ nonisolated struct SampleDataSource: HealthDataSource {
         case .bodyFat: (18, 0.4)
         case .leanBodyMass: (60.5, 0.3)
         case .height: (178, 0)
+        case .bloodPressureSystolic: (121, 5)
+        case .bloodPressureDiastolic: (78, 4)
         }
-        // VO₂ max is only measured every few days, weight every other morning, body fat weekly, height once a month.
+        // VO₂ max is only measured every few days, weight every other morning, blood pressure every third day,
+        // body fat weekly, height once a month.
         let every = switch metric {
         case .vo2Max: 5
+        case .bloodPressureSystolic, .bloodPressureDiastolic: 3
         case .bodyMass: 2
         case .bodyFat, .leanBodyMass: 7
         case .height: 30

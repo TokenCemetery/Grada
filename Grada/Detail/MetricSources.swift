@@ -135,6 +135,9 @@ struct MetricSource: Hashable {
     static let watanabe2001 = MetricSource("Watanabe et al. 2001 · Circulation",
                                            "Without a cool-down the cut-off was 18 bpm; recovery still predicted mortality",
                                            doi: "10.1161/circ.104.16.1911")
+    static let whelton2018 = MetricSource("Whelton et al. 2018 (2017 ACC/AHA guideline) · Hypertension",
+                                          "Blood pressure categories: normal, elevated, stage 1 and stage 2 hypertension",
+                                          doi: "10.1161/HYP.0000000000000065")
     static let who2000 = MetricSource("WHO 2000 · Technical Report Series 894",
                                       "BMI classes for adults: underweight, normal, pre-obese and obese",
                                       url: "https://pubmed.ncbi.nlm.nih.gov/11234459/")
@@ -166,6 +169,7 @@ extension CardKind {
         case .racePredictor: [.danielsGilbert1979]
         case .heartRateRecovery: [.cole1999, .watanabe2001]
         case .weight: [.who2000]
+        case .bloodPressure: [.whelton2018]
         default: []
         }
     }

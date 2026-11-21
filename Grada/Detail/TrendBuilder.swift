@@ -110,6 +110,9 @@ struct TrendBuilder {
             let series = try await source.daily(.bodyMass, days: days)
             return make(series.map { DayValue(day: $0.day, value: $0.value.map { BodyMass.display($0, usesMetric: usesMetric) }) },
                         period, style: .line, unit: BodyMass.unit(usesMetric: usesMetric), format: .number(decimals: 1))
+        case .bloodPressure:
+            return make(try await source.daily(.bloodPressureSystolic, days: days), period, style: .line, unit: BloodPressure.unit,
+                        format: .number(decimals: 0), title: String(localized: "Systolic", comment: "Blood pressure chart: the upper number"))
         case .heartRateRecovery:
             return make(try await source.heartRateRecovery(days: days), period, style: .line,
                         unit: QuantityMetric.restingHeartRate.unit, format: .number(decimals: 0))
@@ -266,9 +269,16 @@ struct TrendBuilder {
     }
 
     /// Charts a detail screen shows below its trend, each only with data: body fat, BMI and lean body mass for
-    /// Weight (#132), training monotony and strain (#133) and effort against heart rate load (#134) for Strain.
+    /// Weight (#132), training monotony and strain (#133) and effort against heart rate load (#134) for Strain,
+    /// diastolic for Blood Pressure (#135).
     func extraTrends(for kind: CardKind, period: TrendPeriod) async throws -> [Trend] {
         if kind == .strain { return try await monotonyAndStrain(period) + effortAndHeartRateLoad(period) }
+        if kind == .bloodPressure {
+            let diastolic = try await source.daily(.bloodPressureDiastolic, days: period.days)
+            guard diastolic.contains(where: { $0.value != nil }) else { return [] }
+            return [make(diastolic, period, style: .line, unit: BloodPressure.unit, format: .number(decimals: 0),
+                         title: String(localized: "Diastolic", comment: "Blood pressure chart: the lower number"))]
+        }
         guard kind == .weight else { return [] }
         let days = period.days
         var trends: [Trend] = []

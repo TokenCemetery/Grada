@@ -248,6 +248,31 @@ nonisolated extension SnapshotBuilder {
     }
 }
 
+nonisolated extension SnapshotBuilder {
+    /// The latest day's cuff reading (the average when there were several) in the last 30 days, colored by its
+    /// ACC/AHA category unless it's over `BloodPressure.freshDays` old, with the average of the 30 days' readings;
+    /// the chart shows systolic (#135).
+    func bloodPressure() async throws -> CardSnapshot {
+        let systolic = try await source.daily(.bloodPressureSystolic, days: 30)
+        let readings = BloodPressure.readings(systolic: systolic, diastolic: try await source.daily(.bloodPressureDiastolic, days: 30))
+        guard let latest = readings.last else { return .noData(period: String(localized: "Latest")) }
+        let category = BloodPressure.Category(systolic: latest.systolic, diastolic: latest.diastolic)
+        let average = BloodPressure.reading(systolic: readings.map(\.systolic).reduce(0, +) / Double(readings.count),
+                                            diastolic: readings.map(\.diastolic).reduce(0, +) / Double(readings.count))
+        let isFresh = calendar.dateComponents([.day], from: latest.day, to: calendar.startOfDay(for: now)).day! <= BloodPressure.freshDays
+        return CardSnapshot(
+            period: dayLabel(latest.day),
+            value: BloodPressure.reading(systolic: latest.systolic, diastolic: latest.diastolic),
+            unit: BloodPressure.unit,
+            comparison: String(localized: "\(category.title) · 30-day avg \(average)",
+                               comment: "Blood pressure category and 30-day average, e.g. Normal · 30-day avg 118/76"),
+            tone: isFresh ? Self.tone(category.rating) : .neutral,
+            rating: isFresh ? category.rating : nil,
+            chart: .line(systolic.map(\.value), normalRange: nil)
+        )
+    }
+}
+
 nonisolated extension QuantityMetric {
     var unit: String {
         switch self {
@@ -264,6 +289,7 @@ nonisolated extension QuantityMetric {
         case .bodyMass, .leanBodyMass: String(localized: "kg", comment: "Unit: kilograms")
         case .bodyFat: "%"
         case .height: String(localized: "cm", comment: "Unit: centimeters")
+        case .bloodPressureSystolic, .bloodPressureDiastolic: BloodPressure.unit
         }
     }
 

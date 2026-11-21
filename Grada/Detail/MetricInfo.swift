@@ -32,7 +32,7 @@ extension CardKind {
         switch self {
         case .steps, .activeEnergy, .exerciseMinutes, .intensityMinutes, .distance, .floors, .standHours, .dayIntensity, .last30Days: .total
         case .heartRate, .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .vo2Max,
-             .heartRateRecovery, .weight: .vital
+             .heartRateRecovery, .weight, .bloodPressure: .vital
         case .sleepDuration, .sleepStages, .sleepNeed, .sleepConsistency, .sleepScore: .sleep
         case .lastWorkout, .weeklyTraining, .strain, .recoveryTime, .racePredictor, .trainingReadiness, .loadFocus: .training
         case .healthStatus, .recovery, .resources, .healthAge, .hrvStatus: .score
@@ -54,6 +54,7 @@ extension CardKind {
         case .wristTemperature: .wristTemperature
         case .vo2Max, .racePredictor: .vo2Max
         case .weight: .bodyMass
+        case .bloodPressure: .bloodPressureSystolic
         default: nil
         }
     }
@@ -112,6 +113,7 @@ extension CardKind {
         case .standHours: [.standHours]
         case .lastWorkout, .weeklyTraining, .heartRateRecovery: [.workouts]
         case .weight: [.bodyMass, .bodyFat, .leanBodyMass, .height]
+        case .bloodPressure: [.bloodPressureSystolic, .bloodPressureDiastolic]
         case .recovery, .hrvStatus, .healthStatus: [.overnightHRV]
         default: quantityMetric.map { [DataKind($0)] } ?? []
         }
@@ -164,6 +166,8 @@ extension CardKind {
             String(localized: "How much oxygen your blood carries. 95–100% is typical; brief dips during sleep are common.")
         case .respiratoryRate:
             String(localized: "Breaths per minute while asleep. It's very stable from night to night, so a rise above your normal is an early sign of illness or strain.")
+        case .bloodPressure:
+            String(localized: "Blood pressure from a cuff that saves its readings to Apple Health; Grada doesn't estimate it from anything else. A day with several readings shows their average, and a reading more than a week old shows without colour. The colours follow the American College of Cardiology and American Heart Association's 2017 categories: normal below 120/80 (green), elevated 120–129 over below 80, stage 1 hypertension 130–139 or 80–89 (both orange), and stage 2 from 140 or 90 (red); when the two numbers differ, the higher category counts. A diagnosis rests on the average of several readings taken on several occasions, measured the right way. Grada isn't a medical device, and only a clinician can diagnose high blood pressure.")
         case .wristTemperature:
             String(localized: "Your overnight wrist temperature compared with your baseline. Changes follow illness, alcohol, the menstrual cycle and room temperature.")
         case .steps:

@@ -33,6 +33,8 @@ nonisolated final class DaySummary {
     var bodyFat: Double?
     var leanBodyMass: Double?
     var height: Double?
+    var bloodPressureSystolic: Double?
+    var bloodPressureDiastolic: Double?
     var standHours: Double?
 
     /// Seconds per sleep stage for the night that ended on this day.
@@ -95,6 +97,8 @@ nonisolated final class DaySummary {
         case .bodyFat: \.bodyFat
         case .leanBodyMass: \.leanBodyMass
         case .height: \.height
+        case .bloodPressureSystolic: \.bloodPressureSystolic
+        case .bloodPressureDiastolic: \.bloodPressureDiastolic
         }
     }
 }
@@ -290,7 +294,11 @@ nonisolated struct StoredHealthData: HealthDataSource {
     }
 
     func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] {
-        try merged(days: days) { $0.value(for: metric) }
+        // Blood pressure only from a source with both numbers that day, so a pair isn't mixed between sources (#135).
+        if let partner = metric.bloodPressurePartner {
+            return try merged(days: days) { $0.metrics[partner] == nil ? nil : $0.metrics[metric] }
+        }
+        return try merged(days: days) { $0.value(for: metric) }
     }
 
     func standHours(days: Int) async throws -> [DayValue] {

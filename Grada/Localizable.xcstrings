@@ -1728,6 +1728,59 @@
         }
       }
     },
+    "%@ · 30-day avg %@" : {
+      "comment" : "Blood pressure category and 30-day average, e.g. Normal · 30-day avg 118/76",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · Ø 30 Tage %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · media 30 días %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · moy. 30 j %2$@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 30 दिन का औसत %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · media 30 gg %2$@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · média 30 dias %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · среднее за 30 дн. %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · 30 天平均 %2$@"
+          }
+        }
+      }
+    },
     "%@ · baseline %@" : {
       "localizations" : {
         "de" : {
@@ -8979,6 +9032,162 @@
         }
       }
     },
+    "Blood Pressure" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutdruck"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presión arterial"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tension artérielle"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ब्लड प्रेशर"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pressione arteriosa"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pressão arterial"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Давление"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "血压"
+          }
+        }
+      }
+    },
+    "Blood pressure categories: normal, elevated, stage 1 and stage 2 hypertension" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutdruckkategorien: normal, erhöht, Hypertonie Stufe 1 und Stufe 2"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Categorías de presión arterial: normal, elevada, hipertensión en etapa 1 y etapa 2"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Catégories de tension artérielle : normale, élevée, hypertension de stade 1 et de stade 2"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ब्लड प्रेशर की श्रेणियाँ: सामान्य, बढ़ा हुआ, चरण 1 और चरण 2 हाइपरटेंशन"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Categorie di pressione arteriosa: normale, elevata, ipertensione di stadio 1 e 2"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Categorias de pressão arterial: normal, elevada, hipertensão estágio 1 e estágio 2"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Категории давления: нормальное, повышенное, гипертония 1 и 2 стадии"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "血压分类：正常、偏高、1 级和 2 级高血压"
+          }
+        }
+      }
+    },
+    "Blood pressure from a cuff that saves its readings to Apple Health; Grada doesn't estimate it from anything else. A day with several readings shows their average, and a reading more than a week old shows without colour. The colours follow the American College of Cardiology and American Heart Association's 2017 categories: normal below 120/80 (green), elevated 120–129 over below 80, stage 1 hypertension 130–139 or 80–89 (both orange), and stage 2 from 140 or 90 (red); when the two numbers differ, the higher category counts. A diagnosis rests on the average of several readings taken on several occasions, measured the right way. Grada isn't a medical device, and only a clinician can diagnose high blood pressure." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutdruck von einer Manschette, die ihre Messungen in Apple Health speichert; Grada schätzt ihn aus nichts anderem. Ein Tag mit mehreren Messungen zeigt deren Durchschnitt, und eine Messung, die älter als eine Woche ist, erscheint ohne Farbe. Die Farben folgen den Kategorien des American College of Cardiology und der American Heart Association von 2017: normal unter 120/80 (grün), erhöht 120–129 zu unter 80, Hypertonie Stufe 1 bei 130–139 oder 80–89 (beide orange) und Stufe 2 ab 140 oder 90 (rot); liegen die beiden Werte in verschiedenen Kategorien, zählt die höhere. Eine Diagnose beruht auf dem Durchschnitt mehrerer richtig gemessener Werte an mehreren Terminen. Grada ist kein Medizinprodukt, und nur Ärztinnen und Ärzte können Bluthochdruck diagnostizieren."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presión arterial de un tensiómetro que guarda sus mediciones en Salud; Grada no la estima a partir de nada más. Un día con varias mediciones muestra su media, y una medición de hace más de una semana se muestra sin color. Los colores siguen las categorías de 2017 del American College of Cardiology y la American Heart Association: normal por debajo de 120/80 (verde), elevada 120–129 con menos de 80, hipertensión en etapa 1 con 130–139 u 80–89 (ambas naranjas) y etapa 2 desde 140 o 90 (rojo); si los dos números difieren, cuenta la categoría más alta. Un diagnóstico se basa en la media de varias mediciones bien tomadas en varias ocasiones. Grada no es un dispositivo médico y solo un profesional sanitario puede diagnosticar la hipertensión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La tension artérielle d’un tensiomètre qui enregistre ses mesures dans Santé ; Grada ne l’estime à partir de rien d’autre. Un jour avec plusieurs mesures affiche leur moyenne, et une mesure de plus d’une semaine s’affiche sans couleur. Les couleurs suivent les catégories 2017 de l’American College of Cardiology et de l’American Heart Association : normale sous 120/80 (vert), élevée de 120 à 129 sur moins de 80, hypertension de stade 1 de 130 à 139 ou de 80 à 89 (orange toutes deux) et stade 2 à partir de 140 ou 90 (rouge) ; quand les deux chiffres diffèrent, la catégorie la plus haute l’emporte. Un diagnostic repose sur la moyenne de plusieurs mesures bien prises à plusieurs occasions. Grada n’est pas un dispositif médical, et seul un professionnel de santé peut diagnostiquer l’hypertension."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऐसे कफ़ से ब्लड प्रेशर जो अपनी रीडिंग Apple Health में सेव करता है; Grada इसका अनुमान किसी और चीज़ से नहीं लगाता। कई रीडिंग वाले दिन उनका औसत दिखता है, और एक हफ़्ते से पुरानी रीडिंग बिना रंग के दिखती है। रंग American College of Cardiology और American Heart Association की 2017 की श्रेणियों पर आधारित हैं: 120/80 से कम सामान्य (हरा), 120–129 और 80 से कम बढ़ा हुआ, 130–139 या 80–89 चरण 1 हाइपरटेंशन (दोनों नारंगी), और 140 या 90 से चरण 2 (लाल); दोनों संख्याएँ अलग श्रेणी में हों तो ऊँची श्रेणी गिनी जाती है। निदान कई मौक़ों पर सही तरीके से ली गई कई रीडिंग के औसत पर होता है। Grada कोई मेडिकल डिवाइस नहीं है, और हाई ब्लड प्रेशर का निदान सिर्फ़ डॉक्टर कर सकते हैं।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La pressione arteriosa da un bracciale che salva le misurazioni in Salute; Grada non la stima da nient’altro. Un giorno con più misurazioni ne mostra la media, e una misurazione di oltre una settimana fa appare senza colore. I colori seguono le categorie 2017 dell’American College of Cardiology e dell’American Heart Association: normale sotto 120/80 (verde), elevata 120–129 con meno di 80, ipertensione di stadio 1 con 130–139 o 80–89 (entrambe arancioni) e stadio 2 da 140 o 90 (rosso); se i due numeri differiscono, conta la categoria più alta. Una diagnosi si basa sulla media di più misurazioni corrette in più occasioni. Grada non è un dispositivo medico e solo un medico può diagnosticare l’ipertensione."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pressão arterial de um medidor de braçadeira que salva as medições no Saúde; o Grada não a estima a partir de mais nada. Um dia com várias medições mostra a média delas, e uma medição com mais de uma semana aparece sem cor. As cores seguem as categorias de 2017 do American College of Cardiology e da American Heart Association: normal abaixo de 120/80 (verde), elevada 120–129 com menos de 80, hipertensão estágio 1 com 130–139 ou 80–89 (ambas laranja) e estágio 2 a partir de 140 ou 90 (vermelho); quando os dois números diferem, vale a categoria mais alta. Um diagnóstico se baseia na média de várias medições bem feitas em várias ocasiões. O Grada não é um dispositivo médico, e só um profissional de saúde pode diagnosticar pressão alta."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Давление с тонометра, который сохраняет измерения в «Здоровье»; Grada не оценивает его ни по чему другому. Если за день было несколько измерений, показывается их среднее, а измерение старше недели показывается без цвета. Цвета следуют категориям American College of Cardiology и American Heart Association 2017 года: нормальное ниже 120/80 (зелёный), повышенное 120–129 при нижнем ниже 80, гипертония 1 стадии при 130–139 или 80–89 (обе оранжевые) и 2 стадии от 140 или 90 (красный); если два числа попадают в разные категории, считается более высокая. Диагноз ставят по среднему нескольких правильно выполненных измерений в разные дни. Grada не медицинское изделие, и только врач может диагностировать гипертонию."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "血压来自把读数保存到“健康”的袖带式血压计；Grada 不会根据其他数据估算。一天有多次读数时显示其平均值，超过一周的读数不显示颜色。颜色依据美国心脏病学会和美国心脏协会 2017 年的分类：低于 120/80 为正常（绿色），120–129 且舒张压低于 80 为偏高，130–139 或 80–89 为 1 级高血压（均为橙色），140 或 90 及以上为 2 级（红色）；两个数值分属不同类别时，以较高者为准。诊断要依据多次、在不同时间、以正确方法测得的读数平均值。Grada 不是医疗器械，只有临床医生才能诊断高血压。"
+          }
+        }
+      }
+    },
     "Body" : {
       "comment" : "Card category: weight and body composition",
       "localizations" : {
@@ -11482,6 +11691,111 @@
         }
       }
     },
+    "Diastolic" : {
+      "comment" : "Blood pressure chart: the lower number",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diastolisch"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diastólica"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diastolique"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डायस्टोलिक"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diastolica"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diastólica"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Диастолическое"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "舒张压"
+          }
+        }
+      }
+    },
+    "Diastolic Blood Pressure" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diastolischer Blutdruck"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presión arterial diastólica"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tension artérielle diastolique"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डायस्टोलिक ब्लड प्रेशर"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pressione diastolica"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pressão arterial diastólica"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Диастолическое давление"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "舒张压"
+          }
+        }
+      }
+    },
     "Disconnect" : {
       "localizations" : {
         "de" : {
@@ -12260,6 +12574,59 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "费力负荷是评分乘以训练分钟数（课程 RPE）。一项研究（Foster et al. 2001）中，在匀速和间歇骑行以及篮球中，它与心率负荷（TRIMP）同升同降，只是数值尺度更高。"
+          }
+        }
+      }
+    },
+    "Elevated" : {
+      "comment" : "ACC/AHA blood pressure category",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erhöht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elevada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Élevée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "बढ़ा हुआ"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elevata"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elevada"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повышенное"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偏高"
           }
         }
       }
@@ -24710,6 +25077,58 @@
         }
       }
     },
+    "Readings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mediciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesures"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रीडिंग"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Misurazioni"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medições"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Измерения"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "读数"
+          }
+        }
+      }
+    },
     "Ready for hard training" : {
       "localizations" : {
         "de" : {
@@ -28534,6 +28953,112 @@
         }
       }
     },
+    "Stage 1" : {
+      "comment" : "ACC/AHA blood pressure category: stage 1 hypertension",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stufe 1"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etapa 1"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stade 1"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चरण 1"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stadio 1"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estágio 1"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стадия 1"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 级"
+          }
+        }
+      }
+    },
+    "Stage 2" : {
+      "comment" : "ACC/AHA blood pressure category: stage 2 hypertension",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stufe 2"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etapa 2"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stade 2"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "चरण 2"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stadio 2"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estágio 2"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стадия 2"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 级"
+          }
+        }
+      }
+    },
     "Stand Hours" : {
       "localizations" : {
         "de" : {
@@ -29469,6 +29994,111 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跟随系统"
+          }
+        }
+      }
+    },
+    "Systolic" : {
+      "comment" : "Blood pressure chart: the upper number",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systolisch"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistólica"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systolique"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिस्टोलिक"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistolica"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistólica"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Систолическое"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收缩压"
+          }
+        }
+      }
+    },
+    "Systolic Blood Pressure" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systolischer Blutdruck"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Presión arterial sistólica"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tension artérielle systolique"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिस्टोलिक ब्लड प्रेशर"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pressione sistolica"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pressão arterial sistólica"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Систолическое давление"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收缩压"
           }
         }
       }

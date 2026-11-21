@@ -12,6 +12,17 @@ nonisolated enum QuantityMetric: CaseIterable {
     case steps, activeEnergy, exerciseMinutes, distance, floors, vo2Max
     /// From smart scales or entered by hand (#132): kilograms, percent, kilograms, centimeters.
     case bodyMass, bodyFat, leanBodyMass, height
+    /// Cuff readings (#135), millimetres of mercury, averaged per day.
+    case bloodPressureSystolic, bloodPressureDiastolic
+
+    /// The other number of a blood pressure reading, which must come from the same app and day.
+    var bloodPressurePartner: QuantityMetric? {
+        switch self {
+        case .bloodPressureSystolic: .bloodPressureDiastolic
+        case .bloodPressureDiastolic: .bloodPressureSystolic
+        default: nil
+        }
+    }
 
     /// Body measurements keep the day's last reading, as a scale shows it, rather than averaging weighings.
     var usesLatestReading: Bool {
@@ -200,6 +211,7 @@ nonisolated struct OvernightVitals: Equatable {
 nonisolated enum DataKind: String, CaseIterable, Identifiable {
     case restingHeartRate, hrv, overnightHRV, oxygenSaturation, respiratoryRate, wristTemperature, vo2Max
     case bodyMass, bodyFat, leanBodyMass, height
+    case bloodPressureSystolic, bloodPressureDiastolic
     case sleep
     case steps, activeEnergy, exerciseMinutes, distance, floors, standHours
     case workouts
@@ -223,6 +235,8 @@ nonisolated enum DataKind: String, CaseIterable, Identifiable {
         case .bodyFat: .bodyFat
         case .leanBodyMass: .leanBodyMass
         case .height: .height
+        case .bloodPressureSystolic: .bloodPressureSystolic
+        case .bloodPressureDiastolic: .bloodPressureDiastolic
         }
     }
 
@@ -239,6 +253,8 @@ nonisolated enum DataKind: String, CaseIterable, Identifiable {
         case .bodyFat: String(localized: "Body Fat Percentage")
         case .leanBodyMass: String(localized: "Lean Body Mass")
         case .height: String(localized: "Height")
+        case .bloodPressureSystolic: String(localized: "Systolic Blood Pressure")
+        case .bloodPressureDiastolic: String(localized: "Diastolic Blood Pressure")
         case .sleep: String(localized: "Sleep")
         case .steps: String(localized: "Steps")
         case .activeEnergy: String(localized: "Active Energy")

@@ -354,6 +354,8 @@ enum Breakdown {
     case recovery([Recovery.Check])
     /// Resources at midnight and now, and what moved it in between.
     case resources(midnight: Double, now: Double, amounts: [Resources.Cause: Double])
+    /// The period's daily cuff readings, newest first, each in its ACC/AHA category's color (#135).
+    case bloodPressure([(day: Date, systolic: Double, diastolic: Double)])
 
     var title: String {
         switch self {
@@ -363,6 +365,7 @@ enum Breakdown {
         case .workouts: String(localized: "Workouts")
         case .recovery: String(localized: "Inputs")
         case .resources: String(localized: "Since midnight")
+        case .bloodPressure: String(localized: "Readings")
         }
     }
 
@@ -379,6 +382,10 @@ enum Breakdown {
                 unit = String(localized: "mi", comment: "Unit: miles")
             }
             return hours.isEmpty ? nil : .hourly(hours, unit: unit, decimals: metric.decimals)
+        case .vital where kind == .bloodPressure:
+            let readings = BloodPressure.readings(systolic: try await source.daily(.bloodPressureSystolic, days: period.days),
+                                                  diastolic: try await source.daily(.bloodPressureDiastolic, days: period.days))
+            return readings.isEmpty ? nil : .bloodPressure(readings.reversed())
         case .vital:
             guard kind == .heartRate else { return nil }
             let interval = DateInterval(start: day, end: min(.now, calendar.date(byAdding: .day, value: 1, to: day)!))
@@ -493,6 +500,23 @@ private struct BreakdownView: View {
                         Text(Self.recoveryValue(check.value, check, decimals: Self.decimals(check))).font(.subheadline.weight(.semibold)).monospacedDigit()
                             .foregroundStyle(rating.text(colorBlind: colorBlind))
                     }
+                }
+            }
+        case .bloodPressure(let readings):
+            VStack(spacing: 6) {
+                ForEach(readings, id: \.day) { reading in
+                    let category = BloodPressure.Category(systolic: reading.systolic, diastolic: reading.diastolic)
+                    HStack(spacing: 8) {
+                        Circle().fill(category.rating.fill(colorBlind: colorBlind)).frame(width: 8, height: 8)
+                        Text(reading.day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
+                            .font(.subheadline).foregroundStyle(.secondary)
+                        Spacer()
+                        Text(category.title).font(.caption).foregroundStyle(.secondary)
+                        Text("\(BloodPressure.reading(systolic: reading.systolic, diastolic: reading.diastolic)) \(BloodPressure.unit)")
+                            .font(.subheadline.weight(.semibold)).monospacedDigit()
+                            .foregroundStyle(category.rating.text(colorBlind: colorBlind))
+                    }
+                    .accessibilityElement(children: .combine)
                 }
             }
         case .resources(let midnight, let now, let amounts):

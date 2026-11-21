@@ -47,9 +47,10 @@ final class HealthImporter {
     /// Oldest day imported so far, per source; lets an interrupted history import resume.
     /// Versioned: bumping it re-imports the whole history once, e.g. v2 added overnight vitals and
     /// bed and wake times; v3 removes workouts and readings that several apps wrote to Apple Health;
-    /// v4 keeps which app or device each value came from; v5 adds weight, body fat, lean body mass and height.
-    private static func importedFromKey(_ source: any HealthSource) -> String { "historyImportedFrom.\(source.id).v5" }
-    private static func historyDoneKey(_ source: any HealthSource) -> String { "historyImportDone.\(source.id).v5" }
+    /// v4 keeps which app or device each value came from; v5 adds weight, body fat, lean body mass and height;
+    /// v6 adds blood pressure.
+    private static func importedFromKey(_ source: any HealthSource) -> String { "historyImportedFrom.\(source.id).v6" }
+    private static func historyDoneKey(_ source: any HealthSource) -> String { "historyImportDone.\(source.id).v6" }
     /// Re-imported on every refresh: today, plus nights and late-syncing watches from the days before.
     static let recentDays = 3
 
