@@ -36,19 +36,29 @@ final class GradaUITests: XCTestCase {
         app.tabBars.buttons["Journal"].tap()
         XCTAssertTrue(app.navigationBars["Journal"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Today"].exists)
+        // The loaded reports push the tags below the fold, out of the lazy list, so wait for them and scroll (#185).
+        let report = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Sleep Score,")).firstMatch
+        XCTAssertTrue(report.waitForExistence(timeout: 10))
         let alcohol = app.buttons["Alcohol"]
+        for _ in 0..<5 where !alcohol.exists { app.swipeUp() }
         XCTAssertTrue(alcohol.waitForExistence(timeout: 5))
         // Marking shows the amount stepper; tapping again unmarks, leaving the simulator's journal as it was.
         let wasMarked = alcohol.isSelected
         alcohol.tap()
+        let previousDay = app.buttons["Previous day"]
         if !wasMarked {
-            XCTAssertTrue(app.staticTexts["1 drink"].waitForExistence(timeout: 5))
-            XCTAssertTrue(app.images["Saved"].waitForExistence(timeout: 5))
+            // Saturdays' sample drinks make Alcohol a suggestion, which logs 2 rather than 1 (#185).
+            let drinks = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "[0-9]+ drinks?")).firstMatch
+            XCTAssertTrue(drinks.waitForExistence(timeout: 5))
             attachScreenshot("Journal")
+            for _ in 0..<5 where !previousDay.exists { app.swipeDown() }
+            XCTAssertTrue(app.images["Saved"].waitForExistence(timeout: 5))
+            for _ in 0..<5 where !alcohol.exists { app.swipeUp() }
             alcohol.tap()
         }
 
-        app.buttons["Previous day"].tap()
+        for _ in 0..<5 where !previousDay.exists { app.swipeDown() }
+        previousDay.tap()
         XCTAssertFalse(app.buttons["Today"].exists)
         attachScreenshot("Journal yesterday")
     }
