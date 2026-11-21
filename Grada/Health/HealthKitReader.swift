@@ -37,7 +37,13 @@ final class HealthKitReader: HealthSource {
             HKQuantityType(.dietaryCaffeine),
             // Workout screens and the Heart Rate Recovery card.
             HKQuantityType(.heartRateRecoveryOneMinute),
-        ]
+        ] + effortTypes
+
+    /// Workout effort ratings, the user's and Apple's estimate; Apple Health has them from iOS 18 (#134).
+    static var effortTypes: [HKSampleType] {
+        guard #available(iOS 18.0, *) else { return [] }
+        return [HKQuantityType(.workoutEffortScore), HKQuantityType(.estimatedWorkoutEffortScore)]
+    }
 
     func requestAuthorization() async throws {
         let characteristics = [HKCharacteristicType(.dateOfBirth), HKCharacteristicType(.biologicalSex)]
@@ -51,11 +57,11 @@ final class HealthKitReader: HealthSource {
         // Heart rate is sampled every few minutes; its changes come with the daily metrics anyway. Workout
         // screen data (ride and swim distance, routes) is read live and arrives with its workout.
         // Mindful sessions, daylight, drinks and caffeine are read live for the Journal and aren't imported either.
-        let unobserved: Set<HKSampleType> = [HKQuantityType(.heartRate), HKQuantityType(.distanceCycling),
+        let unobserved = Set<HKSampleType>([HKQuantityType(.heartRate), HKQuantityType(.distanceCycling),
                                              HKQuantityType(.distanceSwimming), HKSeriesType.workoutRoute(),
                                              HKCategoryType(.mindfulSession), HKQuantityType(.timeInDaylight),
                                              HKQuantityType(.numberOfAlcoholicBeverages), HKQuantityType(.dietaryCaffeine),
-                                             HKQuantityType(.heartRateRecoveryOneMinute)]
+                                             HKQuantityType(.heartRateRecoveryOneMinute)] + Self.effortTypes)
         for type in Self.readTypes where !unobserved.contains(type) {
             store.execute(HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
                 guard error == nil else { completion(); return }
@@ -456,8 +462,36 @@ final class HealthKitReader: HealthSource {
             distanceTrack: track,
             elevationGain: (workout.metadata?[HKMetadataKeyElevationAscended] as? HKQuantity)?.doubleValue(for: .meter()),
             route: route,
-            heartRateRecovery: try await heartRateRecovery(after: [summary])[summary.id]
+            heartRateRecovery: try await heartRateRecovery(after: [summary])[summary.id],
+            effort: try await effort(of: [summary])[summary.id]
         )
+    }
+
+    /// Each workout's effort: the user's latest rating, or else Apple's latest estimate. Nothing before iOS 18.
+    /// Only the workouts kept after merging duplicates are asked for, so a rating on a duplicate that lost the merge
+    /// (say the Apple Watch copy of a workout Strava also wrote) isn't found.
+    func effort(of workouts: [WorkoutSummary]) async throws -> [String: WorkoutEffort] {
+        guard #available(iOS 18.0, *),
+              let first = workouts.map(\.start).min(), let last = workouts.map({ $0.start.addingTimeInterval($0.duration) }).max()
+        else { return [:] }
+        let ids = Set(workouts.map(\.id))
+        // Workouts that ended a day later than their start plus duration (paused ones) still overlap this range.
+        let range = HKQuery.predicateForSamples(withStart: first, end: last.addingTimeInterval(24 * 3600))
+        let relationships = try await HKWorkoutEffortRelationshipQueryDescriptor(predicate: range, anchor: nil, option: .default)
+            .result(for: store).relationships
+        var byWorkout: [String: [HKQuantitySample]] = [:]
+        for relationship in relationships where relationship.activity == nil && ids.contains(relationship.workout.uuid.uuidString) {
+            byWorkout[relationship.workout.uuid.uuidString, default: []] += (relationship.samples ?? []).compactMap { $0 as? HKQuantitySample }
+        }
+        var efforts: [String: WorkoutEffort] = [:]
+        for (id, unsorted) in byWorkout {
+            let samples = unsorted.sorted { $0.endDate < $1.endDate }
+            let rated = samples.last { $0.quantityType == HKQuantityType(.workoutEffortScore) }
+            let estimated = samples.last { $0.quantityType == HKQuantityType(.estimatedWorkoutEffortScore) }
+            guard let sample = rated ?? estimated else { continue }
+            efforts[id] = WorkoutEffort(score: sample.quantity.doubleValue(for: .appleEffortScore()), isEstimate: rated == nil)
+        }
+        return efforts
     }
 
     /// Apple's own one-minute recovery first; otherwise derived from the heart rate readings around each workout's end,

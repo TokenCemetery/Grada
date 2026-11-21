@@ -31,7 +31,7 @@ Every calculated metric rests on published research, not invented formulas. Each
 
 - **Recovery and HRV:** your overnight HRV against your own baseline, the method from HRV-guided training studies.
 - **Sleep Score:** the National Sleep Foundation's sleep quality consensus.
-- **Strain:** Edwards' training load and the acute:chronic workload ratio. The detail screen also charts Foster's training monotony and strain over 7 days of load, calls out weeks with monotony above 2, and then suggests mixing hard and easy days.
+- **Strain:** Edwards' training load and the acute:chronic workload ratio. The detail screen also charts Foster's training monotony and strain over 7 days of load, calls out weeks with monotony above 2, and then suggests mixing hard and easy days. On iOS 18 and later, workouts rated for effort in Apple Health (or estimated by Apple Watch) show the rating and their session-RPE load (rating × minutes, Foster et al. 2001), and the Strain detail screen compares the effort load of workouts you rated with their heart rate load.
 - **Health Age:** published mortality risks for VO₂ max, resting heart rate, steps, sleep and exercise.
 - **Weight:** the latest weight with its body mass index (BMI) and WHO adult class, and the 30-day trend, in kilograms or pounds; the detail screen adds body fat, lean body mass and BMI over time, and says BMI doesn't tell fat from muscle.
 - **Heart Rate Recovery:** how far heart rate falls in the minute after a workout, from Apple Watch's own measurement or the heart rate around the workout's end, shown on the workout screen and as a card with a 90-day trend. A fall of 12 bpm or less is marked, Cole et al.'s cut-off, as a fitness marker rather than a diagnosis.

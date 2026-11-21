@@ -352,6 +352,16 @@ nonisolated struct StoredHealthData: HealthDataSource {
         return HeartRateRecovery.byDay(values, workouts: workouts, days: lastDays(days), calendar: calendar)
     }
 
+    /// Read live from each workout's own source, like heart rate recovery.
+    func workoutEfforts(days: Int) async throws -> [String: WorkoutEffort] {
+        var efforts: [String: WorkoutEffort] = [:]
+        for (sourceID, ofSource) in Dictionary(grouping: try await workouts(days: days), by: \.source) {
+            guard let source = sources.first(where: { $0.id == sourceID }) else { continue }
+            efforts.merge(try await source.effort(of: ofSource)) { first, _ in first }
+        }
+        return efforts
+    }
+
     /// Per kind, the first source in order with origins wins each day, as it does for the values.
     func origins() async throws -> [DataKind: [DataOrigin]] {
         var lastDay: [DataKind: [String: Date]] = [:]

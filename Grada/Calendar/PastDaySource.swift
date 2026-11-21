@@ -34,6 +34,11 @@ nonisolated struct PastDaySource: HealthDataSource {
         Array(try await base.heartRateRecovery(days: days + daysAgo).dropLast(daysAgo))
     }
 
+    /// Keyed by workout, so later workouts' ratings don't matter: callers look up the shown days' workouts.
+    func workoutEfforts(days: Int) async throws -> [String: WorkoutEffort] {
+        try await base.workoutEfforts(days: days + daysAgo)
+    }
+
     func age() async throws -> Int? {
         try await base.age()
     }

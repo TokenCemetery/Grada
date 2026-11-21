@@ -26,6 +26,9 @@ struct WorkoutDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 header
                 DetailSection(title: String(localized: "Summary")) { stats }
+                if let effort = detail?.effort {
+                    DetailSection(title: String(localized: "Effort")) { EffortView(effort: effort, duration: workout.duration) }
+                }
                 if let detail, let maxHeartRate, !detail.heartRate.isEmpty {
                     let zones = HeartRateZones.time(detail.heartRate, end: end, maxHeartRate: maxHeartRate)
                     DetailSection(title: String(localized: "Training Load")) { TrainingLoadView(timeInZones: zones) }
@@ -187,6 +190,37 @@ enum ZoneColors {
         case 4: .orange
         default: .red
         }
+    }
+}
+
+/// The effort rating out of 10, whose it is, and the session-RPE load it makes with the workout's minutes (#134).
+private struct EffortView: View {
+    let effort: WorkoutEffort
+    let duration: TimeInterval
+
+    var body: some View {
+        // The load uses the score as shown, so the two always multiply out.
+        let shown = effort.score.rounded()
+        let score = shown.formatted(.number.precision(.fractionLength(0)))
+        let load = Int(SessionRPE.load(effort: shown, duration: duration).rounded())
+        let whose = effort.isEstimate ? String(localized: "Apple's estimate") : String(localized: "Your rating")
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("\(score)/10", comment: "Workout effort rating out of 10")
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                Text(whose).font(.headline).foregroundStyle(.secondary)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Effort Load").font(.caption).foregroundStyle(.secondary)
+                    Text("\(load)").font(.headline).monospacedDigit()
+                }
+            }
+            Text("Effort load is the rating times the workout's minutes (session RPE). In one study (Foster et al. 2001) it rose and fell with heart rate load (TRIMP) over steady and interval cycling and basketball, on a higher scale of its own.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Effort \(score) out of 10, \(whose), effort load \(load)"))
     }
 }
 

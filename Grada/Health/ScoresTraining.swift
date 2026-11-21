@@ -120,6 +120,19 @@ nonisolated enum TrainingLoad {
     }
 }
 
+/// Foster et al. 2001 (J Strength Cond Res 15:109): a session's load is how hard it felt on the CR-10 scale times
+/// its minutes (session RPE). Against a heart rate method (Edwards' TRIMP) it rose and fell consistently over steady,
+/// interval cycling and basketball, though its scores ran higher. Apple's 1–10 workout effort score stands in for
+/// the CR-10 rating (#134).
+nonisolated enum SessionRPE {
+    /// Rated workouts in the shown period needed to compare with heart rate load. Grada's choice.
+    static let minimumRatedWorkouts = 3
+
+    static func load(effort: Double, duration: TimeInterval) -> Double {
+        effort * duration / 60
+    }
+}
+
 /// Daily strain and the acute:chronic workload ratio. A day's load is Edwards' TRIMP over all of its heart rate,
 /// so workouts and an active day both count. Acute load is the last 7 days' average and chronic the last 28 days'
 /// (Hulin et al. 2016, Br J Sports Med 50:231); Gabbett 2016 (Br J Sports Med 50:273) found the lowest injury risk

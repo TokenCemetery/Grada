@@ -266,9 +266,9 @@ struct TrendBuilder {
     }
 
     /// Charts a detail screen shows below its trend, each only with data: body fat, BMI and lean body mass for
-    /// Weight (#132), training monotony and strain for Strain (#133).
+    /// Weight (#132), training monotony and strain (#133) and effort against heart rate load (#134) for Strain.
     func extraTrends(for kind: CardKind, period: TrendPeriod) async throws -> [Trend] {
-        if kind == .strain { return try await monotonyAndStrain(period) }
+        if kind == .strain { return try await monotonyAndStrain(period) + effortAndHeartRateLoad(period) }
         guard kind == .weight else { return [] }
         let days = period.days
         var trends: [Trend] = []
@@ -315,6 +315,41 @@ struct TrendBuilder {
         let strain = make(days.map { DayValue(day: $0.day, value: $0.week?.strain) }, period, style: .line, unit: "",
                           format: .number(decimals: 0), title: String(localized: "Training Strain"))
         return [monotony, strain]
+    }
+
+    /// Session-RPE load (effort × minutes) and Edwards' TRIMP of the same workouts, so the two compare like for like:
+    /// those the user rated (Apple's estimate comes partly from heart rate, so it can't be compared with it) and that
+    /// have heart rate. Only with `SessionRPE.minimumRatedWorkouts` of them in the period.
+    private func effortAndHeartRateLoad(_ period: TrendPeriod) async throws -> [Trend] {
+        let efforts = try await source.workoutEfforts(days: period.days).filter { !$0.value.isEstimate }
+        let rated = try await source.workouts(days: period.days).filter { efforts[$0.id] != nil }
+        guard rated.count >= SessionRPE.minimumRatedWorkouts,
+              let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
+                                                        highestRecorded: try await source.highestHeartRate(days: 365))
+        else { return [] }
+        let days = lastDays(period.days)
+        let heartRate = try await source.heartRate(in: DateInterval(start: days[0], end: max(cardBuilder.now, days[0])))
+        let heartRateByDay = Dictionary(grouping: heartRate) { calendar.startOfDay(for: $0.date) }
+        var effortLoad: [Date: Double] = [:], heartRateLoad: [Date: Double] = [:]
+        var compared = 0
+        for workout in rated {
+            let day = calendar.startOfDay(for: workout.start)
+            let end = workout.start.addingTimeInterval(workout.duration)
+            // A workout past midnight takes readings from the next day too.
+            let nextDay = calendar.isDate(end, inSameDayAs: day) ? [] : heartRateByDay[calendar.startOfDay(for: end)] ?? []
+            let during = ((heartRateByDay[day] ?? []) + nextDay).filter { $0.date >= workout.start && $0.date < end }
+            guard !during.isEmpty else { continue }
+            compared += 1
+            effortLoad[day, default: 0] += SessionRPE.load(effort: efforts[workout.id]!.score, duration: workout.duration)
+            heartRateLoad[day, default: 0] += Strain.load(heartRate: during, end: end, maxHeartRate: maxHeartRate)
+        }
+        guard compared >= SessionRPE.minimumRatedWorkouts else { return [] }
+        return [
+            make(days.map { DayValue(day: $0, value: effortLoad[$0] ?? 0) }, period, style: .bars, unit: "",
+                 format: .number(decimals: 0), title: String(localized: "Effort Load of Rated Workouts"), weeklyTotals: true),
+            make(days.map { DayValue(day: $0, value: heartRateLoad[$0] ?? 0) }, period, style: .bars, unit: "TRIMP",
+                 format: .number(decimals: 0), title: String(localized: "Heart Rate Load of Rated Workouts"), weeklyTotals: true),
+        ]
     }
 
     // MARK: - Helpers

@@ -124,6 +124,14 @@ nonisolated struct WorkoutDetail: Equatable {
     var route: [RoutePoint] = []
     /// How far heart rate fell in the minute after the workout, in bpm (#131).
     var heartRateRecovery: Double?
+    /// How hard the workout was, 1–10, from Apple Health on iOS 18 and later (#134).
+    var effort: WorkoutEffort?
+}
+
+/// A workout's effort rating on Apple's 1–10 scale: the user's own, or else Apple's estimate (#134).
+nonisolated struct WorkoutEffort: Equatable {
+    let score: Double
+    let isEstimate: Bool
 }
 
 nonisolated struct RoutePoint: Equatable {
@@ -311,6 +319,8 @@ nonisolated protocol HealthDataSource {
     func intake(_ intake: Intake, on day: Date) async throws -> Double?
     /// Heart rate recovery after each of the last `days` days' last workout with one, oldest first (#131).
     func heartRateRecovery(days: Int) async throws -> [DayValue]
+    /// Effort ratings by workout ID, for the last `days` days' workouts that have one (#134).
+    func workoutEfforts(days: Int) async throws -> [String: WorkoutEffort]
     /// The most recent value of `metric` ever stored, e.g. height, which is rarely measured.
     func latest(_ metric: QuantityMetric) async throws -> Double?
 }
@@ -324,6 +334,7 @@ nonisolated extension HealthDataSource {
     func time(in activity: TimedActivity, on day: Date) async throws -> TimeInterval? { nil }
     func intake(_ intake: Intake, on day: Date) async throws -> Double? { nil }
     func heartRateRecovery(days: Int) async throws -> [DayValue] { [] }
+    func workoutEfforts(days: Int) async throws -> [String: WorkoutEffort] { [:] }
     func latest(_ metric: QuantityMetric) async throws -> Double? {
         try await daily(metric, days: 3650).last { $0.value != nil }?.value
     }

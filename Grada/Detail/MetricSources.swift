@@ -83,6 +83,9 @@ struct MetricSource: Hashable {
     static let foster1998 = MetricSource("Foster 1998 · Med Sci Sports Exerc",
                                          "Training monotony (mean daily load ÷ its standard deviation) and strain (weekly load × monotony)",
                                          doi: "10.1097/00005768-199807000-00023")
+    static let foster2001 = MetricSource("Foster et al. 2001 · J Strength Cond Res",
+                                         "Session RPE: how hard a workout felt × its minutes, tracking heart rate load",
+                                         doi: "10.1519/00124278-200102000-00019")
     static let clemente2019 = MetricSource("Clemente et al. 2019 · PLOS ONE",
                                            "Monotony above 2 as the warning sign, citing Foster",
                                            doi: "10.1371/journal.pone.0225522")
@@ -155,7 +158,7 @@ extension CardKind {
         case .sleepScore: [.ohayon2017, .watson2015, .hirshkowitz2015, .phillips2017, .windred2024]
         case .intensityMinutes: [.bull2020, .garber2011, .tanaka2001]
         case .dayIntensity: [.garber2011, .tanaka2001]
-        case .strain: [.edwards1993, .hulin2016, .gabbett2016, .impellizzeri2020, .foster1998, .clemente2019, .tanaka2001]
+        case .strain: [.edwards1993, .hulin2016, .gabbett2016, .impellizzeri2020, .foster1998, .clemente2019, .foster2001, .tanaka2001]
         case .recoveryTime: [.stanley2013, .seiler2010, .tanaka2001]
         case .trainingReadiness: [.ohayon2017, .stanley2013, .plews2012, .gabbett2016, .watson2015, .hirshkowitz2015]
         case .loadFocus: [.seiler2010, .seilerKjerland2006, .sylta2014, .tanaka2001]
@@ -185,7 +188,7 @@ extension CardKind {
         case .restingHeartRate:
             String(localized: "Studies show resting heart rate rising, not a cutoff. Suggesting rest whenever it's above your normal range (30-day average ± 2 standard deviations) is Grada's rule.")
         case .strain:
-            String(localized: "Foster counted only training, with rest days at zero; here a day's load is all of its heart rate. Using the sample standard deviation is Grada's choice.")
+            String(localized: "Foster counted only training, with rest days at zero; here a day's load is all of its heart rate. Using the sample standard deviation is Grada's choice. Effort load uses Apple's 1–10 effort score for Foster's 0–10 rating scale, and needs \(SessionRPE.minimumRatedWorkouts) rated workouts, Grada's choice.")
         case .weight:
             String(localized: "BMI uses the latest height in Apple Health for every day, since adult height barely changes.")
         case .heartRateRecovery:

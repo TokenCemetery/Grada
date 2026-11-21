@@ -141,7 +141,8 @@ nonisolated struct SampleDataSource: HealthDataSource {
             }
         }
         return WorkoutDetail(heartRate: heartRate, maxHeartRate: heartRate.map(\.value).max(), distance: distance,
-                             distanceTrack: track, elevationGain: profile.climb, route: route)
+                             distanceTrack: track, elevationGain: profile.climb, route: route,
+                             effort: try await workoutEfforts(days: 400)[workout.id])
     }
 
     /// About 50 bpm asleep, 70 awake, and workout effort during the sample workouts: runs at threshold, the rest easy.
@@ -208,6 +209,17 @@ nonisolated struct SampleDataSource: HealthDataSource {
         let workouts = try await workouts(days: days)
         let values = Dictionary(uniqueKeysWithValues: workouts.map { ($0.id, Double(20 + $0.id.utf8.reduce(0) { $0 + Int($1) } % 8)) })
         return HeartRateRecovery.byDay(values, workouts: workouts, days: lastDays(days), calendar: calendar)
+    }
+
+    /// Runs rated 6–7 by the user, rides 5 by Apple's estimate, the rest unrated.
+    func workoutEfforts(days: Int) async throws -> [String: WorkoutEffort] {
+        Dictionary(uniqueKeysWithValues: try await workouts(days: days).compactMap { workout in
+            switch workout.name {
+            case "Run": (workout.id, WorkoutEffort(score: workout.duration > 40 * 60 ? 7 : 6, isEstimate: false))
+            case "Ride": (workout.id, WorkoutEffort(score: 5, isEstimate: true))
+            default: nil
+            }
+        })
     }
 
     /// Two cups of coffee a day, and two drinks on Saturdays.
