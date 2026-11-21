@@ -137,6 +137,14 @@ struct HeartRateRecoveryTests {
         let old = try await SnapshotBuilder(source: FixedRecoverySource(values: [-20: 30])).snapshot(for: .heartRateRecovery)
         #expect(old.value == nil, "A recovery from 20 days ago isn't shown as the latest")
     }
+
+    /// The chart is the last 7 days under their weekdays, not the last 7 readings pushed to the right (#164).
+    @Test func cardChartsReadingsOnTheirDays() async throws {
+        let snapshot = try await SnapshotBuilder(source: FixedRecoverySource(values: [-10: 25, -5: 20, -1: 22]))
+            .snapshot(for: .heartRateRecovery)
+        guard case .line(let values, _) = snapshot.chart else { Issue.record("Expected a line chart"); return }
+        #expect(values == [nil, 20, nil, nil, nil, 22, nil])
+    }
 }
 
 /// A live source with fixed recoveries, recording which workouts it was asked about.

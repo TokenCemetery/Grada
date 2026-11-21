@@ -173,10 +173,13 @@ nonisolated extension SnapshotBuilder {
     }
 
     func vo2Max() async throws -> CardSnapshot {
-        let readings = try await source.daily(.vo2Max, days: 90).filter { $0.value != nil }
-        guard let latest = readings.last, let value = latest.value else { return .noData(period: String(localized: "Latest")) }
+        let series = try await source.daily(.vo2Max, days: 90)
+        guard let latest = series.last(where: { $0.value != nil }), let value = latest.value else {
+            return .noData(period: String(localized: "Latest"))
+        }
         guard let age = try await source.age(), let sex = try await source.biologicalSex() else {
-            let points = readings.suffix(7).map(\.value)
+            // The last 7 days, gaps included: the chart labels its points as this week's weekdays.
+            let points = series.suffix(7).map(\.value)
             return CardSnapshot(
                 period: dayLabel(latest.day),
                 value: format(value, 1),
@@ -202,9 +205,12 @@ nonisolated extension SnapshotBuilder {
     /// The latest workout's one-minute heart rate recovery in the last `HeartRateRecovery.cardDays` days, marked when
     /// it's at or below Cole's cut-off (#131).
     func heartRateRecovery() async throws -> CardSnapshot {
-        let readings = try await source.heartRateRecovery(days: HeartRateRecovery.cardDays).filter { $0.value != nil }
-        guard let latest = readings.last, let value = latest.value else { return .noData(period: String(localized: "Latest")) }
-        let points = readings.suffix(7).map(\.value)
+        let series = try await source.heartRateRecovery(days: HeartRateRecovery.cardDays)
+        guard let latest = series.last(where: { $0.value != nil }), let value = latest.value else {
+            return .noData(period: String(localized: "Latest"))
+        }
+        // The last 7 days, gaps included: the chart labels its points as this week's weekdays.
+        let points = series.suffix(7).map(\.value)
         let slow = value <= HeartRateRecovery.slowCutOff
         return CardSnapshot(
             period: dayLabel(latest.day),
