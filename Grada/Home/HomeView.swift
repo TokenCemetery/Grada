@@ -49,6 +49,9 @@ struct HomeView: View {
         }
         .task {
             seedDefaultCardsIfNeeded()
+            // Data already imported first: the refresh imports before it builds cards, which can take minutes on launch
+            // while the history imports or the permission sheet waits, and Health Status has no other way in (#178).
+            await model.reload([healthStatus] + cardIDs, goals: goals)
             await refresh()
         }
         .onChange(of: scenePhase) { _, phase in
