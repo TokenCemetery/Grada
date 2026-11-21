@@ -26,6 +26,7 @@ struct MobilityTests {
         #expect(zip(classes, classes.dropFirst()).allSatisfy { order.firstIndex(of: $0)! <= order.firstIndex(of: $1)! })
     }
 
+    @MainActor
     @Test func cardShowsSpeedAndApplesSteadiness() async throws {
         var builder = SnapshotBuilder(source: AgedSource(age: 70))
         builder.usesMetric = true

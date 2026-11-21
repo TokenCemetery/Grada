@@ -113,6 +113,7 @@ struct BodyMassTests {
         #expect(try await StoredHealthData(container: container, sources: [RankOnlySource(id: "garmin"), health]).latest(.height) == 190)
     }
 
+    @MainActor
     @Test func weightCardListsItsData() {
         #expect(CardKind.weight.dataKinds == [.bodyMass, .bodyFat, .leanBodyMass, .height])
         #expect(CardKind.weight.category == .body)

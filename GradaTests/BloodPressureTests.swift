@@ -38,6 +38,7 @@ struct BloodPressureTests {
         #expect(BloodPressure.reading(systolic: 121.4, diastolic: 78.6) == "121/79")
     }
 
+    @MainActor
     @Test func cardShowsTheLatestReadingAndItsCategory() async throws {
         let source = SampleDataSource()
         let snapshot = try await SnapshotBuilder(source: source).snapshot(for: .bloodPressure)

@@ -19,6 +19,7 @@ struct ReportTests {
         return defaults
     }
 
+    @MainActor
     @Test func morningNotificationWaitsForTheWakeUp() {
         let wake = today.addingTimeInterval(7 * 3600)
         let early = today.addingTimeInterval(5 * 3600)
@@ -27,6 +28,7 @@ struct ReportTests {
                 "Newer data replaces the pending report")
     }
 
+    @MainActor
     @Test func morningNotificationAfterTheWakeUpIsSentOnce() {
         let wake = today.addingTimeInterval(7 * 3600)
         let late = today.addingTimeInterval(9 * 3600)
@@ -35,6 +37,7 @@ struct ReportTests {
         #expect(ReportNotifier.morningAction(now: late, wake: wake, today: today, scheduledDay: today) == .skip)
     }
 
+    @MainActor
     @Test func eveningNotificationIsRescheduledUntilItsTime() {
         let time = today.addingTimeInterval(22 * 3600)
         #expect(ReportNotifier.eveningAction(now: today.addingTimeInterval(18 * 3600), at: time) == .at(time))
@@ -76,6 +79,7 @@ struct ReportTests {
         #expect(report.notificationBody == "8,420 steps · 95 intensity min this week\nWalk about 16 more minutes\nGo to bed by 22:55")
     }
 
+    @MainActor
     @Test func sampleDataHasBothReports() async throws {
         let builder = SnapshotBuilder(source: SampleDataSource())
         let morning = try await DailyReport.load(.morning, builder)
