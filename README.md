@@ -61,12 +61,6 @@ Run the unit tests (use any iPhone simulator listed by `xcrun simctl list device
 xcodebuild test -project Grada.xcodeproj -scheme Grada -destination "platform=iOS Simulator,name=iPhone 15" -only-testing:GradaTests -testLanguage en -testRegion US CODE_SIGNING_ALLOWED=NO
 ```
 
-To refresh the screenshots in `docs/screenshots` (App Store iPhone 6.9" and iPad 13" sizes, plus GitHub's social preview), run the script below. It creates its own simulators and captures the sample data in English.
-
-```bash
-scripts/screenshots.sh
-```
-
 ## Roadmap
 
 [docs/ROADMAP.md](docs/ROADMAP.md) lists what each release shipped and what was declined.
