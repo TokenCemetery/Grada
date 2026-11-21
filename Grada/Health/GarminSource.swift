@@ -68,16 +68,20 @@ final class GarminSource: HealthSource {
         lastSync = defaults.object(forKey: Self.lastSyncKey) as? Date
     }
 
-    /// Saves `key` once Garmin accepts it; a key Garmin refuses isn't kept.
+    /// Saves `key` once Garmin accepts it; a key Garmin refuses, or that can't be checked, isn't kept.
     func connect(key: String) async throws {
         let key = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        let previous = keyStore.key
         try keyStore.save(key)
         client.reset()
         do {
             try await client.verify()
         } catch {
-            keyStore.delete()
-            isConnected = false
+            // Puts back the key that was there, so a new key that fails, e.g. while offline, doesn't also lose a
+            // working one.
+            if let previous { try? keyStore.save(previous) } else { keyStore.delete() }
+            client.reset()
+            isConnected = previous != nil
             throw error
         }
         isConnected = true

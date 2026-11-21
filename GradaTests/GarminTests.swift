@@ -407,6 +407,17 @@ struct GarminTests {
         #expect(garmin.lastSync == nil)
     }
 
+    /// A new key that fails to verify leaves the working key in place (#150).
+    @Test func failedNewKeyKeepsTheOldOne() async throws {
+        let fake = FakeGarmin()
+        fake.answer = { $0.value(forHTTPHeaderField: "Authorization") == "ApiKey new-key" ? (401, "") : (200, self.jwt) }
+        let (garmin, store) = try source(fake)
+
+        await #expect(throws: GarminClient.Failure.keyRejected) { try await garmin.connect(key: "new-key") }
+        #expect(store.key == "test-key")
+        #expect(garmin.isConnected)
+    }
+
     @Test func refusedKeyIsNotKept() async throws {
         let fake = FakeGarmin()
         fake.answer = { _ in (401, "") }

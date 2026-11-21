@@ -26,13 +26,17 @@ struct GarminKeyStore: GarminKeyStoring {
         return String(data: data, encoding: .utf8)
     }
 
+    /// Updates in place rather than deleting first, so a failed save keeps the key that was there.
     func save(_ key: String) throws {
-        delete()
-        var item = query
-        item[kSecValueData as String] = Data(key.utf8)
-        // Readable after the first unlock, so background refreshes work; never leaves this device.
-        item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        let status = SecItemAdd(item as CFDictionary, nil)
+        let attributes: [String: Any] = [
+            kSecValueData as String: Data(key.utf8),
+            // Readable after the first unlock, so background refreshes work; never leaves this device.
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+        ]
+        var status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        if status == errSecItemNotFound {
+            status = SecItemAdd(query.merging(attributes) { $1 } as CFDictionary, nil)
+        }
         guard status == errSecSuccess else { throw NSError(domain: NSOSStatusErrorDomain, code: Int(status)) }
     }
 
