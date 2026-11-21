@@ -83,12 +83,12 @@ struct SleepScheduleView: View {
     }
 
     private func time(_ date: Date) -> String { date.formatted(date: .omitted, time: .shortened) }
-    private func time(minutes: Int) -> String { time(today.addingTimeInterval(Double(minutes) * 60)) }
+    private func time(minutes: Int) -> String { time(SleepSchedule.time(minutes, on: today, calendar: calendar)) }
 
     /// A time of day for minutes after midnight.
     private func minutes(_ value: Binding<Int>) -> Binding<Date> {
         Binding {
-            today.addingTimeInterval(Double(value.wrappedValue) * 60)
+            SleepSchedule.time(value.wrappedValue, on: today, calendar: calendar)
         } set: { date in
             let parts = calendar.dateComponents([.hour, .minute], from: date)
             value.wrappedValue = (parts.hour ?? 0) * 60 + (parts.minute ?? 0)

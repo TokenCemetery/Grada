@@ -99,6 +99,20 @@ struct ReportTests {
                 == today.addingTimeInterval(5.75 * 3600))
     }
 
+    /// On the days clocks change, times stay on the clock rather than shifting an hour (#156).
+    @Test func scheduleTimesKeepTheClockTimeWhenClocksChange() throws {
+        let defaults = try freshDefaults()
+        var berlin = Calendar(identifier: .gregorian)
+        berlin.timeZone = TimeZone(identifier: "Europe/Berlin")!
+        for date in [DateComponents(year: 2026, month: 3, day: 29), DateComponents(year: 2026, month: 10, day: 25)] {
+            let day = berlin.date(from: date)!
+            let wake = SleepSchedule.wake(on: day, usual: nil, defaults: defaults, calendar: berlin)
+            let bedtime = SleepSchedule.bedtime(on: day, usual: nil, defaults: defaults, calendar: berlin)
+            #expect(berlin.dateComponents([.hour, .minute], from: wake) == DateComponents(hour: 7, minute: 0))
+            #expect(berlin.dateComponents([.hour, .minute], from: bedtime) == DateComponents(hour: 23, minute: 0))
+        }
+    }
+
     @Test func ownBedtimeAfterMidnightIsTheNextDay() throws {
         let defaults = try freshDefaults()
         #expect(SleepSchedule.bedtime(on: today, usual: nil, defaults: defaults, calendar: calendar)

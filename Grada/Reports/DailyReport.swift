@@ -105,7 +105,7 @@ nonisolated enum SleepSchedule {
     static func wake(on day: Date, usual: Date?, defaults: UserDefaults = .standard, calendar: Calendar) -> Date {
         if usesUsualTimes(defaults), let usual { return usual }
         let minutes = usesUsualTimes(defaults) ? defaultWakeMinutes : defaults.object(forKey: wakeMinutesKey) as? Int ?? defaultWakeMinutes
-        return calendar.startOfDay(for: day).addingTimeInterval(Double(minutes) * 60)
+        return time(minutes, on: day, calendar: calendar)
     }
 
     /// The bedtime on the evening of `day`: the user's own time, else `usual`, else the default.
@@ -116,7 +116,13 @@ nonisolated enum SleepSchedule {
         // A bedtime before noon is after midnight, so on the next calendar day.
         let start = calendar.startOfDay(for: day)
         let evening = minutes < 12 * 60 ? calendar.date(byAdding: .day, value: 1, to: start)! : start
-        return evening.addingTimeInterval(Double(minutes) * 60)
+        return time(minutes, on: evening, calendar: calendar)
+    }
+
+    /// The clock time `minutes` after midnight on `day`. Adding seconds to midnight would be an hour off on the
+    /// days clocks change.
+    static func time(_ minutes: Int, on day: Date, calendar: Calendar) -> Date {
+        calendar.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: day)!
     }
 
     static func windDown(_ defaults: UserDefaults = .standard) -> TimeInterval {
