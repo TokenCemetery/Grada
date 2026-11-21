@@ -78,6 +78,16 @@ nonisolated enum Recommendations {
         return nil
     }
 
+    /// Above Foster's monotony warning: the same load day after day, whatever its size.
+    static func monotony(_ monotony: Double) -> Recommendation? {
+        guard monotony > Strain.highMonotony else { return nil }
+        return Recommendation(
+            symbol: "chart.bar.xaxis",
+            text: String(localized: "Mix hard and easy days"),
+            reason: String(localized: "Your load has barely changed over the last 7 days (monotony \(monotony.formatted(.number.precision(.fractionLength(1)))), above \(Strain.highMonotony.formatted())). Athletes fell ill most often after hard weeks with too few easy days, so make some days easier and others harder.")
+        )
+    }
+
     static func bedtime(_ plan: Bedtime.Plan, need: TimeInterval) -> Recommendation {
         let time = { (date: Date) in date.formatted(date: .omitted, time: .shortened) }
         let usual = switch plan.weekend {

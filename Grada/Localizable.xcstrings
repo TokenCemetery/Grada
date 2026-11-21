@@ -13042,6 +13042,58 @@
         }
       }
     },
+    "Foster counted only training, with rest days at zero; here a day's load is all of its heart rate. Using the sample standard deviation is Grada's choice." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foster zählte nur Training, Ruhetage mit null; hier ist die Last eines Tages seine gesamte Herzfrequenz. Die Stichproben-Standardabweichung zu verwenden ist Gradas Wahl."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foster solo contó el entrenamiento, con los días de descanso a cero; aquí la carga de un día es toda su frecuencia cardíaca. Usar la desviación estándar muestral es elección de Grada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foster ne comptait que l’entraînement, avec les jours de repos à zéro ; ici, la charge d’une journée vient de toute sa fréquence cardiaque. Utiliser l’écart type de l’échantillon est un choix de Grada."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foster ने सिर्फ़ ट्रेनिंग गिनी, आराम के दिनों को शून्य मानकर; यहाँ किसी दिन का लोड उसकी पूरी हृदय गति से है। सैंपल स्टैंडर्ड डेविएशन का इस्तेमाल Grada का चुनाव है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foster contava solo l’allenamento, con i giorni di riposo a zero; qui il carico di un giorno viene da tutta la sua frequenza cardiaca. Usare la deviazione standard campionaria è una scelta di Grada."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foster contou só o treino, com os dias de descanso em zero; aqui a carga de um dia vem de toda a sua frequência cardíaca. Usar o desvio padrão amostral é escolha do Grada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foster учитывал только тренировки, а дни отдыха — как ноль; здесь нагрузка дня считается по всему его пульсу. Выборочное стандартное отклонение — выбор Grada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foster 只计算训练，休息日记为零；这里一天的负荷来自当天的全部心率。使用样本标准差是 Grada 的选择。"
+          }
+        }
+      }
+    },
     "From VO₂ max %@" : {
       "localizations" : {
         "de" : {
@@ -19543,6 +19595,58 @@
         }
       }
     },
+    "Mix hard and easy days" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wechsle harte und leichte Tage ab"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterna días duros y suaves"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alternez jours durs et jours faciles"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कठिन और हल्के दिन बारी-बारी रखें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterna giorni duri e leggeri"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterne dias fortes e leves"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чередуйте тяжёлые и лёгкие дни"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "交替安排高强度日和轻松日"
+          }
+        }
+      }
+    },
     "Moderate" : {
       "localizations" : {
         "de" : {
@@ -19591,6 +19695,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "中等"
+          }
+        }
+      }
+    },
+    "Monotony above 2 as the warning sign, citing Foster" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonie über 2 als Warnzeichen, mit Verweis auf Foster"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonía por encima de 2 como señal de alerta, citando a Foster"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une monotonie supérieure à 2 comme signal d’alerte, en citant Foster"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 से ऊपर की मोनोटोनी एक चेतावनी के रूप में, Foster के हवाले से"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonia sopra 2 come segnale d’allarme, citando Foster"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonia acima de 2 como sinal de alerta, citando Foster"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Монотонность выше 2 как тревожный признак, со ссылкой на Foster"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以单调性高于 2 作为警示信号，引用 Foster"
           }
         }
       }
@@ -30251,54 +30407,54 @@
         }
       }
     },
-    "Today's training load: minutes with your heart rate in each zone (50–60% of max counts 1 per minute, up to 90% and above counting 5), Edwards' TRIMP, over the whole day, so workouts and busy days both count. The ratio compares your average daily load over the last 7 days with the last 28. In studies of athletes, injuries were least common at ratios of 0.8–1.3 (green) and most common from 1.5 (red); below 0.8 or between 1.3 and 1.5 is yellow. Those studies were of team sports and the link is debated, so read the ratio as how fast your load is changing. Needs 21 of the last 28 days with heart rate." : {
+    "Today's training load: minutes with your heart rate in each zone (50–60% of max counts 1 per minute, up to 90% and above counting 5), Edwards' TRIMP, over the whole day, so workouts and busy days both count. The ratio compares your average daily load over the last 7 days with the last 28. In studies of athletes, injuries were least common at ratios of 0.8–1.3 (green) and most common from 1.5 (red); below 0.8 or between 1.3 and 1.5 is yellow. Those studies were of team sports and the link is debated, so read the ratio as how fast your load is changing. Needs 21 of the last 28 days with heart rate. Below the trend, training monotony is your average daily load over the last 7 days divided by how much it varied, and training strain is the week's total load times monotony (Foster). Athletes' illnesses mostly came after weeks of high strain, and monotony above 2 is the usual warning sign: the same load every day, without easy days to recover. Both need a load on all 7 days; today's week ends yesterday." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Trainingslast von heute: Minuten mit deiner Herzfrequenz in jeder Zone (50–6 % der maximalen zählen 1 pro Minute, bis zu 9 % und mehr mit 5), Edwards-TRIMP, über den ganzen Tag, sodass Workouts und aktive Tage beide zählen. Das Verhältnis vergleicht deine durchschnittliche Tageslast der letzten 7 Tage mit den letzten 28. In Studien an Sportlern waren Verletzungen bei Verhältnissen von 0,8–1,3 am seltensten (grün) und ab 1,5 am häufigsten (rot); unter 0,8 oder zwischen 1,3 und 1,5 ist gelb. Diese Studien betrafen Mannschaftssportarten und der Zusammenhang ist umstritten, lies das Verhältnis also als Maß dafür, wie schnell sich deine Last ändert. Benötigt 21 der letzten 28 Tage mit Herzfrequenz."
+            "value" : "Die Trainingslast von heute: Minuten mit deiner Herzfrequenz in jeder Zone (50–6 % der maximalen zählen 1 pro Minute, bis zu 9 % und mehr mit 5), Edwards-TRIMP, über den ganzen Tag, sodass Workouts und aktive Tage beide zählen. Das Verhältnis vergleicht deine durchschnittliche Tageslast der letzten 7 Tage mit den letzten 28. In Studien an Sportlern waren Verletzungen bei Verhältnissen von 0,8–1,3 am seltensten (grün) und ab 1,5 am häufigsten (rot); unter 0,8 oder zwischen 1,3 und 1,5 ist gelb. Diese Studien betrafen Mannschaftssportarten und der Zusammenhang ist umstritten, lies das Verhältnis also als Maß dafür, wie schnell sich deine Last ändert. Benötigt 21 der letzten 28 Tage mit Herzfrequenz. Unter dem Verlauf ist die Trainingsmonotonie deine durchschnittliche Tageslast der letzten 7 Tage geteilt durch ihre Schwankung, und die Trainingsbeanspruchung die Gesamtlast der Woche mal Monotonie (Foster). Krankheiten von Sportlern folgten meist auf Wochen hoher Beanspruchung, und eine Monotonie über 2 gilt als übliches Warnzeichen: jeden Tag dieselbe Last, ohne leichte Tage zur Erholung. Beide brauchen an allen 7 Tagen eine Last; die Woche von heute endet gestern."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La carga de entrenamiento de hoy: minutos con tu frecuencia cardíaca en cada zona (el 50–60% de la máxima cuenta 1 por minuto, hasta el 90% y más contando 5), el TRIMP de Edwards, durante todo el día, así que cuentan tanto los entrenamientos como los días ajetreados. El ratio compara tu carga diaria media de los últimos 7 días con la de los últimos 28. En estudios con atletas, las lesiones fueron menos frecuentes con ratios de 0,8–1,3 (verde) y más frecuentes desde 1,5 (rojo); por debajo de 0,8 o entre 1,3 y 1,5 es amarillo. Esos estudios fueron de deportes de equipo y la relación se discute, así que lee el ratio como la rapidez con que cambia tu carga. Necesita 21 de los últimos 28 días con frecuencia cardíaca."
+            "value" : "La carga de entrenamiento de hoy: minutos con tu frecuencia cardíaca en cada zona (el 50–60% de la máxima cuenta 1 por minuto, hasta el 90% y más contando 5), el TRIMP de Edwards, durante todo el día, así que cuentan tanto los entrenamientos como los días ajetreados. El ratio compara tu carga diaria media de los últimos 7 días con la de los últimos 28. En estudios con atletas, las lesiones fueron menos frecuentes con ratios de 0,8–1,3 (verde) y más frecuentes desde 1,5 (rojo); por debajo de 0,8 o entre 1,3 y 1,5 es amarillo. Esos estudios fueron de deportes de equipo y la relación se discute, así que lee el ratio como la rapidez con que cambia tu carga. Necesita 21 de los últimos 28 días con frecuencia cardíaca. Debajo de la tendencia, la monotonía del entrenamiento es tu carga diaria media de los últimos 7 días dividida por cuánto varió, y la tensión del entrenamiento es la carga total de la semana por la monotonía (Foster). Las enfermedades de los atletas llegaron sobre todo tras semanas de mucha tensión, y una monotonía por encima de 2 es la señal de alerta habitual: la misma carga cada día, sin días suaves para recuperarse. Ambas necesitan carga en los 7 días; la semana de hoy termina ayer."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La charge d’entraînement du jour : minutes avec votre fréquence cardiaque dans chaque zone (50–60 % du max compte 1 par minute, jusqu’à 90 % et plus qui compte 5), TRIMP d’Edwards, sur toute la journée, donc les entraînements comme les journées actives comptent. Le ratio compare votre charge quotidienne moyenne des 7 derniers jours à celle des 28 derniers. Dans les études sur des athlètes, les blessures étaient les moins fréquentes pour des ratios de 0,8 à 1,3 (vert) et les plus fréquentes à partir de 1,5 (rouge) ; sous 0,8 ou entre 1,3 et 1,5, c’est jaune. Ces études portaient sur des sports d’équipe et le lien est débattu : lisez le ratio comme la vitesse à laquelle votre charge évolue. Nécessite 21 des 28 derniers jours avec fréquence cardiaque."
+            "value" : "La charge d’entraînement du jour : minutes avec votre fréquence cardiaque dans chaque zone (50–60 % du max compte 1 par minute, jusqu’à 90 % et plus qui compte 5), TRIMP d’Edwards, sur toute la journée, donc les entraînements comme les journées actives comptent. Le ratio compare votre charge quotidienne moyenne des 7 derniers jours à celle des 28 derniers. Dans les études sur des athlètes, les blessures étaient les moins fréquentes pour des ratios de 0,8 à 1,3 (vert) et les plus fréquentes à partir de 1,5 (rouge) ; sous 0,8 ou entre 1,3 et 1,5, c’est jaune. Ces études portaient sur des sports d’équipe et le lien est débattu : lisez le ratio comme la vitesse à laquelle votre charge évolue. Nécessite 21 des 28 derniers jours avec fréquence cardiaque. Sous la tendance, la monotonie de l’entraînement est votre charge quotidienne moyenne des 7 derniers jours divisée par sa variation, et la contrainte d’entraînement la charge totale de la semaine multipliée par la monotonie (Foster). Les maladies des athlètes survenaient surtout après des semaines de forte contrainte, et une monotonie supérieure à 2 est le signal d’alerte habituel : la même charge chaque jour, sans jours faciles pour récupérer. Les deux demandent une charge sur les 7 jours ; la semaine d’aujourd’hui se termine hier."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "आज का ट्रेनिंग लोड: पूरे दिन में हर ज़ोन में आपकी हृदय गति के मिनट (अधिकतम के 50–60% पर प्रति मिनट 1 गिना जाता है, 90% और ऊपर तक 5), यानी Edwards का TRIMP, इसलिए वर्कआउट और व्यस्त दिन दोनों गिने जाते हैं। अनुपात पिछले 7 दिनों के आपके औसत दैनिक लोड की तुलना पिछले 28 दिनों से करता है। एथलीटों के अध्ययनों में चोटें 0.8–1.3 के अनुपात पर सबसे कम (हरा) और 1.5 से सबसे ज़्यादा (लाल) थीं; 0.8 से नीचे या 1.3 और 1.5 के बीच पीला है। ये अध्ययन टीम खेलों के थे और संबंध पर बहस है, इसलिए अनुपात को ऐसे पढ़ें कि आपका लोड कितनी तेज़ी से बदल रहा है। पिछले 28 में से 21 दिनों की हृदय गति चाहिए।"
+            "value" : "आज का ट्रेनिंग लोड: पूरे दिन में हर ज़ोन में आपकी हृदय गति के मिनट (अधिकतम के 50–60% पर प्रति मिनट 1 गिना जाता है, 90% और ऊपर तक 5), यानी Edwards का TRIMP, इसलिए वर्कआउट और व्यस्त दिन दोनों गिने जाते हैं। अनुपात पिछले 7 दिनों के आपके औसत दैनिक लोड की तुलना पिछले 28 दिनों से करता है। एथलीटों के अध्ययनों में चोटें 0.8–1.3 के अनुपात पर सबसे कम (हरा) और 1.5 से सबसे ज़्यादा (लाल) थीं; 0.8 से नीचे या 1.3 और 1.5 के बीच पीला है। ये अध्ययन टीम खेलों के थे और संबंध पर बहस है, इसलिए अनुपात को ऐसे पढ़ें कि आपका लोड कितनी तेज़ी से बदल रहा है। पिछले 28 में से 21 दिनों की हृदय गति चाहिए। ट्रेंड के नीचे, ट्रेनिंग मोनोटोनी पिछले 7 दिनों का आपका औसत दैनिक लोड है, जिसे उसके उतार-चढ़ाव से भाग दिया गया है, और ट्रेनिंग स्ट्रेन हफ़्ते का कुल लोड गुणा मोनोटोनी है (Foster)। एथलीट ज़्यादातर ऊँचे स्ट्रेन वाले हफ़्तों के बाद बीमार पड़े, और 2 से ऊपर की मोनोटोनी आम चेतावनी है: हर दिन एक-सा लोड, उबरने के लिए हल्के दिनों के बिना। दोनों के लिए सभी 7 दिनों का लोड चाहिए; आज का हफ़्ता कल ख़त्म होता है।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Il carico di allenamento di oggi: minuti con la frequenza cardiaca in ciascuna zona (50–60% del massimo vale 1 per minuto, fino al 90% e oltre che vale 5), TRIMP di Edwards, su tutta la giornata, quindi contano sia gli allenamenti sia le giornate movimentate. Il rapporto confronta il carico giornaliero medio degli ultimi 7 giorni con quello degli ultimi 28. Negli studi sugli atleti, gli infortuni erano meno frequenti con rapporti di 0,8–1,3 (verde) e più frequenti da 1,5 (rosso); sotto 0,8 o tra 1,3 e 1,5 è giallo. Quegli studi riguardavano sport di squadra e il legame è dibattuto, quindi leggi il rapporto come la velocità con cui cambia il tuo carico. Richiede 21 degli ultimi 28 giorni con frequenza cardiaca."
+            "value" : "Il carico di allenamento di oggi: minuti con la frequenza cardiaca in ciascuna zona (50–60% del massimo vale 1 per minuto, fino al 90% e oltre che vale 5), TRIMP di Edwards, su tutta la giornata, quindi contano sia gli allenamenti sia le giornate movimentate. Il rapporto confronta il carico giornaliero medio degli ultimi 7 giorni con quello degli ultimi 28. Negli studi sugli atleti, gli infortuni erano meno frequenti con rapporti di 0,8–1,3 (verde) e più frequenti da 1,5 (rosso); sotto 0,8 o tra 1,3 e 1,5 è giallo. Quegli studi riguardavano sport di squadra e il legame è dibattuto, quindi leggi il rapporto come la velocità con cui cambia il tuo carico. Richiede 21 degli ultimi 28 giorni con frequenza cardiaca. Sotto l’andamento, la monotonia dell’allenamento è il tuo carico giornaliero medio degli ultimi 7 giorni diviso per quanto è variato, e lo strain dell’allenamento è il carico totale della settimana per la monotonia (Foster). Le malattie degli atleti arrivavano soprattutto dopo settimane di strain elevato, e una monotonia sopra 2 è il consueto segnale d’allarme: lo stesso carico ogni giorno, senza giorni leggeri per recuperare. Entrambi richiedono un carico in tutti i 7 giorni; la settimana di oggi termina ieri."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A carga de treino de hoje: minutos com sua frequência cardíaca em cada zona (50–60% da máxima conta 1 por minuto, até 90% ou mais contando 5), TRIMP de Edwards, ao longo do dia todo, então treinos e dias agitados contam. A proporção compara sua carga diária média dos últimos 7 dias com a dos últimos 28. Em estudos com atletas, as lesões foram menos comuns com proporções de 0,8–1,3 (verde) e mais comuns a partir de 1,5 (vermelho); abaixo de 0,8 ou entre 1,3 e 1,5 é amarelo. Esses estudos foram com esportes coletivos e a relação é debatida, então leia a proporção como a velocidade com que sua carga está mudando. Requer 21 dos últimos 28 dias com frequência cardíaca."
+            "value" : "A carga de treino de hoje: minutos com sua frequência cardíaca em cada zona (50–60% da máxima conta 1 por minuto, até 90% ou mais contando 5), TRIMP de Edwards, ao longo do dia todo, então treinos e dias agitados contam. A proporção compara sua carga diária média dos últimos 7 dias com a dos últimos 28. Em estudos com atletas, as lesões foram menos comuns com proporções de 0,8–1,3 (verde) e mais comuns a partir de 1,5 (vermelho); abaixo de 0,8 ou entre 1,3 e 1,5 é amarelo. Esses estudos foram com esportes coletivos e a relação é debatida, então leia a proporção como a velocidade com que sua carga está mudando. Requer 21 dos últimos 28 dias com frequência cardíaca. Abaixo da tendência, a monotonia do treino é sua carga diária média dos últimos 7 dias dividida por quanto ela variou, e a tensão do treino é a carga total da semana vezes a monotonia (Foster). As doenças dos atletas vieram sobretudo após semanas de tensão alta, e uma monotonia acima de 2 é o sinal de alerta habitual: a mesma carga todo dia, sem dias leves para recuperar. Ambas precisam de carga nos 7 dias; a semana de hoje termina ontem."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Тренировочная нагрузка за сегодня: минуты, проведённые в каждой пульсовой зоне (50–60% максимума считаются за 1 в минуту, а 90% и выше — за 5), TRIMP по Эдвардсу, за весь день, поэтому учитываются и тренировки, и просто активные дни. Соотношение сравнивает вашу среднюю дневную нагрузку за последние 7 дней с последними 28. В исследованиях атлетов травмы были реже всего при соотношении 0,8–1,3 (зелёный) и чаще всего от 1,5 (красный); ниже 0,8 или между 1,3 и 1,5 — жёлтый. Эти исследования касались командных видов спорта, и связь оспаривается, поэтому воспринимайте соотношение как скорость изменения вашей нагрузки. Нужны 21 из последних 28 дней с данными о пульсе."
+            "value" : "Тренировочная нагрузка за сегодня: минуты, проведённые в каждой пульсовой зоне (50–60% максимума считаются за 1 в минуту, а 90% и выше — за 5), TRIMP по Эдвардсу, за весь день, поэтому учитываются и тренировки, и просто активные дни. Соотношение сравнивает вашу среднюю дневную нагрузку за последние 7 дней с последними 28. В исследованиях атлетов травмы были реже всего при соотношении 0,8–1,3 (зелёный) и чаще всего от 1,5 (красный); ниже 0,8 или между 1,3 и 1,5 — жёлтый. Эти исследования касались командных видов спорта, и связь оспаривается, поэтому воспринимайте соотношение как скорость изменения вашей нагрузки. Нужны 21 из последних 28 дней с данными о пульсе. Под трендом монотонность тренировок — это средняя дневная нагрузка за последние 7 дней, делённая на её разброс, а тренировочное напряжение — общая нагрузка за неделю, умноженная на монотонность (Foster). Спортсмены болели чаще всего после недель высокого напряжения, а монотонность выше 2 — обычный тревожный признак: одна и та же нагрузка каждый день, без лёгких дней для восстановления. Для обоих нужна нагрузка во все 7 дней; неделя для сегодняшнего дня заканчивается вчера."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "今日训练负荷：心率处于各区间的分钟数（最大心率的 50–60% 每分钟计 1，到 90% 及以上每分钟计 5），即 Edwards TRIMP，涵盖全天，因此训练和忙碌的日子都会计入。比值是将你最近 7 天的日均负荷与最近 28 天比较。在对运动员的研究中，比值为 0.8–1.3（绿色）时受伤最少，从 1.5 起（红色）最多；低于 0.8 或介于 1.3 与 1.5 之间为黄色。这些研究针对的是团队运动，且这种关联尚有争议，因此请将比值理解为你的负荷变化有多快。需要最近 28 天中有 21 天有心率数据。"
+            "value" : "今日训练负荷：心率处于各区间的分钟数（最大心率的 50–60% 每分钟计 1，到 90% 及以上每分钟计 5），即 Edwards TRIMP，涵盖全天，因此训练和忙碌的日子都会计入。比值是将你最近 7 天的日均负荷与最近 28 天比较。在对运动员的研究中，比值为 0.8–1.3（绿色）时受伤最少，从 1.5 起（红色）最多；低于 0.8 或介于 1.3 与 1.5 之间为黄色。这些研究针对的是团队运动，且这种关联尚有争议，因此请将比值理解为你的负荷变化有多快。需要最近 28 天中有 21 天有心率数据。趋势图下方，训练单调性是你最近 7 天的日均负荷除以其波动程度，训练压力是一周总负荷乘以单调性（Foster）。运动员生病大多发生在高训练压力的几周之后，单调性高于 2 是常用的警示信号：每天负荷相同，没有用于恢复的轻松日。两者都需要 7 天都有负荷数据；今天的这一周截至昨天。"
           }
         }
       }
@@ -30511,6 +30667,111 @@
         }
       }
     },
+    "Training Monotony" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trainingsmonotonie"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonía del entrenamiento"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonie de l’entraînement"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ट्रेनिंग मोनोटोनी"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonia dell’allenamento"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonia do treino"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Монотонность тренировок"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练单调性"
+          }
+        }
+      }
+    },
+    "Training Monotony · High" : {
+      "comment" : "Chart title when the latest week's monotony is above 2",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trainingsmonotonie · Hoch"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonía del entrenamiento · Alta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonie de l’entraînement · Élevée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ट्रेनिंग मोनोटोनी · ऊँची"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonia dell’allenamento · Alta"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonia do treino · Alta"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Монотонность тренировок · Высокая"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练单调性 · 高"
+          }
+        }
+      }
+    },
     "Training Readiness" : {
       "localizations" : {
         "de" : {
@@ -30559,6 +30820,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "训练准备度"
+          }
+        }
+      }
+    },
+    "Training Strain" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trainingsbeanspruchung"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tensión del entrenamiento"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contrainte d’entraînement"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ट्रेनिंग स्ट्रेन"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strain dell’allenamento"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tensão do treino"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тренировочное напряжение"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练压力"
           }
         }
       }
@@ -30819,6 +31132,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "以每个心率区间的分钟数表示的训练负荷，按 1 到 5 加权（TRIMP）"
+          }
+        }
+      }
+    },
+    "Training monotony (mean daily load ÷ its standard deviation) and strain (weekly load × monotony)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trainingsmonotonie (mittlere Tageslast ÷ ihre Standardabweichung) und Beanspruchung (Wochenlast × Monotonie)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonía del entrenamiento (carga diaria media ÷ su desviación estándar) y tensión (carga semanal × monotonía)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonie de l’entraînement (charge quotidienne moyenne ÷ son écart type) et contrainte (charge hebdomadaire × monotonie)"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ट्रेनिंग मोनोटोनी (औसत दैनिक लोड ÷ उसका स्टैंडर्ड डेविएशन) और स्ट्रेन (साप्ताहिक लोड × मोनोटोनी)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonia dell’allenamento (carico giornaliero medio ÷ la sua deviazione standard) e strain (carico settimanale × monotonia)"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monotonia do treino (carga diária média ÷ seu desvio padrão) e tensão (carga semanal × monotonia)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Монотонность тренировок (средняя дневная нагрузка ÷ её стандартное отклонение) и напряжение (недельная нагрузка × монотонность)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练单调性（日均负荷 ÷ 其标准差）和训练压力（周负荷 × 单调性）"
           }
         }
       }
@@ -34082,6 +34447,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你全天的心率。它随活动和压力升高，在休息和睡眠时下降。"
+          }
+        }
+      }
+    },
+    "Your load has barely changed over the last 7 days (monotony %@, above %@). Athletes fell ill most often after hard weeks with too few easy days, so make some days easier and others harder." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Last hat sich in den letzten 7 Tagen kaum verändert (Monotonie %1$@, über %2$@). Sportler wurden am häufigsten nach harten Wochen mit zu wenigen leichten Tagen krank, also mach manche Tage leichter und andere härter."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu carga apenas ha cambiado en los últimos 7 días (monotonía %1$@, por encima de %2$@). Los atletas enfermaban más a menudo tras semanas duras con pocos días suaves, así que haz algunos días más suaves y otros más duros."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre charge a à peine varié ces 7 derniers jours (monotonie %1$@, au-dessus de %2$@). Les athlètes tombaient le plus souvent malades après des semaines dures avec trop peu de jours faciles : rendez certains jours plus faciles et d’autres plus durs."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले 7 दिनों में आपका लोड मुश्किल से बदला है (मोनोटोनी %1$@, %2$@ से ऊपर)। एथलीट सबसे ज़्यादा उन कठिन हफ़्तों के बाद बीमार पड़े जिनमें हल्के दिन बहुत कम थे, इसलिए कुछ दिन हल्के और कुछ कठिन रखें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo carico è cambiato appena negli ultimi 7 giorni (monotonia %1$@, sopra %2$@). Gli atleti si ammalavano più spesso dopo settimane dure con pochi giorni leggeri, quindi rendi alcuni giorni più leggeri e altri più duri."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua carga quase não mudou nos últimos 7 dias (monotonia %1$@, acima de %2$@). Os atletas adoeciam com mais frequência após semanas duras com poucos dias leves, então deixe alguns dias mais leves e outros mais fortes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваша нагрузка почти не менялась последние 7 дней (монотонность %1$@, выше %2$@). Спортсмены чаще всего болели после тяжёлых недель со слишком малым числом лёгких дней, поэтому делайте одни дни легче, а другие тяжелее."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你最近 7 天的负荷几乎没有变化（单调性 %1$@，高于 %2$@）。运动员最常在轻松日太少的艰苦几周后生病，所以让有些天轻松一些、有些天更有强度。"
           }
         }
       }

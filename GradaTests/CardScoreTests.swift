@@ -108,6 +108,66 @@ struct StrainTests {
                 "Fewer than 4 of the last 7 days")
     }
 
+    /// Foster 1998: monotony is the week's mean daily load over its standard deviation, strain the weekly load
+    /// times monotony.
+    @Test func monotonyAndStrainFollowFoster() throws {
+        // The 7 days ending at index 7: mean 100, sample SD 20.
+        let loads: [Double?] = [nil, 80, 120, 80, 120, 80, 120, 100]
+        let week = try #require(Strain.week(loads: loads, endingAt: 7))
+        #expect(week.load == 700)
+        #expect(abs(week.monotony - 5) < 0.000_001)
+        #expect(abs(week.strain - 3500) < 0.001)
+        #expect(week.isMonotonous)
+        #expect(Strain.week(loads: loads, endingAt: 6) == nil, "Needs a load on all 7 days")
+        #expect(Strain.week(loads: Array(repeating: 100, count: 7), endingAt: 6) == nil, "No variation, no monotony")
+        let varied = try #require(Strain.week(loads: [0, 200, 0, 200, 0, 200, 100], endingAt: 6))
+        #expect(!varied.isMonotonous)
+    }
+
+    @Test func monotonyRecommendationAboveTwo() {
+        #expect(Recommendations.monotony(2.0) == nil)
+        #expect(Recommendations.monotony(2.1)?.text == "Mix hard and easy days")
+    }
+
+    /// Today's week ends yesterday, a past day's week on that day.
+    @Test func todaysWeekEndsYesterday() async throws {
+        let calendar = Calendar.current
+        var builder = SnapshotBuilder(source: AlternatingLoadSource())
+        builder.now = calendar.date(bySettingHour: 20, minute: 0, second: 0, of: .now)!
+        let days = try #require(try await builder.strainDays(2))
+        #expect(days[1].week != nil)
+        #expect(days[1].week == days[0].week)
+
+        builder.now = calendar.date(byAdding: .day, value: -1, to: builder.now)!
+        let past = try #require(try await builder.strainDays(2))
+        #expect(past[1].week == days[0].week, "Yesterday's week ends yesterday when shown as a past day")
+        #expect(past[1].week != past[0].week)
+    }
+
+    @MainActor
+    @Test func monotonousWeekRecommendsMixingDays() async throws {
+        let calendar = Calendar.current
+        var builder = SnapshotBuilder(source: AlternatingLoadSource())
+        builder.now = calendar.date(bySettingHour: 20, minute: 0, second: 0, of: .now)!
+        let snapshot = try await builder.snapshot(for: .strain)
+        #expect(snapshot.rating == .good, "The load ratio is in the sweet spot, so it has no advice")
+        #expect(snapshot.recommendation?.text == "Mix hard and easy days")
+
+        builder.now = calendar.date(byAdding: .day, value: -1, to: builder.now)!
+        #expect(try await builder.snapshot(for: .strain).recommendation == nil, "No advice on past days")
+    }
+
+    @MainActor
+    @Test func detailChartsMonotonyAndStrain() async throws {
+        let trends = try await TrendBuilder(source: AlternatingLoadSource()).extraTrends(for: .strain, period: .month)
+        try #require(trends.count == 2)
+        #expect(trends[0].title == "Training Monotony · High")
+        #expect(trends[0].normalRange == 0...Strain.highMonotony)
+        #expect(trends[1].title == "Training Strain")
+        #expect(trends[0].points.dropLast().allSatisfy { $0.value != nil })
+        #expect(trends[0].points.last?.value == nil, "Today's week ends yesterday, so today has no point")
+    }
+
     /// Gabbett 2016: sweet spot 0.8–1.3, danger zone from 1.5.
     @Test func ratingFollowsGabbett() {
         #expect(Strain.rating(1.0) == .good)
@@ -129,6 +189,36 @@ struct StrainTests {
         guard case .bars(let loads, _, _) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
         #expect(loads.count == 7)
     }
+}
+
+/// Heart rate at 150 bpm (zone 4 at age 30) every morning for 50 minutes on even days and 60 on odd ones, so
+/// daily loads alternate 200 and 240: monotony about 10, ratio about 1.
+private struct AlternatingLoadSource: HealthDataSource {
+    let base = SampleDataSource()
+    func heartRate(in interval: DateInterval) async throws -> [TimedValue] {
+        let calendar = Calendar.current
+        var readings: [TimedValue] = []
+        var day = calendar.startOfDay(for: interval.start)
+        while day < interval.end {
+            let start = calendar.date(bySettingHour: 8, minute: 0, second: 0, of: day)!
+            let ordinal = calendar.ordinality(of: .day, in: .era, for: day)!
+            // Readings every 5 minutes, as a heart rate reading counts for at most `HeartRateZones.maxGap`.
+            let minutes = ordinal.isMultiple(of: 2) ? 50 : 60
+            readings += stride(from: 0, to: minutes, by: 5).map { TimedValue(date: start + Double($0 * 60), value: 150) }
+            readings.append(TimedValue(date: start + Double(minutes * 60), value: 70))
+            day = calendar.date(byAdding: .day, value: 1, to: day)!
+        }
+        return readings.filter { interval.contains($0.date) }
+    }
+    func age() async throws -> Int? { 30 }
+    func highestHeartRate(days: Int) async throws -> Double? { nil }
+    func daily(_ metric: QuantityMetric, days: Int) async throws -> [DayValue] { try await base.daily(metric, days: days) }
+    func sleepNights(days: Int) async throws -> [SleepNight] { try await base.sleepNights(days: days) }
+    func standHours(days: Int) async throws -> [DayValue] { try await base.standHours(days: days) }
+    func overnight(days: Int) async throws -> [OvernightVitals] { try await base.overnight(days: days) }
+    func workouts(days: Int) async throws -> [WorkoutSummary] { try await base.workouts(days: days) }
+    func sleepPeriods(in interval: DateInterval) async throws -> [SleepPeriod] { try await base.sleepPeriods(in: interval) }
+    func biologicalSex() async throws -> BiologicalSex? { try await base.biologicalSex() }
 }
 
 struct RecoveryTimeTests {

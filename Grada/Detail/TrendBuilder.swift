@@ -266,8 +266,9 @@ struct TrendBuilder {
     }
 
     /// Charts a detail screen shows below its trend, each only with data: body fat, BMI and lean body mass for
-    /// Weight (#132).
+    /// Weight (#132), training monotony and strain for Strain (#133).
     func extraTrends(for kind: CardKind, period: TrendPeriod) async throws -> [Trend] {
+        if kind == .strain { return try await monotonyAndStrain(period) }
         guard kind == .weight else { return [] }
         let days = period.days
         var trends: [Trend] = []
@@ -295,6 +296,25 @@ struct TrendBuilder {
                                title: String(localized: "Lean Body Mass")))
         }
         return trends
+    }
+
+    /// Each day's 7-day monotony, titled High when the shown day's week is above Foster's warning, and training strain.
+    /// Today's week ends yesterday, so today has no point of its own.
+    private func monotonyAndStrain(_ period: TrendPeriod) async throws -> [Trend] {
+        guard var days = try await cardBuilder.strainDays(period.days),
+              days.contains(where: { $0.week != nil })
+        else { return [] }
+        let shownWeek = days.last?.week
+        if let last = days.last, calendar.isDateInToday(last.day) { days[days.count - 1].week = nil }
+        let title = shownWeek?.isMonotonous == true
+            ? String(localized: "Training Monotony · High", comment: "Chart title when the latest week's monotony is above 2")
+            : String(localized: "Training Monotony")
+        var monotony = make(days.map { DayValue(day: $0.day, value: $0.week?.monotony) }, period, style: .line, unit: "",
+                            format: .number(decimals: 1), title: title)
+        monotony.normalRange = 0...Strain.highMonotony
+        let strain = make(days.map { DayValue(day: $0.day, value: $0.week?.strain) }, period, style: .line, unit: "",
+                          format: .number(decimals: 0), title: String(localized: "Training Strain"))
+        return [monotony, strain]
     }
 
     // MARK: - Helpers

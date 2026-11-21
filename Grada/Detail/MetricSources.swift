@@ -80,6 +80,12 @@ struct MetricSource: Hashable {
     static let impellizzeri2020 = MetricSource("Impellizzeri et al. 2020 · Int J Sports Physiol Perform",
                                                "Why the load ratio is a weak predictor of injury",
                                                doi: "10.1123/ijspp.2019-0864")
+    static let foster1998 = MetricSource("Foster 1998 · Med Sci Sports Exerc",
+                                         "Training monotony (mean daily load ÷ its standard deviation) and strain (weekly load × monotony)",
+                                         doi: "10.1097/00005768-199807000-00023")
+    static let clemente2019 = MetricSource("Clemente et al. 2019 · PLOS ONE",
+                                           "Monotony above 2 as the warning sign, citing Foster",
+                                           doi: "10.1371/journal.pone.0225522")
     static let seiler2010 = MetricSource("Seiler 2010 · Int J Sports Physiol Perform",
                                          "Three intensity zones at 82% and 88% of max heart rate; about 80% of training easy",
                                          doi: "10.1123/ijspp.5.3.276")
@@ -149,7 +155,7 @@ extension CardKind {
         case .sleepScore: [.ohayon2017, .watson2015, .hirshkowitz2015, .phillips2017, .windred2024]
         case .intensityMinutes: [.bull2020, .garber2011, .tanaka2001]
         case .dayIntensity: [.garber2011, .tanaka2001]
-        case .strain: [.edwards1993, .hulin2016, .gabbett2016, .impellizzeri2020, .tanaka2001]
+        case .strain: [.edwards1993, .hulin2016, .gabbett2016, .impellizzeri2020, .foster1998, .clemente2019, .tanaka2001]
         case .recoveryTime: [.stanley2013, .seiler2010, .tanaka2001]
         case .trainingReadiness: [.ohayon2017, .stanley2013, .plews2012, .gabbett2016, .watson2015, .hirshkowitz2015]
         case .loadFocus: [.seiler2010, .seilerKjerland2006, .sylta2014, .tanaka2001]
@@ -178,6 +184,8 @@ extension CardKind {
             String(localized: "Your usual wake-up and time awake in bed are the medians of the last \(Bedtime.nights) nights, weekdays and weekends apart once each has \(Bedtime.minimumNights) nights. The window is Grada's choice; no study sets one.")
         case .restingHeartRate:
             String(localized: "Studies show resting heart rate rising, not a cutoff. Suggesting rest whenever it's above your normal range (30-day average ± 2 standard deviations) is Grada's rule.")
+        case .strain:
+            String(localized: "Foster counted only training, with rest days at zero; here a day's load is all of its heart rate. Using the sample standard deviation is Grada's choice.")
         case .weight:
             String(localized: "BMI uses the latest height in Apple Health for every day, since adult height barely changes.")
         case .heartRateRecovery:

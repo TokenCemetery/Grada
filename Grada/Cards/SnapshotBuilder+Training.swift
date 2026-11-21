@@ -36,12 +36,16 @@ nonisolated extension SnapshotBuilder {
         } else {
             snapshot.comparison = String(localized: "Ratio needs \(Strain.minimumChronicDays) days")
         }
+        if isToday, snapshot.recommendation == nil, let week = today.week {
+            snapshot.recommendation = Recommendations.monotony(week.monotony)
+        }
         return snapshot
     }
 
-    /// Each of the last `count` days' load (nil without heart rate) and its acute:chronic ratio, oldest first.
-    /// Nil altogether without a max heart rate to set the zones.
-    func strainDays(_ count: Int) async throws -> [(day: Date, load: Double?, ratio: Strain.Ratio?)]? {
+    /// Each of the last `count` days' load (nil without heart rate), its acute:chronic ratio and its 7-day
+    /// monotony and strain, oldest first. Nil altogether without a max heart rate to set the zones. Today's week ends
+    /// yesterday: a day under way would read as an easy day and hide a monotonous week.
+    func strainDays(_ count: Int) async throws -> [(day: Date, load: Double?, ratio: Strain.Ratio?, week: Strain.Week?)]? {
         guard let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
                                                         highestRecorded: try await source.highestHeartRate(days: 365))
         else { return nil }
@@ -52,7 +56,9 @@ nonisolated extension SnapshotBuilder {
             byDay[day].map { Strain.load(heartRate: $0, end: min(now, calendar.date(byAdding: .day, value: 1, to: day)!),
                                          maxHeartRate: maxHeartRate) }
         }
-        return (days.count - count..<days.count).map { (days[$0], loads[$0], Strain.ratio(loads: loads, endingAt: $0)) }
+        return (days.count - count..<days.count).map {
+            (days[$0], loads[$0], Strain.ratio(loads: loads, endingAt: $0), Strain.week(loads: loads, endingAt: calendar.isDateInToday(days[$0]) ? $0 - 1 : $0))
+        }
     }
 
     /// Hours left until recovered from the last few days' workouts, counting down with the clock.

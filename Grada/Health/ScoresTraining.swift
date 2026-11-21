@@ -159,6 +159,32 @@ nonisolated enum Strain {
         return Ratio(acute: acuteMean, chronic: chronicMean)
     }
 
+    /// Foster 1998 (Med Sci Sports Exerc 30:1164): a week's monotony is its mean daily load over the standard
+    /// deviation, and training strain its total load times monotony. Athletes' illnesses mostly came when strain
+    /// passed a threshold of their own; monotony above 2 is the warning later work takes from it (Clemente et al.
+    /// 2019, PLOS ONE 14:e0225522). Foster counted rest days as zero load; a day's load here is all of its heart
+    /// rate, so rest days count what they had.
+    struct Week: Equatable {
+        /// The 7 days' total load.
+        let load: Double
+        let monotony: Double
+        var strain: Double { load * monotony }
+        var isMonotonous: Bool { monotony > highMonotony }
+    }
+
+    static let highMonotony = 2.0
+
+    /// The 7 days to `end` in `loads` (oldest first, nil without heart rate); nil unless all 7 have a load and
+    /// they differ. Sample standard deviation, as in `MonthSummary`.
+    static func week(loads: [Double?], endingAt end: Int) -> Week? {
+        guard end >= acuteDays - 1, end < loads.count else { return nil }
+        let days = loads[(end - acuteDays + 1)...end].compactMap { $0 }
+        guard days.count == acuteDays, let mean = Baseline.average(days),
+              let deviation = MonthSummary.standardDeviation(days), deviation > 0
+        else { return nil }
+        return Week(load: days.reduce(0, +), monotony: mean / deviation)
+    }
+
     static func word(_ ratio: Double) -> String {
         if ratio >= dangerRatio { return String(localized: "Very high") }
         if ratio > sweetSpot.upperBound { return String(localized: "High") }
