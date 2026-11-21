@@ -79,7 +79,9 @@ struct GoalStore {
     func adjustIfNeeded() async throws -> Bool {
         let history = history()
         guard !history.isEmpty else { return false }
-        let days = Goals.maximumCatchUpWeeks * 7 + 7
+        // The oldest boundary caught up is `maximumCatchUpWeeks` before today and judges the 7 days before it; the
+        // series ends today, so it needs one day more than whole weeks.
+        let days = (Goals.maximumCatchUpWeeks + 1) * 7 + 1
         let values = try await dailyValues(days: days)
         var changed = false
         for metric in GoalMetric.allCases {
