@@ -86,7 +86,8 @@ struct ReportCard: View {
             blocks.append(AnyView(
                 Label {
                     VStack(alignment: .leading, spacing: 4) {
-                        ForEach(report.followUps, id: \.self) { Text($0) }
+                        // Without fixedSize the list row cuts all but the last line to one line.
+                        ForEach(report.followUps, id: \.self) { Text($0).fixedSize(horizontal: false, vertical: true) }
                     }
                 } icon: {
                     Image(systemName: kind == .morning ? "sun.max" : "moon.stars").foregroundStyle(.orange)
@@ -210,6 +211,8 @@ private struct RecommendationRow: View {
                 Text(recommendation.text).font(.subheadline.weight(.semibold))
                 Text(recommendation.reason).font(.caption).foregroundStyle(.secondary)
             }
+            // Without fixedSize the row sometimes cuts the reason to one line.
+            .fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: recommendation.symbol).foregroundStyle(.orange)
         }

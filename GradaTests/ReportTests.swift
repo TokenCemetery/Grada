@@ -102,6 +102,16 @@ struct ReportTests {
     }
 
     @MainActor
+    @Test func trainingSuggestionAgreesWithTheReadinessCard() async throws {
+        let builder = SnapshotBuilder(source: SampleDataSource())
+        let card = try #require(try await builder.readinessDays(7).last?.result)
+        try #require(card.rating != .poor, "Sample data's readiness isn't low; one day of it was")
+        let morning = try await DailyReport.load(.morning, builder, defaults: try freshDefaults())
+        let training = try #require(morning.training ?? morning.focus)
+        #expect(!training.reason.hasPrefix("Training readiness is low"))
+    }
+
+    @MainActor
     @Test func morningFollowsUpOnYesterdaysPlan() async throws {
         let defaults = try freshDefaults()
         let calendar = Calendar.current

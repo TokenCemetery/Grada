@@ -93,7 +93,7 @@ struct DailyReport {
     private mutating func planDay(_ builder: SnapshotBuilder, warning: String?, defaults: UserDefaults) async throws {
         let week = try await builder.weekTraining()
         var input = TrainingPlan.Input()
-        input.readiness = try await builder.readinessDays(1).last?.result
+        input.readiness = try await builder.readinessDays(7).last?.result
         input.bodyWarning = warning
         input.loadRatio = try await builder.strainDays(1)?.last?.ratio?.value
         input.recoveredAt = try await builder.recoveryTimeStatus()?.recoveredAt
