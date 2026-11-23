@@ -18,8 +18,9 @@ struct MiniChart: View {
                 [(values[index] ?? 0, ratings?[index]?.fill(colorBlind: colorBlind) ?? color)]
             }, target: target)
         case .sleep(let nights, let target):
+            // Bars show asleep time, as the detail trend does, so they compare against the sleep target.
             TrackBars(days: nights.map { night in
-                SleepStage.chartOrder.map { stage in ((night?.hours(in: stage) ?? 0), stage.color) }
+                SleepStage.chartOrder.filter { $0 != .awake }.map { stage in ((night?.hours(in: stage) ?? 0), stage.color) }
             }, target: target)
         case .intensity(let days):
             // Very light time is most of the day and would flatten the rest, so it's left out of the bars.
