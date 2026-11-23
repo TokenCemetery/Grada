@@ -392,7 +392,7 @@ private struct DaysGrid: View {
                 ForEach(Array(cells.enumerated()), id: \.offset) { index, day in
                     ZStack {
                         if let day {
-                            SportPie(day: day, diameter: diameter(day.minutes) * scale)
+                            SportPie(day: day, diameter: SportPie.diameter(day.minutes) * scale)
                         }
                         if index == cells.count - 1 {
                             Circle().strokeBorder(Color.primary.opacity(0.6), lineWidth: 1.5).frame(width: 30 * scale, height: 30 * scale)
@@ -416,10 +416,6 @@ private struct DaysGrid: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(days.filter { $0.minutes > 0 }.count) active days in the last 30 days")
     }
-
-    private func diameter(_ minutes: Double) -> CGFloat {
-        minutes <= 0 ? 6 : min(12 + CGFloat(minutes) / 6, 26)
-    }
 }
 
 /// A day's dot: one slice per sport, sized by its minutes, longest first from 12 o'clock. A rest day is a
@@ -427,6 +423,11 @@ private struct DaysGrid: View {
 struct SportPie: View {
     let day: WorkoutDay
     let diameter: CGFloat
+
+    /// A day's dot size: bigger for longer days, the rest-day dot without workouts.
+    static func diameter(_ minutes: Double) -> CGFloat {
+        minutes <= 0 ? 6 : min(12 + CGFloat(minutes) / 6, 26)
+    }
 
     var body: some View {
         let total = max(day.minutes, .leastNonzeroMagnitude)

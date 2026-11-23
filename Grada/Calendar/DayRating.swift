@@ -38,6 +38,8 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
     case recovery
     /// Steps against the day's Steps goal (#192).
     case activity
+    /// Each day's sports, like the Workouts Calendar card (#195); not rated.
+    case workouts
     /// Logged periods and cycle days from Apple Health, with sleeping wrist temperature (#137). Only with Female as
     /// the profile's sex.
     case cycle
@@ -50,6 +52,7 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
         case "health", "healthStatus", "hrv", "restingHeartRate": self = .health
         case "recovery", "sleep": self = .recovery
         case "activity", "training", "steps": self = .activity
+        case "workouts": self = .workouts
         case "cycle": self = .cycle
         default: return nil
         }
@@ -60,20 +63,21 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
         case .health: String(localized: "Health")
         case .recovery: String(localized: "Recovery")
         case .activity: String(localized: "Activity")
+        case .workouts: String(localized: "Workouts")
         case .cycle: String(localized: "Cycle", comment: "Calendar type: the menstrual cycle")
         }
     }
 
-    /// Health, Recovery and Activity colour days red, yellow or green; Cycle draws period days.
-    var isRated: Bool { self != .cycle }
+    /// Health, Recovery and Activity colour days red, yellow or green; Workouts draws sports, Cycle period days.
+    var isRated: Bool { self == .health || self == .recovery || self == .activity }
 
-    /// The day sheet's cards, in order. Activity adds the day's workouts on top; Cycle shows only the day's flow and cycle day.
+    /// The day sheet's cards, in order. Activity and Workouts add the day's workouts on top; Cycle shows only the day's flow and cycle day.
     var kinds: [CardKind] {
         switch self {
         case .health: [.healthStatus, .hrvStatus, .heartRate, .oxygenSaturation, .respiratoryRate, .wristTemperature]
         case .recovery: [.recovery, .resources, .sleepStages, .sleepNeed, .sleepConsistency]
         case .activity: [.steps, .activeEnergy, .intensityMinutes, .distance, .weeklyTraining, .vo2Max]
-        case .cycle: []
+        case .workouts, .cycle: []
         }
     }
 }

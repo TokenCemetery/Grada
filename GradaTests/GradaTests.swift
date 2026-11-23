@@ -1323,18 +1323,22 @@ struct CalendarTypeTests {
         #expect(CardKind.recovery.calendarMetric == .recovery)
         #expect(CardKind.sleepStages.calendarMetric == .recovery)
         #expect(CardKind.steps.calendarMetric == .activity)
-        #expect(CardKind.last30Days.calendarMetric == .activity)
+        #expect(CardKind.last30Days.calendarMetric == .workouts)
+        #expect(CardKind.lastWorkout.calendarMetric == .workouts)
+        #expect(CardKind.weeklyTraining.calendarMetric == .activity)
         for metric in CalendarMetric.allCases {
             #expect(metric.kinds.allSatisfy { $0.calendarMetric == metric }, "\(metric) sheet holds only its own cards")
         }
     }
 
-    @Test func recoveryAndActivityRateDays() async {
+    @Test func recoveryAndActivityRateDaysAndWorkoutsDoesnt() async {
         let model = CalendarModel(source: SampleDataSource())
         await model.load(.recovery, goals: GoalHistory())
         #expect(!model.ratings.isEmpty)
         await model.load(.activity, goals: GoalHistory())
         #expect(!model.ratings.isEmpty)
+        await model.load(.workouts, goals: GoalHistory())
+        #expect(model.ratings.isEmpty, "Workouts draws sports, not ratings")
         let twoSports = model.workoutDays.values.first { $0.sports.count == 2 }
         #expect(twoSports?.workouts == 2, "Sample strength days add an evening walk")
     }

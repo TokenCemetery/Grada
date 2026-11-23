@@ -4360,7 +4360,6 @@
       }
     },
     "%lld workouts · %@" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -5300,7 +5299,6 @@
       }
     },
     "1 workout · %@" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

@@ -62,7 +62,8 @@ extension CardKind {
 
     /// The calendar type this metric belongs to.
     var calendarMetric: CalendarMetric {
-        switch category {
+        if self == .lastWorkout || self == .last30Days { return .workouts }
+        return switch category {
         case .heart: .health
         case .sleep: .recovery
         case .activity, .training, .history: .activity

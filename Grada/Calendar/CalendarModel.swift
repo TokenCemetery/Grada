@@ -5,11 +5,11 @@ import os
 /// Day colours and workouts for the calendar, and cards for a selected past day.
 @Observable
 final class CalendarModel {
-    /// Start of each rated day → its rating for the loaded type. Empty for Cycle.
+    /// Start of each rated day → its rating for the loaded type. Empty for Workouts and Cycle.
     private(set) var ratings: [Date: DayRating] = [:]
     /// Start of each day with a workout → its sports.
     private(set) var workoutDays: [Date: WorkoutDay] = [:]
-    /// Start of each day with a workout → its workouts, for the Activity day sheet.
+    /// Start of each day with a workout → its workouts, for the Activity and Workouts day sheets.
     private var workoutsByDay: [Date: [WorkoutSummary]] = [:]
     /// Cycle: each loaded day with flow logged, each day's cycle day, and each night's sleeping wrist temperature.
     private(set) var flowDays: [Date: FlowDay] = [:]
@@ -219,7 +219,7 @@ final class CalendarModel {
         case .activity:
             let today = calendar.startOfDay(for: .now)
             return DayRatings.rateSteps(try await source.daily(.steps, days: days), goals: goals, today: today)
-        case .cycle:
+        case .workouts, .cycle:
             return [:]
         }
     }

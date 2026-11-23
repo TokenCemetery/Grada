@@ -110,6 +110,35 @@ final class GradaUITests: XCTestCase {
         XCTAssertEqual(app.state, .runningForeground)
     }
 
+    /// Activity rates days and Workouts draws each day's sports, with a day sheet of that day's workouts (#192, #195).
+    @MainActor
+    func testCalendarTypes() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-SampleData", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        if app.navigationBars["Choose your cards"].waitForExistence(timeout: 5) {
+            app.staticTexts["Health"].tap()
+        }
+        if app.navigationBars["Choose your goals"].waitForExistence(timeout: 5) {
+            app.staticTexts["Balanced"].tap()
+        }
+
+        app.tabBars.buttons["Calendar"].tap()
+        app.buttons["Activity"].tap()
+        XCTAssertTrue(app.staticTexts["Good"].waitForExistence(timeout: 10))
+        attachScreenshot("Calendar Activity")
+
+        app.buttons["Workouts"].tap()
+        let workoutDay = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Walk'")).firstMatch
+        XCTAssertTrue(workoutDay.waitForExistence(timeout: 10))
+        attachScreenshot("Calendar Workouts")
+        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Rest day'")).firstMatch.exists,
+                       "Rest days don't open a sheet")
+        workoutDay.tap()
+        XCTAssertTrue(app.staticTexts["Duration"].waitForExistence(timeout: 10))
+        attachScreenshot("Workouts day sheet")
+    }
+
     /// Light/Dark shows only once Match System is off (#180).
     @MainActor
     func testAppearanceSettings() throws {
