@@ -280,7 +280,7 @@ private struct TrendChart: View {
                                 .symbolSize(isEmphasized(point) ? 60 : 16)
                         }
                     case .sleep:
-                        ForEach([SleepStage.deep, .core, .rem], id: \.self) { stage in
+                        ForEach(SleepStage.chartOrder, id: \.self) { stage in
                             BarMark(x: .value("Day", point.date, unit: unit), y: .value("Hours", point.stages[stage] ?? 0))
                                 .foregroundStyle(stage.color)
                         }

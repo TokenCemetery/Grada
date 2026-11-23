@@ -193,7 +193,6 @@ struct TrendBuilder {
         let daily: [TrendPoint] = days.map { day in
             guard let night = byDay[day], night.asleep > 0 else { return TrendPoint(date: day, value: nil) }
             var stages = night.stages.mapValues { $0 / 3600 }
-            stages[.awake] = nil
             // Asleep time without stage detail is drawn as core sleep.
             if night.unspecified > 0 { stages[.core, default: 0] += night.unspecified / 3600 }
             return TrendPoint(date: day, value: night.asleep / 3600, stages: stages)
