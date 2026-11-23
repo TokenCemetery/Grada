@@ -120,6 +120,8 @@ nonisolated struct WorkoutSummary: Hashable {
     var source: String = HealthKitReader.sourceID
     /// The app or device inside the source that recorded it, e.g. "Garmin Connect · Forerunner 265".
     var origin: String?
+    /// Apple's `HKWorkoutActivityType` raw value, which names it; nil when unknown (#196).
+    var activityType: Int?
 }
 
 /// What a workout's own screen needs beyond its summary, read live from Apple Health on this device.

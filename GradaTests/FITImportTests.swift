@@ -87,6 +87,7 @@ struct FITImportTests {
         #expect(workout.start == start)
         #expect(workout.duration == 1800)
         #expect(workout.name == "Run")
+        #expect(workout.activityType == WorkoutNames.rawType(symbol: "figure.run"), "Stored, so it names the run in any language")
         #expect(workout.energyKcal == 300)
         #expect(workout.averageHeartRate == 140)
         #expect(workout.source == FITImport.sourceID)

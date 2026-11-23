@@ -125,6 +125,9 @@ nonisolated final class WorkoutRecord {
     var averageHeartRate: Double?
     /// The app or device inside the source that recorded it.
     var origin: String?
+    /// Apple's `HKWorkoutActivityType` raw value, which names the workout in the current language; nil for workouts
+    /// stored before it was kept (#196).
+    var activityType: Int?
 
     init(_ workout: WorkoutSummary) {
         healthID = workout.id
@@ -136,11 +139,17 @@ nonisolated final class WorkoutRecord {
         averageHeartRate = workout.averageHeartRate
         source = workout.source
         origin = workout.origin
+        activityType = workout.activityType
     }
 
+    /// Named from its type, so a language change doesn't split a sport in two; `name` is the language it was imported
+    /// in, kept only for a workout whose type is unknown.
     var summary: WorkoutSummary {
-        WorkoutSummary(id: healthID, start: start, duration: duration, name: name, symbol: symbol,
-                       energyKcal: energyKcal, averageHeartRate: averageHeartRate, source: source, origin: origin)
+        let type = activityType ?? WorkoutNames.rawType(symbol: symbol)
+        let info = type.map(WorkoutNames.info(rawType:))
+        return WorkoutSummary(id: healthID, start: start, duration: duration, name: info?.name ?? name,
+                              symbol: info?.symbol ?? symbol, energyKcal: energyKcal, averageHeartRate: averageHeartRate,
+                              source: source, origin: origin, activityType: type)
     }
 }
 

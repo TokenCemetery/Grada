@@ -174,7 +174,8 @@ nonisolated struct FITImport {
         // The end time less elapsed time (7), which unlike timer time (8) includes pauses.
         let elapsed = TimeInterval(session.fields[7] ?? seconds) / 1000
         guard let start = session.date(2) ?? session.timestamp?.addingTimeInterval(-elapsed) else { return nil }
-        let info = WorkoutNames.info(for: activityType(sport: session.fields[5], subSport: session.fields[6]))
+        let type = activityType(sport: session.fields[5], subSport: session.fields[6])
+        let info = WorkoutNames.info(for: type)
         return WorkoutSummary(
             id: "fit-\(Int(start.timeIntervalSince(FITMessage.epoch)))",
             start: start,
@@ -184,7 +185,8 @@ nonisolated struct FITImport {
             energyKcal: session.fields[11].map(Double.init),
             averageHeartRate: session.fields[16].map(Double.init),
             source: sourceID,
-            origin: device
+            origin: device,
+            activityType: Int(type.rawValue)
         )
     }
 

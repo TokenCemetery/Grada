@@ -237,6 +237,7 @@ struct GarminTests {
         #expect(run.start == Date(timeIntervalSince1970: 1_794_295_800))
         #expect(run.duration == 2700.5)
         #expect(run.name == WorkoutNames.info(for: .running).name)
+        #expect(run.activityType == Int(HKWorkoutActivityType.running.rawValue), "Stored, so it names the run in any language")
         #expect(run.energyKcal == 610 && run.averageHeartRate == 148)
         #expect(run.source == GarminSource.sourceID && run.origin == GarminSource.originName)
     }

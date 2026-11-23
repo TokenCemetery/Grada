@@ -68,7 +68,13 @@ actor HealthStoreWriter {
         )
         for record in try modelContext.fetch(workoutDescriptor) {
             if let workout = fetched[record.healthID] {
-                if kept.insert(record.healthID).inserted { record.origin = workout.origin } else { modelContext.delete(record) }
+                if kept.insert(record.healthID).inserted {
+                    record.origin = workout.origin
+                    // Workouts stored before their type was kept get it the next time they're read (#196).
+                    if let type = workout.activityType { record.activityType = type }
+                } else {
+                    modelContext.delete(record)
+                }
             } else if !merging {
                 modelContext.delete(record)
             }

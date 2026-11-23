@@ -66,6 +66,26 @@ struct BackgroundStoreTests {
         #expect(try main.fetch(FetchDescriptor<DaySummary>()).map(\.steps) == [5000])
     }
 
+    /// A refresh that re-reads a workout stored before types were kept saves its type, and one without a type doesn't
+    /// clear it (#196).
+    @Test func refreshFillsInAStoredWorkoutsType() async throws {
+        let main = container.mainContext
+        let today = calendar.startOfDay(for: .now)
+        func batch(type: Int?) -> HealthBatch {
+            var batch = HealthBatch(days: DateInterval(start: today, end: calendar.date(byAdding: .day, value: 1, to: today)!))
+            batch.workouts = [WorkoutSummary(id: "w1", start: today.addingTimeInterval(3600), duration: 1800, name: "Walk",
+                                             symbol: "figure.walk", energyKcal: nil, averageHeartRate: nil, activityType: type)]
+            return batch
+        }
+        main.insert(WorkoutRecord(batch(type: nil).workouts[0]))
+        try main.save()
+
+        try await importer.save(batch(type: 52), from: "appleHealth")
+        #expect(try main.fetch(FetchDescriptor<WorkoutRecord>()).map(\.activityType) == [52])
+        try await importer.save(batch(type: nil), from: "appleHealth")
+        #expect(try main.fetch(FetchDescriptor<WorkoutRecord>()).map(\.activityType) == [52])
+    }
+
     @Test func importSavesRunOffTheMainThread() async throws {
         #expect(await importer.withWriter { await $0.runsOnMainThread() } == false)
     }

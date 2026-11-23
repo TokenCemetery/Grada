@@ -1353,6 +1353,31 @@ struct CalendarTypeTests {
         #expect(WeekdayLabels.symbols(count: 7, endingOn: day).last == letters[calendar.component(.weekday, from: day) - 1])
     }
 
+    /// Stored workouts are named from their type in the current language, so a language change doesn't list a sport
+    /// twice (#196).
+    @Test func storedWorkoutsTakeTheCurrentLanguagesName() throws {
+        let start = calendar.startOfDay(for: .now).addingTimeInterval(8 * 3600)
+        let walking = try #require(WorkoutNames.rawType(symbol: "figure.walk"))
+        func stored(_ id: String, name: String, symbol: String, type: Int?) -> WorkoutSummary {
+            WorkoutRecord(WorkoutSummary(id: id, start: start, duration: 1800, name: name, symbol: symbol, energyKcal: nil,
+                                         averageHeartRate: nil, activityType: type)).summary
+        }
+        let walk = String(localized: "Walk", comment: "Workout type name")
+
+        let typed = stored("a", name: "Ходьба", symbol: "figure.walk.retired", type: walking)
+        #expect(typed.name == walk && typed.symbol == "figure.walk", "The type names it, whatever symbol was saved")
+        let older = stored("b", name: "Ходьба", symbol: "figure.walk", type: nil)
+        #expect(older.name == walk && older.activityType == walking, "Saved before types were kept: from its symbol")
+        let unknown = stored("c", name: "Kitesurf", symbol: "figure.kite", type: nil)
+        #expect(unknown.name == "Kitesurf" && unknown.activityType == nil, "Neither known: its stored name")
+        let workout = String(localized: "Workout", comment: "Workout type name")
+        #expect(WorkoutNames.info(rawType: -1).name == workout && WorkoutNames.info(rawType: 99_999).name == workout,
+                "A type Grada can't read is a generic workout")
+
+        let day = WorkoutDay.byDay([typed, older], calendar: calendar).values.first
+        #expect(day?.sports.count == 1 && day?.workouts == 2)
+    }
+
     @Test func daySheetListsThatDaysWorkouts() async throws {
         let model = CalendarModel(source: SampleDataSource())
         await model.load(.activity, goals: GoalHistory())

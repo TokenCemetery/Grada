@@ -534,7 +534,8 @@ final class HealthKitReader: HealthSource {
                     .sumQuantity()?.doubleValue(for: .kilocalorie()),
                 averageHeartRate: workout.statistics(for: HKQuantityType(.heartRate))?
                     .averageQuantity()?.doubleValue(for: .count().unitDivided(by: .minute())),
-                origin: Self.originName(workout.sourceRevision.source, device: workout.device)
+                origin: Self.originName(workout.sourceRevision.source, device: workout.device),
+                activityType: Int(workout.workoutActivityType.rawValue)
             )
         }
         return SourceMerge.uniqueWorkouts(workouts)
@@ -777,6 +778,23 @@ extension QuantityMetric {
 }
 
 nonisolated enum WorkoutNames {
+    /// A stored workout's name in the current language and its symbol, from its `HKWorkoutActivityType` raw value.
+    /// Stored names stay in the language they were imported in, so they aren't shown when the type is known (#196).
+    static func info(rawType: Int) -> (name: String, symbol: String) {
+        info(for: UInt(exactly: rawType).flatMap(HKWorkoutActivityType.init) ?? .other)
+    }
+
+    /// A type for each symbol `info` gives.
+    private static let named: [HKWorkoutActivityType] = [.running, .walking, .hiking, .cycling, .swimming,
+                                                         .traditionalStrengthTraining, .highIntensityIntervalTraining,
+                                                         .yoga, .rowing, .elliptical, .downhillSkiing, .other]
+
+    /// The type for a symbol saved before workouts stored their type; nil for a symbol `info` doesn't give.
+    /// Only for those older workouts: symbols are a display choice and may change.
+    static func rawType(symbol: String) -> Int? {
+        named.first { info(for: $0).symbol == symbol }.map { Int($0.rawValue) }
+    }
+
     static func info(for type: HKWorkoutActivityType) -> (name: String, symbol: String) {
         switch type {
         case .running: (String(localized: "Run", comment: "Workout type name"), "figure.run")

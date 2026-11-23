@@ -480,10 +480,11 @@ nonisolated enum GarminData {
 
     static func workout(_ activity: Activity) -> WorkoutSummary? {
         guard let id = activity.activityId, let start = activity.startTimeGMT.flatMap({ gmt.date(from: $0) }), let duration = activity.duration, duration > 0 else { return nil }
-        let info = WorkoutNames.info(for: activityType(activity.activityType?.typeKey))
+        let type = activityType(activity.activityType?.typeKey)
+        let info = WorkoutNames.info(for: type)
         return WorkoutSummary(id: "garmin-\(id)", start: start, duration: duration, name: info.name,
                               symbol: info.symbol, energyKcal: activity.calories, averageHeartRate: activity.averageHR,
-                              source: GarminSource.sourceID, origin: GarminSource.originName)
+                              source: GarminSource.sourceID, origin: GarminSource.originName, activityType: Int(type.rawValue))
     }
 
     /// Garmin's activity type keys Grada names; others become a generic workout.
