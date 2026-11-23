@@ -36,20 +36,20 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
     case health
     /// The recovery score, which already covers sleep.
     case recovery
-    /// Workouts by sport; rest days aren't rated.
-    case training
+    /// Steps against the day's Steps goal (#192).
+    case activity
     /// Logged periods and cycle days from Apple Health, with sleeping wrist temperature (#137). Only with Female as
     /// the profile's sex.
     case cycle
 
     var id: String { rawValue }
 
-    /// Also reads the five metrics the calendar had before, so a saved choice lands on its new type.
+    /// Also reads the metrics and types the calendar had before, so a saved choice lands on its new type.
     init?(rawValue: String) {
         switch rawValue {
         case "health", "healthStatus", "hrv", "restingHeartRate": self = .health
         case "recovery", "sleep": self = .recovery
-        case "training", "steps": self = .training
+        case "activity", "training", "steps": self = .activity
         case "cycle": self = .cycle
         default: return nil
         }
@@ -59,20 +59,20 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
         switch self {
         case .health: String(localized: "Health")
         case .recovery: String(localized: "Recovery")
-        case .training: String(localized: "Training")
+        case .activity: String(localized: "Activity")
         case .cycle: String(localized: "Cycle", comment: "Calendar type: the menstrual cycle")
         }
     }
 
-    /// Health and Recovery colour days red, yellow or green; Training draws each day's sports, Cycle period days.
-    var isRated: Bool { self == .health || self == .recovery }
+    /// Health, Recovery and Activity colour days red, yellow or green; Cycle draws period days.
+    var isRated: Bool { self != .cycle }
 
-    /// The day sheet's cards, in order. Training adds the day's workouts on top; Cycle shows only the day's flow and cycle day.
+    /// The day sheet's cards, in order. Activity adds the day's workouts on top; Cycle shows only the day's flow and cycle day.
     var kinds: [CardKind] {
         switch self {
         case .health: [.healthStatus, .hrvStatus, .heartRate, .oxygenSaturation, .respiratoryRate, .wristTemperature]
         case .recovery: [.recovery, .resources, .sleepStages, .sleepNeed, .sleepConsistency]
-        case .training: [.steps, .activeEnergy, .intensityMinutes, .distance, .weeklyTraining, .vo2Max]
+        case .activity: [.steps, .activeEnergy, .intensityMinutes, .distance, .weeklyTraining, .vo2Max]
         case .cycle: []
         }
     }
@@ -80,7 +80,7 @@ nonisolated enum CalendarMetric: String, CaseIterable, Identifiable {
 
 /// The rules behind the calendar colours. All thresholds are starting points to tune with real data.
 nonisolated enum DayRatings {
-    /// Used only before the user has goals. Sleep otherwise follows each night's Sleep need.
+    /// Used only without a goal for the day. Sleep otherwise follows each night's Sleep need.
     static let stepsGoal = 10_000.0
     static let sleepGoal = SleepNeed.baseline
 
@@ -89,6 +89,18 @@ nonisolated enum DayRatings {
         let share = value / goal
         if share >= 1 { return .good }
         return share >= 0.7 ? .fair : .poor
+    }
+
+    /// Activity days: steps against the Steps goal in effect that day, or `stepsGoal` without one. Days without steps
+    /// get no rating, and neither does `today` until its goal is reached, so a day under way doesn't read as poor.
+    static func rateSteps(_ series: [DayValue], goals: GoalHistory, today: Date) -> [Date: DayRating] {
+        var ratings: [Date: DayRating] = [:]
+        for entry in series {
+            guard let steps = entry.value else { continue }
+            let rating = goal(steps, goal: goals.value(.steps, on: entry.day) ?? stepsGoal)
+            if entry.day < today || rating == .good { ratings[entry.day] = rating }
+        }
+        return ratings
     }
 
     /// Range metrics: green inside the normal range or past it on the healthy side. Yellow when off by

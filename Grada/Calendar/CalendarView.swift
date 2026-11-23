@@ -2,8 +2,8 @@ import Charts
 import SwiftData
 import SwiftUI
 
-/// Months scroll vertically under a pinned type picker. Health and Recovery colour each day by how good
-/// it was; Training draws each day's sports. Tapping a day opens a sheet with that type's cards for the day.
+/// Months scroll vertically under a pinned type picker. Health, Recovery and Activity colour each day by how good
+/// it was; Cycle draws period days. Tapping a day opens a sheet with that type's cards for the day.
 struct CalendarView: View {
     @Environment(CalendarModel.self) private var model
     @Query private var goalChanges: [GoalChange]
@@ -113,10 +113,8 @@ struct CalendarView: View {
     private var legend: some View {
         if metric.isRated {
             ratingLegend
-        } else if metric == .cycle {
-            cycleLegend
         } else {
-            sportLegend
+            cycleLegend
         }
     }
 
@@ -212,28 +210,6 @@ struct CalendarView: View {
         .font(.caption)
         .foregroundStyle(.secondary)
     }
-
-    /// The most common sports in the loaded history, then rest days.
-    private var sportLegend: some View {
-        HStack(spacing: 12) {
-            ForEach(WorkoutDay.topSports(model.workoutDays.values, limit: 4), id: \.name) { sport in
-                Label {
-                    Text(sport.name)
-                } icon: {
-                    Circle().fill(WorkoutColors.color(symbol: sport.symbol)).frame(width: 10, height: 10)
-                }
-            }
-            Label {
-                Text("Rest")
-            } icon: {
-                Circle().fill(Color(.tertiarySystemFill)).frame(width: 6, height: 6)
-            }
-        }
-        .labelStyle(LegendLabelStyle())
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .lineLimit(1)
-    }
 }
 
 private struct LegendLabelStyle: LabelStyle {
@@ -296,7 +272,7 @@ private struct MonthView: View {
                 Text(month.formatted(.dateTime.month(.wide).year()))
                     .font(.headline)
                 Spacer()
-                if metric.isRated { counts } else if metric == .training { trainingTotals }
+                if metric.isRated { counts }
             }
             // Plain rows, not a LazyVGrid: a lazy grid inside the calendar's LazyVStack left the
             // calendar blank on first open until something changed its layout.
@@ -359,7 +335,7 @@ private struct MonthView: View {
                              isToday: day == today,
                              isFuture: day > today,
                              isSelected: day == selected)
-            } else if metric.isRated {
+            } else {
                 DayCell(day: day,
                         rating: model.ratings[day],
                         hasWorkout: model.workoutDays[day] != nil,
@@ -367,34 +343,9 @@ private struct MonthView: View {
                         isFuture: day > today,
                         isSelected: day == selected,
                         colorBlind: colorBlind)
-            } else {
-                TrainingDayCell(day: day,
-                                workouts: model.workoutDays[day],
-                                isToday: day == today,
-                                isFuture: day > today,
-                                isSelected: day == selected)
             }
         }
         .onTapGesture { if day <= today { onSelect(day) } }
-    }
-
-    /// The month's workouts and their total time.
-    private var trainingTotals: some View {
-        let month = days.compactMap { model.workoutDays[$0] }
-        let count = month.reduce(0) { $0 + $1.workouts }
-        let minutes = month.reduce(0) { $0 + $1.minutes }
-        let time = SnapshotBuilder.hoursMinutes(minutes * 60)
-        let text = if count == 0 {
-            String(localized: "No workouts")
-        } else if count == 1 {
-            String(localized: "1 workout · \(time)")
-        } else {
-            String(localized: "\(count) workouts · \(time)")
-        }
-        return Text(text)
-            .font(.caption.weight(.semibold))
-            .monospacedDigit()
-            .foregroundStyle(.secondary)
     }
 
     private func countLabel(_ count: Int, _ rating: DayRating) -> String {
@@ -483,64 +434,6 @@ private struct DayCell: View {
         var parts = [day.formatted(date: .complete, time: .omitted)]
         parts.append(rating?.title ?? (isFuture ? String(localized: "Upcoming") : String(localized: "No data")))
         if hasWorkout { parts.append(String(localized: "Workout")) }
-        return parts.joined(separator: ", ")
-    }
-}
-
-/// A Training day: the date over a pie of the day's sports, bigger for longer days. A rest day is a small
-/// grey dot.
-private struct TrainingDayCell: View {
-    let day: Date
-    let workouts: WorkoutDay?
-    let isToday: Bool
-    let isFuture: Bool
-    let isSelected: Bool
-
-    private let size: CGFloat = 38
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Text("\(Calendar.current.component(.day, from: day))")
-                .font(.caption2.weight(isToday ? .bold : .regular))
-                .monospacedDigit()
-                .foregroundStyle(isFuture ? .secondary : .primary)
-            if isFuture {
-                Spacer(minLength: 0)
-            } else {
-                SportPie(day: workouts ?? WorkoutDay(), diameter: diameter)
-                    .frame(height: 20)
-            }
-        }
-        .frame(width: size, height: size)
-        .overlay {
-            if isToday {
-                Circle().strokeBorder(.primary, lineWidth: 2).padding(-4)
-            } else if isSelected {
-                Circle().strokeBorder(.primary, lineWidth: 1.5).padding(-3)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 2)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText)
-        .accessibilityAddTraits(isFuture ? [] : .isButton)
-    }
-
-    private var diameter: CGFloat {
-        guard let minutes = workouts?.minutes, minutes > 0 else { return 6 }
-        return min(10 + CGFloat(minutes) / 10, 20)
-    }
-
-    private var accessibilityText: String {
-        var parts = [day.formatted(date: .complete, time: .omitted)]
-        if isFuture {
-            parts.append(String(localized: "Upcoming"))
-        } else if let workouts, !workouts.sports.isEmpty {
-            parts += workouts.sports.map { "\($0.name) \(SnapshotBuilder.hoursMinutes($0.minutes * 60))" }
-        } else {
-            parts.append(String(localized: "Rest day"))
-        }
         return parts.joined(separator: ", ")
     }
 }
@@ -671,7 +564,7 @@ private struct DaySheet: View {
                 let dayKey = DayKey.make(day, calendar: .current)
                 DayTagsView(entries: journalEntries.filter { $0.dayKey == dayKey })
                 if metric == .cycle { cycleSummary }
-                if metric == .training, isLoaded {
+                if metric == .activity, isLoaded {
                     if workouts.isEmpty {
                         Text("Rest day").font(.subheadline).foregroundStyle(.secondary)
                     }
@@ -692,7 +585,7 @@ private struct DaySheet: View {
             // A load cancelled by tapping another day can finish after the newer one; drop it.
             guard !Task.isCancelled else { return }
             snapshots = newSnapshots
-            workouts = metric == .training ? model.workoutSnapshots(for: day) : []
+            workouts = metric == .activity ? model.workoutSnapshots(for: day) : []
             loaded = key
         }
     }

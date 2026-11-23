@@ -198,6 +198,24 @@ struct RatingTests {
         #expect(DayRatings.range(36.4, normal: normal, higherIsBetter: false) == .poor)
     }
 
+    @Test func activityDaysRateStepsAgainstThatDaysGoal() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let day = { calendar.date(byAdding: .day, value: $0, to: today)! }
+        let goals = GoalHistory([GoalEntry(metric: .steps, value: 6_000, effectiveFrom: day(-2), reason: .edit)])
+        let series = [DayValue(day: day(-4), value: 9_000), DayValue(day: day(-3), value: nil),
+                      DayValue(day: day(-2), value: 6_000), DayValue(day: day(-1), value: 4_000),
+                      DayValue(day: today, value: 3_000)]
+        let ratings = DayRatings.rateSteps(series, goals: goals, today: today)
+        #expect(ratings[day(-4)] == .fair, "Before any goal, 10,000 steps")
+        #expect(ratings[day(-3)] == nil, "No steps, no rating")
+        #expect(ratings[day(-2)] == .good)
+        #expect(ratings[day(-1)] == .poor)
+        #expect(ratings[today] == nil, "Today isn't over")
+        let reached = DayRatings.rateSteps([DayValue(day: today, value: 6_500)], goals: goals, today: today)
+        #expect(reached[today] == .good)
+    }
+
     @Test func vo2MaxZonesFollowFRIENDPercentiles() {
         let men = VO2MaxZones.bounds(age: 25, sex: .male)
         #expect(men == [40.1, 48.0, 55.2, 61.8])
@@ -1284,9 +1302,9 @@ struct CalendarTypeTests {
         let model = CalendarModel(source: SampleDataSource())
         let first = Task { await model.load(.recovery, goals: GoalHistory()) }
         await Task.yield()
-        await model.load(.training, goals: GoalHistory())
+        await model.load(.activity, goals: GoalHistory())
         await first.value
-        #expect(model.loadedMetric == .training)
+        #expect(model.loadedMetric == .activity)
     }
 
     @Test func savedMetricsMapToTheirType() {
@@ -1294,7 +1312,8 @@ struct CalendarTypeTests {
         #expect(CalendarMetric(rawValue: "hrv") == .health)
         #expect(CalendarMetric(rawValue: "restingHeartRate") == .health)
         #expect(CalendarMetric(rawValue: "sleep") == .recovery)
-        #expect(CalendarMetric(rawValue: "steps") == .training)
+        #expect(CalendarMetric(rawValue: "steps") == .activity)
+        #expect(CalendarMetric(rawValue: "training") == .activity)
         #expect(CalendarMetric.allCases.allSatisfy { CalendarMetric(rawValue: $0.rawValue) == $0 })
     }
 
@@ -1303,19 +1322,19 @@ struct CalendarTypeTests {
         #expect(CardKind.wristTemperature.calendarMetric == .health)
         #expect(CardKind.recovery.calendarMetric == .recovery)
         #expect(CardKind.sleepStages.calendarMetric == .recovery)
-        #expect(CardKind.steps.calendarMetric == .training)
-        #expect(CardKind.last30Days.calendarMetric == .training)
+        #expect(CardKind.steps.calendarMetric == .activity)
+        #expect(CardKind.last30Days.calendarMetric == .activity)
         for metric in CalendarMetric.allCases {
             #expect(metric.kinds.allSatisfy { $0.calendarMetric == metric }, "\(metric) sheet holds only its own cards")
         }
     }
 
-    @Test func recoveryRatesDaysAndTrainingDoesnt() async {
+    @Test func recoveryAndActivityRateDays() async {
         let model = CalendarModel(source: SampleDataSource())
         await model.load(.recovery, goals: GoalHistory())
         #expect(!model.ratings.isEmpty)
-        await model.load(.training, goals: GoalHistory())
-        #expect(model.ratings.isEmpty)
+        await model.load(.activity, goals: GoalHistory())
+        #expect(!model.ratings.isEmpty)
         let twoSports = model.workoutDays.values.first { $0.sports.count == 2 }
         #expect(twoSports?.workouts == 2, "Sample strength days add an evening walk")
     }
@@ -1332,7 +1351,7 @@ struct CalendarTypeTests {
 
     @Test func daySheetListsThatDaysWorkouts() async throws {
         let model = CalendarModel(source: SampleDataSource())
-        await model.load(.training, goals: GoalHistory())
+        await model.load(.activity, goals: GoalHistory())
         let day = try #require(model.workoutDays.first { $0.value.workouts == 2 }?.key)
         let cards = model.workoutSnapshots(for: day)
         #expect(cards.map(\.comparison) == ["Strength", "Walk"], "Earliest first")

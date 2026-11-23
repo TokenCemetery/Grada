@@ -65,7 +65,7 @@ extension CardKind {
         switch category {
         case .heart: .health
         case .sleep: .recovery
-        case .activity, .training, .history: .training
+        case .activity, .training, .history: .activity
         case .body: .health
         case .status: self == .recovery || self == .resources ? .recovery : .health
         }

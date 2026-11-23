@@ -5,11 +5,11 @@ import os
 /// Day colours and workouts for the calendar, and cards for a selected past day.
 @Observable
 final class CalendarModel {
-    /// Start of each rated day → its rating for the loaded type. Empty for Training.
+    /// Start of each rated day → its rating for the loaded type. Empty for Cycle.
     private(set) var ratings: [Date: DayRating] = [:]
     /// Start of each day with a workout → its sports.
     private(set) var workoutDays: [Date: WorkoutDay] = [:]
-    /// Start of each day with a workout → its workouts, for the Training day sheet.
+    /// Start of each day with a workout → its workouts, for the Activity day sheet.
     private var workoutsByDay: [Date: [WorkoutSummary]] = [:]
     /// Cycle: each loaded day with flow logged, each day's cycle day, and each night's sleeping wrist temperature.
     private(set) var flowDays: [Date: FlowDay] = [:]
@@ -114,7 +114,7 @@ final class CalendarModel {
         let start = max(earliest, loadedMonth)
         let days = (calendar.dateComponents([.day], from: start, to: today).day ?? 0) + 1
 
-        // Rating reads the same days once per metric, plus the baseline before them; Training only reads workouts.
+        // Rating reads the same days once per metric, plus the baseline before them.
         let source = metric.isRated ? try await source.withDaysLoaded(days + baselineDays) : source
         let ratings = try await ratings(metric, days: days, goals: goals, source: source, calendar: calendar,
                                         baselineDays: baselineDays)
@@ -216,7 +216,10 @@ final class CalendarModel {
             return Dictionary(try await builder.recoveryDays(days).compactMap { day in
                 day.result.map { (day.day, $0.rating) }
             }, uniquingKeysWith: { first, _ in first })
-        case .training, .cycle:
+        case .activity:
+            let today = calendar.startOfDay(for: .now)
+            return DayRatings.rateSteps(try await source.daily(.steps, days: days), goals: goals, today: today)
+        case .cycle:
             return [:]
         }
     }
