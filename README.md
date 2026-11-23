@@ -19,7 +19,7 @@ Grada is an iPhone and iPad app that reads Apple Health and turns it into daily 
 | **Widgets** | Any single-value card, such as Recovery or Training Readiness, on the Home Screen (small, medium) or Lock Screen (circular, rectangular). Touch and hold the widget > **Edit Widget** to pick a card. It matches the Home card, updates after each Apple Health import, and clears at midnight until the next one. |
 | **Cycle** | For Female users, Calendar shows period days logged to Apple Health (Cycle Tracking, Clue, Flo…), the cycle day and sleeping wrist temperature. After 3 cycles it predicts the next period as a range. Ovulation is marked only from a positive LH test or a sustained temperature rise (three-over-six rule), never ahead. There is no fertile window; it is not for birth control or pregnancy planning, and Grada only reads this data and never stores it. |
 
-Grada follows the device language: English, Spanish, Simplified Chinese, Hindi, Portuguese, Russian, French, German or Italian.
+Grada follows the device language, or the one picked in Settings › Appearance › Language: English, Spanish, Simplified Chinese, Hindi, Portuguese, Russian, French, German or Italian.
 
 ## Data
 

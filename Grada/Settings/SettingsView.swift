@@ -107,6 +107,7 @@ private struct AppearanceView: View {
                     .labelsHidden()
                 }
             }
+            LanguageSection()
             Section {
                 Toggle("Color-Blind Palette", isOn: $colorBlind)
             } header: {
@@ -117,6 +118,59 @@ private struct AppearanceView: View {
         }
         .navigationTitle("Appearance")
         .onChange(of: colorBlind) { WidgetPublisher.setColorBlind(colorBlind) }
+    }
+}
+
+/// Grada's own language, stored where iOS keeps the per-app language from Settings › Grada › Language, so the two
+/// stay in step. Bundles load their strings at launch, so a change applies the next time Grada opens (#190).
+private struct LanguageSection: View {
+    private static let key = "AppleLanguages"
+    /// The app's own choice; nil follows the device. `UserDefaults.standard` would also return the global list.
+    @State private var chosen: String? = Self.storedLanguage()
+
+    private static func storedLanguage() -> String? {
+        guard let domain = Bundle.main.bundleIdentifier else { return nil }
+        return (UserDefaults.standard.persistentDomain(forName: domain)?[key] as? [String])?.first
+    }
+
+    /// Each language named in itself, as iOS lists them.
+    private static let languages: [(code: String, name: String)] = Bundle.main.localizations
+        .filter { $0 != "Base" }
+        .map { code in
+            let locale = Locale(identifier: code)
+            return (code, locale.localizedString(forIdentifier: code)?.capitalized(with: locale) ?? code)
+        }
+        .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+
+    private var usesSystem: Binding<Bool> {
+        Binding {
+            chosen == nil
+        } set: { uses in
+            // Start on the language already on screen, so turning the toggle off changes nothing yet.
+            chosen = uses ? nil : (Bundle.main.preferredLocalizations.first ?? "en")
+        }
+    }
+
+    var body: some View {
+        Section {
+            Toggle("Use System", isOn: usesSystem.animation())
+            if let chosen {
+                Picker("Language", selection: Binding { chosen } set: { self.chosen = $0 }) {
+                    ForEach(Self.languages, id: \.code) { Text(verbatim: $0.name).tag($0.code) }
+                }
+            }
+        } header: {
+            Text("Language")
+        } footer: {
+            Text("Grada switches to the new language the next time it opens.")
+        }
+        .onChange(of: chosen) {
+            if let chosen {
+                UserDefaults.standard.set([chosen], forKey: Self.key)
+            } else {
+                UserDefaults.standard.removeObject(forKey: Self.key)
+            }
+        }
     }
 }
 
