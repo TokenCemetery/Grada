@@ -126,6 +126,33 @@ final class HealthKitReader: HealthSource {
         return batch
     }
 
+    /// Each month's sum of a total, such as steps, or average of a reading, such as weight, across all apps. Sleep and
+    /// workouts aren't counted: they take a read of every sample, and their devices usually write these metrics too.
+    func monthlyTotals(before end: Date) async throws -> [Date: [String: Double]] {
+        guard let earliest = try await earliestSampleDate() else { return [:] }
+        let start = calendar.dateInterval(of: .month, for: earliest)!.start
+        guard start < end else { return [:] }
+        var totals: [Date: [String: Double]] = [:]
+        for metric in QuantityMetric.allCases {
+            let descriptor = HKStatisticsCollectionQueryDescriptor(
+                predicate: .quantitySample(
+                    type: HKQuantityType(metric.identifier),
+                    predicate: HKQuery.predicateForSamples(withStart: start, end: end)
+                ),
+                options: metric.isCumulative ? .cumulativeSum : .discreteAverage,
+                anchorDate: start,
+                intervalComponents: DateComponents(month: 1)
+            )
+            let collection = try await descriptor.result(for: store)
+            collection.enumerateStatistics(from: start, to: end) { statistics, _ in
+                if let total = metric.isCumulative ? statistics.sumQuantity() : statistics.averageQuantity() {
+                    totals[statistics.startDate, default: [:]]["\(metric)"] = metric.convert(total)
+                }
+            }
+        }
+        return totals
+    }
+
     /// The name Apple Health shows for a source, plus the device when it says more, e.g.
     /// "Garmin Connect · Forerunner 265". Apple's own sources are already named after the device.
     nonisolated static func originName(_ source: HKSource, device: HKDevice?) -> String {

@@ -17,7 +17,7 @@ nonisolated struct HealthBatch {
 }
 
 /// Copies each source's data into the app's store: the whole history on first launch,
-/// then the last few days on every refresh.
+/// then the last few days on every refresh, and once a day any past month whose data changed since.
 @Observable
 final class HealthImporter {
     /// 0...1 while the first-launch history import runs, nil otherwise.
@@ -58,6 +58,12 @@ final class HealthImporter {
     private static func recentImportedKey(_ source: any HealthSource) -> String { "recentImportedThrough.\(source.id)" }
     /// How far back a refresh after a long absence reaches, matching one history chunk.
     static let maximumCatchUpDays = 366
+    /// Each finished month's `HealthSource.monthlyTotals` when it was last imported, keyed "yyyy-MM".
+    private static func monthTotalsKey(_ source: any HealthSource) -> String { "monthTotals.\(source.id)" }
+    /// The day finished months were last checked for data that arrived after their import.
+    private static func monthsCheckedKey(_ source: any HealthSource) -> String { "monthsChecked.\(source.id)" }
+    /// Most months re-imported in one read, matching one history chunk.
+    private static let monthsPerReimport = 12
 
     /// What cards read live, in merge order: the importing `sources`, then FIT files.
     var liveSources: [any LiveHealthSource] { sources + [fitFiles] }
@@ -123,6 +129,8 @@ final class HealthImporter {
             let earliest = calendar.startOfDay(for: earliestSample)
             var end = (defaults.object(forKey: Self.importedFromKey(source)) as? Date) ?? recentStart
             let total = max(tomorrow.timeIntervalSince(earliest), 1)
+            // Read before the data, so anything that arrives while the history imports shows up as a change later.
+            let totals = try await source.monthlyTotals(before: currentMonthStart)
 
             while end > earliest {
                 let start = max(earliest, calendar.date(byAdding: .year, value: -1, to: end)!)
@@ -131,6 +139,7 @@ final class HealthImporter {
                 progress(tomorrow.timeIntervalSince(start) / total)
                 end = start
             }
+            defaults.set(monthKeyed(totals), forKey: Self.monthTotalsKey(source))
             defaults.set(true, forKey: Self.historyDoneKey(source))
             logger.info("History import from \(source.id) finished from \(earliest)")
         } catch {
@@ -202,7 +211,73 @@ final class HealthImporter {
             } catch {
                 logger.error("Recent import from \(source.id) failed: \(error.localizedDescription)")
             }
+            guard defaults.object(forKey: Self.monthsCheckedKey(source)) as? Date != today else { continue }
+            do {
+                try await reimportChangedMonths(of: source)
+                defaults.set(today, forKey: Self.monthsCheckedKey(source))
+            } catch {
+                logger.error("Checking past months of \(source.id) failed: \(error.localizedDescription)")
+            }
         }
+    }
+
+    /// Re-imports finished months whose totals changed since their import: older data can reach a source after its
+    /// history imported, e.g. when access to more types is allowed later or a new iPad syncs years of Apple Health
+    /// from iCloud over several days (#191). The current month is left to the recent imports, as it changes daily.
+    /// Months without saved totals, such as on installs from before the check, are imported again once.
+    func reimportChangedMonths(of source: any HealthSource) async throws {
+        guard defaults.bool(forKey: Self.historyDoneKey(source)) else { return }
+        let current = monthKeyed(try await source.monthlyTotals(before: currentMonthStart))
+        var saved = defaults.dictionary(forKey: Self.monthTotalsKey(source)) as? [String: [String: Double]] ?? [:]
+        let changed = Set(current.keys).union(saved.keys)
+            .filter { !Self.sameTotals(current[$0] ?? [:], saved[$0] ?? [:]) }
+            .compactMap(monthStart(forKey:))
+            .sorted(by: >)
+        guard !changed.isEmpty else { return }
+        logger.info("Re-importing \(changed.count) months from \(source.id) that changed since their import")
+
+        // Newest first, like the history import, with neighbouring months read together.
+        var runs: [[Date]] = []
+        for month in changed {
+            if let run = runs.last, run.count < Self.monthsPerReimport,
+               calendar.date(byAdding: .month, value: -1, to: run.last!) == month {
+                runs[runs.count - 1].append(month)
+            } else {
+                runs.append([month])
+            }
+        }
+        for run in runs {
+            let end = calendar.date(byAdding: .month, value: 1, to: run.first!)!
+            try await importDays(DateInterval(start: run.last!, end: end), from: source)
+            for month in run {
+                let key = monthKey(month)
+                saved[key] = current[key]
+            }
+            defaults.set(saved, forKey: Self.monthTotalsKey(source))
+        }
+    }
+
+    private var currentMonthStart: Date { calendar.dateInterval(of: .month, for: .now)!.start }
+
+    private func monthKey(_ month: Date) -> String {
+        let components = calendar.dateComponents([.year, .month], from: month)
+        return String(format: "%04d-%02d", components.year!, components.month!)
+    }
+
+    private func monthStart(forKey key: String) -> Date? {
+        let parts = key.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 2 else { return nil }
+        return calendar.date(from: DateComponents(year: parts[0], month: parts[1]))
+    }
+
+    /// Keyed by year and month rather than date, so a move to another time zone doesn't make every month look new.
+    private func monthKeyed(_ totals: [Date: [String: Double]]) -> [String: [String: Double]] {
+        Dictionary(totals.map { (monthKey($0.key), $0.value) }) { first, _ in first }
+    }
+
+    /// Equal but for rounding: Apple Health may add up the same samples in another order.
+    nonisolated static func sameTotals(_ a: [String: Double], _ b: [String: Double]) -> Bool {
+        Set(a.keys) == Set(b.keys) && a.allSatisfy { key, value in abs(value - b[key]!) <= 1e-6 * max(abs(value), 1) }
     }
 
     /// Imports a source the user just connected: its whole history, then the latest days.
@@ -218,6 +293,8 @@ final class HealthImporter {
         defaults.removeObject(forKey: Self.importedFromKey(source))
         defaults.removeObject(forKey: Self.historyDoneKey(source))
         defaults.removeObject(forKey: Self.recentImportedKey(source))
+        defaults.removeObject(forKey: Self.monthTotalsKey(source))
+        defaults.removeObject(forKey: Self.monthsCheckedKey(source))
         lastRecentImport[source.id] = nil
     }
 
@@ -235,6 +312,7 @@ final class HealthImporter {
         for source in sources {
             defaults.removeObject(forKey: Self.importedFromKey(source))
             defaults.removeObject(forKey: Self.historyDoneKey(source))
+            defaults.removeObject(forKey: Self.monthTotalsKey(source))
         }
         revision += 1
         await importHistoryIfNeeded()

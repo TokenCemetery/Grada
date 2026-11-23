@@ -66,6 +66,10 @@ protocol HealthSource: LiveHealthSource {
     func earliestSampleDate() async throws -> Date?
     /// Everything the store keeps for `days` (start of day ..< start of day).
     func batch(for days: DateInterval) async throws -> HealthBatch
+    /// One number per metric for each month that starts before `end` and has data, keyed by the month's start. A
+    /// number changes when data for its month is added or removed, so months that filled in after their import can
+    /// be imported again (#191).
+    func monthlyTotals(before end: Date) async throws -> [Date: [String: Double]]
     /// Calls `onChange` when the source gets new data; `onChange` must call its completion handler when done.
     func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws
 }
@@ -73,6 +77,8 @@ protocol HealthSource: LiveHealthSource {
 extension HealthSource {
     var refreshInterval: TimeInterval { 0 }
     func needsAuthorizationSheet() async -> Bool { false }
+    /// Sources without totals are never checked for months that filled in late.
+    func monthlyTotals(before end: Date) async throws -> [Date: [String: Double]] { [:] }
 
     /// Sources without change notifications are refreshed when the app asks for recent data.
     func observeChanges(_ onChange: @escaping @Sendable (_ completion: @escaping @Sendable () -> Void) -> Void) async throws {}
