@@ -282,7 +282,7 @@ private struct TrendChart: View {
                     case .sleep:
                         ForEach([SleepStage.deep, .core, .rem], id: \.self) { stage in
                             BarMark(x: .value("Day", point.date, unit: unit), y: .value("Hours", point.stages[stage] ?? 0))
-                                .foregroundStyle(stage.color(base: color))
+                                .foregroundStyle(stage.color)
                         }
                     }
                 }
@@ -450,7 +450,7 @@ private struct BreakdownView: View {
             VStack(spacing: 6) {
                 ForEach([SleepStage.deep, .core, .rem, .awake], id: \.self) { stage in
                     if let seconds = night.stages[stage], seconds > 0 {
-                        row(stage.title, SnapshotBuilder.hoursMinutes(seconds), dot: stage.color(base: color))
+                        row(stage.title, SnapshotBuilder.hoursMinutes(seconds), dot: stage.color)
                     }
                 }
                 if night.unspecified > 0 { row(String(localized: "Asleep, no stages"), SnapshotBuilder.hoursMinutes(night.unspecified)) }

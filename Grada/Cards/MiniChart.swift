@@ -19,7 +19,7 @@ struct MiniChart: View {
             }, target: target)
         case .sleep(let nights, let target):
             TrackBars(days: nights.map { night in
-                SleepStage.chartOrder.map { stage in ((night?.hours(in: stage) ?? 0), stage.color(base: color)) }
+                SleepStage.chartOrder.map { stage in ((night?.hours(in: stage) ?? 0), stage.color) }
             }, target: target)
         case .intensity(let days):
             // Very light time is most of the day and would flatten the rest, so it's left out of the bars.
@@ -381,13 +381,13 @@ extension SleepStage {
         }
     }
 
-    /// Asleep stages are shades of the sleep color; awake stands out, as in Suunto.
-    func color(base: Color) -> Color {
+    /// The Apple Health stage palette, so stages read the same as in the Health app.
+    var color: Color {
         switch self {
-        case .deep: base
-        case .core: base.opacity(0.65)
-        case .rem: base.opacity(0.4)
-        case .awake: .orange
+        case .deep: Color(red: 0.24, green: 0.18, blue: 0.67)
+        case .core: Color(red: 0.16, green: 0.49, blue: 1.0)
+        case .rem: Color(red: 0.35, green: 0.78, blue: 0.98)
+        case .awake: Color(red: 1.0, green: 0.50, blue: 0.38)
         }
     }
 }

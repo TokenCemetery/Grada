@@ -284,7 +284,7 @@ private struct SleepStagesBar: View {
                     ForEach(SleepStage.chartOrder, id: \.self) { stage in
                         let share = (stages[stage] ?? 0) / total
                         if share > 0 {
-                            stage.color(base: color).background(Color.white)
+                            stage.color
                                 .frame(width: max(proxy.size.width * share - 2, 2))
                         }
                     }
@@ -313,7 +313,7 @@ private struct SleepStagesBar: View {
 
     private func legendItem(_ stage: SleepStage) -> some View {
         HStack(spacing: 4) {
-            Circle().fill(stage.color(base: color)).background(Circle().fill(.white)).frame(width: 7, height: 7)
+            Circle().fill(stage.color).frame(width: 7, height: 7)
             Text("\(stage.title) \(SnapshotBuilder.hoursMinutes(stages[stage] ?? 0))")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
