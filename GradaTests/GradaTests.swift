@@ -1438,6 +1438,22 @@ struct TrendBuilderTests {
         #expect(TrendBuilder.averageRating([]) == nil)
     }
 
+    /// Resources charts each day's peak, colored by the card's bands, for W and M only (#198).
+    @Test func resourcesTrendShowsDailyPeaks() async throws {
+        let builder = TrendBuilder(source: SampleDataSource())
+        let week = try #require(try await builder.trend(for: .resources, period: .week))
+        #expect(week.points.count == 7)
+        #expect(week.points.contains { $0.value != nil })
+        for point in week.points {
+            #expect(point.rating == point.value.map { Resources.rating(Int($0.rounded())) })
+            if let value = point.value { #expect((0...100).contains(value)) }
+        }
+        #expect(try await builder.trend(for: .resources, period: .month)?.points.count == 30)
+        #expect(try await builder.trend(for: .resources, period: .year) == nil)
+        #expect(TrendPeriod.available(for: .resources) == [.week, .month])
+        #expect(TrendPeriod.available(for: .recovery) == TrendPeriod.allCases)
+    }
+
     @Test func everyCardWithADetailScreenHasAnExplanation() {
         for kind in CardKind.gallery + [.healthStatus] where !kind.opensCalendar {
             #expect(!kind.explanation.isEmpty)

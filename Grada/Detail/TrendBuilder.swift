@@ -27,6 +27,11 @@ enum TrendPeriod: String, CaseIterable, Identifiable {
 
     /// Daily points get too dense to read beyond 3 months, so these show one point per week.
     var isWeekly: Bool { self == .sixMonths || self == .year }
+
+    /// The periods `kind`'s detail offers. Resources replays 5-minute heart rate, too slow beyond a month (#198).
+    static func available(for kind: CardKind) -> [TrendPeriod] {
+        kind == .resources ? [.week, .month] : allCases
+    }
 }
 
 /// One point on the trend chart: a day, or a week starting at `date` for long periods.
@@ -152,10 +157,13 @@ struct TrendBuilder {
             let ages = try await cardBuilder.healthAgeInputs(age: age, count: days)
                 .map { DayValue(day: $0.day, value: HealthAge.age($0.input)) }
             return make(ages, period, style: .line, unit: String(localized: "yrs", comment: "Unit: years"), format: .number(decimals: 1))
-        // Rebuilding each day needs a year of 5-minute heart rate, too slow for a chart, and storing a daily value
-        // would freeze an estimated formula (#42). The detail screen shows today's breakdown instead.
+        // Replaying 5-minute heart rate is too slow past a month, and storing a daily value would freeze an
+        // estimated formula (#42), so only W and M are offered (#198).
         case .resources:
-            return nil
+            guard TrendPeriod.available(for: kind).contains(period),
+                  let peaks = try await cardBuilder.resourcesPeaks(days) else { return nil }
+            return make(peaks, period, style: .bars, unit: "%", format: .number(decimals: 0), title: String(localized: "Daily peak"),
+                        ratings: peaks.map { $0.value.map { Resources.rating(Int($0.rounded())) } })
         // Hours left change through the day; the explanation covers the inputs instead.
         case .recoveryTime:
             return nil

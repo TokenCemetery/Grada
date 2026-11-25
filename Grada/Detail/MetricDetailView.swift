@@ -128,7 +128,7 @@ struct MetricDetailView: View {
         DetailSection(title: trend?.title ?? String(localized: "Trend")) {
             VStack(alignment: .leading, spacing: 12) {
                 Picker("Period", selection: $period) {
-                    ForEach(TrendPeriod.allCases) { Text($0.label).tag($0) }
+                    ForEach(TrendPeriod.available(for: kind)) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 if let trend {

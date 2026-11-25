@@ -158,9 +158,22 @@ nonisolated extension SnapshotBuilder {
                                                   highestRecorded: try await source.highestHeartRate(days: 365))
         guard let restingHeartRate, let maxHeartRate, maxHeartRate > restingHeartRate + 20 else { return nil }
         let sleep = try await source.sleepPeriods(in: interval)
-        let workouts = try await source.workouts(days: 4).map { DateInterval(start: $0.start, duration: $0.duration) }
+        let workoutDays = calendar.dateComponents([.day], from: interval.start, to: now).day! + 1
+        let workouts = try await source.workouts(days: workoutDays).map { DateInterval(start: $0.start, duration: $0.duration) }
         return (Resources.steps(interval: interval, heartRate: heartRate, sleep: sleep, workouts: workouts,
                                 restingHeartRate: restingHeartRate, maxHeartRate: maxHeartRate), sleep)
+    }
+
+    /// Each of the last `count` days' highest Resources level, oldest first; today's so far. One simulation runs from
+    /// three days before the first, like the card. Days without heart rate get nil. Nil while calibrating.
+    func resourcesPeaks(_ count: Int) async throws -> [DayValue]? {
+        let days = lastDays(count)
+        let interval = DateInterval(start: calendar.date(byAdding: .day, value: -3, to: days[0])!, end: now)
+        let heartRate = try await source.heartRate(in: interval)
+        guard let steps = try await resourcesSteps(interval: interval, heartRate: heartRate)?.steps else { return nil }
+        let measured = Set(heartRate.map { calendar.startOfDay(for: $0.date) })
+        let peaks = Dictionary(grouping: steps) { calendar.startOfDay(for: $0.date) }.mapValues { $0.map(\.level).max() }
+        return days.map { DayValue(day: $0, value: measured.contains($0) ? peaks[$0] ?? nil : nil) }
     }
 
     /// Today's Resources at midnight and now, and how much each cause moved it in between. Nil without
