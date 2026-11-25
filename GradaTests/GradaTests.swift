@@ -1438,6 +1438,38 @@ struct TrendBuilderTests {
         #expect(TrendBuilder.averageRating([]) == nil)
     }
 
+    /// Chosen charts draw a moving average: 7 days for daily points, an average week over 4 weeks for weekly totals
+    /// (#200). Sleep debt is a line (#199).
+    @Test func movingAverageOnChosenCharts() async throws {
+        let builder = TrendBuilder(source: SampleDataSource())
+        let steps = try #require(try await builder.trend(for: .steps, period: .month))
+        #expect(steps.points.count == 30)
+        // Days before the period fill the first point's window.
+        #expect(steps.points.allSatisfy { $0.movingAverage != nil })
+        // Today is still adding up: faint, out of the stats, and its average covers the 7 days before, like the card.
+        let complete = steps.points.dropLast()
+        #expect(steps.points.last?.isPartial == true)
+        #expect(!complete.contains { $0.isPartial })
+        #expect(steps.average == Baseline.average(complete.compactMap(\.value)))
+        #expect(steps.low == complete.compactMap(\.value).min())
+        #expect(steps.points.last?.movingAverage == Baseline.average(complete.suffix(7).compactMap(\.value)))
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now))!
+        let past = TrendBuilder(source: PastDaySource.asOf(yesterday, base: SampleDataSource(), calendar: .current))
+        #expect(try await past.trend(for: .steps, period: .month)?.points.contains { $0.isPartial } == false)
+        #expect(Set(steps.points.compactMap(\.movingAverage)).count > 1)
+        let workouts = try #require(try await builder.trend(for: .weeklyTraining, period: .year))
+        let weekly = try #require(workouts.points.last?.movingAverage), daily = try #require(workouts.average)
+        #expect(weekly > daily)
+        let debt = try #require(try await builder.trend(for: .sleepNeed, period: .month))
+        #expect(debt.style == .line)
+        #expect(debt.points.contains { $0.movingAverage != nil })
+        #expect(!debt.points.contains { $0.isPartial })
+        for kind in [CardKind.restingHeartRate, .weight, .sleepScore] {
+            let trend = try await builder.trend(for: kind, period: .month)
+            #expect(trend?.points.allSatisfy { $0.movingAverage == nil } != false)
+        }
+    }
+
     /// Resources charts each day's peak, colored by the card's bands, for W and M only (#198).
     @Test func resourcesTrendShowsDailyPeaks() async throws {
         let builder = TrendBuilder(source: SampleDataSource())

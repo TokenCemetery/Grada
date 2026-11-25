@@ -270,7 +270,7 @@ private struct TrendChart: View {
                     case .bars:
                         BarMark(x: .value("Day", point.date, unit: unit), y: .value("Value", value))
                             // Rated bars stay at full color so they match the card's bars.
-                            .foregroundStyle(point.rating?.fill(colorBlind: colorBlind) ?? color.opacity(isEmphasized(point) ? 1 : 0.6))
+                            .foregroundStyle(point.rating?.fill(colorBlind: colorBlind) ?? color.opacity(opacity(point)))
                     case .line:
                         LineMark(x: .value("Day", point.date, unit: unit), y: .value("Value", value),
                                  series: .value("Series", "Value"))
@@ -289,6 +289,21 @@ private struct TrendChart: View {
                     }
                 }
             }
+            ForEach(trend.points) { point in
+                if let average = point.movingAverage {
+                    LineMark(x: .value("Day", point.date, unit: unit), y: .value("Average", average),
+                             series: .value("Series", "Moving average"))
+                        .foregroundStyle(.gray)
+                        .lineStyle(StrokeStyle(lineWidth: 2, dash: [4, 3]))
+                        .interpolationMethod(.monotone)
+                        .annotation(position: .top, alignment: .trailing, spacing: 4) {
+                            if point.id == trend.points.last(where: { $0.movingAverage != nil })?.id {
+                                Text(period.isWeekly ? String(localized: "4-week avg") : String(localized: "7-day avg"))
+                                    .font(.caption2).foregroundStyle(.secondary)
+                            }
+                        }
+                }
+            }
             if let highlightedDate {
                 RuleMark(x: .value("Shown day", highlightedDate, unit: unit))
                     .foregroundStyle(.secondary)
@@ -300,7 +315,8 @@ private struct TrendChart: View {
                     .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
                         VStack(spacing: 0) {
                             Text("\(trend.formatted(value)) \(trend.unit)").font(.caption.weight(.semibold))
-                            Text(label(point.date)).font(.caption2).foregroundStyle(.secondary)
+                            Text(point.isPartial ? String(localized: "\(label(point.date)) · so far", comment: "Trend chart label for today's or this week's unfinished total, e.g. Tue 25 Nov · so far") : label(point.date))
+                                .font(.caption2).foregroundStyle(.secondary)
                         }
                         .padding(6)
                         .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
@@ -309,6 +325,12 @@ private struct TrendChart: View {
         }
         .chartXSelection(value: $selection)
         .chartYScale(domain: .automatic(includesZero: trend.style != .line))
+    }
+
+    /// Today's unfinished total is drawn faint, so it doesn't read as a low day.
+    private func opacity(_ point: TrendPoint) -> Double {
+        if point.isPartial { return 0.3 }
+        return isEmphasized(point) ? 1 : 0.6
     }
 
     private func isEmphasized(_ point: TrendPoint) -> Bool {

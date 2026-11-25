@@ -28,6 +28,9 @@ enum TrendPeriod: String, CaseIterable, Identifiable {
     /// Daily points get too dense to read beyond 3 months, so these show one point per week.
     var isWeekly: Bool { self == .sixMonths || self == .year }
 
+    /// Days in the moving average: a week for daily points, 4 weeks for weekly ones (#200).
+    var movingAverageDays: Int { isWeekly ? 28 : 7 }
+
     /// The periods `kind`'s detail offers. Resources replays 5-minute heart rate, too slow beyond a month (#198).
     static func available(for kind: CardKind) -> [TrendPeriod] {
         kind == .resources ? [.week, .month] : allCases
@@ -42,6 +45,11 @@ struct TrendPoint: Identifiable {
     var stages: [SleepStage: Double] = [:]
     /// The card's color for this day, or for a week the average of its days.
     var rating: DayRating?
+    /// The moving average ending here, on charts that draw one (#200): over `TrendPeriod.movingAverageDays`, as an
+    /// average week on weekly totals.
+    var movingAverage: Double?
+    /// Today's total, or this week's, while the day is under way: drawn lighter and left out of the stats (#200).
+    var isPartial = false
 
     var id: Date { date }
 }
@@ -84,26 +92,31 @@ struct TrendBuilder {
     /// `source` should already end on the shown day (see `PastDaySource.asOf`). Nil when the card has no trend.
     func trend(for kind: CardKind, period: TrendPeriod) async throws -> Trend? {
         let days = period.days
+        // Days before the period, so the moving average starts full on the first one.
+        let withLead = days + period.movingAverageDays - 1
         switch kind {
         case .steps, .activeEnergy, .exerciseMinutes, .distance, .floors:
             let metric = kind.quantityMetric!
-            var series = try await source.daily(metric, days: days)
+            var series = try await source.daily(metric, days: withLead)
             var unit = metric.unit
             if metric == .distance, !usesMetric {
                 series = series.map { DayValue(day: $0.day, value: $0.value.map { $0 * 0.621_371 }) }
                 unit = String(localized: "mi", comment: "Unit: miles")
             }
-            return make(series, period, style: .bars, unit: unit, format: .number(decimals: metric.decimals))
+            return make(series, period, style: .bars, unit: unit, format: .number(decimals: metric.decimals), movingAverage: true,
+                        dailyTotal: true)
         case .intensityMinutes:
-            return make(try await cardBuilder.intensityDays(days), period, style: .bars, unit: String(localized: "min", comment: "Unit: minutes"),
-                        format: .number(decimals: 0), weeklyTotals: true)
+            return make(try await cardBuilder.intensityDays(withLead), period, style: .bars, unit: String(localized: "min", comment: "Unit: minutes"),
+                        format: .number(decimals: 0), weeklyTotals: true, movingAverage: true, dailyTotal: true)
         case .dayIntensity:
-            let active = (try await cardBuilder.dayIntensityDays(days) ?? []).map { day in
+            let active = (try await cardBuilder.dayIntensityDays(withLead) ?? []).map { day in
                 DayValue(day: day.day, value: day.seconds.map { $0.filter { $0.key != .veryLight }.values.reduce(0, +) / 3600 })
             }
-            return make(active, period, style: .bars, unit: String(localized: "h", comment: "Unit: hours"), format: .number(decimals: 1), title: String(localized: "Light or harder"))
+            return make(active, period, style: .bars, unit: String(localized: "h", comment: "Unit: hours"), format: .number(decimals: 1), title: String(localized: "Light or harder"),
+                        movingAverage: true, dailyTotal: true)
         case .standHours:
-            return make(try await source.standHours(days: days), period, style: .bars, unit: String(localized: "h", comment: "Unit: hours"), format: .number(decimals: 0))
+            return make(try await source.standHours(days: withLead), period, style: .bars, unit: String(localized: "h", comment: "Unit: hours"), format: .number(decimals: 0),
+                        movingAverage: true, dailyTotal: true)
         case .restingHeartRate, .hrv, .oxygenSaturation, .respiratoryRate, .wristTemperature, .heartRate:
             return try await vital(kind.quantityMetric!, period,
                                    title: kind == .heartRate ? String(localized: "Resting heart rate") : nil)
@@ -123,11 +136,12 @@ struct TrendBuilder {
                         period, style: .line, unit: Mobility.speedUnit(usesMetric: usesMetric), format: .number(decimals: 1),
                         title: String(localized: "Walking Speed"))
         case .bloodPressure:
-            return make(try await source.daily(.bloodPressureSystolic, days: days), period, style: .line, unit: BloodPressure.unit,
-                        format: .number(decimals: 0), title: String(localized: "Systolic", comment: "Blood pressure chart: the upper number"))
+            return make(try await source.daily(.bloodPressureSystolic, days: withLead), period, style: .line, unit: BloodPressure.unit,
+                        format: .number(decimals: 0), title: String(localized: "Systolic", comment: "Blood pressure chart: the upper number"),
+                        movingAverage: true)
         case .heartRateRecovery:
-            return make(try await source.heartRateRecovery(days: days), period, style: .line,
-                        unit: QuantityMetric.restingHeartRate.unit, format: .number(decimals: 0))
+            return make(try await source.heartRateRecovery(days: withLead), period, style: .line,
+                        unit: QuantityMetric.restingHeartRate.unit, format: .number(decimals: 0), movingAverage: true)
         case .sleepDuration, .sleepStages:
             return try await sleep(period)
         case .sleepNeed:
@@ -139,10 +153,10 @@ struct TrendBuilder {
             let scores = nights.map { DayValue(day: $0.day, value: $0.result.map { Double($0.score) }) }
             return make(scores, period, style: .bars, unit: "", format: .number(decimals: 0), ratings: nights.map { $0.result?.rating })
         case .lastWorkout, .weeklyTraining, .last30Days:
-            let workouts = try await source.workouts(days: days)
-            let minutes = minutesPerDay(workouts, days: days)
+            let workouts = try await source.workouts(days: withLead)
+            let minutes = minutesPerDay(workouts, days: withLead)
             return make(minutes, period, style: .bars, unit: "", format: .hours, title: String(localized: "Workout time"),
-                        weeklyTotals: true, transform: { $0 / 60 })
+                        weeklyTotals: true, movingAverage: true, dailyTotal: true, transform: { $0 / 60 })
         case .healthStatus:
             return try await healthStatus(period)
         case .strain:
@@ -230,14 +244,17 @@ struct TrendBuilder {
 
     /// Sleep debt after each night, as the Sleep Need card counts it.
     private func sleepNeed(_ period: TrendPeriod) async throws -> Trend? {
-        guard let nights = try await cardBuilder.sleepDebt(period.days) else { return nil }
-        let debt = zip(lastDays(period.days), nights).map { DayValue(day: $0, value: $1.debt / 3600) }
-        return make(debt, period, style: .bars, unit: "", format: .hours, title: String(localized: "Sleep debt"))
+        let withLead = period.days + period.movingAverageDays - 1
+        guard let nights = try await cardBuilder.sleepDebt(withLead) else { return nil }
+        let debt = zip(lastDays(withLead), nights).map { DayValue(day: $0, value: $1.debt / 3600) }
+        // A balance carried night to night, so a line like the other levels (#199).
+        return make(debt, period, style: .line, unit: "", format: .hours, title: String(localized: "Sleep debt"), movingAverage: true)
     }
 
     private func sleepConsistency(_ period: TrendPeriod) async throws -> Trend {
-        let indexes = try await cardBuilder.sleepRegularity(period.days).map { DayValue(day: $0.day, value: $0.index) }
-        return make(indexes, period, style: .line, unit: "", format: .number(decimals: 0), title: String(localized: "Sleep Regularity Index"))
+        let indexes = try await cardBuilder.sleepRegularity(period.days + period.movingAverageDays - 1).map { DayValue(day: $0.day, value: $0.index) }
+        return make(indexes, period, style: .line, unit: "", format: .number(decimals: 0), title: String(localized: "Sleep Regularity Index"),
+                    movingAverage: true)
     }
 
     /// The 7-night average for each day, with the shown day's baseline as the normal range.
@@ -293,10 +310,10 @@ struct TrendBuilder {
         if kind == .strain { return try await monotonyAndStrain(period) + effortAndHeartRateLoad(period) }
         if kind == .mobility { return try await mobilityTrends(period) }
         if kind == .bloodPressure {
-            let diastolic = try await source.daily(.bloodPressureDiastolic, days: period.days)
+            let diastolic = try await source.daily(.bloodPressureDiastolic, days: period.days + period.movingAverageDays - 1)
             guard diastolic.contains(where: { $0.value != nil }) else { return [] }
             return [make(diastolic, period, style: .line, unit: BloodPressure.unit, format: .number(decimals: 0),
-                         title: String(localized: "Diastolic", comment: "Blood pressure chart: the lower number"))]
+                         title: String(localized: "Diastolic", comment: "Blood pressure chart: the lower number"), movingAverage: true)]
         }
         guard kind == .weight else { return [] }
         let days = period.days
@@ -402,14 +419,21 @@ struct TrendBuilder {
 
     // MARK: - Helpers
 
-    /// Daily points, or weekly averages (totals with `weeklyTotals`) for long periods.
+    /// Daily points, or weekly averages (totals with `weeklyTotals`) for long periods. With `movingAverage`, `series`
+    /// starts `movingAverageDays - 1` days before the period, so the average is full from the first point.
+    /// `dailyTotal` marks series whose today is still adding up, like steps: while today is under way it is left out
+    /// of the stats and the moving average, as the card's 7-day average leaves it out (#39).
     private func make(_ series: [DayValue], _ period: TrendPeriod, style: Trend.Style, unit: String,
-                      format: Trend.ValueFormat, title: String? = nil, weeklyTotals: Bool = false,
-                      ratings: [DayRating?]? = nil, transform: (Double) -> Double = { $0 }) -> Trend {
-        let daily = series.indices.map { index in
+                      format: Trend.ValueFormat, title: String? = nil, weeklyTotals: Bool = false, movingAverage: Bool = false,
+                      dailyTotal: Bool = false, ratings: [DayRating?]? = nil, transform: (Double) -> Double = { $0 }) -> Trend {
+        let all = series
+        let series = movingAverage ? Array(all.suffix(period.days)) : all
+        let underway = dailyTotal && series.last.map { calendar.isDateInToday($0.day) } == true
+        var daily = series.indices.map { index in
             TrendPoint(date: series[index].day, value: series[index].value.map(transform), rating: ratings?[index])
         }
-        let values = daily.compactMap(\.value)
+        if underway { daily[daily.count - 1].isPartial = true }
+        let values = daily.filter { !$0.isPartial }.compactMap(\.value)
         var points = daily
         if period.isWeekly {
             var buckets = weeks(daily)
@@ -417,14 +441,39 @@ struct TrendBuilder {
             // The current week stays: it's the week so far.
             if weeklyTotals, let first = buckets.first, first.points.count < 7, buckets.count > 1 { buckets.removeFirst() }
             points = buckets.map { week in
-                let weekValues = week.points.compactMap(\.value)
+                // A weekly total keeps today as the week so far; a weekly average leaves it out.
+                let weekValues = (weeklyTotals ? week.points : week.points.filter { !$0.isPartial }).compactMap(\.value)
                 let value = weeklyTotals ? weekValues.reduce(0, +) : Baseline.average(weekValues)
-                return TrendPoint(date: week.start, value: weekValues.isEmpty ? nil : value,
-                                  rating: Self.averageRating(week.points.compactMap(\.rating)))
+                var point = TrendPoint(date: week.start, value: weekValues.isEmpty ? nil : value,
+                                       rating: Self.averageRating(week.points.compactMap(\.rating)))
+                point.isPartial = weeklyTotals && week.points.contains { $0.isPartial }
+                return point
             }
+        }
+        if movingAverage {
+            addMovingAverage(to: &points, from: all, period, weeklyTotals: weeklyTotals, skipLast: underway, transform: transform)
         }
         return Trend(title: title, style: style, unit: unit, format: format, points: points,
                      average: Baseline.average(values), low: values.min(), high: values.max())
+    }
+
+    /// The average of the days with a value in the `movingAverageDays` up to each point; for a week, up to its last
+    /// day. With `skipLast`, a window ending on today ends on yesterday. Weekly totals get an average week (7 × the daily average) so the line runs through the bars.
+    private func addMovingAverage(to points: inout [TrendPoint], from series: [DayValue], _ period: TrendPeriod,
+                                  weeklyTotals: Bool, skipLast: Bool, transform: (Double) -> Double) {
+        guard let last = series.last?.day else { return }
+        let values = series.map { $0.value.map(transform) }
+        let index = Dictionary(series.indices.map { (series[$0].day, $0) }, uniquingKeysWith: { first, _ in first })
+        let scale = period.isWeekly && weeklyTotals ? 7.0 : 1
+        for i in points.indices {
+            let end = period.isWeekly ? min(calendar.date(byAdding: .day, value: 6, to: points[i].date)!, last) : points[i].date
+            guard var endIndex = index[end] else { continue }
+            // Today's unfinished total would pull the line down, so its window ends yesterday instead.
+            if skipLast, endIndex == values.count - 1 { endIndex -= 1 }
+            guard endIndex >= 0 else { continue }
+            let window = values[max(0, endIndex - period.movingAverageDays + 1)...endIndex].compactMap { $0 }
+            points[i].movingAverage = Baseline.average(window).map { $0 * scale }
+        }
     }
 
     /// Good counts 2, fair 1 and poor 0; the rounded mean picks the week's color.
