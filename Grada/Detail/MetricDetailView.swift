@@ -237,6 +237,7 @@ private struct TrendChart: View {
     let color: Color
     /// The day picked in the calendar, marked on the chart.
     let highlighted: Date?
+    @AppStorage(SettingsKey.colorBlindPalette) private var colorBlind = false
     @State private var selection: Date?
 
     private var calendar: Calendar { .current }
@@ -268,7 +269,8 @@ private struct TrendChart: View {
                     switch trend.style {
                     case .bars:
                         BarMark(x: .value("Day", point.date, unit: unit), y: .value("Value", value))
-                            .foregroundStyle(color.opacity(isEmphasized(point) ? 1 : 0.6))
+                            // Rated bars stay at full color so they match the card's bars.
+                            .foregroundStyle(point.rating?.fill(colorBlind: colorBlind) ?? color.opacity(isEmphasized(point) ? 1 : 0.6))
                     case .line:
                         LineMark(x: .value("Day", point.date, unit: unit), y: .value("Value", value),
                                  series: .value("Series", "Value"))

@@ -35,6 +35,8 @@ struct TrendPoint: Identifiable {
     let value: Double?
     /// Hours per stage, for sleep.
     var stages: [SleepStage: Double] = [:]
+    /// The card's color for this day, or for a week the average of its days.
+    var rating: DayRating?
 
     var id: Date { date }
 }
@@ -128,8 +130,9 @@ struct TrendBuilder {
         case .sleepConsistency:
             return try await sleepConsistency(period)
         case .sleepScore:
-            let scores = try await cardBuilder.sleepScoreDays(days).map { DayValue(day: $0.day, value: $0.result.map { Double($0.score) }) }
-            return make(scores, period, style: .bars, unit: "", format: .number(decimals: 0))
+            let nights = try await cardBuilder.sleepScoreDays(days)
+            let scores = nights.map { DayValue(day: $0.day, value: $0.result.map { Double($0.score) }) }
+            return make(scores, period, style: .bars, unit: "", format: .number(decimals: 0), ratings: nights.map { $0.result?.rating })
         case .lastWorkout, .weeklyTraining, .last30Days:
             let workouts = try await source.workouts(days: days)
             let minutes = minutesPerDay(workouts, days: days)
@@ -140,9 +143,10 @@ struct TrendBuilder {
         case .strain:
             return try await strain(period)
         case .recovery:
-            let inRange = try await cardBuilder.recoveryDays(days)
-                .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
-            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Inputs in range"))
+            let recovery = try await cardBuilder.recoveryDays(days)
+            let inRange = recovery.map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
+            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Inputs in range"),
+                        ratings: recovery.map { $0.result?.rating })
         case .healthAge:
             guard let age = try await source.age() else { return nil }
             let ages = try await cardBuilder.healthAgeInputs(age: age, count: days)
@@ -156,9 +160,10 @@ struct TrendBuilder {
         case .recoveryTime:
             return nil
         case .trainingReadiness:
-            let inRange = try await cardBuilder.readinessDays(days)
-                .map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
-            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Inputs in range"))
+            let readiness = try await cardBuilder.readinessDays(days)
+            let inRange = readiness.map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
+            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Inputs in range"),
+                        ratings: readiness.map { $0.result?.rating })
         case .loadFocus:
             guard let days = try await cardBuilder.loadFocusDays(days) else { return nil }
             var trend = make(days.map { DayValue(day: $0.day, value: LoadFocus.shares($0.seconds).map { $0[0] * 100 }) },
@@ -392,8 +397,10 @@ struct TrendBuilder {
     /// Daily points, or weekly averages (totals with `weeklyTotals`) for long periods.
     private func make(_ series: [DayValue], _ period: TrendPeriod, style: Trend.Style, unit: String,
                       format: Trend.ValueFormat, title: String? = nil, weeklyTotals: Bool = false,
-                      transform: (Double) -> Double = { $0 }) -> Trend {
-        let daily = series.map { TrendPoint(date: $0.day, value: $0.value.map(transform)) }
+                      ratings: [DayRating?]? = nil, transform: (Double) -> Double = { $0 }) -> Trend {
+        let daily = series.indices.map { index in
+            TrendPoint(date: series[index].day, value: series[index].value.map(transform), rating: ratings?[index])
+        }
         let values = daily.compactMap(\.value)
         var points = daily
         if period.isWeekly {
@@ -404,11 +411,29 @@ struct TrendBuilder {
             points = buckets.map { week in
                 let weekValues = week.points.compactMap(\.value)
                 let value = weeklyTotals ? weekValues.reduce(0, +) : Baseline.average(weekValues)
-                return TrendPoint(date: week.start, value: weekValues.isEmpty ? nil : value)
+                return TrendPoint(date: week.start, value: weekValues.isEmpty ? nil : value,
+                                  rating: Self.averageRating(week.points.compactMap(\.rating)))
             }
         }
         return Trend(title: title, style: style, unit: unit, format: format, points: points,
                      average: Baseline.average(values), low: values.min(), high: values.max())
+    }
+
+    /// Good counts 2, fair 1 and poor 0; the rounded mean picks the week's color.
+    static func averageRating(_ ratings: [DayRating]) -> DayRating? {
+        guard !ratings.isEmpty else { return nil }
+        let scores = ratings.map { rating -> Double in
+            switch rating {
+            case .good: 2
+            case .fair: 1
+            case .poor: 0
+            }
+        }
+        switch (scores.reduce(0, +) / Double(scores.count)).rounded() {
+        case 2: return .good
+        case 1: return .fair
+        default: return .poor
+        }
     }
 
     private func weeks(_ points: [TrendPoint]) -> [(start: Date, points: [TrendPoint])] {

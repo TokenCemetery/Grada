@@ -1422,6 +1422,22 @@ struct TrendBuilderTests {
         }
     }
 
+    /// Rated bars match the card's day colors, and weekly bars average them (#197).
+    @Test func ratedTrendsColorDaysAndWeeks() async throws {
+        let builder = TrendBuilder(source: SampleDataSource())
+        let month = try #require(try await builder.trend(for: .recovery, period: .month))
+        // Sample data is seeded from the oldest day asked for, so compare the same 30 days.
+        let days = try await SnapshotBuilder(source: SampleDataSource()).recoveryDays(TrendPeriod.month.days)
+        #expect(month.points.map(\.rating) == days.map { $0.result?.rating })
+        #expect(month.points.contains { $0.rating != nil })
+        let year = try #require(try await builder.trend(for: .recovery, period: .year))
+        #expect(year.points.contains { $0.rating != nil })
+        #expect(TrendBuilder.averageRating([.good, .poor]) == .fair)
+        #expect(TrendBuilder.averageRating([.good, .good, .fair]) == .good)
+        #expect(TrendBuilder.averageRating([.fair, .poor, .poor]) == .poor)
+        #expect(TrendBuilder.averageRating([]) == nil)
+    }
+
     @Test func everyCardWithADetailScreenHasAnExplanation() {
         for kind in CardKind.gallery + [.healthStatus] where !kind.opensCalendar {
             #expect(!kind.explanation.isEmpty)
