@@ -89,6 +89,9 @@ struct TrendBuilder {
     /// History used for personal normal ranges, as on the cards.
     private let baselineDays = 30
 
+    /// False for cards that never chart a trend: Recovery Time's hours left change through the day (#205).
+    static func hasTrend(_ kind: CardKind) -> Bool { kind != .recoveryTime }
+
     /// `source` should already end on the shown day (see `PastDaySource.asOf`). Nil when the card has no trend.
     func trend(for kind: CardKind, period: TrendPeriod) async throws -> Trend? {
         let days = period.days

@@ -12,6 +12,7 @@ struct MetricDetailView: View {
     @State private var snapshot: CardSnapshot?
     @State private var trend: Trend?
     @State private var trendLoaded = false
+    @State private var trendFailed = false
     @State private var extraTrends: [Trend] = []
     @State private var breakdown: Breakdown?
     @State private var origins: [(kind: DataKind, origins: [DataOrigin])] = []
@@ -36,7 +37,7 @@ struct MetricDetailView: View {
                         }
                     }
                 }
-                trendSection
+                if TrendBuilder.hasTrend(kind) { trendSection }
                 ForEach(Array(extraTrends.enumerated()), id: \.offset) { _, extra in
                     DetailSection(title: extra.title ?? String(localized: "Trend")) {
                         VStack(alignment: .leading, spacing: 12) {
@@ -115,7 +116,15 @@ struct MetricDetailView: View {
         .task(id: period) {
             var trendBuilder = TrendBuilder(source: source, calendar: calendar)
             trendBuilder.goals = GoalHistory(goalChanges)
-            trend = try? await trendBuilder.trend(for: kind, period: period)
+            do {
+                trend = try await trendBuilder.trend(for: kind, period: period)
+                trendFailed = false
+            } catch is CancellationError {
+                return
+            } catch {
+                trend = nil
+                trendFailed = true
+            }
             extraTrends = (try? await trendBuilder.extraTrends(for: kind, period: period)) ?? []
             trendLoaded = true
             breakdown = try? await Breakdown.load(for: kind, day: day, period: period, source: source, calendar: calendar,
@@ -136,7 +145,8 @@ struct MetricDetailView: View {
                         .frame(height: 200)
                     TrendStats(trend: trend, period: period)
                 } else if trendLoaded {
-                    Text("A trend for this card is coming in a later version.")
+                    // Nil means calibrating or no data yet; the card above says what it needs (#205).
+                    Text(trendFailed ? "Couldn't load the trend." : "Not enough data for a trend yet.")
                         .font(.subheadline).foregroundStyle(.secondary)
                 } else {
                     ProgressView().frame(maxWidth: .infinity, minHeight: 200)
