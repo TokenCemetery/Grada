@@ -1407,7 +1407,7 @@ struct TrendBuilderTests {
 
     /// A weekly total starts with the first whole week, so the period's cut-off week doesn't chart as a dip (#162).
     @Test func weeklyTotalsStartWithAWholeWeek() async throws {
-        let trend = try #require(try await TrendBuilder(source: SampleDataSource()).trend(for: .weeklyTraining, period: .year))
+        let trend = try #require(try await TrendBuilder(source: SampleDataSource()).trend(for: .lastWorkout, period: .year))
         let firstDay = calendar.date(byAdding: .day, value: -(TrendPeriod.year.days - 1), to: today)!
         #expect(try #require(trend.points.first).date >= firstDay)
     }
@@ -1457,7 +1457,7 @@ struct TrendBuilderTests {
         let past = TrendBuilder(source: PastDaySource.asOf(yesterday, base: SampleDataSource(), calendar: .current))
         #expect(try await past.trend(for: .steps, period: .month)?.points.contains { $0.isPartial } == false)
         #expect(Set(steps.points.compactMap(\.movingAverage)).count > 1)
-        let workouts = try #require(try await builder.trend(for: .weeklyTraining, period: .year))
+        let workouts = try #require(try await builder.trend(for: .lastWorkout, period: .year))
         let weekly = try #require(workouts.points.last?.movingAverage), daily = try #require(workouts.average)
         #expect(weekly > daily)
         let debt = try #require(try await builder.trend(for: .sleepNeed, period: .month))
@@ -1484,6 +1484,62 @@ struct TrendBuilderTests {
         let days = try #require(try await SnapshotBuilder(source: SampleDataSource()).strainDays(7))
         let yesterday = try #require(days[5].ratio)
         #expect(days[6].ratio == yesterday)
+    }
+
+    /// Trends whose card covers the last 7 days plot that rolling window, so the last point is the card's (#201).
+    @Test func rollingWeekTrendsMatchTheirCards() async throws {
+        let builder = TrendBuilder(source: SampleDataSource())
+        let cards = SnapshotBuilder(source: SampleDataSource())
+        let week = TrendPeriod.week.days
+        // Sample data is seeded from the oldest day asked for, so read the same 13 days the trend reads.
+        let minutes = try await cards.intensityDays(week + 6)
+        let intensity = try #require(try await builder.trend(for: .intensityMinutes, period: .week))
+        #expect(intensity.style == .line)
+        #expect(intensity.points.count == week)
+        #expect(intensity.points.last?.value == minutes.suffix(7).compactMap(\.value).reduce(0, +))
+        #expect(intensity.points.allSatisfy { $0.goal != nil })
+        #expect(intensity.points.allSatisfy { $0.movingAverage == nil })
+        let training = try #require(try await builder.trend(for: .weeklyTraining, period: .week))
+        #expect(training.style == .line)
+        let weekStart = Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: .now))!
+        let workouts = try await SampleDataSource().workouts(days: week + 6).filter { $0.start >= weekStart }
+        let trainingHours = try #require(training.points.last?.value)
+        #expect(abs(trainingHours - workouts.map(\.duration).reduce(0, +) / 3600) < 1e-9)
+        let mobility = try #require(try await builder.trend(for: .mobility, period: .month))
+        #expect(mobility.points.count == 30)
+        let speeds = try await SampleDataSource().daily(.walkingSpeed, days: 30 + 6).suffix(7).compactMap(\.value)
+        let speed = try #require(mobility.points.last?.value)
+        #expect(abs(speed - Mobility.speed(Baseline.average(speeds)!, usesMetric: builder.usesMetric)) < 1e-9)
+        // Same weekly sampling as Intensity Minutes, without building a year of heart rate.
+        let year = try #require(try await builder.trend(for: .weeklyTraining, period: .year))
+        #expect(year.statsArePerPoint)
+        #expect((52...54).contains(year.points.count))
+    }
+
+    /// In-range trends plot the share like the cards, and Health Status takes the calendar's colors (#202).
+    @Test func inRangeTrendsPlotTheShare() async throws {
+        let builder = TrendBuilder(source: SampleDataSource())
+        for kind in [CardKind.recovery, .trainingReadiness, .healthStatus] {
+            let trend = try #require(try await builder.trend(for: kind, period: .month))
+            #expect(trend.unit == "%")
+            #expect(trend.points.compactMap(\.value).allSatisfy { (0...100).contains($0) })
+        }
+        let health = try #require(try await builder.trend(for: .healthStatus, period: .month))
+        #expect(health.points.allSatisfy { ($0.value == nil) == ($0.rating == nil) })
+        #expect(TrendBuilder.share(3, of: 4) == 75)
+    }
+
+    /// Recovery Time has no trend section; Day Intensity reads in hours and minutes; Resources marks the card's level (#205, #208).
+    @Test func detailTrendsMatchTheirCards() async throws {
+        #expect(!TrendBuilder.hasTrend(.recoveryTime))
+        #expect(TrendBuilder.hasTrend(.steps))
+        let builder = TrendBuilder(source: SampleDataSource())
+        let intensity = try #require(try await builder.trend(for: .dayIntensity, period: .week))
+        guard case .hours = intensity.format else { Issue.record("Day Intensity isn't in hours and minutes"); return }
+        #expect(intensity.unit.isEmpty, "\"2h 05m\" already says hours; a unit would read \"2h 05m h\"")
+        let resources = try #require(try await builder.trend(for: .resources, period: .week))
+        #expect(resources.current?.label == String(localized: "Now"))
+        #expect(resources.current.map { (0...100).contains($0.value) } == true)
     }
 
     /// Resources charts each day's peak, colored by the card's bands, for W and M only (#198).

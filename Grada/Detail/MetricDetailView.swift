@@ -308,6 +308,20 @@ private struct TrendChart: View {
                 }
             }
             ForEach(trend.points) { point in
+                if let goal = point.goal {
+                    LineMark(x: .value("Day", point.date, unit: unit), y: .value("Goal", goal), series: .value("Series", "Goal"))
+                        .foregroundStyle(DayRating.good.fill(colorBlind: colorBlind))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 2]))
+                        .interpolationMethod(.stepEnd)
+                        .accessibilityHidden(true)
+                        .annotation(position: .top, alignment: .leading, spacing: 2) {
+                            if point.id == trend.points.first?.id {
+                                Text("Goal").font(.caption2).foregroundStyle(.secondary)
+                            }
+                        }
+                }
+            }
+            ForEach(trend.points) { point in
                 if let average = point.movingAverage {
                     LineMark(x: .value("Day", point.date, unit: unit), y: .value("Average", average),
                              series: .value("Series", "Moving average"))
@@ -322,6 +336,18 @@ private struct TrendChart: View {
                             }
                         }
                 }
+            }
+            if let current = trend.current, let last = trend.points.last {
+                PointMark(x: .value("Day", last.date, unit: unit), y: .value("Value", current.value))
+                    .symbol(.diamond)
+                    .symbolSize(70)
+                    .foregroundStyle(.primary)
+                    .accessibilityLabel(current.label)
+                    .accessibilityValue(pointValue(TrendPoint(date: last.date, value: current.value), current.value))
+                    .annotation(position: .top, alignment: .trailing, spacing: 2) {
+                        Text(verbatim: "\(current.label) \(trend.formatted(current.value))\(trend.unit)")
+                            .font(.caption2.weight(.semibold))
+                    }
             }
             if let highlightedDate {
                 RuleMark(x: .value("Shown day", highlightedDate, unit: unit))
@@ -385,7 +411,7 @@ private struct TrendStats: View {
 
     var body: some View {
         HStack {
-            stat(period.isWeekly ? "Daily avg" : "Average", trend.average)
+            stat(period.isWeekly && !trend.statsArePerPoint ? "Daily avg" : "Average", trend.average)
             stat("Low", trend.low)
             stat("High", trend.high)
         }

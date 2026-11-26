@@ -165,15 +165,18 @@ nonisolated extension SnapshotBuilder {
     }
 
     /// Each of the last `count` days' highest Resources level, oldest first; today's so far. One simulation runs from
-    /// three days before the first, like the card. Days without heart rate get nil. Nil while calibrating.
-    func resourcesPeaks(_ count: Int) async throws -> [DayValue]? {
+    /// three days before the first, like the card. Days without heart rate get nil. Nil while calibrating. `current` is
+    /// the level the card shows: now, or at the end of a past day.
+    func resourcesPeaks(_ count: Int) async throws -> (peaks: [DayValue], current: Double?)? {
         let days = lastDays(count)
         let interval = DateInterval(start: calendar.date(byAdding: .day, value: -3, to: days[0])!, end: now)
         let heartRate = try await source.heartRate(in: interval)
         guard let steps = try await resourcesSteps(interval: interval, heartRate: heartRate)?.steps else { return nil }
         let measured = Set(heartRate.map { calendar.startOfDay(for: $0.date) })
         let peaks = Dictionary(grouping: steps) { calendar.startOfDay(for: $0.date) }.mapValues { $0.map(\.level).max() }
-        return days.map { DayValue(day: $0, value: measured.contains($0) ? peaks[$0] ?? nil : nil) }
+        let last = days[days.count - 1]
+        return (days.map { DayValue(day: $0, value: measured.contains($0) ? peaks[$0] ?? nil : nil) },
+                measured.contains(last) ? steps.last?.level : nil)
     }
 
     /// Today's Resources at midnight and now, and how much each cause moved it in between. Nil without

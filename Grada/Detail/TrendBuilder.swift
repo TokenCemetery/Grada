@@ -50,6 +50,8 @@ struct TrendPoint: Identifiable {
     var movingAverage: Double?
     /// Today's total, or this week's, while the day is under way: drawn lighter and left out of the stats (#200).
     var isPartial = false
+    /// The goal in effect on this day, drawn as a stepped line (Intensity Minutes' weekly goal, #201).
+    var goal: Double?
 
     var id: Date { date }
 }
@@ -69,6 +71,10 @@ struct Trend {
     var average: Double?
     var low: Double?
     var high: Double?
+    /// The card's own value on the shown day, marked on the chart when the bars plot something else (Resources).
+    var current: (label: String, value: Double)?
+    /// Average/Low/High are over the plotted points themselves, not daily values, even on weekly periods.
+    var statsArePerPoint = false
 
     func formatted(_ value: Double) -> String {
         switch format {
@@ -109,13 +115,12 @@ struct TrendBuilder {
             return make(series, period, style: .bars, unit: unit, format: .number(decimals: metric.decimals), movingAverage: true,
                         dailyTotal: true)
         case .intensityMinutes:
-            return make(try await cardBuilder.intensityDays(withLead), period, style: .bars, unit: String(localized: "min", comment: "Unit: minutes"),
-                        format: .number(decimals: 0), weeklyTotals: true, movingAverage: true, dailyTotal: true)
+            return try await intensityMinutes(period)
         case .dayIntensity:
             let active = (try await cardBuilder.dayIntensityDays(withLead) ?? []).map { day in
                 DayValue(day: day.day, value: day.seconds.map { $0.filter { $0.key != .veryLight }.values.reduce(0, +) / 3600 })
             }
-            return make(active, period, style: .bars, unit: String(localized: "h", comment: "Unit: hours"), format: .number(decimals: 1), title: String(localized: "Light or harder"),
+            return make(active, period, style: .bars, unit: "", format: .hours, title: String(localized: "Light or harder"),
                         movingAverage: true, dailyTotal: true)
         case .standHours:
             return make(try await source.standHours(days: withLead), period, style: .bars, unit: String(localized: "h", comment: "Unit: hours"), format: .number(decimals: 0),
@@ -134,10 +139,11 @@ struct TrendBuilder {
             return make(series.map { DayValue(day: $0.day, value: $0.value.map { BodyMass.display($0, usesMetric: usesMetric) }) },
                         period, style: .line, unit: BodyMass.unit(usesMetric: usesMetric), format: .number(decimals: 1))
         case .mobility:
-            let series = try await source.daily(.walkingSpeed, days: days)
-            return make(series.map { DayValue(day: $0.day, value: $0.value.map { Mobility.speed($0, usesMetric: usesMetric) }) },
-                        period, style: .line, unit: Mobility.speedUnit(usesMetric: usesMetric), format: .number(decimals: 1),
-                        title: String(localized: "Walking Speed"))
+            // The card's 7-day average, so the last point is the card's speed (#201).
+            let series = try await source.daily(.walkingSpeed, days: days + Self.cardWeek - 1)
+            return rollingWeek(series.map { DayValue(day: $0.day, value: $0.value.map { Mobility.speed($0, usesMetric: usesMetric) }) },
+                               period, total: false, unit: Mobility.speedUnit(usesMetric: usesMetric), format: .number(decimals: 1),
+                               title: String(localized: "Walking Speed, 7-day average"))
         case .bloodPressure:
             return make(try await source.daily(.bloodPressureSystolic, days: withLead), period, style: .line, unit: BloodPressure.unit,
                         format: .number(decimals: 0), title: String(localized: "Systolic", comment: "Blood pressure chart: the upper number"),
@@ -155,7 +161,12 @@ struct TrendBuilder {
             let nights = try await cardBuilder.sleepScoreDays(days)
             let scores = nights.map { DayValue(day: $0.day, value: $0.result.map { Double($0.score) }) }
             return make(scores, period, style: .bars, unit: "", format: .number(decimals: 0), ratings: nights.map { $0.result?.rating })
-        case .lastWorkout, .weeklyTraining, .last30Days:
+        case .weeklyTraining:
+            // The card's 7-day total, so the last point is the card's value (#201).
+            let minutes = minutesPerDay(try await source.workouts(days: days + Self.cardWeek - 1), days: days + Self.cardWeek - 1)
+            return rollingWeek(minutes.map { DayValue(day: $0.day, value: $0.value.map { $0 / 60 }) }, period, total: true,
+                               unit: "", format: .hours, title: String(localized: "7-day total"))
+        case .lastWorkout, .last30Days:
             let workouts = try await source.workouts(days: withLead)
             let minutes = minutesPerDay(workouts, days: withLead)
             return make(minutes, period, style: .bars, unit: "", format: .hours, title: String(localized: "Workout time"),
@@ -166,8 +177,8 @@ struct TrendBuilder {
             return try await strain(period)
         case .recovery:
             let recovery = try await cardBuilder.recoveryDays(days)
-            let inRange = recovery.map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
-            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Inputs in range"),
+            let inRange = recovery.map { DayValue(day: $0.day, value: $0.result.map { Self.share($0.inRange, of: $0.measured) }) }
+            return make(inRange, period, style: .bars, unit: "%", format: .number(decimals: 0), title: String(localized: "Inputs in range"),
                         ratings: recovery.map { $0.result?.rating })
         case .healthAge:
             guard let age = try await source.age() else { return nil }
@@ -178,16 +189,20 @@ struct TrendBuilder {
         // estimated formula (#42), so only W and M are offered (#198).
         case .resources:
             guard TrendPeriod.available(for: kind).contains(period),
-                  let peaks = try await cardBuilder.resourcesPeaks(days) else { return nil }
-            return make(peaks, period, style: .bars, unit: "%", format: .number(decimals: 0), title: String(localized: "Daily peak"),
-                        ratings: peaks.map { $0.value.map { Resources.rating(Int($0.rounded())) } })
+                  let resources = try await cardBuilder.resourcesPeaks(days) else { return nil }
+            let peaks = resources.peaks
+            var trend = make(peaks, period, style: .bars, unit: "%", format: .number(decimals: 0), title: String(localized: "Daily peak"),
+                             ratings: peaks.map { $0.value.map { Resources.rating(Int($0.rounded())) } })
+            // The card's level, so the peak bar isn't read as the card's value (#208).
+            trend.current = resources.current.map { (label: cardBuilder.nowLabel, value: $0) }
+            return trend
         // Hours left change through the day; the explanation covers the inputs instead.
         case .recoveryTime:
             return nil
         case .trainingReadiness:
             let readiness = try await cardBuilder.readinessDays(days)
-            let inRange = readiness.map { DayValue(day: $0.day, value: $0.result.map { Double($0.inRange) }) }
-            return make(inRange, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Inputs in range"),
+            let inRange = readiness.map { DayValue(day: $0.day, value: $0.result.map { Self.share($0.inRange, of: $0.measured) }) }
+            return make(inRange, period, style: .bars, unit: "%", format: .number(decimals: 0), title: String(localized: "Inputs in range"),
                         ratings: readiness.map { $0.result?.rating })
         case .loadFocus:
             guard let days = try await cardBuilder.loadFocusDays(days) else { return nil }
@@ -208,7 +223,10 @@ struct TrendBuilder {
             series = series.map { DayValue(day: $0.day, value: $0.value.map { $0 * 1.8 + 32 }) }
             unit = "°F"
         }
-        let history = series.dropLast().suffix(baselineDays).compactMap(\.value)
+        // The card's history: the 30 days before its value, which is yesterday's until today's arrives (#208).
+        let window = Array(series.suffix(baselineDays + 1))
+        let latestIndex = window.indices.suffix(2).last { window[$0].value != nil } ?? window.count - 1
+        let history = window[..<latestIndex].compactMap(\.value)
         let range = Baseline.normalRange(history: history, minimumHalfWidth: metric.minimumHalfWidth * (unit == "°F" ? 1.8 : 1))
         var trend = make(Array(series.suffix(period.days)), period, style: .line, unit: unit,
                          format: .number(decimals: metric.decimals), title: title)
@@ -285,6 +303,52 @@ struct TrendBuilder {
         return trend
     }
 
+    /// The rolling 7-day total the card shows, for each day, against the weekly goal in effect that day (#201).
+    private func intensityMinutes(_ period: TrendPeriod) async throws -> Trend {
+        let minutes = try await cardBuilder.intensityDays(period.days + Self.cardWeek - 1)
+        var trend = rollingWeek(minutes, period, total: true, unit: String(localized: "min", comment: "Unit: minutes"),
+                                format: .number(decimals: 0), title: String(localized: "7-day total"))
+        let lastDay = minutes.last?.day ?? calendar.startOfDay(for: .now)
+        for index in trend.points.indices {
+            // A weekly point is dated its week's start but holds the total at the week's end, so take that day's goal.
+            let date = trend.points[index].date
+            let day = period.isWeekly ? min(calendar.date(byAdding: .day, value: 6, to: date)!, lastDay) : date
+            trend.points[index].goal = goals.value(.intensityMinutes, on: day) ?? IntensityMinutes.weeklyTarget
+        }
+        return trend
+    }
+
+    /// Cards that sum or average the last 7 days, today included.
+    private static let cardWeek = 7
+
+    /// Each day's 7-day total (or mean) ending that day, as the cards that cover the last 7 days show it. `daily`
+    /// starts 6 days before the period. Weekly periods take each week's last day, and the latest day for this week.
+    private func rollingWeek(_ daily: [DayValue], _ period: TrendPeriod, total: Bool, unit: String,
+                             format: Trend.ValueFormat, title: String) -> Trend {
+        let window = Self.cardWeek
+        var rolled: [DayValue] = []
+        guard daily.count >= window else { return make([], period, style: .line, unit: unit, format: format, title: title) }
+        for end in (window - 1)..<daily.count {
+            let week = daily[(end - window + 1)...end].compactMap(\.value)
+            rolled.append(DayValue(day: daily[end].day, value: week.isEmpty ? nil : total ? week.reduce(0, +) : Baseline.average(week)))
+        }
+        if period.isWeekly {
+            let last = rolled.last?.day
+            rolled = rolled.filter { day in
+                let weekEnd = calendar.dateInterval(of: .weekOfYear, for: day.day)!.end.addingTimeInterval(-1)
+                return calendar.isDate(day.day, inSameDayAs: weekEnd) || day.day == last
+            }
+        }
+        var trend = make(rolled, period, style: .line, unit: unit, format: format, title: title)
+        trend.statsArePerPoint = true
+        return trend
+    }
+
+    /// Percent of `measured` inputs that were in range.
+    static func share(_ inRange: Int, of measured: Int) -> Double {
+        Double(inRange) / Double(measured) * 100
+    }
+
     /// Vitals in range each night, out of those measured with a finished baseline.
     private func healthStatus(_ period: TrendPeriod) async throws -> Trend {
         var series: [QuantityMetric: [DayValue]] = [:]
@@ -301,9 +365,12 @@ struct TrendBuilder {
                 measured += 1
                 if range.contains(value) { inRange += 1 }
             }
-            return DayValue(day: days[index], value: measured > 0 ? Double(inRange) : nil)
+            return (DayValue(day: days[index], value: measured > 0 ? Self.share(inRange, of: measured) : nil),
+                    measured > 0 ? DayRatings.healthStatus(outOfRange: measured - inRange) : nil)
         }
-        return make(counts, period, style: .bars, unit: "", format: .number(decimals: 0), title: String(localized: "Vitals in range"))
+        // The share, like the card's bars, and the calendar's colors (#202).
+        return make(counts.map(\.0), period, style: .bars, unit: "%", format: .number(decimals: 0), title: String(localized: "Vitals in range"),
+                    ratings: counts.map(\.1))
     }
 
     /// Charts a detail screen shows below its trend, each only with data: body fat, BMI and lean body mass for
