@@ -93,6 +93,14 @@ private struct DayLine: View {
         .chartYAxis(.hidden)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Today")
+        .accessibilityValue(summary(values))
+    }
+
+    /// The chart's shape in words (#207); the card's own value and unit are read with the card.
+    private func summary(_ values: [Double]) -> String {
+        guard let latest = values.last, let low = values.min(), let high = values.max() else { return String(localized: "No data") }
+        return String(localized: "Latest \(Int(latest.rounded())), lowest \(Int(low.rounded())), highest \(Int(high.rounded()))",
+                      comment: "VoiceOver summary of a card's line through today")
     }
 }
 
@@ -353,6 +361,29 @@ private struct TrackBars: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Last 7 days")
+        .accessibilityValue(Self.summary(totals, target: target))
+    }
+
+    /// How the last day compares with the others, and how often the target was reached, in words (#207).
+    static func summary(_ totals: [Double], target: Double?) -> String {
+        guard let latest = totals.last, totals.contains(where: { $0 > 0 }) else { return String(localized: "No data") }
+        var parts: [String] = []
+        let others = totals.dropLast().filter { $0 > 0 }
+        if latest <= 0 {
+            parts.append(String(localized: "No data for the last day yet"))
+        } else if let average = Baseline.average(Array(others)), average > 0 {
+            let ratio = latest / average
+            parts.append(ratio > 1.1 ? String(localized: "Last day above the others' average")
+                         : ratio < 0.9 ? String(localized: "Last day below the others' average")
+                         : String(localized: "Last day close to the others' average"))
+        }
+        if let target {
+            let reached = totals.filter { $0 >= target }.count
+            parts.append(String(localized: "Target reached on \(reached) of \(totals.count) days"))
+        }
+        // Only the last day has data and there's no target: nothing to compare it with.
+        if parts.isEmpty { return String(localized: "Data for the last day only") }
+        return parts.joined(separator: ", ")
     }
 }
 

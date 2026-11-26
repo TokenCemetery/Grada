@@ -272,6 +272,7 @@ private struct TrendChart: View {
                              yStart: .value("Low", range.lowerBound), yEnd: .value("High", range.upperBound),
                              series: .value("Series", "Normal range"))
                         .foregroundStyle(color.opacity(0.12))
+                        .accessibilityHidden(true)
                 }
             }
             ForEach(trend.points) { point in
@@ -281,20 +282,27 @@ private struct TrendChart: View {
                         BarMark(x: .value("Day", point.date, unit: unit), y: .value("Value", value))
                             // Rated bars stay at full color so they match the card's bars.
                             .foregroundStyle(point.rating?.fill(colorBlind: colorBlind) ?? color.opacity(opacity(point)))
+                            .accessibilityLabel(pointLabel(point))
+                            .accessibilityValue(pointValue(point, value))
                     case .line:
                         LineMark(x: .value("Day", point.date, unit: unit), y: .value("Value", value),
                                  series: .value("Series", "Value"))
                             .foregroundStyle(color)
                             .interpolationMethod(.monotone)
+                            .accessibilityLabel(pointLabel(point))
+                            .accessibilityValue(pointValue(point, value))
                         if period != .year {
                             PointMark(x: .value("Day", point.date, unit: unit), y: .value("Value", value))
                                 .foregroundStyle(color)
                                 .symbolSize(isEmphasized(point) ? 60 : 16)
+                                .accessibilityHidden(true)
                         }
                     case .sleep:
                         ForEach([SleepStage.deep, .core, .rem], id: \.self) { stage in
                             BarMark(x: .value("Day", point.date, unit: unit), y: .value("Hours", point.stages[stage] ?? 0))
                                 .foregroundStyle(stage.color)
+                                .accessibilityLabel(pointLabel(point) + ", " + stage.title)
+                                .accessibilityValue(SnapshotBuilder.hoursMinutes((point.stages[stage] ?? 0) * 3600))
                         }
                     }
                 }
@@ -306,6 +314,7 @@ private struct TrendChart: View {
                         .foregroundStyle(.gray)
                         .lineStyle(StrokeStyle(lineWidth: 2, dash: [4, 3]))
                         .interpolationMethod(.monotone)
+                        .accessibilityHidden(true)
                         .annotation(position: .top, alignment: .trailing, spacing: 4) {
                             if point.id == trend.points.last(where: { $0.movingAverage != nil })?.id {
                                 Text(period.isWeekly ? String(localized: "4-week avg") : String(localized: "7-day avg"))
@@ -318,14 +327,16 @@ private struct TrendChart: View {
                 RuleMark(x: .value("Shown day", highlightedDate, unit: unit))
                     .foregroundStyle(.secondary)
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                    .accessibilityHidden(true)
             }
             if let point = selectedPoint, let value = point.value {
                 RuleMark(x: .value("Selected", point.date, unit: unit))
                     .foregroundStyle(.primary.opacity(0.4))
+                    .accessibilityHidden(true)
                     .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
                         VStack(spacing: 0) {
                             Text("\(trend.formatted(value)) \(trend.unit)").font(.caption.weight(.semibold))
-                            Text(point.isPartial ? String(localized: "\(label(point.date)) · so far", comment: "Trend chart label for today's or this week's unfinished total, e.g. Tue 25 Nov · so far") : label(point.date))
+                            Text(pointLabel(point))
                                 .font(.caption2).foregroundStyle(.secondary)
                         }
                         .padding(6)
@@ -335,6 +346,19 @@ private struct TrendChart: View {
         }
         .chartXSelection(value: $selection)
         .chartYScale(domain: .automatic(includesZero: trend.style != .line))
+    }
+
+    /// The point's day or week, with "so far" while it is still adding up.
+    private func pointLabel(_ point: TrendPoint) -> String {
+        point.isPartial
+            ? String(localized: "\(label(point.date)) · so far", comment: "Trend chart label for today's or this week's unfinished total, e.g. Tue 25 Nov · so far")
+            : label(point.date)
+    }
+
+    /// What VoiceOver reads for a point: its value with unit, and its rating, which the bar shows only by color (#207).
+    private func pointValue(_ point: TrendPoint, _ value: Double) -> String {
+        let text = "\(trend.formatted(value)) \(trend.unit)".trimmingCharacters(in: .whitespaces)
+        return point.rating.map { "\(text), \($0.title)" } ?? text
     }
 
     /// Today's unfinished total is drawn faint, so it doesn't read as a low day.
