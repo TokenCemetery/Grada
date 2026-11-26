@@ -53,16 +53,20 @@ nonisolated extension SnapshotBuilder {
         let inRange = statuses.filter { $0.state == .inRange }.count
 
         var snapshot = CardSnapshot(period: period, value: nil, detail: .vitals(statuses))
+        // The calendar's rule, so the color matches it and follows the color-blind palette (#203).
+        let rating = DayRatings.healthStatus(outOfRange: outOfRange)
         if outOfRange > 0 {
             snapshot.value = outOfRange == 1 ? String(localized: "1 vital out of range")
                 : String(localized: "\(outOfRange) vitals out of range")
-            snapshot.tone = .warning
+            snapshot.tone = Self.tone(rating)
+            snapshot.rating = rating
         } else if inRange == 0 {
             snapshot.value = String(localized: "Calibrating")
             snapshot.comparison = String(localized: "Needs \(Baseline.minimumDays) nights of data")
         } else {
             snapshot.value = String(localized: "All in range")
-            snapshot.tone = .good
+            snapshot.tone = Self.tone(rating)
+            snapshot.rating = rating
         }
         if snapshot.comparison == nil {
             snapshot.comparison = String(localized: "\(inRange) of \(measured.count) vitals normal")

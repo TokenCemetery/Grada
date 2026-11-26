@@ -1470,6 +1470,15 @@ struct TrendBuilderTests {
         }
     }
 
+    /// Health Status is rated like the calendar, so it follows the color-blind palette (#203).
+    @Test func healthStatusCardIsRatedLikeTheCalendar() async throws {
+        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .healthStatus)
+        guard case .vitals(let statuses) = snapshot.detail else { Issue.record("\(String(describing: snapshot.detail))"); return }
+        let outOfRange = statuses.filter { $0.state == .outOfRange }.count
+        try #require(statuses.contains { $0.state == .inRange || $0.state == .outOfRange })
+        #expect(snapshot.rating == DayRatings.healthStatus(outOfRange: outOfRange))
+    }
+
     /// While today is under way, the Strain ratio is this morning's: the one ending yesterday (#204).
     @Test func strainRatioEndsYesterdayWhileTodayIsUnderWay() async throws {
         let days = try #require(try await SnapshotBuilder(source: SampleDataSource()).strainDays(7))
