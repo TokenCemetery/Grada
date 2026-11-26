@@ -127,16 +127,19 @@ struct HeartRateRecoveryTests {
         #expect(health.asked == [["apple-run"]])
     }
 
-    @Test func cardShowsTheLatestRecoveryOfTheLastTwoWeeks() async throws {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: .now)
-        let slow = try await SnapshotBuilder(source: FixedRecoverySource(values: [-20: 30, -3: 12])).snapshot(for: .heartRateRecovery)
-        #expect(slow.value == "12")
+    /// The card averages the last 3 workouts from the last 30 days, since one session is noisy (#209).
+    @Test func cardAveragesTheLastThreeRecoveries() async throws {
+        let slow = try await SnapshotBuilder(source: FixedRecoverySource(values: [-40: 40, -25: 40, -20: 14, -10: 12, -3: 10]))
+            .snapshot(for: .heartRateRecovery)
+        #expect(slow.value == "12", "The day 40 days ago is out of the window and the 4th-latest is past the last 3; those average 12")
         #expect(slow.rating == .fair)
         #expect(slow.comparison == "Slow: 12 bpm or less")
-        #expect(slow.period == calendar.date(byAdding: .day, value: -3, to: today)!.formatted(.dateTime.month(.abbreviated).day()))
-        let old = try await SnapshotBuilder(source: FixedRecoverySource(values: [-20: 30])).snapshot(for: .heartRateRecovery)
-        #expect(old.value == nil, "A recovery from 20 days ago isn't shown as the latest")
+        #expect(slow.period == String(localized: "Average of last \(3) workouts"))
+        let single = try await SnapshotBuilder(source: FixedRecoverySource(values: [-5: 20])).snapshot(for: .heartRateRecovery)
+        #expect(single.value == "20")
+        #expect(single.period == String(localized: "Last workout"))
+        let old = try await SnapshotBuilder(source: FixedRecoverySource(values: [-40: 30])).snapshot(for: .heartRateRecovery)
+        #expect(old.value == nil, "A recovery from 40 days ago isn't today's fitness")
     }
 
     /// The chart is the last 7 days under their weekdays, not the last 7 readings pushed to the right (#164).

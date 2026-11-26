@@ -9432,6 +9432,58 @@
         }
       }
     },
+    "Average of last %lld workouts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchschnitt der letzten %lld Trainings"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Media de los últimos %lld entrenamientos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moyenne des %lld dernières séances"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले %lld वर्कआउट का औसत"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Media degli ultimi %lld allenamenti"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Média dos últimos %lld treinos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Среднее за последние %lld трен."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近 %lld 次锻炼的平均值"
+          }
+        }
+      }
+    },
     "Avg %@ · Resting %@" : {
       "localizations" : {
         "de" : {
@@ -22527,6 +22579,58 @@
         }
       }
     },
+    "Last workout" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letztes Training"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último entrenamiento"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière séance"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछला वर्कआउट"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ultimo allenamento"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último treino"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Последняя тренировка"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次锻炼"
+          }
+        }
+      }
+    },
     "Last Workout" : {
       "localizations" : {
         "de" : {
@@ -28523,6 +28627,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在主页"
+          }
+        }
+      }
+    },
+    "One workout varies a lot with how it ended, and recovery changes over weeks rather than days, so the card shows the average of your last 3 workouts from the last 30 days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein einzelnes Training schwankt stark je nachdem, wie es endete, und die Erholung ändert sich über Wochen statt Tage. Deshalb zeigt die Karte den Durchschnitt deiner letzten 3 Trainings aus den letzten 30 Tagen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un solo entrenamiento varía mucho según cómo terminó, y la recuperación cambia en semanas, no en días, así que la tarjeta muestra la media de tus últimos 3 entrenamientos de los últimos 30 días."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une seule séance varie beaucoup selon sa fin, et la récupération évolue sur des semaines plutôt que des jours : la carte affiche donc la moyenne de tes 3 dernières séances des 30 derniers jours."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एक वर्कआउट इस पर बहुत निर्भर करता है कि वह कैसे खत्म हुआ, और रिकवरी दिनों के बजाय हफ़्तों में बदलती है, इसलिए कार्ड पिछले 30 दिनों के आपके आखिरी 3 वर्कआउट का औसत दिखाता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un singolo allenamento varia molto a seconda di come è finito, e il recupero cambia nell’arco di settimane, non di giorni: per questo la scheda mostra la media dei tuoi ultimi 3 allenamenti degli ultimi 30 giorni."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um único treino varia muito conforme terminou, e a recuperação muda ao longo de semanas, não de dias, por isso o cartão mostra a média dos seus últimos 3 treinos dos últimos 30 dias."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Одна тренировка сильно зависит от того, как она закончилась, а восстановление меняется за недели, а не дни, поэтому карточка показывает среднее за последние 3 тренировки за 30 дней."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单次锻炼会因结束方式而有很大差异，且恢复能力以周而非天为单位变化，因此卡片显示你最近 30 天内最后 3 次锻炼的平均值。"
           }
         }
       }

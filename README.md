@@ -52,7 +52,7 @@ Every calculated metric rests on published research. Each detail screen lists it
 - **Weight:** latest weight with BMI and WHO adult class and the 30-day trend, in kilograms or pounds; the detail screen adds body fat and lean body mass, and notes that BMI doesn't tell fat from muscle.
 - **Blood Pressure:** the latest day's cuff reading (averaged when there were several) and the 30-day average, coloured by the 2017 ACC/AHA categories; readings over a week old show uncoloured. Grada estimates nothing here.
 - **Mobility:** iPhone walking speed averaged over 7 days, with Apple's Walking Steadiness class labelled as Apple's. From age 65 the average is coloured by Studenski et al.'s survival bands (1.0, 0.8 and 0.6 m/s) as a fitness marker, not a diagnosis.
-- **Heart Rate Recovery:** the heart rate drop in the minute after a workout, from Apple Watch or the heart rate around the workout's end, with a 90-day trend. A drop of 12 bpm or less is marked, Cole et al.'s cut-off, as a fitness marker.
+- **Heart Rate Recovery:** the heart rate drop in the minute after a workout, from Apple Watch or the heart rate around the workout's end, averaged over your last 3 workouts in 30 days because one session is noisy; the detail screen charts each workout day with a moving average. An average drop of 12 bpm or less is marked, Cole et al.'s cut-off, as a fitness marker.
 
 Resources, an all-day energy estimate, has no published method behind it and says so.
 

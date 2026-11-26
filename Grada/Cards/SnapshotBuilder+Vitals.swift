@@ -206,18 +206,21 @@ nonisolated extension SnapshotBuilder {
 }
 
 nonisolated extension SnapshotBuilder {
-    /// The latest workout's one-minute heart rate recovery in the last `HeartRateRecovery.cardDays` days, marked when
-    /// it's at or below Cole's cut-off (#131).
+    /// The average one-minute heart rate recovery of the last `HeartRateRecovery.cardWorkouts` workout days in the last
+    /// `HeartRateRecovery.cardDays` days, marked when it's at or below Cole's cut-off (#131, #209).
     func heartRateRecovery() async throws -> CardSnapshot {
         let series = try await source.heartRateRecovery(days: HeartRateRecovery.cardDays)
-        guard let latest = series.last(where: { $0.value != nil }), let value = latest.value else {
-            return .noData(period: String(localized: "Latest"))
+        let recent = series.compactMap(\.value).suffix(HeartRateRecovery.cardWorkouts)
+        guard let value = Baseline.average(Array(recent)) else {
+            return .noData(period: String(localized: "Last 30 days"))
         }
         // The last 7 days, gaps included: the chart labels its points as this week's weekdays.
         let points = series.suffix(7).map(\.value)
+        // The cut-off applies to the average, since one workout's finish can move it past 12 bpm.
         let slow = value <= HeartRateRecovery.slowCutOff
         return CardSnapshot(
-            period: dayLabel(latest.day),
+            period: recent.count == 1 ? String(localized: "Last workout")
+                : String(localized: "Average of last \(recent.count) workouts"),
             value: format(value, 0),
             unit: QuantityMetric.restingHeartRate.unit,
             comparison: slow ? String(localized: "Slow: \(Int(HeartRateRecovery.slowCutOff)) bpm or less")

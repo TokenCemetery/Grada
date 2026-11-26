@@ -13,8 +13,14 @@ nonisolated enum HeartRateRecovery {
     static let sampleWindow: TimeInterval = 5 * 60
     /// The last reading `derived` uses, relative to the end.
     static var readingWindow: TimeInterval { 60 + readingTolerance }
-    /// How far back the card looks for the latest recovery; an older one isn't today's fitness. Grada's estimate.
-    static let cardDays = 14
+    /// The card averages the last 3 workouts' recoveries from the last 30 days (#209). One session is noisy: HRR is the
+    /// least reliable of the heart rate measures used to monitor training (Buchheit 2014, Front Physiol 5:73; Al Haddad
+    /// et al. 2011, Int J Sports Physiol Perform), and a workout's finish moves it more than a lab protocol would
+    /// (Daanen et al. 2012, Int J Sports Physiol Perform 7:251). It changes over weeks of training or detraining, not
+    /// days (Daanen 2012; Aubry et al. 2015, PLoS ONE 10:e0139754), so 30 days still describes current fitness.
+    /// No study gives an averaging rule; 3 sessions is Grada's choice.
+    static let cardDays = 30
+    static let cardWorkouts = 3
 
     /// The peak in the last minute of the workout minus the reading closest to one minute after it ends.
     /// Nil without readings on both sides, or when heart rate rose, which means something other than
