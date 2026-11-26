@@ -43,8 +43,8 @@ nonisolated extension SnapshotBuilder {
     }
 
     /// Each of the last `count` days' load (nil without heart rate), its acute:chronic ratio and its 7-day
-    /// monotony and strain, oldest first. Nil altogether without a max heart rate to set the zones. Today's week ends
-    /// yesterday: a day under way would read as an easy day and hide a monotonous week.
+    /// monotony and strain, oldest first. Nil altogether without a max heart rate to set the zones. Today's week and
+    /// ratio end yesterday: a day under way would read as an easy day, hide a monotonous week and sag the ratio (#204).
     func strainDays(_ count: Int) async throws -> [(day: Date, load: Double?, ratio: Strain.Ratio?, week: Strain.Week?)]? {
         guard let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
                                                         highestRecorded: try await source.highestHeartRate(days: 365))
@@ -57,7 +57,8 @@ nonisolated extension SnapshotBuilder {
                                          maxHeartRate: maxHeartRate) }
         }
         return (days.count - count..<days.count).map {
-            (days[$0], loads[$0], Strain.ratio(loads: loads, endingAt: $0), Strain.week(loads: loads, endingAt: calendar.isDateInToday(days[$0]) ? $0 - 1 : $0))
+            let end = calendar.isDateInToday(days[$0]) ? $0 - 1 : $0
+            return (days[$0], loads[$0], Strain.ratio(loads: loads, endingAt: end), Strain.week(loads: loads, endingAt: end))
         }
     }
 

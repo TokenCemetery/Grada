@@ -1470,6 +1470,13 @@ struct TrendBuilderTests {
         }
     }
 
+    /// While today is under way, the Strain ratio is this morning's: the one ending yesterday (#204).
+    @Test func strainRatioEndsYesterdayWhileTodayIsUnderWay() async throws {
+        let days = try #require(try await SnapshotBuilder(source: SampleDataSource()).strainDays(7))
+        let yesterday = try #require(days[5].ratio)
+        #expect(days[6].ratio == yesterday)
+    }
+
     /// Resources charts each day's peak, colored by the card's bands, for W and M only (#198).
     @Test func resourcesTrendShowsDailyPeaks() async throws {
         let builder = TrendBuilder(source: SampleDataSource())
