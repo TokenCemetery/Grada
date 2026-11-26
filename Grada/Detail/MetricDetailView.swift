@@ -383,12 +383,13 @@ private struct TrendStats: View {
 enum Breakdown {
     case hourly([TimedValue], unit: String, decimals: Int)
     case heartRate([TimedValue])
-    case sleep(SleepNight, bedtime: Date?, wakeTime: Date?, debt: TimeInterval)
+    /// `title` names the night as the card does: last night, the night before on a past day, or yesterday's (#206).
+    case sleep(SleepNight, title: String, bedtime: Date?, wakeTime: Date?, debt: TimeInterval)
     case workouts([WorkoutSummary])
     /// Each Recovery input against its threshold.
     case recovery([Recovery.Check])
-    /// Resources at midnight and now, and what moved it in between.
-    case resources(midnight: Double, now: Double, amounts: [Resources.Cause: Double])
+    /// Resources at midnight and now (the end of a past day, labelled by `nowLabel`), and what moved it in between.
+    case resources(midnight: Double, now: Double, amounts: [Resources.Cause: Double], nowLabel: String)
     /// The period's daily cuff readings, newest first, each in its ACC/AHA category's color (#135).
     case bloodPressure([(day: Date, systolic: Double, diastolic: Double)])
 
@@ -396,7 +397,7 @@ enum Breakdown {
         switch self {
         case .hourly: String(localized: "By hour")
         case .heartRate: String(localized: "Through the day")
-        case .sleep: String(localized: "Last night")
+        case .sleep(_, let title, _, _, _): title
         case .workouts: String(localized: "Workouts")
         case .recovery: String(localized: "Inputs")
         case .resources: String(localized: "Since midnight")
@@ -427,13 +428,23 @@ enum Breakdown {
             let values = try await source.heartRate(in: interval)
             return values.isEmpty ? nil : .heartRate(values)
         case .sleep:
-            let nights = try await source.sleepNights(days: 1)
-            guard let night = nights.last(where: { $0.wakeDay == day }), night.asleep > 0 else { return nil }
             var builder = SnapshotBuilder.forDay(day, source: source, calendar: calendar)
             builder.goals = goals
-            let debt = try await builder.sleepDebt(1)?.last?.debt ?? 0
-            let vitals = try await source.overnight(days: 1).last
-            return .sleep(night, bedtime: vitals?.bedtime, wakeTime: vitals?.wakeTime, debt: debt)
+            // The card's night: the shown day's, or yesterday's until it arrives.
+            let nights = try await source.sleepNights(days: 2)
+            let yesterday = calendar.date(byAdding: .day, value: -1, to: day)!
+            let shown: (night: SleepNight, title: String, index: Int)
+            if let night = nights.last(where: { $0.wakeDay == day && $0.asleep > 0 }) {
+                shown = (night, builder.lastNightLabel, 1)
+            } else if let night = nights.last(where: { $0.wakeDay == yesterday && $0.asleep > 0 }) {
+                shown = (night, builder.yesterdayLabel, 0)
+            } else {
+                return nil
+            }
+            let debts = try await builder.sleepDebt(2)
+            let debt = debts.flatMap { $0.indices.contains(shown.index) ? $0[shown.index].debt : nil } ?? 0
+            let vitals = try await source.overnight(days: 2).last { $0.wakeDay == shown.night.wakeDay }
+            return .sleep(shown.night, title: shown.title, bedtime: vitals?.bedtime, wakeTime: vitals?.wakeTime, debt: debt)
         case .training:
             guard kind == .lastWorkout || kind == .weeklyTraining else { return nil }
             let workouts = try await source.workouts(days: period.days)
@@ -447,7 +458,9 @@ enum Breakdown {
                 let checks = (days.last?.hasData == true ? days.last : days.first)?.checks ?? []
                 return checks.isEmpty ? nil : .recovery(checks)
             case .resources:
-                return try await builder.resourcesContributions().map { .resources(midnight: $0.midnight, now: $0.now, amounts: $0.amounts) }
+                return try await builder.resourcesContributions().map {
+                    .resources(midnight: $0.midnight, now: $0.now, amounts: $0.amounts, nowLabel: builder.nowLabel)
+                }
             default:
                 return nil
             }
@@ -480,7 +493,7 @@ private struct BreakdownView: View {
             .chartYScale(domain: .automatic(includesZero: false))
             .chartXAxis { AxisMarks(values: .stride(by: .hour, count: 6)) { AxisValueLabel(format: .dateTime.hour()) } }
             .frame(height: 160)
-        case .sleep(let night, let bedtime, let wakeTime, let debt):
+        case .sleep(let night, _, let bedtime, let wakeTime, let debt):
             VStack(spacing: 6) {
                 ForEach([SleepStage.deep, .core, .rem, .awake], id: \.self) { stage in
                     if let seconds = night.stages[stage], seconds > 0 {
@@ -554,7 +567,7 @@ private struct BreakdownView: View {
                     .accessibilityElement(children: .combine)
                 }
             }
-        case .resources(let midnight, let now, let amounts):
+        case .resources(let midnight, let now, let amounts, let nowLabel):
             VStack(spacing: 6) {
                 row(String(localized: "At midnight"), "\(Int(midnight.rounded()))%")
                 Divider()
@@ -570,7 +583,7 @@ private struct BreakdownView: View {
                     }
                 }
                 Divider()
-                row(String(localized: "Now", comment: "Resources: the current charge, as opposed to at midnight"), "\(Int(now.rounded()))%")
+                row(nowLabel, "\(Int(now.rounded()))%")
             }
         }
     }

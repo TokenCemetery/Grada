@@ -396,10 +396,18 @@ struct ScoreBreakdownTests {
         guard case .recovery(let checks) = recovery else { Issue.record("\(String(describing: recovery))"); return }
         #expect(checks.first?.kind == .hrv)
         let resources = try await Breakdown.load(for: .resources, day: today, period: .month, source: source, calendar: calendar)
-        guard case .resources(let midnight, let now, let amounts) = resources else {
+        guard case .resources(let midnight, let now, let amounts, let nowLabel) = resources else {
             Issue.record("\(String(describing: resources))"); return
         }
         #expect(abs(amounts.values.reduce(0, +) - (now - midnight)) < 0.000_1)
+        #expect(nowLabel == String(localized: "Now"))
+        // A past day speaks of its end and its own night, as its card does (#206).
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        let past = try await Breakdown.load(for: .resources, day: yesterday, period: .month, source: source, calendar: calendar)
+        guard case .resources(_, _, _, let pastLabel) = past else { Issue.record("\(String(describing: past))"); return }
+        #expect(pastLabel == String(localized: "End of day"))
+        let sleep = try await Breakdown.load(for: .sleepDuration, day: yesterday, period: .month, source: source, calendar: calendar)
+        #expect(sleep?.title == String(localized: "Night before"))
     }
 }
 
