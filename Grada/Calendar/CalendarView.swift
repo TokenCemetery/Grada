@@ -202,11 +202,6 @@ struct CalendarView: View {
             } icon: {
                 Circle().strokeBorder(.secondary, lineWidth: 1).frame(width: 10, height: 10)
             }
-            Label {
-                Text("Workout")
-            } icon: {
-                Circle().fill(.secondary).frame(width: 4, height: 4)
-            }
         }
         .labelStyle(LegendLabelStyle())
         .font(.caption)
@@ -363,7 +358,6 @@ private struct MonthView: View {
             } else {
                 DayCell(day: day,
                         rating: model.ratings[day],
-                        hasWorkout: model.workoutDays[day] != nil,
                         isToday: day == today,
                         isFuture: day > today,
                         isSelected: day == selected,
@@ -428,7 +422,6 @@ private struct MonthView: View {
 private struct DayCell: View {
     let day: Date
     let rating: DayRating?
-    let hasWorkout: Bool
     let isToday: Bool
     let isFuture: Bool
     let isSelected: Bool
@@ -442,15 +435,10 @@ private struct DayCell: View {
     }
 
     var body: some View {
-        VStack(spacing: 2) {
-            Text("\(Calendar.current.component(.day, from: day))")
-                .font(.footnote.weight(isToday ? .bold : .regular))
-                .monospacedDigit()
-            Circle()
-                .fill(hasWorkout && !isFuture ? textColor : .clear)
-                .frame(width: 4, height: 4)
-        }
-        .foregroundStyle(textColor)
+        Text("\(Calendar.current.component(.day, from: day))")
+            .font(.footnote.weight(isToday ? .bold : .regular))
+            .monospacedDigit()
+            .foregroundStyle(textColor)
         .frame(width: size, height: size)
         .background { background }
         .overlay {
@@ -482,7 +470,6 @@ private struct DayCell: View {
     private var accessibilityText: String {
         var parts = [day.formatted(date: .complete, time: .omitted)]
         parts.append(rating?.title ?? (isFuture ? String(localized: "Upcoming") : String(localized: "No data")))
-        if hasWorkout { parts.append(String(localized: "Workout")) }
         return parts.joined(separator: ", ")
     }
 }

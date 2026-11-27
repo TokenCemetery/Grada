@@ -20,7 +20,7 @@ nonisolated extension DayRating {
         }
     }
 
-    /// Text and the workout dot drawn on top of `fill`.
+    /// Text drawn on top of `fill`.
     func foreground(colorBlind: Bool) -> Color {
         switch (self, colorBlind) {
         case (.good, false), (.fair, false), (.fair, true): .black
