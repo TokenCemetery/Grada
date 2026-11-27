@@ -207,7 +207,9 @@ struct RatingTests {
                       DayValue(day: day(-2), value: 6_000), DayValue(day: day(-1), value: 4_000),
                       DayValue(day: today, value: 3_000)]
         let ratings = DayRatings.rateSteps(series, goals: goals, today: today)
-        #expect(ratings[day(-4)] == .fair, "Before any goal, 10,000 steps")
+        #expect(ratings[day(-4)] == .good, "Before the first goal, that goal")
+        let unset = DayRatings.rateSteps([DayValue(day: day(-4), value: 9_000)], goals: GoalHistory(), today: today)
+        #expect(unset[day(-4)] == .fair, "Without any goal, 10,000 steps")
         #expect(ratings[day(-3)] == nil, "No steps, no rating")
         #expect(ratings[day(-2)] == .good)
         #expect(ratings[day(-1)] == .poor)
@@ -1632,7 +1634,7 @@ struct GoalTests {
 
     @Test func pastDaysUseTheGoalInEffectThen() {
         let goals = history([steps(8_000, from: 0), steps(8_500, from: 7, .automatic)])
-        #expect(goals.value(.steps, on: day(-1)) == nil)
+        #expect(goals.value(.steps, on: day(-1)) == 8_000, "Before the first goal, that goal")
         #expect(goals.value(.steps, on: day(3)) == 8_000)
         #expect(goals.value(.steps, on: day(7)) == 8_500)
     }

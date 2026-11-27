@@ -116,11 +116,16 @@ nonisolated struct GoalHistory: Equatable {
 
     var isEmpty: Bool { entries.isEmpty }
 
-    /// The change in effect on `day`; for sleep, only a user edit that hasn't expired yet.
+    /// The change in effect on `day`; for sleep, only a user edit that hasn't expired yet. Days before a metric's
+    /// first goal use that goal, so days before setup are judged by the goal the user picked (#215).
     func entry(_ metric: GoalMetric, on day: Date) -> GoalEntry? {
-        guard let entry = entries.last(where: { $0.metric == metric && $0.effectiveFrom <= day }) else { return nil }
-        if metric == .sleep, day >= Goals.adjustmentDate(after: entry.effectiveFrom, calendar: calendar) { return nil }
-        return entry
+        if metric == .sleep {
+            guard let entry = entries.last(where: { $0.metric == metric && $0.effectiveFrom <= day }),
+                  day < Goals.adjustmentDate(after: entry.effectiveFrom, calendar: calendar) else { return nil }
+            return entry
+        }
+        return entries.last(where: { $0.metric == metric && $0.effectiveFrom <= day })
+            ?? entries.first(where: { $0.metric == metric })
     }
 
     /// Nil without a goal; for sleep, nil means it follows Sleep need.
