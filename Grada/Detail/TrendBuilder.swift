@@ -71,8 +71,6 @@ struct Trend {
     var average: Double?
     var low: Double?
     var high: Double?
-    /// The card's own value on the shown day, marked on the chart when the bars plot something else (Resources).
-    var current: (label: String, value: Double)?
     /// Average/Low/High are over the plotted points themselves, not daily values, even on weekly periods.
     var statsArePerPoint = false
 
@@ -189,13 +187,9 @@ struct TrendBuilder {
         // estimated formula (#42), so only W and M are offered (#198).
         case .resources:
             guard TrendPeriod.available(for: kind).contains(period),
-                  let resources = try await cardBuilder.resourcesPeaks(days) else { return nil }
-            let peaks = resources.peaks
-            var trend = make(peaks, period, style: .bars, unit: "%", format: .number(decimals: 0), title: String(localized: "Daily peak"),
-                             ratings: peaks.map { $0.value.map { Resources.rating(Int($0.rounded())) } })
-            // The card's level, so the peak bar isn't read as the card's value (#208).
-            trend.current = resources.current.map { (label: cardBuilder.nowLabel, value: $0) }
-            return trend
+                  let peaks = try await cardBuilder.resourcesPeaks(days) else { return nil }
+            return make(peaks, period, style: .bars, unit: "%", format: .number(decimals: 0), title: String(localized: "Daily peak"),
+                        ratings: peaks.map { $0.value.map { Resources.rating(Int($0.rounded())) } })
         // Hours left change through the day; the explanation covers the inputs instead.
         case .recoveryTime:
             return nil

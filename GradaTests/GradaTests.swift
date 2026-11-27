@@ -1529,7 +1529,7 @@ struct TrendBuilderTests {
         #expect(TrendBuilder.share(3, of: 4) == 75)
     }
 
-    /// Recovery Time has no trend section; Day Intensity reads in hours and minutes; Resources marks the card's level (#205, #208).
+    /// Recovery Time has no trend section; Day Intensity reads in hours and minutes (#205, #208).
     @Test func detailTrendsMatchTheirCards() async throws {
         #expect(!TrendBuilder.hasTrend(.recoveryTime))
         #expect(TrendBuilder.hasTrend(.steps))
@@ -1537,9 +1537,6 @@ struct TrendBuilderTests {
         let intensity = try #require(try await builder.trend(for: .dayIntensity, period: .week))
         guard case .hours = intensity.format else { Issue.record("Day Intensity isn't in hours and minutes"); return }
         #expect(intensity.unit.isEmpty, "\"2h 05m\" already says hours; a unit would read \"2h 05m h\"")
-        let resources = try #require(try await builder.trend(for: .resources, period: .week))
-        #expect(resources.current?.label == String(localized: "Now"))
-        #expect(resources.current.map { (0...100).contains($0.value) } == true)
     }
 
     /// Resources charts each day's peak, colored by the card's bands, for W and M only (#198).

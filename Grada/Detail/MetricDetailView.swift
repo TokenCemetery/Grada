@@ -337,18 +337,6 @@ private struct TrendChart: View {
                         }
                 }
             }
-            if let current = trend.current, let last = trend.points.last {
-                PointMark(x: .value("Day", last.date, unit: unit), y: .value("Value", current.value))
-                    .symbol(.diamond)
-                    .symbolSize(70)
-                    .foregroundStyle(.primary)
-                    .accessibilityLabel(current.label)
-                    .accessibilityValue(pointValue(TrendPoint(date: last.date, value: current.value), current.value))
-                    .annotation(position: .top, alignment: .trailing, spacing: 2) {
-                        Text(verbatim: "\(current.label) \(trend.formatted(current.value))\(trend.unit)")
-                            .font(.caption2.weight(.semibold))
-                    }
-            }
             if let highlightedDate {
                 RuleMark(x: .value("Shown day", highlightedDate, unit: unit))
                     .foregroundStyle(.secondary)
