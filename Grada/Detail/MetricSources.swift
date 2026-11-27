@@ -59,8 +59,26 @@ struct MetricSource: Hashable {
                                           "Typical scores and mortality risk by sleep regularity in 60,000 adults",
                                           doi: "10.1093/sleep/zsad253")
     static let wittmann2006 = MetricSource("Wittmann et al. 2006 · Chronobiology International",
-                                           "People sleep later on free days than on work days",
+                                           "Sleeping later on free days than on work days is social jetlag",
                                            doi: "10.1080/07420520500545979")
+    static let roenneberg2003 = MetricSource("Roenneberg, Wirz-Justice & Merrow 2003 · J Biol Rhythms",
+                                             "Free days show how much people sleep without an alarm",
+                                             doi: "10.1177/0748730402239679")
+    static let roenneberg2012 = MetricSource("Roenneberg et al. 2012 · Current Biology",
+                                             "Each hour of social jetlag went with higher odds of overweight",
+                                             doi: "10.1016/j.cub.2012.03.038")
+    static let banks2010 = MetricSource("Banks et al. 2010 · Sleep",
+                                        "One long night isn't enough to recover from a week of short sleep",
+                                        doi: "10.1093/sleep/33.8.1013")
+    static let depner2019 = MetricSource("Depner et al. 2019 · Current Biology",
+                                         "Weekend catch-up sleep didn't undo the harm of short weeknights",
+                                         doi: "10.1016/j.cub.2019.01.069")
+    static let chinoy2021 = MetricSource("Chinoy et al. 2021 · Sleep",
+                                         "Consumer sleep trackers detect time awake poorly",
+                                         doi: "10.1093/sleep/zsaa291")
+    static let nikbakhtian2021 = MetricSource("Nikbakhtian et al. 2021 · Eur Heart J Digital Health",
+                                              "Falling asleep at 22:00–23:00 had the lowest heart disease risk, after midnight the highest",
+                                              doi: "10.1093/ehjdh/ztab088")
     static let vanDongen2003 = MetricSource("Van Dongen et al. 2003 · Sleep",
                                             "Deficits keep building over 14 nights of short sleep",
                                             doi: "10.1093/sleep/26.2.117")
@@ -175,7 +193,8 @@ extension CardKind {
         case .hrvStatus: [.plews2012, .leMeur2013, .buchheit2014, .kiviniemi2007]
         case .healthAge:
             [.finch1990, .kodama2009, .kaminsky2015, .zhang2016, .ostchega2011, .paluch2022, .cappuccio2010, .arem2015]
-        case .sleepNeed: [.watson2015, .hirshkowitz2015, .vanDongen2003, .kitamura2016, .wittmann2006]
+        case .sleepNeed: [.watson2015, .hirshkowitz2015, .roenneberg2003, .vanDongen2003, .kitamura2016, .banks2010,
+                          .depner2019, .wittmann2006, .roenneberg2012, .nikbakhtian2021, .chinoy2021]
         case .steps: [.tudorLocke2018, .paluch2022]
         case .restingHeartRate: [.mishra2020]
         case .sleepConsistency: [.phillips2017, .windred2024]
@@ -210,7 +229,7 @@ extension CardKind {
         case .recoveryTime:
             String(localized: "The review grades intensity by physiological thresholds, not heart rate. Judging each workout by its average heart rate, placing the thresholds at 82% and 88% of max heart rate (Seiler's zones) and taking 36 hours for the 24–48 hour range are Grada's choices.")
         case .sleepNeed:
-            String(localized: "Your usual wake-up and time awake in bed are the medians of the last \(Bedtime.nights) nights, weekdays and weekends apart once each has \(Bedtime.minimumNights) nights. The window is Grada's choice; no study sets one.")
+            String(localized: "Your sleep need is the median sleep of your weekend nights over the last \(SleepNeed.learningDays) days, once there are \(SleepNeed.minimumFreeNights). Your usual wake-up and bedtime are the medians of the last \(Bedtime.nights) nights, weekdays and weekends apart once each has \(Bedtime.minimumNights) nights. The bedtime doesn't add time awake in bed, which trackers measure poorly. These windows, and letting a weekend run up to an hour later, are Grada's choices; no study sets them. Paying back at most an hour of sleep debt a night is Grada's choice too.")
         case .restingHeartRate:
             String(localized: "Studies show resting heart rate rising, not a cutoff. Suggesting rest whenever it's above your normal range (30-day average ± 2 standard deviations) is Grada's rule.")
         case .strain:

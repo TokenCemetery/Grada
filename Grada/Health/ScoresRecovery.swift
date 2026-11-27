@@ -117,6 +117,8 @@ nonisolated struct HealthProfile: Equatable {
     var maxHeartRateSource: MaxHeartRateSource?
     /// 7-day average, the same one Resources uses.
     var restingHeartRate: Double?
+    /// Without a sleep goal; the same one Sleep Need uses.
+    var sleepNeed: TimeInterval?
 
     static func load(from source: HealthDataSource) async throws -> HealthProfile {
         let age = try await source.age()
@@ -126,7 +128,8 @@ nonisolated struct HealthProfile: Equatable {
             sex: try await source.biologicalSex(),
             maxHeartRate: Resources.maxHeartRate(age: age, highestRecorded: highest),
             maxHeartRateSource: age != nil ? .age : (highest != nil ? .highestRecorded : nil),
-            restingHeartRate: Baseline.average(try await source.daily(.restingHeartRate, days: 8).compactMap(\.value))
+            restingHeartRate: Baseline.average(try await source.daily(.restingHeartRate, days: 8).compactMap(\.value)),
+            sleepNeed: try await SnapshotBuilder(source: source).personalSleepNeed()
         )
     }
 }

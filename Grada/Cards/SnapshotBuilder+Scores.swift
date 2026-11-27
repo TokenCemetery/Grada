@@ -124,7 +124,7 @@ nonisolated extension SnapshotBuilder {
         let hrv = overnight.map(\.hrv)
         let nights = try await source.sleepNights(days: count + history - 1)
         let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
-        let needs = sleepGoals(count + history - 1)
+        let needs = try await sleepGoals(count + history - 1)
         let maxHeartRate = Resources.maxHeartRate(age: try await source.age(),
                                                   highestRecorded: try await source.highestHeartRate(days: 365))
         let workouts = try await source.workouts(days: count + 3)

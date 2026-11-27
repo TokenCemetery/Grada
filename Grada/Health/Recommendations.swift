@@ -126,18 +126,26 @@ nonisolated enum Recommendations {
         )
     }
 
-    static func bedtime(_ plan: Bedtime.Plan, need: TimeInterval) -> Recommendation {
+    /// The bedtime, the sleep it leaves before the planned wake-up, and, after midnight, Nikbakhtian et al. 2021
+    /// (Eur Heart J Digit Health 2:658): in UK Biobank, sleep onset at 22:00–23:00 had the lowest cardiovascular
+    /// risk and after midnight the highest. It observed people, so it's a note and doesn't move the bedtime.
+    static func bedtime(_ plan: Bedtime.Plan, calendar: Calendar = .current) -> Recommendation {
         let time = { (date: Date) in date.formatted(date: .omitted, time: .shortened) }
-        let usual = switch plan.weekend {
-        case true?: String(localized: "usual weekend wake-up")
-        case false?: String(localized: "usual weekday wake-up")
-        case nil: String(localized: "usual wake-up")
+        let sleep = SnapshotBuilder.hoursMinutes(plan.plannedWake.timeIntervalSince(plan.bedtime))
+        let wake = time(plan.plannedWake)
+        var reason = switch plan.weekend {
+        case true?: String(localized: "That leaves \(sleep) of sleep before \(wake) on the weekend, at most an hour after your usual weekday wake-up.")
+        case false?: String(localized: "That leaves \(sleep) of sleep before your usual weekday wake-up at \(wake).")
+        case nil: String(localized: "That leaves \(sleep) of sleep before your usual wake-up at \(wake).")
         }
-        let sleepNeed = SnapshotBuilder.hoursMinutes(need)
-        let wake = time(plan.wake)
-        let reason = plan.awakeInBed >= 60
-            ? String(localized: "For \(sleepNeed) of sleep before your \(usual) at \(wake), plus the \(SnapshotBuilder.hoursMinutes(plan.awakeInBed)) you usually lie awake.")
-            : String(localized: "For \(sleepNeed) of sleep before your \(usual) at \(wake).")
+        if plan.payback > 0 {
+            reason += " " + String(localized: "It includes \(SnapshotBuilder.hoursMinutes(plan.payback)) toward your \(SnapshotBuilder.hoursMinutes(plan.debt)) of sleep debt; paying it back takes several nights.")
+        }
+        if calendar.component(.hour, from: plan.bedtime) < 12 {
+            let day = calendar.startOfDay(for: plan.bedtime)
+            let early = time(day.addingTimeInterval(-2 * 3600)), late = time(day.addingTimeInterval(-3600))
+            reason += " " + String(localized: "In a large study, falling asleep between \(early) and \(late) went with the lowest heart disease risk, and after midnight with the highest.")
+        }
         return Recommendation(
             symbol: "bed.double",
             text: String(localized: "Go to bed by \(time(plan.bedtime))"),
@@ -158,24 +166,31 @@ nonisolated enum Recommendations {
     }
 }
 
-/// Tonight's bedtime: the usual wake-up minus the sleep need and the time usually spent awake in bed.
-/// Weekdays and weekends are kept apart because people wake later on free days (Wittmann et al. 2006,
-/// Chronobiol Int 23:497). No study adds sleep debt to the bedtime, so `SleepNeed` doesn't either.
+/// Tonight's bedtime: the planned wake-up minus the sleep need and part of the sleep debt (`SleepNeed.payback`),
+/// and never later than the usual bedtime, since a later one can't add sleep. Time awake in bed isn't added:
+/// consumer trackers detect wake poorly (Chinoy et al. 2021, Sleep 44:zsaa291), and the need is learned from the
+/// same tracked sleep, so they stay in the same units. Weekends plan from the weekday wake-up: sleeping later on
+/// free days is social jetlag (Wittmann et al. 2006, Chronobiol Int 23:497), and each hour of it went with higher
+/// odds of overweight (Roenneberg et al. 2012, Curr Biol 22:939). Allowing a weekend up to `weekendShift` later is
+/// Grada's choice.
 nonisolated enum Bedtime {
-    /// One recorded night: when sleep started and ended, and the time asleep in between.
+    /// One recorded night: when sleep started and ended.
     struct Night: Equatable {
         let wakeDay: Date
         let start: Date
         let end: Date
-        let asleep: TimeInterval
     }
 
     struct Plan: Equatable {
         let bedtime: Date
+        /// The wake-up the bedtime is for: the usual one, but on a weekend at most `weekendShift` after the weekday one.
+        let plannedWake: Date
+        /// The usual wake-up and bedtime of nights of the same kind, for report times and Settings.
         let wake: Date
-        /// When sleep usually starts before this wake-up, from the same nights.
         let usualBedtime: Date
-        let awakeInBed: TimeInterval
+        /// Extra sleep planned toward `debt`, the sleep debt after last night.
+        var payback: TimeInterval = 0
+        var debt: TimeInterval = 0
         /// Whether the wake-up is the usual weekend or weekday one; nil when too few nights of that kind mixed both.
         let weekend: Bool?
     }
@@ -184,21 +199,42 @@ nonisolated enum Bedtime {
     static let nights = 14
     /// Nights of the same kind (weekday or weekend) needed; with fewer, all nights count. Grada's choice.
     static let minimumNights = 3
+    /// How much later than the weekday schedule a weekend may run. Grada's choice.
+    static let weekendShift: TimeInterval = 3600
+
+    /// Usual wake-up and sleep start as offsets from the wake day's midnight: medians.
+    private struct Usual {
+        let wake: TimeInterval
+        let start: TimeInterval
+    }
 
     /// The plan for the night that ends on `wakeDay`, from recent nights. Nil with fewer than `minimumNights`.
-    static func plan(nights: [Night], need: TimeInterval, wakeDay: Date, calendar: Calendar) -> Plan? {
+    static func plan(nights: [Night], need: TimeInterval, payback: TimeInterval = 0, debt: TimeInterval = 0,
+                     wakeDay: Date, calendar: Calendar) -> Plan? {
         let weekend = calendar.isDateInWeekend(wakeDay)
-        let sameKind = nights.filter { calendar.isDateInWeekend($0.wakeDay) == weekend }
-        let used = sameKind.count >= minimumNights ? sameKind : nights
-        guard used.count >= minimumNights,
-              let wakeOffset = median(used.map { $0.end.timeIntervalSince(calendar.startOfDay(for: $0.wakeDay)) }),
-              let startOffset = median(used.map { $0.start.timeIntervalSince(calendar.startOfDay(for: $0.wakeDay)) }),
-              let awake = median(used.map { max($0.end.timeIntervalSince($0.start) - $0.asleep, 0) })
+        let weekdays = nights.filter { !calendar.isDateInWeekend($0.wakeDay) }
+        let sameKind = weekend ? nights.filter { calendar.isDateInWeekend($0.wakeDay) } : weekdays
+        let split = sameKind.count >= minimumNights
+        guard let usual = usual(split ? sameKind : nights, calendar: calendar) else { return nil }
+        var plannedWake = usual.wake, latest = usual.start
+        if weekend, split, weekdays.count >= minimumNights, let weekday = Self.usual(weekdays, calendar: calendar) {
+            let shift = min(usual.wake - weekday.wake, weekendShift)
+            plannedWake = weekday.wake + shift
+            latest = min(weekday.start + shift, usual.start)
+        }
+        let midnight = calendar.startOfDay(for: wakeDay)
+        return Plan(bedtime: midnight.addingTimeInterval(min(plannedWake - need - payback, latest)),
+                    plannedWake: midnight.addingTimeInterval(plannedWake),
+                    wake: midnight.addingTimeInterval(usual.wake), usualBedtime: midnight.addingTimeInterval(usual.start),
+                    payback: payback, debt: debt, weekend: split ? weekend : nil)
+    }
+
+    private static func usual(_ nights: [Night], calendar: Calendar) -> Usual? {
+        guard nights.count >= minimumNights,
+              let wake = median(nights.map { $0.end.timeIntervalSince(calendar.startOfDay(for: $0.wakeDay)) }),
+              let start = median(nights.map { $0.start.timeIntervalSince(calendar.startOfDay(for: $0.wakeDay)) })
         else { return nil }
-        let wake = calendar.startOfDay(for: wakeDay).addingTimeInterval(wakeOffset)
-        return Plan(bedtime: wake.addingTimeInterval(-need - awake), wake: wake,
-                    usualBedtime: calendar.startOfDay(for: wakeDay).addingTimeInterval(startOffset), awakeInBed: awake,
-                    weekend: sameKind.count >= minimumNights ? weekend : nil)
+        return Usual(wake: wake, start: start)
     }
 
     static func median(_ values: [Double]) -> Double? {

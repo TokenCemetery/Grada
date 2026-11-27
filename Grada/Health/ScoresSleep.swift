@@ -1,13 +1,44 @@
 import Foundation
 
 /// How much sleep the user needs, and the debt from nights short of it. The need is the user's sleep goal, or
-/// the AASM/SRS adult minimum of 7 hours (Watson et al. 2015, for ages 18–60), which the NSF also sets from 65
-/// (Hirshkowitz et al. 2015). No published method adds debt or training on
-/// top of it, so nothing is added.
+/// what they sleep on free nights, kept within the NSF's adult range (Hirshkowitz et al. 2015). Until there
+/// are enough free nights it is the AASM/SRS adult minimum of 7 hours (Watson et al. 2015). The need itself
+/// stays the same each night; debt only moves tonight's bedtime earlier, through `payback`.
 nonisolated enum SleepNeed {
     static let baseline: TimeInterval = 7 * 3600
+    /// Days looked back on for free nights: 4 weeks hold 8. Grada's choice.
+    static let learningDays = 28
+    /// Free nights needed before they replace the baseline. Grada's choice.
+    static let minimumFreeNights = 4
+
+    /// The NSF's recommended sleep for adults: 7–9 hours, 7–8 from 65.
+    static func range(age: Int?) -> ClosedRange<TimeInterval> {
+        baseline...TimeInterval((age ?? 0) >= 65 ? 8 * 3600 : 9 * 3600)
+    }
+
+    /// The median sleep of free nights, those before a weekend day, when no alarm cuts sleep short; the MCTQ
+    /// reads free days the same way (Roenneberg et al. 2003). They also hold catch-up sleep, so the estimate
+    /// can run high; the NSF range caps it.
+    static func personal(freeNights: [TimeInterval], age: Int?) -> TimeInterval {
+        guard freeNights.count >= minimumFreeNights, let median = Bedtime.median(freeNights) else { return baseline }
+        let range = range(age: age)
+        return min(max(median, range.lowerBound), range.upperBound)
+    }
     /// Van Dongen et al. 2003 saw deficits keep building over 14 nights of short sleep.
     static let debtNights = 14
+    /// Debt below this is neither shown nor paid back. Grada's choice.
+    static let minimumDebt: TimeInterval = 5 * 60
+    /// The most extra sleep planned for one night. Grada's choice; no study sets a payback rate.
+    static let maximumNightlyPayback: TimeInterval = 3600
+
+    /// Extra sleep tonight toward the debt: at most `maximumNightlyPayback`, and never past the top of the NSF range.
+    /// Kitamura et al. 2016 needed about four nights of longer sleep to recover an hour of debt, and Banks et al. 2010
+    /// found one long night too little, so it's spread over nights. It comes from going to bed earlier, since
+    /// sleeping in at weekends didn't undo the harm of short weeknights (Depner et al. 2019).
+    static func payback(debt: TimeInterval, need: TimeInterval, age: Int?) -> TimeInterval {
+        guard debt >= minimumDebt else { return 0 }
+        return max(0, min(debt, maximumNightlyPayback, range(age: age).upperBound - need))
+    }
 
     /// How far each night fell short of its need, oldest first; nights without data count nothing.
     static func shortfalls(asleep: [TimeInterval?], need: [TimeInterval]) -> [TimeInterval] {

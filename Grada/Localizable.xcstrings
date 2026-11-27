@@ -12927,6 +12927,58 @@
         }
       }
     },
+    "Consumer sleep trackers detect time awake poorly" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlaftracker für Verbraucher erkennen Wachzeit schlecht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los rastreadores de sueño de consumo detectan mal el tiempo despierto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les trackers de sommeil grand public détectent mal l’éveil"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "उपभोक्ता स्लीप ट्रैकर जागने का समय ठीक से नहीं पकड़ते"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I tracker del sonno di consumo rilevano male la veglia"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rastreadores de sono de consumo detectam mal o tempo acordado"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Потребительские трекеры сна плохо распознают бодрствование"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消费级睡眠追踪设备难以准确识别清醒时间"
+          }
+        }
+      }
+    },
     "Copy the key and paste it above. Garmin shows it only once." : {
       "localizations" : {
         "de" : {
@@ -14760,6 +14812,58 @@
         }
       }
     },
+    "Each hour of social jetlag went with higher odds of overweight" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Stunde sozialer Jetlag ging mit höherem Risiko für Übergewicht einher"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada hora de jet lag social se asoció con más probabilidad de sobrepeso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque heure de jet lag social allait avec un risque accru de surpoids"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सोशल जेटलैग के हर घंटे के साथ अधिक वज़न की संभावना बढ़ी"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogni ora di jet lag sociale andava con maggiori probabilità di sovrappeso"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada hora de jet lag social foi associada a maior chance de sobrepeso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каждый час социального джетлага сопровождался более высокими шансами лишнего веса"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每多一小时社会时差，超重几率就更高"
+          }
+        }
+      }
+    },
     "Each threshold comes from the studies above. Counting inputs off into Good, Fair and Poor is Grada's choice." : {
       "localizations" : {
         "de" : {
@@ -15908,6 +16012,58 @@
         }
       }
     },
+    "Falling asleep at 22:00–23:00 had the lowest heart disease risk, after midnight the highest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einschlafen um 22–23 Uhr hatte das geringste Risiko für Herzkrankheiten, nach Mitternacht das höchste"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dormirse entre las 22:00 y las 23:00 tuvo el menor riesgo cardíaco; después de medianoche, el mayor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S’endormir entre 22 h et 23 h avait le plus faible risque cardiaque, après minuit le plus élevé"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "रात 22:00–23:00 के बीच सोने पर हृदय रोग का जोखिम सबसे कम था, आधी रात के बाद सबसे ज़्यादा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Addormentarsi tra le 22 e le 23 aveva il rischio cardiaco più basso, dopo mezzanotte il più alto"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adormecer entre 22h e 23h teve o menor risco de doença cardíaca; depois da meia-noite, o maior"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Засыпание в 22:00–23:00 давало самый низкий риск болезней сердца, после полуночи — самый высокий"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "22:00–23:00 入睡者心脏病风险最低，午夜后入睡者最高"
+          }
+        }
+      }
+    },
     "Female" : {
       "localizations" : {
         "de" : {
@@ -16273,110 +16429,6 @@
         }
       }
     },
-    "For %@ of sleep before your %@ at %@, plus the %@ you usually lie awake." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Für %@ Schlaf vor deinem %@ um %@, plus die %@, die du üblicherweise wach liegst."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Para %@ de sueño antes de tu %@ a las %@, más los %@ que sueles pasar despierto en la cama."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pour %@ de sommeil avant votre %@ à %@, plus les %@ que vous restez habituellement éveillé au lit."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%3$@ पर आपके %2$@ से पहले %1$@ की नींद के लिए, साथ ही वह %4$@ जो आप आमतौर पर जागते लेटे रहते हैं।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Per %1$@ di sonno prima del tuo %2$@ alle %3$@, più i %4$@ in cui di solito resti sveglio a letto."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Para %1$@ de sono antes de %2$@ às %3$@, mais os %4$@ em que você costuma ficar deitado acordado."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Чтобы поспать %@ до %@ в %@, плюс %@, которые вы обычно лежите без сна."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 %3$@ 就寝（%2$@）之前睡 %1$@，再加上你通常躺在床上醒着的 %4$@。"
-          }
-        }
-      }
-    },
-    "For %@ of sleep before your %@ at %@." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Für %@ Schlaf vor deinem %@ um %@."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Para %@ de sueño antes de tu %@ a las %@."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pour %@ de sommeil avant votre %@ à %@."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%3$@ पर आपके %2$@ से पहले %1$@ की नींद के लिए।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Per %1$@ di sonno prima del tuo %2$@ alle %3$@."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Para %1$@ de sono antes de %2$@ às %3$@."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Чтобы поспать %@ до %@ в %@."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 %3$@ 就寝（%2$@）之前睡 %1$@。"
-          }
-        }
-      }
-    },
     "For one activity: in the COROS app, open it under Activities, tap ⋯, choose Export Data, then .FIT, and save it to Files." : {
       "localizations" : {
         "de" : {
@@ -16581,6 +16633,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Foster 只计算训练，休息日记为零；这里一天的负荷来自当天的全部心率。使用样本标准差是 Grada 的选择。费力负荷用 Apple 的 1–10 费力评分代替 Foster 的 0–10 评分量表，并需要 %lld 次评过分的训练，这是 Grada 的选择。"
+          }
+        }
+      }
+    },
+    "Free days show how much people sleep without an alarm" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Freie Tage zeigen, wie viel Menschen ohne Wecker schlafen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los días libres muestran cuánto duerme la gente sin alarma"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les jours libres montrent combien on dort sans réveil"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "छुट्टी के दिन दिखाते हैं कि लोग बिना अलार्म के कितना सोते हैं"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I giorni liberi mostrano quanto si dorme senza sveglia"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os dias livres mostram quanto as pessoas dormem sem alarme"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Свободные дни показывают, сколько люди спят без будильника"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "休息日能反映人们不用闹钟时睡多久"
           }
         }
       }
@@ -20107,54 +20211,54 @@
         }
       }
     },
-    "How much sleep you need tonight: your sleep goal, or 7 hours, the minimum sleep experts recommend for adults of any age. Sleep debt adds up how far each of the last 14 nights fell short of that. A long night doesn't cancel it: an hour of debt can take several nights of extra sleep to recover, and the bars show each night's shortfall." : {
+    "How much sleep you need tonight: your sleep goal, or what you sleep on weekend nights, when no alarm cuts sleep short, kept within the 7–9 hours experts recommend for adults (7–8 from 65). Until there are 4 weekend nights from the last 4 weeks it's 7 hours. Sleep debt adds up how far each of the last 14 nights fell short of that. A long night doesn't cancel it: an hour of debt can take several nights of extra sleep to recover, and the bars show each night's shortfall. The bedtime plans for your usual weekday wake-up, at most an hour later on weekends, and is never later than you usually go to bed. While you have sleep debt, the bedtime moves up to an hour earlier to pay part of it back, never past 9 hours of sleep (8 from 65)." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie viel Schlaf du heute Nacht brauchst: dein Schlafziel oder 7 Stunden, das Minimum, das Schlafexperten Erwachsenen jeden Alters empfehlen. Das Schlafdefizit addiert, um wie viel jede der letzten 14 Nächte darunter lag. Eine lange Nacht gleicht es nicht aus: Eine Stunde Defizit kann mehrere Nächte mit mehr Schlaf brauchen, und die Balken zeigen das Defizit jeder Nacht."
+            "value" : "Wie viel Schlaf du heute Nacht brauchst: dein Schlafziel oder das, was du in Wochenendnächten schläfst, wenn kein Wecker den Schlaf abkürzt – innerhalb der 7–9 Stunden, die Experten Erwachsenen empfehlen (7–8 ab 65). Bis es 4 Wochenendnächte aus den letzten 4 Wochen gibt, sind es 7 Stunden. Das Schlafdefizit addiert, um wie viel jede der letzten 14 Nächte darunter lag. Eine lange Nacht gleicht es nicht aus: Eine Stunde Defizit kann mehrere Nächte mit mehr Schlaf brauchen, und die Balken zeigen das Defizit jeder Nacht. Die Schlafenszeit plant für dein übliches Aufwachen unter der Woche, am Wochenende höchstens eine Stunde später, und liegt nie später, als du sonst ins Bett gehst. Solange du ein Schlafdefizit hast, rückt die Schlafenszeit bis zu eine Stunde früher, um einen Teil davon auszugleichen, aber nie über 9 Stunden Schlaf hinaus (8 ab 65)."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cuánto sueño necesitas esta noche: tu objetivo de sueño, o 7 horas, el mínimo que recomiendan los expertos para adultos de cualquier edad. La deuda de sueño suma cuánto se quedó corta cada una de las últimas 14 noches. Una noche larga no la cancela: una hora de deuda puede necesitar varias noches de sueño extra para recuperarse, y las barras muestran el déficit de cada noche."
+            "value" : "Cuánto sueño necesitas esta noche: tu objetivo de sueño, o lo que duermes las noches de fin de semana, cuando ninguna alarma corta el sueño, dentro de las 7–9 horas que los expertos recomiendan a los adultos (7–8 desde los 65). Hasta tener 4 noches de fin de semana de las últimas 4 semanas, son 7 horas. La deuda de sueño suma cuánto se quedó corta cada una de las últimas 14 noches. Una noche larga no la cancela: una hora de deuda puede necesitar varias noches de sueño extra para recuperarse, y las barras muestran el déficit de cada noche. La hora de acostarse se planifica para tu despertar habitual entre semana, como mucho una hora más tarde el fin de semana, y nunca es más tarde de lo que sueles acostarte. Mientras tengas deuda de sueño, la hora de acostarse se adelanta hasta una hora para saldar parte de ella, sin pasar de 9 horas de sueño (8 desde los 65)."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le sommeil dont vous avez besoin cette nuit : votre objectif de sommeil, ou 7 heures, le minimum recommandé par les experts du sommeil pour les adultes de tout âge. La dette de sommeil additionne le déficit de chacune des 14 dernières nuits par rapport à ce niveau. Une longue nuit ne l’annule pas : une heure de dette peut demander plusieurs nuits de sommeil supplémentaire à rattraper, et les barres montrent le déficit de chaque nuit."
+            "value" : "Le sommeil dont vous avez besoin cette nuit : votre objectif de sommeil, ou ce que vous dormez les nuits de week-end, quand aucun réveil n’écourte le sommeil, dans la plage de 7 à 9 heures recommandée aux adultes (7 à 8 dès 65 ans). Tant qu’il n’y a pas 4 nuits de week-end sur les 4 dernières semaines, c’est 7 heures. La dette de sommeil additionne le déficit de chacune des 14 dernières nuits par rapport à ce niveau. Une longue nuit ne l’annule pas : une heure de dette peut demander plusieurs nuits de sommeil supplémentaire à rattraper, et les barres montrent le déficit de chaque nuit. L’heure du coucher vise votre réveil habituel en semaine, au plus une heure plus tard le week-end, et n’est jamais plus tardive que votre coucher habituel. Tant que vous avez une dette de sommeil, l’heure du coucher avance jusqu’à une heure pour en rembourser une partie, sans dépasser 9 heures de sommeil (8 dès 65 ans)."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "आज रात आपको कितनी नींद चाहिए: आपका नींद का लक्ष्य, या 7 घंटे, जो विशेषज्ञ किसी भी उम्र के वयस्क के लिए न्यूनतम नींद बताते हैं। नींद की कमी जोड़ती है कि पिछली 14 रातों में से हर रात उससे कितनी कम रही। एक लंबी रात इसे खत्म नहीं करती: एक घंटे की कमी पूरी होने में कई रातों की अतिरिक्त नींद लग सकती है, और बार हर रात की कमी दिखाते हैं।"
+            "value" : "आज रात आपको कितनी नींद चाहिए: आपका नींद का लक्ष्य, या सप्ताहांत की रातों में आप जितना सोते हैं जब कोई अलार्म नींद नहीं तोड़ता, विशेषज्ञों द्वारा वयस्कों के लिए सुझाए गए 7–9 घंटों के भीतर (65 से 7–8)। जब तक पिछले 4 हफ़्तों में सप्ताहांत की 4 रातें न हों, यह 7 घंटे है। नींद की कमी जोड़ती है कि पिछली 14 रातों में से हर रात उससे कितनी कम रही। एक लंबी रात इसे खत्म नहीं करती: एक घंटे की कमी पूरी होने में कई रातों की अतिरिक्त नींद लग सकती है, और बार हर रात की कमी दिखाते हैं। सोने का समय आपके सामान्य कार्यदिवस के जागने के हिसाब से तय होता है, सप्ताहांत में अधिकतम एक घंटा बाद, और कभी भी आपके सामान्य सोने के समय से बाद नहीं होता। जब तक नींद की कमी है, सोने का समय उसका कुछ हिस्सा पूरा करने के लिए एक घंटे तक पहले हो जाता है, पर कुल नींद 9 घंटे (65 से 8) से ज़्यादा नहीं होती।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quanto sonno ti serve stanotte: il tuo obiettivo di sonno oppure 7 ore, il minimo consigliato dagli esperti per gli adulti di qualsiasi età. Il debito di sonno somma di quanto ciascuna delle ultime 14 notti è rimasta sotto quel valore. Una notte lunga non lo cancella: un’ora di debito può richiedere diverse notti di sonno extra per essere recuperata, e le barre mostrano il deficit di ogni notte."
+            "value" : "Quanto sonno ti serve stanotte: il tuo obiettivo di sonno oppure quanto dormi nelle notti del weekend, quando nessuna sveglia accorcia il sonno, entro le 7–9 ore consigliate dagli esperti per gli adulti (7–8 dai 65 anni). Finché non ci sono 4 notti del weekend nelle ultime 4 settimane, sono 7 ore. Il debito di sonno somma di quanto ciascuna delle ultime 14 notti è rimasta sotto quel valore. Una notte lunga non lo cancella: un’ora di debito può richiedere diverse notti di sonno extra per essere recuperata, e le barre mostrano il deficit di ogni notte. L’ora di andare a letto è pensata per il tuo risveglio abituale nei giorni feriali, al massimo un’ora più tardi nel weekend, e non è mai più tarda di quando vai a letto di solito. Finché hai un debito di sonno, l’ora di andare a letto si anticipa fino a un’ora per recuperarne una parte, senza superare 9 ore di sonno (8 dai 65 anni)."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quanto sono você precisa esta noite: sua meta de sono ou 7 horas, o mínimo que especialistas em sono recomendam para adultos de qualquer idade. A dívida de sono soma o quanto cada uma das últimas 14 noites ficou abaixo disso. Uma noite longa não a cancela: uma hora de dívida pode levar várias noites de sono extra para ser recuperada, e as barras mostram o déficit de cada noite."
+            "value" : "Quanto sono você precisa esta noite: sua meta de sono ou o quanto você dorme nas noites de fim de semana, quando nenhum alarme encurta o sono, dentro das 7–9 horas que especialistas recomendam para adultos (7–8 a partir dos 65). Até haver 4 noites de fim de semana nas últimas 4 semanas, são 7 horas. A dívida de sono soma o quanto cada uma das últimas 14 noites ficou abaixo disso. Uma noite longa não a cancela: uma hora de dívida pode levar várias noites de sono extra para ser recuperada, e as barras mostram o déficit de cada noite. A hora de dormir é planejada para o seu horário habitual de acordar nos dias úteis, no máximo uma hora mais tarde no fim de semana, e nunca é mais tarde do que você costuma ir para a cama. Enquanto houver dívida de sono, a hora de dormir é antecipada em até uma hora para quitar parte dela, sem passar de 9 horas de sono (8 a partir dos 65)."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сколько сна нужно сегодня ночью: ваша цель по сну или 7 часов — минимум, который эксперты рекомендуют взрослым любого возраста. Дефицит сна складывает, насколько каждая из последних 14 ночей не дотянула до этого. Одна долгая ночь его не обнуляет: час дефицита может восстанавливаться несколько ночей дополнительного сна, а столбцы показывают недостачу каждой ночи."
+            "value" : "Сколько сна нужно сегодня ночью: ваша цель по сну или то, сколько вы спите в ночи на субботу и воскресенье, когда будильник не прерывает сон, в пределах 7–9 часов, которые эксперты рекомендуют взрослым (7–8 с 65 лет). Пока за последние 4 недели не наберётся 4 таких ночи, это 7 часов. Дефицит сна складывает, насколько каждая из последних 14 ночей не дотянула до этого. Одна долгая ночь его не обнуляет: час дефицита может восстанавливаться несколько ночей дополнительного сна, а столбцы показывают недостачу каждой ночи. Время отхода ко сну рассчитано на обычное пробуждение в будни, в выходные — не больше чем на час позже, и никогда не позже, чем вы обычно ложитесь. Пока есть недосып, время отхода ко сну сдвигается раньше — до часа, чтобы вернуть его часть, но не больше чем до 9 часов сна (8 с 65 лет)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "你今晚需要多少睡眠：你的睡眠目标，或 7 小时（睡眠专家为任何年龄成年人推荐的最低睡眠时间）。睡眠债是最近 14 晚各自不足部分的总和。睡得久一晚并不能抵消它：1 小时的睡眠债可能需要多晚额外睡眠才能恢复，柱形显示每晚的不足量。"
+            "value" : "你今晚需要多少睡眠：你的睡眠目标，或你在周末夜里没有闹钟打断时的睡眠时长，限定在专家为成年人推荐的 7–9 小时内（65 岁起为 7–8 小时）。在最近 4 周内有 4 个周末夜之前，按 7 小时计。睡眠债是最近 14 晚各自不足部分的总和。睡得久一晚并不能抵消它：1 小时的睡眠债可能需要多晚额外睡眠才能恢复，柱形显示每晚的不足量。就寝时间按你平常工作日的起床时间安排，周末最多晚一小时，且不会晚于你平常的就寝时间。有睡眠债时，就寝时间最多提前一小时来偿还一部分，但总睡眠不超过 9 小时（65 岁起 8 小时）。"
           }
         }
       }
@@ -21260,6 +21364,58 @@
         }
       }
     },
+    "In a large study, falling asleep between %@ and %@ went with the lowest heart disease risk, and after midnight with the highest." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In einer großen Studie hatten Menschen, die zwischen %@ und %@ einschliefen, das geringste Risiko für Herzkrankheiten, nach Mitternacht das höchste."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En un gran estudio, dormirse entre las %@ y las %@ se asoció con el menor riesgo de enfermedad cardíaca, y después de medianoche con el mayor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans une grande étude, s’endormir entre %@ et %@ allait avec le plus faible risque de maladie cardiaque, et après minuit avec le plus élevé."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एक बड़े अध्ययन में %@ से %@ के बीच सोने वालों में हृदय रोग का जोखिम सबसे कम था, और आधी रात के बाद सोने वालों में सबसे ज़्यादा।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In un ampio studio, addormentarsi tra le %@ e le %@ andava con il rischio più basso di malattie cardiache, e dopo mezzanotte con il più alto."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em um grande estudo, adormecer entre %@ e %@ foi associado ao menor risco de doença cardíaca, e depois da meia-noite ao maior."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В большом исследовании у тех, кто засыпал с %@ до %@, риск болезней сердца был самым низким, а после полуночи — самым высоким."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一项大型研究发现，在 %@ 到 %@ 之间入睡的人心脏病风险最低，午夜后入睡的最高。"
+          }
+        }
+      }
+    },
     "In bed by %@ last night. Nice early night." : {
       "localizations" : {
         "de" : {
@@ -21724,6 +21880,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "作息不规律"
+          }
+        }
+      }
+    },
+    "It includes %@ toward your %@ of sleep debt; paying it back takes several nights." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Darin sind %@ für dein Schlafdefizit von %@ enthalten; es auszugleichen dauert mehrere Nächte."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incluye %@ para tu deuda de sueño de %@; saldarla lleva varias noches."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela inclut %@ pour votre dette de sommeil de %@ ; la rattraper prend plusieurs nuits."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इसमें आपकी %2$@ की नींद की कमी के लिए %1$@ शामिल हैं; इसे पूरा करने में कई रातें लगती हैं।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Include %@ per il tuo debito di sonno di %@; recuperarlo richiede diverse notti."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inclui %@ para a sua dívida de sono de %@; quitá-la leva várias noites."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сюда входит %@ в счёт недосыпа %@ — чтобы его вернуть, нужно несколько ночей."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其中 %1$@ 用于偿还你 %2$@ 的睡眠债；还清需要好几晚。"
           }
         }
       }
@@ -29392,6 +29600,58 @@
         }
       }
     },
+    "One long night isn't enough to recover from a week of short sleep" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine lange Nacht reicht nicht, um sich von einer Woche mit zu wenig Schlaf zu erholen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una noche larga no basta para recuperarse de una semana de sueño corto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une longue nuit ne suffit pas à récupérer d’une semaine de sommeil trop court"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "छोटी नींद वाले एक हफ़्ते से उबरने के लिए एक लंबी रात काफ़ी नहीं"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una notte lunga non basta per recuperare una settimana di sonno breve"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma noite longa não basta para se recuperar de uma semana de sono curto"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Одной долгой ночи мало, чтобы восстановиться после недели недосыпа"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一晚长睡不足以从一周睡眠不足中恢复"
+          }
+        }
+      }
+    },
     "One workout varies a lot with how it ended, and recovery changes over weeks rather than days, so the card shows the average of your last 3 workouts from the last 30 days." : {
       "localizations" : {
         "de" : {
@@ -30352,58 +30612,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "部分"
-          }
-        }
-      }
-    },
-    "People sleep later on free days than on work days" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "An freien Tagen schlafen Menschen länger als an Arbeitstagen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La gente duerme más tarde en los días libres que en los laborables"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On dort plus tard les jours de repos que les jours de travail"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "लोग छुट्टी के दिनों में काम के दिनों से देर तक सोते हैं"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si dorme più a lungo nei giorni liberi che in quelli lavorativi"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "As pessoas dormem mais tarde nos dias livres do que nos dias de trabalho"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В выходные люди спят дольше, чем в будни"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "人们在休息日比工作日睡得更晚"
           }
         }
       }
@@ -35472,6 +35680,58 @@
         }
       }
     },
+    "Sleeping later on free days than on work days is social jetlag" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Später schlafen an freien Tagen als an Arbeitstagen ist sozialer Jetlag"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dormir más tarde los días libres que los laborables es jet lag social"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dormir plus tard les jours libres que les jours travaillés, c’est le jet lag social"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "काम के दिनों की तुलना में छुट्टी के दिनों में देर से सोना सोशल जेटलैग है"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dormire più tardi nei giorni liberi che in quelli lavorativi è jet lag sociale"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dormir mais tarde nos dias livres do que nos dias de trabalho é jet lag social"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Более поздний сон в выходные, чем в рабочие дни, — социальный джетлаг"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "休息日比工作日睡得更晚即社会时差"
+          }
+        }
+      }
+    },
     "slightly out of range" : {
       "localizations" : {
         "de" : {
@@ -37682,6 +37942,162 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "那一天"
+          }
+        }
+      }
+    },
+    "That leaves %@ of sleep before %@ on the weekend, at most an hour after your usual weekday wake-up." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So bleiben %@ Schlaf bis %@ am Wochenende, höchstens eine Stunde nach deinem üblichen Aufwachen unter der Woche."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Así te quedan %@ de sueño antes de las %@ del fin de semana, como mucho una hora después de tu despertar habitual entre semana."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela laisse %@ de sommeil avant %@ le week-end, au plus une heure après votre réveil habituel en semaine."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इससे सप्ताहांत में %2$@ से पहले %1$@ की नींद मिलती है, जो आपके सामान्य कार्यदिवस के जागने से अधिकतम एक घंटा बाद है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Così restano %@ di sonno prima delle %@ nel weekend, al massimo un’ora dopo il tuo risveglio abituale nei giorni feriali."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assim sobram %@ de sono antes das %@ no fim de semana, no máximo uma hora depois do seu horário habitual de acordar nos dias úteis."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Так вы поспите %@ до %@ в выходной — не больше чем через час после обычного пробуждения в будни."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这样周末在 %2$@ 前能睡 %1$@，最多比你平常工作日的起床时间晚一小时。"
+          }
+        }
+      }
+    },
+    "That leaves %@ of sleep before your usual wake-up at %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So bleiben %@ Schlaf bis zu deinem üblichen Aufwachen um %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Así te quedan %@ de sueño antes de tu despertar habitual a las %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela laisse %@ de sommeil avant votre réveil habituel à %@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इससे आपके सामान्य जागने के समय %2$@ से पहले %1$@ की नींद मिलती है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Così restano %@ di sonno prima del tuo risveglio abituale alle %@."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assim sobram %@ de sono antes do seu horário habitual de acordar, às %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Так вы поспите %@ до обычного пробуждения в %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这样在你平常 %2$@ 起床前能睡 %1$@。"
+          }
+        }
+      }
+    },
+    "That leaves %@ of sleep before your usual weekday wake-up at %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So bleiben %@ Schlaf bis zu deinem üblichen Aufwachen unter der Woche um %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Así te quedan %@ de sueño antes de tu despertar habitual entre semana a las %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela laisse %@ de sommeil avant votre réveil habituel en semaine à %@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इससे कार्यदिवस में आपके सामान्य जागने के समय %2$@ से पहले %1$@ की नींद मिलती है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Così restano %@ di sonno prima del tuo risveglio abituale nei giorni feriali alle %@."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assim sobram %@ de sono antes do seu horário habitual de acordar nos dias úteis, às %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Так вы поспите %@ до обычного пробуждения в будни в %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这样在你平常工作日 %2$@ 起床前能睡 %1$@。"
           }
         }
       }
@@ -41778,162 +42194,6 @@
         }
       }
     },
-    "usual wake-up" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "übliches Aufwachen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "hora habitual de despertar"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "réveil habituel"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सामान्य जागने का समय"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "risveglio abituale"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "hora habitual de acordar"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "обычное пробуждение"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "常用起床时间"
-          }
-        }
-      }
-    },
-    "usual weekday wake-up" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "übliches Aufwachen unter der Woche"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "hora habitual de despertar entre semana"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "réveil habituel en semaine"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सामान्य सप्ताह के दिनों में जागने का समय"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "risveglio abituale in settimana"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "hora habitual de acordar em dias úteis"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "обычное пробуждение в будни"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "常用工作日起床时间"
-          }
-        }
-      }
-    },
-    "usual weekend wake-up" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "übliches Aufwachen am Wochenende"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "hora habitual de despertar en fin de semana"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "réveil habituel le week-end"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सामान्य सप्ताहांत में जागने का समय"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "risveglio abituale nel weekend"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "hora habitual de acordar no fim de semana"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "обычное пробуждение в выходные"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "常用周末起床时间"
-          }
-        }
-      }
-    },
     "Value" : {
       "localizations" : {
         "de" : {
@@ -43265,6 +43525,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "工作日"
+          }
+        }
+      }
+    },
+    "Weekend catch-up sleep didn't undo the harm of short weeknights" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausschlafen am Wochenende machte den Schaden kurzer Nächte unter der Woche nicht wett"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dormir más el fin de semana no compensó el daño de las noches cortas entre semana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rattraper le sommeil le week-end n’a pas annulé les effets des nuits courtes en semaine"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सप्ताहांत में ज़्यादा सोने से कार्यदिवसों की छोटी नींद का नुकसान दूर नहीं हुआ"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperare sonno nel weekend non ha annullato i danni delle notti brevi in settimana"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compensar o sono no fim de semana não desfez o dano das noites curtas durante a semana"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отсыпание в выходные не отменило вреда коротких ночей в будни"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "周末补觉并未抵消工作日睡眠不足的危害"
           }
         }
       }
@@ -46406,6 +46718,58 @@
         }
       }
     },
+    "Your sleep need is the median sleep of your weekend nights over the last %lld days, once there are %lld. Your usual wake-up and bedtime are the medians of the last %lld nights, weekdays and weekends apart once each has %lld nights. The bedtime doesn't add time awake in bed, which trackers measure poorly. These windows, and letting a weekend run up to an hour later, are Grada's choices; no study sets them. Paying back at most an hour of sleep debt a night is Grada's choice too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Schlafbedarf ist der Median deines Schlafs in Wochenendnächten der letzten %1$lld Tage, sobald es %2$lld sind. Dein übliches Aufwachen und deine übliche Schlafenszeit sind die Mediane der letzten %3$lld Nächte, Wochentage und Wochenenden getrennt, sobald jede Gruppe %4$lld Nächte hat. Die Schlafenszeit rechnet keine Wachzeit im Bett ein, die Tracker schlecht messen. Diese Fenster und dass ein Wochenende bis zu eine Stunde später sein darf, sind Entscheidungen von Grada; keine Studie legt sie fest. Höchstens eine Stunde Schlafdefizit pro Nacht auszugleichen, ist ebenfalls die Entscheidung von Grada."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu necesidad de sueño es la mediana de lo que duermes las noches de fin de semana de los últimos %1$lld días, cuando hay %2$lld. Tu hora habitual de despertar y de acostarte son las medianas de las últimas %3$lld noches, entre semana y fines de semana por separado una vez que cada uno tiene %4$lld noches. La hora de acostarse no suma el tiempo despierto en la cama, que los dispositivos miden mal. Estas ventanas, y permitir que el fin de semana vaya hasta una hora más tarde, son decisiones de Grada; ningún estudio las fija. Saldar como mucho una hora de deuda de sueño por noche también es decisión de Grada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre besoin de sommeil est la médiane de votre sommeil les nuits de week-end des %1$lld derniers jours, dès qu’il y en a %2$lld. Votre réveil habituel et votre coucher habituel sont les médianes des %3$lld dernières nuits, en semaine et le week-end séparément une fois que chacun compte %4$lld nuits. L’heure du coucher n’ajoute pas le temps éveillé au lit, que les trackers mesurent mal. Ces fenêtres, et le fait qu’un week-end puisse aller jusqu’à une heure plus tard, sont des choix de Grada ; aucune étude ne les fixe. Rembourser au plus une heure de dette de sommeil par nuit est aussi un choix de Grada."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपकी नींद की ज़रूरत पिछले %1$lld दिनों की सप्ताहांत रातों की नींद की माध्यिका है, जब %2$lld रातें हो जाएँ। आपके सामान्य जागने और सोने का समय पिछली %3$lld रातों की माध्यिकाएँ हैं, सप्ताह के दिन और सप्ताहांत अलग-अलग जब हर एक की %4$lld रातें हो जाएँ। सोने के समय में बिस्तर में जागने का समय नहीं जोड़ा जाता, क्योंकि ट्रैकर उसे ठीक से नहीं मापते। ये अवधियाँ, और सप्ताहांत को एक घंटे तक बाद में होने देना, Grada के चुनाव हैं; कोई अध्ययन इन्हें तय नहीं करता। हर रात अधिकतम एक घंटे की नींद की कमी पूरी करना भी Grada का चुनाव है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il tuo fabbisogno di sonno è la mediana del sonno nelle notti del weekend degli ultimi %1$lld giorni, quando ce ne sono %2$lld. Il tuo risveglio abituale e l’ora abituale in cui vai a letto sono le mediane delle ultime %3$lld notti, giorni feriali e weekend separati quando ciascuno ha %4$lld notti. L’ora di andare a letto non aggiunge il tempo di veglia a letto, che i tracker misurano male. Queste finestre, e lasciare che il weekend vada fino a un’ora più tardi, sono scelte di Grada; nessuno studio le stabilisce. Recuperare al massimo un’ora di debito di sonno a notte è anch’essa una scelta di Grada."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua necessidade de sono é a mediana do sono nas noites de fim de semana dos últimos %1$lld dias, quando houver %2$lld. Sua hora habitual de acordar e de dormir são as medianas das últimas %3$lld noites, com dias úteis e fins de semana separados quando cada um tiver %4$lld noites. A hora de dormir não soma o tempo acordado na cama, que os rastreadores medem mal. Essas janelas, e permitir que o fim de semana seja até uma hora mais tarde, são escolhas do Grada; nenhum estudo as define. Quitar no máximo uma hora de dívida de sono por noite também é uma escolha do Grada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваша потребность во сне — медиана сна в ночи на субботу и воскресенье за последние %1$lld дней, когда их наберётся %2$lld. Ваше обычное пробуждение и отход ко сну — медианы последних %3$lld ночей; будни и выходные считаются отдельно, когда в каждой группе наберётся %4$lld ночей. Время без сна в постели не добавляется: трекеры плохо его измеряют. Эти окна и то, что выходные могут сдвигаться не больше чем на час, выбраны Grada; ни одно исследование их не задаёт. Возвращать не больше часа недосыпа за ночь — тоже выбор Grada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的睡眠需求是最近 %1$lld 天里周末夜睡眠时长的中位数，满 %2$lld 晚后生效。你的常用起床和就寝时间是最近 %3$lld 晚的中位数，工作日和周末在各自满 %4$lld 晚后分开计算。就寝时间不计入在床上醒着的时间，因为手环和手表测不准。这些窗口以及允许周末最多晚一小时，都是 Grada 的选择；没有研究设定过。每晚最多偿还一小时睡眠债也是 Grada 的选择。"
+          }
+        }
+      }
+    },
     "Your sleep score shows it." : {
       "localizations" : {
         "de" : {
@@ -46506,58 +46870,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的常用时间是最近 %1$lld 晚的中位数，工作日和周末分开计算。在满 %2$lld 晚之前，使用 %3$@–%4$@。"
-          }
-        }
-      }
-    },
-    "Your usual wake-up and time awake in bed are the medians of the last %lld nights, weekdays and weekends apart once each has %lld nights. The window is Grada's choice; no study sets one." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dein übliches Aufwachen und deine Wachzeit im Bett sind die Mediane der letzten %lld Nächte, Wochentage und Wochenenden getrennt, sobald jede Gruppe %lld Nächte hat. Das Fenster ist die Entscheidung von Grada; keine Studie legt eines fest."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tu hora habitual de despertar y el tiempo despierto en la cama son las medianas de las últimas %lld noches, entre semana y fines de semana por separado una vez que cada uno tiene %lld noches. La ventana es decisión de Grada; ningún estudio fija una."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Votre réveil habituel et votre temps d’éveil au lit sont les médianes des %lld dernières nuits, en semaine et le week-end séparément une fois que chacun compte %lld nuits. La fenêtre est un choix de Grada ; aucune étude n’en fixe."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आपके सामान्य जागने का समय और बिस्तर में जागते रहने का समय पिछली %1$lld रातों की माध्यिकाएँ हैं, सप्ताह के दिन और सप्ताहांत अलग-अलग जब हर एक की %2$lld रातें हो जाएँ। यह अवधि Grada का चुनाव है; कोई अध्ययन इसे तय नहीं करता।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Il tuo risveglio abituale e il tempo di veglia a letto sono le mediane delle ultime %lld notti, giorni feriali e weekend separati quando ciascuno ha %lld notti. La finestra è una scelta di Grada; nessuno studio ne stabilisce una."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sua hora habitual de acordar e o tempo acordado na cama são as medianas das últimas %1$lld noites, com dias úteis e fins de semana separados quando cada um tiver %2$lld noites. A janela é uma escolha do Grada; nenhum estudo define uma."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ваше обычное пробуждение и время без сна в постели — медианы последних %lld ночей; будни и выходные считаются отдельно, когда в каждой группе наберётся %lld ночей. Это окно выбрано Grada; ни одно исследование его не задаёт."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你的常用起床时间和在床上醒着的时间是最近 %1$lld 晚的中位数，工作日和周末在各自满 %2$lld 晚后分开计算。该窗口是 Grada 的选择；没有研究设定过。"
           }
         }
       }

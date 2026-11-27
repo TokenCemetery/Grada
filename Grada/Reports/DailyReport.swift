@@ -132,7 +132,8 @@ struct DailyReport {
     }
 
     private mutating func wrapUpDay(_ builder: SnapshotBuilder, defaults: UserDefaults, forNotification: Bool) async throws {
-        let tonight = try await builder.bedtimePlan(need: builder.tonightsNeed)
+        let tonight = try await builder.bedtimePlan(need: try await builder.tonightsNeed(),
+                                                    debt: try await builder.sleepDebt(1)?.last?.debt ?? 0)
         let usualBedtime = SleepSchedule.bedtime(on: day, usual: tonight?.usualBedtime, defaults: defaults, calendar: calendar)
         let isEvening = builder.now >= usualBedtime.addingTimeInterval(-SleepSchedule.windDown(defaults))
         if forNotification || isEvening, let plan = DayPlanStore.plan(for: day, defaults: defaults, calendar: calendar),
@@ -147,7 +148,7 @@ struct DailyReport {
                                        intensityMinutes: week.intensityMinutes, intensityGoal: week.intensityGoal)
         if let tonight {
             bedtime = tonight.bedtime
-            focus = Recommendations.bedtime(tonight, need: builder.tonightsNeed)
+            focus = Recommendations.bedtime(tonight, calendar: calendar)
             DayPlanStore.saveBedtime(tonight.bedtime, for: day, defaults: defaults, calendar: calendar)
         }
     }

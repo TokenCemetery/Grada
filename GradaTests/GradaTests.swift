@@ -1056,8 +1056,11 @@ struct SleepNeedTests {
     }
 
     @Test func cardShowsNeedDebtAndAWeekOfShortfalls() async throws {
-        let snapshot = try await SnapshotBuilder(source: SampleDataSource()).snapshot(for: .sleepNeed)
-        #expect(snapshot.value == "7h 00m")
+        let builder = SnapshotBuilder(source: SampleDataSource())
+        let snapshot = try await builder.snapshot(for: .sleepNeed)
+        let need = try await builder.personalSleepNeed()
+        #expect(SleepNeed.range(age: nil).contains(need) && need > SleepNeed.baseline, "Learned from the sample's weekend nights")
+        #expect(snapshot.value == SnapshotBuilder.hoursMinutes(need))
         guard case .bars(let shortfalls, _, _) = snapshot.chart else { Issue.record("\(snapshot.chart)"); return }
         #expect(shortfalls.count == 7)
     }

@@ -20,7 +20,7 @@ nonisolated extension SnapshotBuilder {
         }
 
         let goalIndex = shown.night.wakeDay == today ? 1 : 0
-        let goal = sleepGoals(2)[goalIndex].value ?? SleepNeed.baseline
+        let goal = try await sleepGoals(2)[goalIndex].value ?? SleepNeed.baseline
         return CardSnapshot(
             period: shown.period,
             value: Self.hoursMinutes(shown.night.asleep),
@@ -33,9 +33,17 @@ nonisolated extension SnapshotBuilder {
     }
 
     /// The sleep need for each night ending on the last `count` days, oldest first: the user's edited goal
-    /// while it holds, otherwise the 7-hour guideline.
-    func sleepGoals(_ count: Int) -> [DayValue] {
-        lastDays(count).map { DayValue(day: $0, value: goals.value(.sleep, on: $0) ?? SleepNeed.baseline) }
+    /// while it holds, otherwise today's personal need.
+    func sleepGoals(_ count: Int) async throws -> [DayValue] {
+        let personal = try await personalSleepNeed()
+        return lastDays(count).map { DayValue(day: $0, value: goals.value(.sleep, on: $0) ?? personal) }
+    }
+
+    /// Sleep need without a goal, from the free nights of the last `SleepNeed.learningDays` days.
+    func personalSleepNeed() async throws -> TimeInterval {
+        let free = try await source.sleepNights(days: SleepNeed.learningDays)
+            .filter { calendar.isDateInWeekend($0.wakeDay) && $0.asleep > 0 }
+        return SleepNeed.personal(freeNights: free.map(\.asleep), age: try await source.age())
     }
 
     /// Each of the last `count` nights' shortfall below its need, and the sleep debt after it, oldest first.
@@ -46,7 +54,7 @@ nonisolated extension SnapshotBuilder {
         guard !nights.isEmpty else { return nil }
         let asleep = Dictionary(nights.map { ($0.wakeDay, $0.asleep) }, uniquingKeysWith: { first, _ in first })
         let shortfalls = SleepNeed.shortfalls(asleep: days.map { day in asleep[day].flatMap { $0 > 0 ? $0 : nil } },
-                                              need: sleepGoals(days.count).map { $0.value ?? SleepNeed.baseline })
+                                              need: try await sleepGoals(days.count).map { $0.value ?? SleepNeed.baseline })
         return Array(zip(shortfalls, SleepNeed.debt(shortfalls: shortfalls)).suffix(count))
             .map { (shortfall: $0.0, debt: $0.1) }
     }
@@ -54,35 +62,39 @@ nonisolated extension SnapshotBuilder {
     /// Tonight's need, the debt from the last 14 nights, and each of the last 7 nights' shortfall.
     func sleepNeed() async throws -> CardSnapshot {
         guard let nights = try await sleepDebt(7) else { return .noData(period: tonightLabel) }
-        let need = tonightsNeed
+        let need = try await tonightsNeed()
         let owed = nights[nights.count - 1].debt
-        let bedtime = isToday ? try await bedtimePlan(need: need) : nil
+        let bedtime = isToday ? try await bedtimePlan(need: need, debt: owed) : nil
         return CardSnapshot(
             period: tonightLabel,
             value: Self.hoursMinutes(need),
-            comparison: owed >= 5 * 60
+            comparison: owed >= SleepNeed.minimumDebt
                 ? String(localized: "Sleep debt \(Self.hoursMinutes(owed)) · \(SleepNeed.debtNights) nights")
                 : String(localized: "No sleep debt"),
             chart: .bars(nights.map { $0.shortfall / 3600 }),
-            recommendation: bedtime.map { Recommendations.bedtime($0, need: need) }
+            recommendation: bedtime.map { Recommendations.bedtime($0, calendar: calendar) }
         )
     }
 
-    /// Tonight's sleep need: the user's own goal, else the baseline.
-    var tonightsNeed: TimeInterval {
-        goals.value(.sleep, on: calendar.startOfDay(for: now)) ?? SleepNeed.baseline
+    /// Tonight's sleep need: the user's own goal, else the personal need.
+    func tonightsNeed() async throws -> TimeInterval {
+        if let goal = goals.value(.sleep, on: calendar.startOfDay(for: now)) { return goal }
+        return try await personalSleepNeed()
     }
 
-    /// The bedtime for a wake-up on `wakeDay` (tomorrow by default), from the last `Bedtime.nights` nights.
-    func bedtimePlan(need: TimeInterval, wakeDay: Date? = nil) async throws -> Bedtime.Plan? {
+    /// The bedtime for a wake-up on `wakeDay` (tomorrow by default), from the last `Bedtime.nights` nights, paying
+    /// back part of `debt`.
+    func bedtimePlan(need: TimeInterval, debt: TimeInterval = 0, wakeDay: Date? = nil) async throws -> Bedtime.Plan? {
         let asleep = Dictionary(try await source.sleepNights(days: Bedtime.nights).map { ($0.wakeDay, $0.asleep) },
                                 uniquingKeysWith: { first, _ in first })
         let nights = try await source.overnight(days: Bedtime.nights).compactMap { night -> Bedtime.Night? in
             guard let start = night.bedtime, let end = night.wakeTime, let slept = asleep[night.wakeDay], slept > 0 else { return nil }
-            return Bedtime.Night(wakeDay: night.wakeDay, start: start, end: end, asleep: slept)
+            return Bedtime.Night(wakeDay: night.wakeDay, start: start, end: end)
         }
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
-        return Bedtime.plan(nights: nights, need: need, wakeDay: wakeDay ?? tomorrow, calendar: calendar)
+        let payback = debt > 0 ? SleepNeed.payback(debt: debt, need: need, age: try await source.age()) : 0
+        return Bedtime.plan(nights: nights, need: need, payback: payback, debt: debt, wakeDay: wakeDay ?? tomorrow,
+                            calendar: calendar)
     }
 
     /// The Sleep Regularity Index over the last week, rated against UK Biobank adults, with the last 7 days.
@@ -154,7 +166,7 @@ nonisolated extension SnapshotBuilder {
         // Stage totals stand in for nights without a stage timeline, such as Garmin's (#100).
         let totals = Dictionary(try await source.sleepNights(days: count).map { ($0.wakeDay, $0) }) { first, _ in first }
         let regularity = try await sleepRegularity(count)
-        let needs = sleepGoals(count)
+        let needs = try await sleepGoals(count)
         let age = try await source.age()
         return days.indices.map { index in
             let night = byNight[days[index]] ?? []

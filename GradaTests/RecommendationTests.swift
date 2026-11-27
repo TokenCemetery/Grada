@@ -20,9 +20,8 @@ struct RecommendationTests {
         let load = try #require(Recommendations.load(ratio: 1.4))
         let steps = Recommendations.steps(today: 8_420, goal: 10_000)
         let wake = Date(timeIntervalSince1970: 1_800_000_000)
-        let bed = Recommendations.bedtime(Bedtime.Plan(bedtime: wake.addingTimeInterval(-8 * 3600), wake: wake,
-                                                       usualBedtime: wake.addingTimeInterval(-8 * 3600),
-                                                       awakeInBed: 0, weekend: nil), need: 8 * 3600)
+        let bed = Recommendations.bedtime(Bedtime.Plan(bedtime: wake.addingTimeInterval(-8 * 3600), plannedWake: wake, wake: wake,
+                                                       usualBedtime: wake.addingTimeInterval(-8 * 3600), weekend: nil))
         // Morning's warnings, then the evening's bedtime, steps and Strain again, as the Journal combines them.
         #expect(Recommendations.dailyFirst([rest, load, bed, steps, load]) == [steps, bed, rest, load])
     }
@@ -80,22 +79,22 @@ struct BedtimeTests {
     private func day(_ offset: Int) -> Date { calendar.date(byAdding: .day, value: offset, to: monday)! }
 
     /// A night ending `offset` days from Monday: asleep from `start` to `end` hours after that day's midnight
-    /// (a negative start is the evening before), with `awake` minutes of it awake.
-    private func night(_ offset: Int, _ start: Double, _ end: Double, awake: Double = 0) -> Bedtime.Night {
+    /// (a negative start is the evening before).
+    private func night(_ offset: Int, _ start: Double, _ end: Double) -> Bedtime.Night {
         let wakeDay = day(offset)
         return Bedtime.Night(wakeDay: wakeDay, start: wakeDay.addingTimeInterval(start * 3600),
-                             end: wakeDay.addingTimeInterval(end * 3600), asleep: (end - start) * 3600 - awake * 60)
+                             end: wakeDay.addingTimeInterval(end * 3600))
     }
 
-    @Test func weekdayBedtimeFromUsualWakeNeedAndTimeAwake() throws {
+    @Test func weekdayBedtimeFromUsualWakeAndNeed() throws {
         // Weekdays wake at 6:30–7:00, the weekend at 9:00.
-        let nights = [night(-7, -1, 7, awake: 20), night(-6, -1, 6.5, awake: 10), night(-5, -1, 6.75, awake: 30),
+        let nights = [night(-7, -1, 7), night(-6, -1, 6.5), night(-5, -1, 6.75),
                       night(-2, 0, 9), night(-1, 0, 9)]
-        let plan = try #require(Bedtime.plan(nights: nights, need: 7.5 * 3600, wakeDay: monday, calendar: calendar))
+        let plan = try #require(Bedtime.plan(nights: nights, need: 8 * 3600, wakeDay: monday, calendar: calendar))
         #expect(plan.weekend == false)
         #expect(plan.wake == monday.addingTimeInterval(6.75 * 3600), "Median of the three weekday wake-ups")
-        #expect(plan.awakeInBed == 20 * 60)
-        #expect(plan.bedtime == monday.addingTimeInterval((6.75 - 7.5) * 3600 - 20 * 60), "22:55 the evening before")
+        #expect(plan.plannedWake == plan.wake)
+        #expect(plan.bedtime == monday.addingTimeInterval((6.75 - 8) * 3600), "22:45 the evening before")
         #expect(plan.usualBedtime == monday.addingTimeInterval(-3600), "Weekday nights started at 23:00")
     }
 
@@ -105,8 +104,62 @@ struct BedtimeTests {
         let saturday = day(5)
         let plan = try #require(Bedtime.plan(nights: nights, need: 8 * 3600, wakeDay: saturday, calendar: calendar))
         #expect(plan.weekend == true)
-        #expect(plan.wake == saturday.addingTimeInterval(9 * 3600))
-        #expect(plan.bedtime == saturday.addingTimeInterval(3600))
+        #expect(plan.wake == saturday.addingTimeInterval(9 * 3600), "The usual weekend wake-up, for report times")
+        #expect(plan.plannedWake == saturday.addingTimeInterval(8 * 3600), "At most an hour after the weekday 7:00")
+        #expect(plan.bedtime == saturday, "Midnight: 8 hours before 8:00, and an hour after the weekday 23:00")
+    }
+
+    @Test func weekendWithinAnHourKeepsItsOwnTimes() throws {
+        let nights = [night(-7, -1, 7), night(-6, -1, 7), night(-5, -1, 7),
+                      night(-9, -0.5, 7.5), night(-2, -0.5, 7.5), night(-1, -0.5, 7.5)]
+        let saturday = day(5)
+        let plan = try #require(Bedtime.plan(nights: nights, need: 7 * 3600, wakeDay: saturday, calendar: calendar))
+        #expect(plan.plannedWake == saturday.addingTimeInterval(7.5 * 3600))
+        #expect(plan.bedtime == saturday.addingTimeInterval(-0.5 * 3600))
+    }
+
+    @Test func neverLaterThanTheUsualBedtime() throws {
+        // In bed 23:00–8:00 every weekday: a 7-hour need alone would allow 1:00.
+        let nights = [night(-7, -1, 8), night(-6, -1, 8), night(-5, -1, 8)]
+        let plan = try #require(Bedtime.plan(nights: nights, need: 7 * 3600, wakeDay: monday, calendar: calendar))
+        #expect(plan.bedtime == monday.addingTimeInterval(-3600))
+    }
+
+    @Test func debtPaybackMovesTheBedtimeEarlier() throws {
+        // Usually asleep 2:00–9:00 on weekdays: 7 hours of need and an hour of payback mean 1:00.
+        let nights = [night(-7, 2, 9), night(-6, 2, 9), night(-5, 2, 9)]
+        let plan = try #require(Bedtime.plan(nights: nights, need: 7 * 3600, payback: 3600, debt: 4 * 3600,
+                                             wakeDay: monday, calendar: calendar))
+        #expect(plan.bedtime == monday.addingTimeInterval(3600))
+        let reason = Recommendations.bedtime(plan, calendar: calendar).reason
+        #expect(reason.contains("It includes 1h 00m toward your 4h 00m of sleep debt; paying it back takes several nights."))
+        let rested = try #require(Bedtime.plan(nights: nights, need: 7 * 3600, wakeDay: monday, calendar: calendar))
+        #expect(!Recommendations.bedtime(rested, calendar: calendar).reason.contains("sleep debt"))
+    }
+
+    @Test func paybackIsAtMostAnHourAndStaysInTheRecommendedRange() {
+        let hour: TimeInterval = 3600
+        #expect(SleepNeed.payback(debt: 3 * 60, need: 7 * hour, age: 30) == 0, "Under the debt shown")
+        #expect(SleepNeed.payback(debt: 20 * 60, need: 7 * hour, age: 30) == 20 * 60, "All of a small debt")
+        #expect(SleepNeed.payback(debt: 5 * hour, need: 7.5 * hour, age: 30) == hour, "An hour a night at most")
+        #expect(SleepNeed.payback(debt: 5 * hour, need: 8.5 * hour, age: 30) == 0.5 * hour, "Up to 9 hours in all")
+        #expect(SleepNeed.payback(debt: 5 * hour, need: 7.5 * hour, age: 70) == 0.5 * hour, "Up to 8 hours from 65")
+        #expect(SleepNeed.payback(debt: 5 * hour, need: 9.5 * hour, age: 30) == 0, "A goal above the range adds nothing")
+    }
+
+    @Test func bedtimeReasonGivesTheSleepItLeaves() {
+        let wake = monday.addingTimeInterval(8 * 3600)
+        let plan = { (bedtime: Double, weekend: Bool?) in
+            Bedtime.Plan(bedtime: monday.addingTimeInterval(bedtime * 3600), plannedWake: wake, wake: wake,
+                         usualBedtime: monday.addingTimeInterval(bedtime * 3600), weekend: weekend)
+        }
+        let weekday = Recommendations.bedtime(plan(-1, false), calendar: calendar).reason
+        #expect(weekday.hasPrefix("That leaves 9h 00m of sleep before your usual weekday wake-up at "))
+        #expect(!weekday.contains("heart disease"), "Before midnight")
+        let weekend = Recommendations.bedtime(plan(1, true), calendar: calendar).reason
+        #expect(weekend.hasPrefix("That leaves 7h 00m of sleep before "))
+        #expect(weekend.contains("on the weekend, at most an hour after your usual weekday wake-up."))
+        #expect(weekend.contains("went with the lowest heart disease risk, and after midnight with the highest."))
     }
 
     @Test func tooFewNightsOfOneKindUseAllNights() throws {
@@ -114,6 +167,15 @@ struct BedtimeTests {
         let plan = try #require(Bedtime.plan(nights: nights, need: 7 * 3600, wakeDay: day(5), calendar: calendar))
         #expect(plan.weekend == nil, "One weekend night isn't enough, so the wake-up mixes both")
         #expect(plan.wake == day(5).addingTimeInterval(7 * 3600))
+    }
+
+    @Test func personalSleepNeedFromFreeNights() {
+        let hours = { (values: [Double]) in values.map { $0 * 3600 } }
+        #expect(SleepNeed.personal(freeNights: hours([8, 8, 8]), age: 30) == SleepNeed.baseline, "Too few nights")
+        #expect(SleepNeed.personal(freeNights: hours([7, 7.5, 7.5, 8]), age: 30) == 7.5 * 3600)
+        #expect(SleepNeed.personal(freeNights: hours([6, 6, 6.5, 6.5]), age: 30) == 7 * 3600, "Never under the guideline")
+        #expect(SleepNeed.personal(freeNights: hours([10, 10, 10, 10]), age: 30) == 9 * 3600)
+        #expect(SleepNeed.personal(freeNights: hours([10, 10, 10, 10]), age: 70) == 8 * 3600, "7–8 hours from 65")
     }
 
     @Test func calibratingWithFewerThanThreeNights() {

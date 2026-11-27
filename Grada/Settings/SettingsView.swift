@@ -448,7 +448,7 @@ private struct ProfileView: View {
                     }
                 }
             }
-            LabeledContent("Sleep Need", value: SnapshotBuilder.hoursMinutes(SleepNeed.baseline))
+            LabeledContent("Sleep Need", value: profile?.sleepNeed.map(SnapshotBuilder.hoursMinutes) ?? "…")
         } footer: {
             if let provided, !provided.age || !provided.sex {
                 Text("Used for Resources, Health age and Sleep need. Read from Apple Health where it's allowed: add your birth date and sex in Health › your picture › Health Details, then allow Grada to read them in Health › Sharing › Apps › Grada, or save them below.")
