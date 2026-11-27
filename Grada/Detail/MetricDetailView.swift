@@ -37,7 +37,14 @@ struct MetricDetailView: View {
                         }
                     }
                 }
-                if TrendBuilder.hasTrend(kind) { trendSection }
+                if TrendBuilder.hasTrend(kind) {
+                    // Above every section it drives: the trends below and the breakdown all follow the period.
+                    Picker("Period", selection: $period) {
+                        ForEach(TrendPeriod.available(for: kind)) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    trendSection
+                }
                 ForEach(Array(extraTrends.enumerated()), id: \.offset) { _, extra in
                     DetailSection(title: extra.title ?? String(localized: "Trend")) {
                         VStack(alignment: .leading, spacing: 12) {
@@ -136,10 +143,6 @@ struct MetricDetailView: View {
     private var trendSection: some View {
         DetailSection(title: trend?.title ?? String(localized: "Trend")) {
             VStack(alignment: .leading, spacing: 12) {
-                Picker("Period", selection: $period) {
-                    ForEach(TrendPeriod.available(for: kind)) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.segmented)
                 if let trend {
                     TrendChart(trend: trend, period: period, color: color, highlighted: route.day.map { _ in day })
                         .frame(height: 200)
