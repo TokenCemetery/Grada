@@ -168,6 +168,18 @@ struct StrainTests {
         #expect(trends[0].points.last?.value == nil, "Today's week ends yesterday, so today has no point")
     }
 
+    @MainActor
+    @Test func detailChartsLoadRatioOverZones() async throws {
+        let source = AlternatingLoadSource()
+        let trend = try #require(try await TrendBuilder(source: source).trend(for: .strain, period: .month))
+        let days = try #require(try await SnapshotBuilder(source: source).strainDays(TrendPeriod.month.days))
+        #expect(trend.points.map(\.value) == days.map { $0.ratio?.value }, "Each day plots its own ratio (#212)")
+        #expect(trend.normalRange == nil)
+        #expect(trend.zones.map(\.rating) == [.fair, .good, .fair, .poor])
+        #expect(trend.zones[1].range == Strain.sweetSpot)
+        #expect(trend.zones[3].range.lowerBound == Strain.dangerRatio)
+    }
+
     /// Gabbett 2016: sweet spot 0.8–1.3, danger zone from 1.5.
     @Test func ratingFollowsGabbett() {
         #expect(Strain.rating(1.0) == .good)

@@ -67,6 +67,8 @@ struct Trend {
     var format: ValueFormat
     var points: [TrendPoint]
     var normalRange: ClosedRange<Double>?
+    /// Fixed bands shaded in their rating's color, where the explanation names zones (Strain's ratio, #212).
+    var zones: [(range: ClosedRange<Double>, rating: DayRating)] = []
     /// Stats over the daily values, also for weekly charts.
     var average: Double?
     var low: Double?
@@ -286,14 +288,15 @@ struct TrendBuilder {
         return trend
     }
 
-    /// The 7-day average load each day, with the shown day's sweet spot (0.8–1.3 × its 28-day average) as the range.
+    /// Each day's acute:chronic ratio over the zones the explanation names. A band in TRIMP would have to use one day's
+    /// 28-day load for every day, so past days couldn't be read against it (#212).
     private func strain(_ period: TrendPeriod) async throws -> Trend? {
         guard let days = try await cardBuilder.strainDays(period.days) else { return nil }
-        var trend = make(days.map { DayValue(day: $0.day, value: $0.ratio?.acute) }, period, style: .line, unit: "TRIMP",
-                         format: .number(decimals: 0), title: String(localized: "7-day load against 28-day"))
-        trend.normalRange = days.last?.ratio.map {
-            Strain.sweetSpot.lowerBound * $0.chronic...Strain.sweetSpot.upperBound * $0.chronic
-        }
+        var trend = make(days.map { DayValue(day: $0.day, value: $0.ratio?.value) }, period, style: .line, unit: "",
+                         format: .number(decimals: 2), title: String(localized: "7-day load against 28-day"))
+        let top = max(2, trend.high ?? 0)
+        trend.zones = [(0...Strain.sweetSpot.lowerBound, .fair), (Strain.sweetSpot, .good),
+                       (Strain.sweetSpot.upperBound...Strain.dangerRatio, .fair), (Strain.dangerRatio...top, .poor)]
         return trend
     }
 

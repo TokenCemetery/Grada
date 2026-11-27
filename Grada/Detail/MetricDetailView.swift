@@ -269,6 +269,11 @@ private struct TrendChart: View {
 
     var body: some View {
         Chart {
+            ForEach(Array(trend.zones.enumerated()), id: \.offset) { _, zone in
+                RectangleMark(yStart: .value("Low", zone.range.lowerBound), yEnd: .value("High", zone.range.upperBound))
+                    .foregroundStyle(zone.rating.fill(colorBlind: colorBlind).opacity(0.15))
+                    .accessibilityHidden(true)
+            }
             if let range = trend.normalRange {
                 ForEach(trend.points) { point in
                     AreaMark(x: .value("Day", point.date, unit: unit),
