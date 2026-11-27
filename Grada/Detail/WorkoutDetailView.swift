@@ -255,7 +255,7 @@ private struct TrainingLoadView: View {
     }
 }
 
-/// Heart rate across the workout, colored by the zone it was in.
+/// Heart rate across the workout over its zone bands, the line colored by the zone it was in.
 private struct HeartRateChart: View {
     let readings: [TimedValue]
     let start: Date
@@ -274,12 +274,25 @@ private struct HeartRateChart: View {
             return [Gradient.Stop(color: ZoneColors.color(max(index, 1)), location: location),
                     Gradient.Stop(color: ZoneColors.color(index + 1), location: location)]
         }
-        Chart(readings, id: \.date) { reading in
-            LineMark(x: .value("Time", reading.date), y: .value("Heart rate", reading.value))
-                .interpolationMethod(.monotone)
-                .lineStyle(StrokeStyle(lineWidth: 2))
+        Chart {
+            // Each zone's band behind the line, cut to the plotted range so the axis isn't stretched to fit.
+            ForEach(HeartRateZones.lowerBounds.indices, id: \.self) { index in
+                let bandLow = max(HeartRateZones.lowerBounds[index] * maxHeartRate, domain.lowerBound)
+                let bandHigh = index + 1 < HeartRateZones.lowerBounds.count
+                    ? min(HeartRateZones.lowerBounds[index + 1] * maxHeartRate, domain.upperBound) : domain.upperBound
+                if bandLow < bandHigh {
+                    RectangleMark(yStart: .value("Low", bandLow), yEnd: .value("High", bandHigh))
+                        .foregroundStyle(ZoneColors.color(index + 1).opacity(0.15))
+                        .accessibilityHidden(true)
+                }
+            }
+            ForEach(readings, id: \.date) { reading in
+                LineMark(x: .value("Time", reading.date), y: .value("Heart rate", reading.value))
+                    .interpolationMethod(.monotone)
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+                    .foregroundStyle(LinearGradient(stops: stops, startPoint: .bottom, endPoint: .top))
+            }
         }
-        .foregroundStyle(LinearGradient(stops: stops, startPoint: .bottom, endPoint: .top))
         .chartYScale(domain: domain)
         .chartXScale(domain: start...end)
         .chartXAxis {
@@ -307,13 +320,13 @@ private struct ZoneRows: View {
                 let high = zone < seconds.count ? Int((HeartRateZones.lowerBounds[zone] * maxHeartRate).rounded()) - 1 : Int(maxHeartRate.rounded())
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("Zone \(zone)").font(.subheadline.weight(.semibold))
+                        Text("Zone \(zone)").font(.subheadline.weight(.semibold)).foregroundStyle(ZoneColors.color(zone))
                         Text("\(low)–\(high) bpm").font(.caption2).foregroundStyle(.secondary).monospacedDigit()
                     }
                     .frame(width: 84, alignment: .leading)
                     GeometryReader { proxy in
                         ZStack(alignment: .leading) {
-                            Capsule().fill(Color(.tertiarySystemFill))
+                            Capsule().fill(ZoneColors.color(zone).opacity(0.2))
                             Capsule().fill(ZoneColors.color(zone)).frame(width: proxy.size.width * share)
                         }
                     }
