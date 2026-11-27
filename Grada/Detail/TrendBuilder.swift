@@ -132,8 +132,13 @@ struct TrendBuilder {
             return try await hrvStatus(period)
         case .vo2Max, .racePredictor:
             let series = try await source.daily(.vo2Max, days: days)
-            return make(series, period, style: .line, unit: QuantityMetric.vo2Max.unit, format: .number(decimals: 1),
-                        title: kind == .racePredictor ? String(localized: "VO₂ Max") : nil)
+            var trend = make(series, period, style: .line, unit: QuantityMetric.vo2Max.unit, format: .number(decimals: 1),
+                             title: kind == .racePredictor ? String(localized: "VO₂ Max") : nil)
+            if let age = try await source.age(), let sex = try await source.biologicalSex() {
+                // Excellent and Superior rate Good, as on the card, so the bands stop at Good's lower bound.
+                trend.zones = Self.zones(Array(VO2MaxZones.bounds(age: age, sex: sex).prefix(2)), [.poor, .fair, .good], trend)
+            }
+            return trend
         case .weight:
             let series = try await source.daily(.bodyMass, days: days)
             return make(series.map { DayValue(day: $0.day, value: $0.value.map { BodyMass.display($0, usesMetric: usesMetric) }) },
@@ -149,8 +154,10 @@ struct TrendBuilder {
                         format: .number(decimals: 0), title: String(localized: "Systolic", comment: "Blood pressure chart: the upper number"),
                         movingAverage: true)
         case .heartRateRecovery:
-            return make(try await source.heartRateRecovery(days: withLead), period, style: .line,
-                        unit: QuantityMetric.restingHeartRate.unit, format: .number(decimals: 0), movingAverage: true)
+            var trend = make(try await source.heartRateRecovery(days: withLead), period, style: .line,
+                             unit: QuantityMetric.restingHeartRate.unit, format: .number(decimals: 0), movingAverage: true)
+            trend.zones = Self.zones([HeartRateRecovery.slowCutOff], [.fair, .good], trend)
+            return trend
         case .sleepDuration, .sleepStages:
             return try await sleep(period)
         case .sleepNeed:
@@ -204,7 +211,7 @@ struct TrendBuilder {
             guard let days = try await cardBuilder.loadFocusDays(days) else { return nil }
             var trend = make(days.map { DayValue(day: $0.day, value: LoadFocus.shares($0.seconds).map { $0[0] * 100 }) },
                              period, style: .line, unit: "%", format: .number(decimals: 0), title: String(localized: "Low intensity, 4 weeks"))
-            trend.normalRange = LoadFocus.lowTarget * 100...100
+            trend.zones = Self.zones([LoadFocus.lowTarget * 100, 100], [.fair, .good, .good], trend)
             return trend
         }
     }
@@ -270,8 +277,10 @@ struct TrendBuilder {
 
     private func sleepConsistency(_ period: TrendPeriod) async throws -> Trend {
         let indexes = try await cardBuilder.sleepRegularity(period.days + period.movingAverageDays - 1).map { DayValue(day: $0.day, value: $0.index) }
-        return make(indexes, period, style: .line, unit: "", format: .number(decimals: 0), title: String(localized: "Sleep Regularity Index"),
-                    movingAverage: true)
+        var trend = make(indexes, period, style: .line, unit: "", format: .number(decimals: 0), title: String(localized: "Sleep Regularity Index"),
+                         movingAverage: true)
+        trend.zones = Self.zones([SleepConsistency.populationLowerQuartile, SleepConsistency.populationMedian], [.poor, .fair, .good], trend)
+        return trend
     }
 
     /// The 7-night average for each day, with the shown day's baseline as the normal range.
@@ -522,6 +531,14 @@ struct TrendBuilder {
         }
         return Trend(title: title, style: style, unit: unit, format: format, points: points,
                      average: Baseline.average(values), low: values.min(), high: values.max())
+    }
+
+    /// Bands between `limits` (ascending), rated as the card rates values in them: `ratings` has one more entry than
+    /// `limits`. The outer bands reach only the trend's low and high, so the axis isn't stretched to fit them (#213).
+    static func zones(_ limits: [Double], _ ratings: [DayRating], _ trend: Trend) -> [(range: ClosedRange<Double>, rating: DayRating)] {
+        guard let first = limits.first, let last = limits.last, ratings.count == limits.count + 1 else { return [] }
+        let edges = [min(trend.low ?? first, first)] + limits + [max(trend.high ?? last, last)]
+        return ratings.indices.map { (edges[$0]...edges[$0 + 1], ratings[$0]) }
     }
 
     /// The average of the days with a value in the `movingAverageDays` up to each point; for a week, up to its last

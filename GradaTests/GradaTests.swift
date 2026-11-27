@@ -1399,6 +1399,36 @@ struct TrendBuilderTests {
         #expect(trend.average != nil)
     }
 
+    /// Zone bands follow the card's limits and reach only as far as the plotted values (#213).
+    @Test func zonesSpanTheLimitsAndTheValues() {
+        let trend = Trend(style: .line, unit: "", format: .number(decimals: 0), points: [], low: 60, high: 90)
+        let zones = TrendBuilder.zones([73.8, 81], [.poor, .fair, .good], trend)
+        #expect(zones.map(\.range) == [60...73.8, 73.8...81, 81...90])
+        #expect(zones.map(\.rating) == [.poor, .fair, .good])
+        let inside = Trend(style: .line, unit: "", format: .number(decimals: 0), points: [], low: 75, high: 78)
+        #expect(TrendBuilder.zones([73.8, 81], [.poor, .fair, .good], inside).map(\.range) == [73.8...73.8, 73.8...81, 81...81])
+    }
+
+    @Test func cardsRatedByFixedLimitsChartTheirZones() async throws {
+        let builder = TrendBuilder(source: SampleDataSource())
+        let vo2 = try #require(try await builder.trend(for: .vo2Max, period: .month))
+        let bounds = VO2MaxZones.bounds(age: 35, sex: .male)
+        #expect(vo2.zones.map(\.rating) == [.poor, .fair, .good])
+        #expect(vo2.zones[1].range == bounds[0]...bounds[1])
+        #expect(try await builder.trend(for: .racePredictor, period: .month)?.zones.count == 3)
+        let recovery = try #require(try await builder.trend(for: .heartRateRecovery, period: .month))
+        #expect(recovery.zones.map(\.rating) == [.fair, .good])
+        #expect(recovery.zones[0].range.upperBound == HeartRateRecovery.slowCutOff)
+        let consistency = try #require(try await builder.trend(for: .sleepConsistency, period: .month))
+        #expect(consistency.zones.map(\.range.upperBound).prefix(2) == [SleepConsistency.populationLowerQuartile,
+                                                                         SleepConsistency.populationMedian])
+        if let focus = try await builder.trend(for: .loadFocus, period: .month) {
+            #expect(focus.normalRange == nil)
+            #expect(focus.zones.first?.range.upperBound == LoadFocus.lowTarget * 100)
+            #expect(focus.zones.first?.rating == .fair)
+        }
+    }
+
     @Test func longPeriodsShowWeeklyPoints() async throws {
         let trend = try #require(try await TrendBuilder(source: SampleDataSource()).trend(for: .restingHeartRate, period: .year))
         #expect((52...54).contains(trend.points.count))
