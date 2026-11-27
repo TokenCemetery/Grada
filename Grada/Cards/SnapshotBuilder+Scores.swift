@@ -107,7 +107,8 @@ nonisolated extension SnapshotBuilder {
             tone: Self.tone(shown.rating),
             rating: shown.rating,
             chart: .bars(days.map { $0.result.map { Double($0.inRange) / Double($0.measured) } }, target: 1,
-                         ratings: days.map { $0.result?.rating })
+                         ratings: days.map { $0.result?.rating }),
+            recommendation: isToday ? try await trainingRecommendation() : nil
         )
     }
 
@@ -300,11 +301,13 @@ nonisolated extension SnapshotBuilder {
         let resting = try await source.daily(.restingHeartRate, days: baselineDays + 1)
         var comparison = String(localized: "Avg \(format(average, 0)) bpm")
         var rating: DayRating?
+        var recommendation: Recommendation?
         if let todayResting = resting.last?.value {
             comparison = String(localized: "Avg \(format(average, 0)) · Resting \(format(todayResting, 0))")
             let history = resting.dropLast().compactMap(\.value)
             if let normal = Baseline.normalRange(history: history, minimumHalfWidth: QuantityMetric.restingHeartRate.minimumHalfWidth) {
                 rating = DayRatings.range(todayResting, normal: normal, higherIsBetter: false)
+                recommendation = isToday ? Recommendations.restingHeartRate(todayResting, normal: normal) : nil
             }
         }
         return CardSnapshot(
@@ -313,7 +316,8 @@ nonisolated extension SnapshotBuilder {
             unit: String(localized: "bpm"),
             comparison: comparison,
             rating: rating,
-            chart: .intraday(values.map { (hour: $0.date.timeIntervalSince(today) / 3600, value: $0.value) }, domain: nil)
+            chart: .intraday(values.map { (hour: $0.date.timeIntervalSince(today) / 3600, value: $0.value) }, domain: nil),
+            recommendation: recommendation
         )
     }
 }

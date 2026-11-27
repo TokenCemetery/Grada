@@ -35,6 +35,23 @@ struct RecommendationTests {
         #expect(Recommendations.restingHeartRate(48, normal: 52...58) == nil, "A low resting heart rate is no concern")
     }
 
+    @Test func intensityMinutesLeftToTheWeeklyTarget() {
+        let behind = Recommendations.intensityMinutes(total: 92.4, target: 150)
+        #expect(behind.text == "Get about 58 more intensity minutes", "57.6 left, rounded up")
+        #expect(behind.reason.hasPrefix("92 of 150 intensity minutes in the last 7 days."))
+        #expect(Recommendations.intensityMinutes(total: 149.5, target: 150).text == "Get about 1 more intensity minute")
+        #expect(Recommendations.intensityMinutes(total: 150, target: 150).text == "Weekly goal reached")
+        #expect(Recommendations.intensityMinutes(total: 210, target: 150).reason == "210 of 150 intensity minutes in the last 7 days.")
+    }
+
+    @Test func onlyPoorSleepConsistencySuggestsARegularSchedule() throws {
+        let recommendation = try #require(Recommendations.sleepConsistency(65))
+        #expect(recommendation.text == "Keep a regular sleep schedule")
+        #expect(recommendation.reason.contains("consistency of 65"))
+        #expect(Recommendations.sleepConsistency(SleepConsistency.populationLowerQuartile) == nil, "Fair from the lower quartile")
+        #expect(Recommendations.sleepConsistency(90) == nil)
+    }
+
     @Test func onlyLowHRVSuggestsEasyTraining() {
         #expect(Recommendations.hrv(.low)?.text == "Keep training easy")
         #expect(Recommendations.hrv(.unbalanced) == nil)

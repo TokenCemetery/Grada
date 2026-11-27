@@ -102,7 +102,8 @@ nonisolated extension SnapshotBuilder {
             tone: Self.tone(rating),
             rating: rating,
             chart: .bars(days.map { $0.index.map { max($0, 0) } }, target: 100,
-                         ratings: days.map { $0.index.map(SleepConsistency.rating) })
+                         ratings: days.map { $0.index.map(SleepConsistency.rating) }),
+            recommendation: isToday ? Recommendations.sleepConsistency(shown) : nil
         )
     }
 

@@ -49,6 +49,31 @@ nonisolated enum Recommendations {
         )
     }
 
+    /// Intensity minutes left to the weekly target, or that it's reached. The week is the last 7 days, as the card counts it.
+    static func intensityMinutes(total: Double, target: Double) -> Recommendation {
+        let week = String(localized: "\(whole(total)) of \(whole(target)) intensity minutes in the last 7 days.")
+        guard total < target else {
+            return Recommendation(symbol: "checkmark.circle", text: String(localized: "Weekly goal reached"), reason: week)
+        }
+        let left = Int((target - total).rounded(.up))
+        return Recommendation(
+            symbol: "figure.run",
+            text: left == 1 ? String(localized: "Get about 1 more intensity minute")
+                : String(localized: "Get about \(left) more intensity minutes"),
+            reason: "\(week) \(String(localized: "Each brisk minute counts once, and each vigorous minute, like running, counts twice."))"
+        )
+    }
+
+    /// Below most UK Biobank adults (Windred et al. 2024), whose more regular sleep went with lower mortality.
+    static func sleepConsistency(_ index: Double) -> Recommendation? {
+        guard SleepConsistency.rating(index) == .poor else { return nil }
+        return Recommendation(
+            symbol: "clock",
+            text: String(localized: "Keep a regular sleep schedule"),
+            reason: String(localized: "Your sleep consistency of \(whole(index)) is lower than in most adults. Go to bed and get up at the same times every day, weekends included.")
+        )
+    }
+
     /// Mishra et al. 2020 (Nat Biomed Eng 4:1208) saw resting heart rate rise above its personal baseline before
     /// symptoms in most of the infections they tracked; stress, alcohol and too little recovery raise it too.
     static func restingHeartRate(_ value: Double, normal: ClosedRange<Double>) -> Recommendation? {

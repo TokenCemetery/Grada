@@ -31,7 +31,8 @@ nonisolated extension SnapshotBuilder {
             unit: String(localized: "min", comment: "Unit: minutes"),
             comparison: Self.goalComparison(total, goal: target, decimals: 0),
             tone: total >= target ? .good : .neutral,
-            chart: .progress(value: total, goal: target)
+            chart: .progress(value: total, goal: target),
+            recommendation: isToday ? Recommendations.intensityMinutes(total: total, target: target) : nil
         )
     }
 

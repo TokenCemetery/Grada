@@ -14708,6 +14708,58 @@
         }
       }
     },
+    "Each brisk minute counts once, and each vigorous minute, like running, counts twice." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede zügige Minute zählt einfach, jede intensive Minute, etwa beim Laufen, doppelt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada minuto a paso ligero cuenta una vez y cada minuto vigoroso, como correr, cuenta dos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque minute soutenue compte une fois, et chaque minute intense, comme la course, compte double."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हर तेज़ मिनट एक बार गिना जाता है, और हर ज़ोरदार मिनट, जैसे दौड़ना, दो बार।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogni minuto a passo svelto conta una volta e ogni minuto intenso, come la corsa, conta due."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada minuto em ritmo acelerado conta uma vez e cada minuto vigoroso, como correr, conta duas."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каждая минута быстрой ходьбы считается один раз, а каждая минута высокой нагрузки, например бега, — дважды."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每分钟快走计 1 分钟，每分钟高强度运动（如跑步）计 2 分钟。"
+          }
+        }
+      }
+    },
     "Each threshold comes from the studies above. Counting inputs off into Good, Fair and Poor is Grada's choice." : {
       "localizations" : {
         "de" : {
@@ -17258,6 +17310,194 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "轻松"
+          }
+        }
+      }
+    },
+    "Get about %lld more intensity minutes" : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Noch etwa %lld Intensitätsminute sammeln"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Noch etwa %lld Intensitätsminuten sammeln"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Suma alrededor de %lld minuto intenso más"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Suma alrededor de %lld minutos intensos más"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites encore environ %lld minutes d’intensité"
+          }
+        },
+        "hi" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "लगभग %lld और इंटेंसिटी मिनट जोड़ें"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "लगभग %lld और इंटेंसिटी मिनट जोड़ें"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fai ancora circa %lld minuto di intensità"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fai ancora circa %lld minuti di intensità"
+                }
+              }
+            }
+          }
+        },
+        "pt" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Some cerca de mais %lld minuto intenso"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Some cerca de mais %lld minutos intensos"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Наберите ещё около %lld минуты интенсивности"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Наберите ещё около %lld минут интенсивности"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Наберите ещё около %lld минут интенсивности"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Наберите ещё около %lld минут интенсивности"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再积累约 %lld 个强度分钟"
+          }
+        }
+      }
+    },
+    "Get about 1 more intensity minute" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch etwa 1 Intensitätsminute sammeln"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suma alrededor de 1 minuto intenso más"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites encore environ 1 minute d’intensité"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "लगभग 1 और इंटेंसिटी मिनट जोड़ें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fai ancora circa 1 minuto di intensità"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some cerca de mais 1 minuto intenso"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Наберите ещё около 1 минуты интенсивности"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再积累约 1 个强度分钟"
           }
         }
       }
@@ -21699,6 +21939,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "kcal"
+          }
+        }
+      }
+    },
+    "Keep a regular sleep schedule" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halte feste Schlafzeiten ein"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén un horario de sueño regular"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gardez des horaires de sommeil réguliers"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सोने का नियमित समय रखें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantieni orari di sonno regolari"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantenha horários de sono regulares"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Соблюдайте режим сна"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持规律的作息"
           }
         }
       }
@@ -43029,6 +43321,58 @@
         }
       }
     },
+    "Weekly goal reached" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wochenziel erreicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objetivo semanal alcanzado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif hebdomadaire atteint"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "साप्ताहिक लक्ष्य पूरा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obiettivo settimanale raggiunto"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meta semanal atingida"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Недельная цель достигнута"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已达成每周目标"
+          }
+        }
+      }
+    },
     "Weigh yourself on a smart scale that syncs to Apple Health, or add your weight in the Health app." : {
       "localizations" : {
         "de" : {
@@ -46006,6 +46350,58 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的报告已在“日志”中准备好。"
+          }
+        }
+      }
+    },
+    "Your sleep consistency of %@ is lower than in most adults. Go to bed and get up at the same times every day, weekends included." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Schlafkonstanz von %@ ist niedriger als bei den meisten Erwachsenen. Geh jeden Tag zur gleichen Zeit ins Bett und steh zur gleichen Zeit auf, auch am Wochenende."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu regularidad del sueño de %@ es más baja que la de la mayoría de los adultos. Acuéstate y levántate a la misma hora todos los días, también los fines de semana."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre régularité du sommeil de %@ est plus basse que celle de la plupart des adultes. Couchez-vous et levez-vous aux mêmes heures chaque jour, week-end compris."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपकी नींद की निरंतरता %@ है, जो ज़्यादातर वयस्कों से कम है। हर दिन, सप्ताहांत में भी, एक ही समय पर सोएँ और उठें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La tua costanza del sonno di %@ è più bassa di quella della maggior parte degli adulti. Vai a letto e alzati agli stessi orari ogni giorno, fine settimana compresi."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sua regularidade do sono de %@ é menor que a da maioria dos adultos. Deite-se e levante-se nos mesmos horários todos os dias, inclusive nos fins de semana."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваше постоянство сна — %@, это ниже, чем у большинства взрослых. Ложитесь и вставайте в одно и то же время каждый день, включая выходные."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的睡眠一致性为 %@，低于大多数成年人。每天在相同时间上床和起床，周末也一样。"
           }
         }
       }

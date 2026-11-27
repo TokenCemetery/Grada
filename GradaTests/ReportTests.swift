@@ -94,6 +94,10 @@ struct ReportTests {
         let evening = try await DailyReport.load(.evening, builder, defaults: defaults, forNotification: true)
         #expect(evening.snapshots[.steps]?.value != nil)
         #expect(evening.recommendations.contains { $0.text.hasPrefix("Go to bed by") }, "Sleep Need gives tonight's bedtime")
+        let readiness = try #require(morning.snapshots[.trainingReadiness]?.recommendation)
+        let intensity = try #require(evening.snapshots[.intensityMinutes]?.recommendation)
+        #expect(!morning.recommendations.contains(readiness) && !evening.recommendations.contains(intensity),
+                "The reports say the session and the week's minutes themselves")
         #expect(evening.focus?.text.hasPrefix("Go to bed by") == true, "Tonight's bedtime is the evening's focus")
         #expect(evening.followUps.count == 1, "The evening checks in on this morning's focus")
         #expect(evening.tomorrow != nil)

@@ -63,6 +63,10 @@ struct DailyReport {
     /// today, and loading today's saves its plan for tomorrow's follow-up. The evening's follow-up waits for the
     /// evening report's time, so a morning look at Journal doesn't judge a day that's only begun; a notification
     /// built ahead of that time, for it, passes `forNotification`.
+    /// Cards whose advice the reports give in their own words: the morning's session and the evening's
+    /// look at what the week still needs.
+    static let ownAdvice: Set<CardKind> = [.trainingReadiness, .intensityMinutes]
+
     static func load(_ kind: Kind, _ builder: SnapshotBuilder, defaults: UserDefaults = .standard,
                      forNotification: Bool = false) async throws -> DailyReport {
         let day = builder.calendar.startOfDay(for: builder.now)
@@ -78,7 +82,8 @@ struct DailyReport {
             if kind.kinds.contains(card) { report.snapshots[card] = snapshot }
             if card == .restingHeartRate || card == .hrvStatus, warning == nil { warning = snapshot.recommendation?.reason }
             // Both reports take Strain's, so a card's advice is listed once.
-            if let recommendation = snapshot.recommendation, !report.recommendations.contains(recommendation) {
+            if let recommendation = snapshot.recommendation, !Self.ownAdvice.contains(card),
+               !report.recommendations.contains(recommendation) {
                 report.recommendations.append(recommendation)
             }
         }
@@ -91,15 +96,7 @@ struct DailyReport {
     }
 
     private mutating func planDay(_ builder: SnapshotBuilder, warning: String?, defaults: UserDefaults) async throws {
-        let week = try await builder.weekTraining()
-        var input = TrainingPlan.Input()
-        input.readiness = try await builder.readinessDays(7).last?.result
-        input.bodyWarning = warning
-        input.loadRatio = try await builder.strainDays(1)?.last?.ratio?.value
-        input.recoveredAt = try await builder.recoveryTimeStatus()?.recoveredAt
-        (input.workouts, input.workoutsGoal) = (week.workouts, week.workoutsGoal)
-        (input.intensityMinutes, input.intensityGoal) = (week.intensityMinutes, week.intensityGoal)
-        let suggestion = TrainingPlan.suggest(input)
+        let suggestion = try await builder.trainingSuggestion(warning: warning)
         let stepsGoal = builder.goals.value(.steps, on: day)
         let plan = DayPlanStore.saveMorning(
             DayPlan(focus: suggestion.isPriority || stepsGoal == nil ? .training : .steps, training: suggestion.level,
@@ -249,6 +246,27 @@ nonisolated enum CheckIn {
 }
 
 nonisolated extension SnapshotBuilder {
+    /// Today's session from what the cards show. `warning` is the reason of a resting heart rate or HRV warning.
+    func trainingSuggestion(warning: String?) async throws -> TrainingPlan.Suggestion {
+        let week = try await weekTraining()
+        var input = TrainingPlan.Input()
+        input.readiness = try await readinessDays(7).last?.result
+        input.bodyWarning = warning
+        input.loadRatio = try await strainDays(1)?.last?.ratio?.value
+        input.recoveredAt = try await recoveryTimeStatus()?.recoveredAt
+        (input.workouts, input.workoutsGoal) = (week.workouts, week.workoutsGoal)
+        (input.intensityMinutes, input.intensityGoal) = (week.intensityMinutes, week.intensityGoal)
+        return TrainingPlan.suggest(input)
+    }
+
+    /// Training Readiness's advice: the session the morning report would suggest now, with the same warnings it takes.
+    func trainingRecommendation() async throws -> Recommendation {
+        var warning = try await vital(.restingHeartRate, .current).recommendation?.reason
+        if warning == nil { warning = try await hrvStatus(.current).recommendation?.reason }
+        let suggestion = try await trainingSuggestion(warning: warning)
+        return TrainingPlan.recommendation(suggestion.level, reason: suggestion.reason)
+    }
+
     /// Workouts and intensity minutes over the last 7 days, as the cards count them, with their goals.
     func weekTraining() async throws -> (workouts: Int, workoutsGoal: Double?, intensityMinutes: Double?, intensityGoal: Double) {
         let day = calendar.startOfDay(for: now)
